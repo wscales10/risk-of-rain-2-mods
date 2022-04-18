@@ -2,3 +2,7 @@
 
 # IDE1006: Naming Styles
 dotnet_diagnostic.IDE1006.severity = none
+dotnet_diagnostic.VSTHRD110.severity=silent
+
+# RCS1211: Remove unnecessary 'else'.
+dotnet_diagnostic.RCS1211.severity = none

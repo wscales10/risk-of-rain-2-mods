@@ -29,13 +29,9 @@ namespace WPFApp.Controls.PatternControls
 			_ = deleteButton.SetBinding(VisibilityProperty, binding);
 		}
 
-		public PatternContainer(IReadableControlWrapper patternWrapper, IndexGetter<PatternContainer> indexGetter) : this()
-		{
-			PatternWrapper = patternWrapper;
-			Node = indexGetter(this);
-		}
+		public PatternContainer(IReadableControlWrapper patternWrapper) : this() => PatternWrapper = patternWrapper;
 
-		public event Action<int> Deleted;
+		public event Action Deleted;
 
 		public IReadableControlWrapper PatternWrapper
 		{
@@ -55,8 +51,6 @@ namespace WPFApp.Controls.PatternControls
 			}
 		}
 
-		public int? Node { get; }
-
-		private void deleteButton_Click(object sender, RoutedEventArgs e) => Deleted?.Invoke(Node.Value);
+		private void deleteButton_Click(object sender, RoutedEventArgs e) => Deleted?.Invoke();
 	}
 }

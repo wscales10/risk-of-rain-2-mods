@@ -150,6 +150,7 @@ namespace WPFApp
 			{
 				MetadataClient.GiftNewAccessToken(t);
 				PlaybackClient.GiftNewAccessToken(t);
+				SpotifyItemPicker.Refresh();
 			};
 			Authorisation.OnClientRequested += Web.Goto;
 			if (!navigationContext.IsOffline)

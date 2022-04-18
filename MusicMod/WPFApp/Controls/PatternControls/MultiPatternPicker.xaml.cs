@@ -20,10 +20,10 @@ namespace WPFApp.Controls.PatternControls
 
 		internal bool TrySaveChanges() => PatternContainerManager.Rows.All(c => c.PatternWrapper.TryGetValue(out object _));
 
+		internal PatternContainer AddPatternWrapper(IReadableControlWrapper patternWrapper) => PatternContainerManager.Add(new(patternWrapper));
+
 		protected override void Init() => InitializeComponent();
 
 		protected override void HandleSelection(IReadableControlWrapper patternWrapper) => _ = AddPatternWrapper(patternWrapper);
-
-		private PatternContainer AddPatternWrapper(IReadableControlWrapper patternWrapper) => new(patternWrapper, PatternContainerManager.Add);
 	}
 }

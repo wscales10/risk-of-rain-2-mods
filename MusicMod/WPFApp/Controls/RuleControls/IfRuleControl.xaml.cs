@@ -14,16 +14,19 @@ namespace WPFApp.Controls.RuleControls
 	{
 		private readonly RowManager<IfRow> rowManager;
 
+		private readonly ThenRow thenRow;
+
 		public IfRuleControl(IfRule rule, NavigationContext ctx) : base(ctx)
 		{
 			Item = rule;
 			InitializeComponent();
 
 			rowManager = new(rulesGrid, AddElseButton);
+			rowButtonsControl.BindTo(rowManager);
 			rowManager.OnRowRemoved += (_, _) => rule.ElseRule = null;
 			rowManager.OnRowAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
 
-			thenRow = new(rule.Pattern, rule.ThenRule, rowManager.Add, NavigationContext);
+			thenRow = rowManager.Add(new ThenRow(rule.Pattern, rule.ThenRule, NavigationContext));
 			thenRow.OnSetOutput += (rule) => Item.ThenRule = rule;
 
 			if (rule.ElseRule is not null)
@@ -32,17 +35,7 @@ namespace WPFApp.Controls.RuleControls
 			}
 		}
 
-		private readonly ThenRow thenRow;
-
 		public override IfRule Item { get; }
-
-		private void AddElse(Rule rule = null)
-		{
-			var elseRow = new ElseRow(rule, rowManager.AddDefault);
-			elseRow.OnSetOutput += (rule) => Item.ElseRule = rule;
-		}
-
-		private void AddElseButton_Click(object sender, RoutedEventArgs e) => AddElse();
 
 		protected override bool ShouldAllowExit()
 		{
@@ -54,5 +47,14 @@ namespace WPFApp.Controls.RuleControls
 
 			return false;
 		}
+
+		private void AddElse(Rule rule = null)
+		{
+			ElseRow elseRow = new(rule);
+			rowManager.AddDefault(elseRow);
+			elseRow.OnSetOutput += (rule) => Item.ElseRule = rule;
+		}
+
+		private void AddElseButton_Click(object sender, RoutedEventArgs e) => AddElse();
 	}
 }

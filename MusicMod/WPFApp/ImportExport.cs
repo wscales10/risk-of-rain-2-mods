@@ -12,6 +12,7 @@ namespace WPFApp
 	public partial class App
 	{
 		private readonly CancellationTokenSource exportCancellationTokenSource = new();
+
 		private Task exportTask;
 
 		public void ImportFile(string filename)
@@ -70,10 +71,10 @@ namespace WPFApp
 				exportCancellationTokenSource.Cancel();
 			}
 
-			_ = ExportInner(xmlControl.GetContentXml(), fileName);
+			_ = ExportAsync(xmlControl.GetContentXml(), fileName);
 		}
 
-		private async Task ExportInner(XElement xml, string fileName)
+		private async Task ExportAsync(XElement xml, string fileName)
 		{
 			var stream = new FileStream(fileName, FileMode.Create);
 			exportTask = xml.SaveAsync(stream, SaveOptions.None, exportCancellationTokenSource.Token);

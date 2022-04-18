@@ -36,12 +36,12 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 		protected override void Display()
 		{
 			base.Display();
-			_ = SetImageSource(TextBox.Text);
+			_ = SetImageSourceAsync(TextBox.Text);
 		}
 
 		private static string GetFileName(string sceneDisplayName) => Info.InvalidFilePathCharsRegex.Replace(sceneDisplayName, string.Empty) + ".png";
 
-		private static async Task<string> GetImageUrl(string sceneDisplayName)
+		private static async Task<string> GetImageUrlAsync(string sceneDisplayName)
 		{
 			var client = PatternWrapper.RequestHtmlWeb();
 
@@ -74,9 +74,9 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
 		private static string GetWikiPageUrl(string sceneDisplayName) => "https://riskofrain2.fandom.com/wiki/" + sceneDisplayName.Replace(" ", "_");
 
-		private void TextBox_TextChanged(object sender, TextChangedEventArgs e) => _ = SetImageSource(TextBox.Text);
+		private void TextBox_TextChanged(object sender, TextChangedEventArgs e) => _ = SetImageSourceAsync(TextBox.Text);
 
-		private async Task SetImageSource(string sceneDisplayName)
+		private async Task SetImageSourceAsync(string sceneDisplayName)
 		{
 			if (sceneDisplayName is null)
 			{
@@ -92,7 +92,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			}
 			else
 			{
-				string sourceString = await GetImageUrl(sceneDisplayName);
+				string sourceString = await GetImageUrlAsync(sceneDisplayName);
 				if (sourceString is not null)
 				{
 					Uri sourceUri = new(sourceString);

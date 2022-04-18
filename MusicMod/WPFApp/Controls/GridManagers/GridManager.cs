@@ -68,37 +68,31 @@ namespace WPFApp.Controls.GridManagers
 
 		protected abstract double RowMinHeight { get; }
 
-		public int Add(TRow row) => Add(row, false);
+		public TDerived Add<TDerived>(TDerived row)
+			where TDerived : TRow
+			=> Add(row, false);
 
-		public int AddDefault(TRow row)
-		{
-			if (!HasDefault)
-			{
-				int index = Add(row, true);
-				HasDefault = true;
-				return index;
-			}
-			else
-			{
-				throw new InvalidOperationException();
-			}
-		}
+		public TRow Add(TRow row) => Add(row, false);
 
-		public int Move(int index, bool down)
+		public TRow AddDefault(TRow row) => HasDefault ? throw new InvalidOperationException() : Add(row, true);
+
+		public virtual int? Move(int index, bool down)
 		{
+			// Trying to move default
 			if (HasDefault && index == List.Count - 1)
 			{
 				throw new InvalidOperationException();
 			}
 
-			int neighbouringIndex = down ? index + 1 : index - 1;
+			int diff = down ? 1 : -1;
+			int neighbouringIndex = index + diff;
 
-			if (neighbouringIndex < 0 || neighbouringIndex >= List.Count || (HasDefault && neighbouringIndex + 1 >= List.Count))
+			// Blocked
+			if (IsMoveBlocked(index, down))
 			{
-				return index;
+				return null;
 			}
 
-			int diff = down ? 1 : -1;
 			TRow row = List[index];
 			TRow neighbour = List[neighbouringIndex];
 			List.RemoveAt(index);
@@ -114,20 +108,17 @@ namespace WPFApp.Controls.GridManagers
 				Grid.SetRow(element, Grid.GetRow(element) - diff);
 			}
 
-			RefreshUi(row, neighbouringIndex == 0, IsAtBottom(neighbouringIndex));
-			RefreshUi(neighbour, index == 0, IsAtBottom(index));
-
 			OnRowMoved?.Invoke(row, diff);
 			return neighbouringIndex;
 		}
 
 		public void Remove(TRow item) => RemoveAt(List.IndexOf(item));
 
-		public void RemoveAt(int index)
+		public virtual void RemoveAt(int index)
 		{
 			bool wasDefault;
 
-			if (wasDefault = (index == List.Count - 1 && HasDefault))
+			if (wasDefault = index == List.Count - 1 && HasDefault)
 			{
 				HasDefault = false;
 			}
@@ -144,8 +135,6 @@ namespace WPFApp.Controls.GridManagers
 			List.RemoveAt(index);
 			OnRowRemoved?.Invoke(row, wasDefault);
 		}
-
-		//#error doesn't work if you allow the value produced by valueGetter to change after the row has been added
 
 		public void BindTo<T>(IList list, Func<T, TRow> rowMaker, Func<TRow, T> valueGetter, Action<TRow> setDefault = null)
 		{
@@ -192,12 +181,41 @@ namespace WPFApp.Controls.GridManagers
 			};
 		}
 
+		protected virtual bool IsMovable(TRow row) => true;
+
+		protected virtual bool IsRemovable(TRow row) => true;
+
+		protected bool IsMoveBlocked(int index, bool down)
+		{
+			if (down)
+			{
+				for (int i = index + 1; i < List.Count; i++)
+				{
+					if (IsMovable(List[i]))
+					{
+						return true;
+					}
+				}
+			}
+			else
+			{
+				for (int i = index - 1; i >= 0; i--)
+				{
+					if (IsMovable(List[i]))
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+#warning doesn't work if you allow the value produced by valueGetter to change after the row has been added
+
 		protected int GetIndex(TRow row) => List.TakeWhile(r => !r.Equals(row)).Count();
 
 		protected abstract IEnumerable<UIElement> GetUIElements(TRow item);
-
-		protected virtual void RefreshUi(TRow item, bool isAtTop, bool isAtBottom)
-		{ }
 
 		protected virtual int add(TRow row, bool isDefault)
 		{
@@ -229,28 +247,19 @@ namespace WPFApp.Controls.GridManagers
 				List.Add(row);
 			}
 
-			RefreshUi(row, targetIndex == 0, true);
-
-			if (targetIndex > 0)
-			{
-				RefreshUi(List[targetIndex - 1], targetIndex == 1, isDefault);
-			}
-
 			return targetIndex;
 		}
 
-		private bool Shift(int index, bool down)
+		protected virtual bool Shift(int index, bool down)
 		{
 			if (index < 0 || index >= List.Count)
 			{
 				return false;
 			}
 
-			bool isAtTop = false, isAtBottom = false;
-
 			if (down)
 			{
-				isAtBottom = !Shift(index + 1, true);
+				_ = Shift(index + 1, true);
 			}
 
 			foreach (UIElement element in GetUIElements(List[index]))
@@ -260,24 +269,23 @@ namespace WPFApp.Controls.GridManagers
 
 			if (!down)
 			{
-				isAtTop = !Shift(index + 1, false);
+				_ = Shift(index + 1, false);
 			}
 
-			RefreshUi(List[index], isAtTop, isAtBottom);
 			return true;
 		}
 
-		private int Add(TRow row, bool isDefault)
+		private TDerived Add<TDerived>(TDerived row, bool isDefault)
+			where TDerived : TRow
 		{
 			int index = add(row, isDefault);
 			OnRowAdded?.Invoke(row, isDefault);
 			added = true;
-			return index;
-		}
-
-		private bool IsAtBottom(int index)
-		{
-			return index == List.Count - 1 || (HasDefault && index == List.Count - 2);
+			if (isDefault)
+			{
+				HasDefault = true;
+			}
+			return row;
 		}
 
 		private void OnPropertyChanged(string info) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));

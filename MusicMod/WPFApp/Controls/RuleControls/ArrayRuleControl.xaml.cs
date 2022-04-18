@@ -21,10 +21,12 @@ namespace WPFApp.Controls.RuleControls
 			rowManager = new(rulesGrid);
 			rowManager.OnRowAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
 			rowManager.BindTo(Item.Rules, AddRule, r => r.Output);
+
+			rowButtonsControl.BindTo(rowManager);
 		}
 
 		public override ArrayRule Item { get; }
 
-		private ArrayRow AddRule(Rule rule) => new(rule, rowManager.Add);
+		private ArrayRow AddRule(Rule rule) => rowManager.Add(new ArrayRow(rule));
 	}
 }

@@ -29,6 +29,7 @@ namespace WPFApp.Controls.RuleControls
 			propertyComboBox.SelectionChanged += (s, e) => Item.PropertyInfo = e.AddedItems.Cast<PropertyInfo>().Single();
 
 			rowManager = new(casesGrid, AddDefaultButton);
+			rowButtonsControl.BindTo(rowManager);
 			rowManager.OnRowAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
 			rowManager.BindTo(Item.Cases, AddCase, r => (r as CaseRow).Case, r => Item.DefaultRule = r?.Output);
 
@@ -50,12 +51,12 @@ namespace WPFApp.Controls.RuleControls
 				Item.Cases.Add(c);
 			}
 
-			return new CaseRow(c, Item.PropertyInfo.Type, rowManager.Add, NavigationContext);
+			return rowManager.Add(new CaseRow(c, Item.PropertyInfo.Type, NavigationContext));
 		}
 
 		private void AddCaseButton_Click(object sender, RoutedEventArgs e) => AddCase();
 
-		private void AddDefault(Rule rule = null) => _ = new DefaultRow(rule, rowManager.AddDefault);
+		private void AddDefault(Rule rule = null) => _ = rowManager.AddDefault(new DefaultRow(rule));
 
 		private void AddDefaultButton_Click(object sender, RoutedEventArgs e) => AddDefault();
 	}

@@ -31,6 +31,6 @@ namespace WPFApp.Controls.RuleControls
 
 		public bool TrySaveChanges() => patternPicker.TrySaveChanges();
 
-		private PatternContainer AddPattern(IPattern pattern) => new(PatternWrapper.Create(pattern, navigationContext), patternPicker.PatternContainerManager.Add);
+		private PatternContainer AddPattern(IPattern pattern) => patternPicker.AddPatternWrapper(PatternWrapper.Create(pattern, navigationContext));
 	}
 }

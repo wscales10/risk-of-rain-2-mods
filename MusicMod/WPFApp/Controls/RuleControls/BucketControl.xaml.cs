@@ -27,6 +27,8 @@ namespace WPFApp.Controls.RuleControls
 
 			rowManager = new(commandsGrid);
 			rowManager.BindTo(Item.Commands, AddCommand, r => r.Output);
+
+			rowButtonsControl.BindTo(rowManager);
 		}
 
 		public override Bucket Item { get; }
@@ -64,7 +66,7 @@ namespace WPFApp.Controls.RuleControls
 			}
 
 			PropertyString.NavigationContext = NavigationContext;
-			return new BucketRow(command, rowManager.Add, NavigationContext);
+			return rowManager.Add(new BucketRow(command, NavigationContext));
 		}
 
 		private void AddCommandButton_Click(object sender, RoutedEventArgs e)

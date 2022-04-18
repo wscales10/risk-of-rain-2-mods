@@ -8,8 +8,8 @@ namespace WPFApp.Controls.Rows
 	internal abstract class RuleRow<TRow> : Row<Rule, TRow>
 		where TRow : RuleRow<TRow>
 	{
-		protected RuleRow(Rule output, IndexGetter<TRow> indexGetter, bool movable, bool removable = true)
-			: base(output, indexGetter, movable, removable)
+		protected RuleRow(Rule output, bool movable, bool removable = true)
+			: base(output, movable, removable)
 		{
 		}
 

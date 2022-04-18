@@ -20,7 +20,7 @@ namespace WPFApp.Controls.GridManagers
 
 		protected override int add(PatternContainer row, bool isDefault)
 		{
-			row.Deleted += RemoveAt;
+			row.Deleted += () => Remove(row);
 			return base.add(row, isDefault);
 		}
 	}

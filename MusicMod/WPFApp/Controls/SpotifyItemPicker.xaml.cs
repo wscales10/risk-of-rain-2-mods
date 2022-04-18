@@ -7,21 +7,25 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using Utils;
 using WPFApp.Properties;
 
 namespace WPFApp.Controls
 {
+	public delegate Task MusicItemInfoRequestHandler(SpotifyItem item, Func<MusicItemInfo, Task> callback);
+
 	/// <summary>
 	/// Interaction logic for SpotifyItemPicker.xaml
 	/// </summary>
 	public partial class SpotifyItemPicker : UserControl
 	{
 		private static readonly Regex regex = new(@"https?:\/\/open.spotify.com\/(?<itemType>.*?)\/(?<id>\w*)");
-		private SpotifyItem? item;
-		private readonly SetProperty<MusicItemInfo> Info = new();
+
 		private static readonly Brush infoBrush = new SolidColorBrush(Color.FromRgb(244, 244, 244));
+
+		private readonly SetProperty<MusicItemInfo> Info = new();
+
+		private SpotifyItem? item;
 
 		public SpotifyItemPicker()
 		{
@@ -37,19 +41,9 @@ namespace WPFApp.Controls
 			OnConnectionMade += RequestMusicItemInfo;
 		}
 
-		public void RequestMusicItemInfo()
-		{
-			if (Item is SpotifyItem si)
-			{
-				Cursor = Cursors.Hand;
-				_ = (OnMusicItemInfoRequested?.Invoke(si, DisplayMusicItemInfo));
-			}
-			else
-			{
-				Cursor = null;
-				_ = DisplayMusicItemInfo(null);
-			}
-		}
+		internal static event MusicItemInfoRequestHandler OnMusicItemInfoRequested;
+
+		private static event Action OnConnectionMade;
 
 		public SpotifyItem? Item
 		{
@@ -62,14 +56,23 @@ namespace WPFApp.Controls
 			}
 		}
 
-		internal static event MusicItemInfoRequestHandler OnMusicItemInfoRequested;
-
-		private static event Action OnConnectionMade;
-
-		internal static void Refresh()
+		public void RequestMusicItemInfo()
 		{
-			OnConnectionMade?.Invoke();
+			if (Item is SpotifyItem si)
+			{
+				Cursor = Cursors.Hand;
+				_ = (OnMusicItemInfoRequested?.Invoke(si, DisplayMusicItemInfoAsync));
+			}
+			else
+			{
+				Cursor = null;
+				_ = DisplayMusicItemInfoAsync(null);
+			}
 		}
+
+		internal static void Refresh() => OnConnectionMade?.Invoke();
+
+		private static Uri GetUri(SpotifyItem item) => Settings.Default.OpenLinksInApp ? item.GetUri() : item.GetUrl();
 
 		private void Border_PreviewDrop(object sender, DragEventArgs e)
 		{
@@ -95,7 +98,7 @@ namespace WPFApp.Controls
 			Item = new(itemType.AsEnum<SpotifyItemType>(true), id);
 		}
 
-		private Task DisplayMusicItemInfo(MusicItemInfo info)
+		private Task DisplayMusicItemInfoAsync(MusicItemInfo info)
 		{
 			Info.Set(info);
 			void AddLabel(string text, SpotifyItem? linkedItem = null)
@@ -157,12 +160,5 @@ namespace WPFApp.Controls
 
 			return Task.CompletedTask;
 		}
-
-		private static Uri GetUri(SpotifyItem item)
-		{
-			return Settings.Default.OpenLinksInApp ? item.GetUri() : item.GetUrl();
-		}
 	}
-
-	public delegate Task MusicItemInfoRequestHandler(SpotifyItem item, Func<MusicItemInfo, Task> callback);
 }

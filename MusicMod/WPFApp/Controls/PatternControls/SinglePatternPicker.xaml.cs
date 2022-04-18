@@ -23,7 +23,7 @@ namespace WPFApp.Controls.PatternControls
 			comboBox.Visibility = Visibility.Collapsed;
 			patternContainer.Visibility = Visibility.Visible;
 			patternContainer.PatternWrapper = patternWrapper;
-			patternContainer.Deleted += (_) =>
+			patternContainer.Deleted += () =>
 			{
 				patternContainer.PatternWrapper = null;
 				comboBox.SelectedItem = null;

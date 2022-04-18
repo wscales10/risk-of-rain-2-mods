@@ -9,14 +9,14 @@ namespace WPFApp.Controls.Rows
 {
 	internal abstract class IfRow : RuleRow<IfRow>
 	{
-		protected IfRow(Rule output, IndexGetter<IfRow> indexGetter, bool removable = true) : base(output, indexGetter, false, removable)
+		protected IfRow(Rule output, bool removable = true) : base(output, false, removable)
 		{
 		}
 	}
 
 	internal class ThenRow : IfRow
 	{
-		public ThenRow(IPattern<Context> pattern, Rule rule, IndexGetter<IfRow> indexGetter, NavigationContext navigationContext) : base(rule, indexGetter, false)
+		public ThenRow(IPattern<Context> pattern, Rule rule, NavigationContext navigationContext) : base(rule, false)
 		{
 			PatternPickerWrapper = new SinglePatternPickerWrapper<Context>(navigationContext);
 			LeftElement = PatternPickerWrapper.UIElement;
@@ -37,6 +37,6 @@ namespace WPFApp.Controls.Rows
 
 	internal class ElseRow : IfRow
 	{
-		public ElseRow(Rule rule, IndexGetter<IfRow> indexGetter) : base(rule, indexGetter) => ((TextBlock)LeftElement).Text = "Else";
+		public ElseRow(Rule rule) : base(rule) => ((TextBlock)LeftElement).Text = "Else";
 	}
 }

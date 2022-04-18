@@ -22,12 +22,13 @@ namespace WPFApp.Controls.PatternControls
 			patternPickerContainer.Child = patternPicker;
 			rowManager = new(patternsGrid);
 			rowManager.BindTo(Item.Children, AddPatternWrapper, r => r.Output);
+			rowButtonsControl.BindTo(rowManager);
 		}
 
 		public override IListPattern Item { get; }
 
 		protected override bool ShouldAllowExit() => rowManager.TrySaveChanges();
 
-		private PatternRow AddPatternWrapper(IReadableControlWrapper patternWrapper) => new(patternWrapper, rowManager.Add);
+		private PatternRow AddPatternWrapper(IReadableControlWrapper patternWrapper) => rowManager.Add(new(patternWrapper));
 	}
 }
