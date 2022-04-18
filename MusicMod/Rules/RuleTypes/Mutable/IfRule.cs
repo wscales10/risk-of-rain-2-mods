@@ -1,0 +1,48 @@
+﻿using MyRoR2;
+using Patterns;
+using Rules.RuleTypes.Interfaces;
+using Rules.RuleTypes.Readonly;
+using System.Xml.Linq;
+
+namespace Rules.RuleTypes.Mutable
+{
+	public class IfRule : UpperRule, IIfRule
+	{
+		public IPattern<Context> Pattern { get; set; }
+
+		public Rule ThenRule { get; set; }
+
+		public Rule ElseRule { get; set; }
+
+		IRule IIfRule.ThenRule => ThenRule;
+
+		IRule IIfRule.ElseRule => ElseRule;
+
+		public IfRule(IPattern<Context> pattern = null, Rule thenRule = null, Rule elseRule = null)
+		{
+			Pattern = pattern;
+			ThenRule = thenRule;
+			ElseRule = elseRule;
+		}
+
+		public override Rule GetRule(Context c) => Pattern.IsMatch(c) ? ThenRule : ElseRule;
+
+		public override XElement ToXml()
+		{
+			var element = base.ToXml();
+			var ifElement = Pattern.Simplify().ToXml();
+			var thenElement = new XElement("Then", ThenRule.ToXml());
+			element.Add(ifElement, thenElement);
+
+			if (!(ElseRule is null))
+			{
+				var elseElement = new XElement("Else", ElseRule.ToXml());
+				element.Add(elseElement);
+			}
+
+			return element;
+		}
+
+		public override IReadOnlyRule ToReadOnly() => new ReadOnlyIfRule(this);
+	}
+}

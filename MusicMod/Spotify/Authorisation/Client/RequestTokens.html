@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="utf-8" />
+	<title>Success</title>
+</head>
+<body>
+	<h1 id="header"></h1>
+	<script>
+		/*const urlParams = new URLSearchParams(window.location.search);
+		const code = urlParams.get("code");
+		const state = urlParams.get("state");
+
+		let xhr = new XMLHttpRequest();
+		xhr.open("POST", "https://accounts.spotify.com/api/token");
+		xhr.setRequestHeader("Authorization", )*/
+		var i = 6;
+		f();
+
+		function f() {
+			i--;
+			if (i <= 0) {
+				close()
+			} else {
+				document.getElementById("header").innerText = `Authentication success! This tab will close automatically in ${i} seconds.`;
+				setTimeout(f, 1000);
+			}
+		}
+	</script>
+</body>
+</html>

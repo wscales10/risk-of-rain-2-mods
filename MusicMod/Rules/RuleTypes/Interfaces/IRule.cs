@@ -1,0 +1,18 @@
+﻿using MyRoR2;
+using Spotify.Commands;
+using System.Xml.Linq;
+using Utils;
+
+namespace Rules.RuleTypes.Interfaces
+{
+	public interface IRule : IXmlExportable
+	{
+		string Name { get; }
+
+		IBucket GetBucket(Context c);
+
+		ICommandList GetCommands(Context oldContext, Context newContext, bool force = false);
+
+		IReadOnlyRule ToReadOnly();
+	}
+}
