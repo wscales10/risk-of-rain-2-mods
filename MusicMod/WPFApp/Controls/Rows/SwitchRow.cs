@@ -8,7 +8,7 @@ namespace WPFApp.Controls.Rows
 {
 	internal class CaseRow : SwitchRow
 	{
-		public CaseRow(Case<IPattern> c, Type valueType, NodeGetter<SwitchRow> nodeGetter, NavigationContext navigationContext) : base(c.Output, nodeGetter, true)
+		public CaseRow(Case<IPattern> c, Type valueType, IndexGetter<SwitchRow> indexGetter, NavigationContext navigationContext) : base(c.Output, indexGetter, true)
 		{
 			LeftElement = new(c, valueType, navigationContext);
 			PropagateUiChange(null, LeftElement);
@@ -25,13 +25,13 @@ namespace WPFApp.Controls.Rows
 
 	internal class DefaultRow : SwitchRow
 	{
-		public DefaultRow(Rule rule, NodeGetter<SwitchRow> nodeGetter) : base(rule, nodeGetter, false) => ((TextBlock)LeftElement).Text = "Default";
+		public DefaultRow(Rule rule, IndexGetter<SwitchRow> indexGetter) : base(rule, indexGetter, false) => ((TextBlock)LeftElement).Text = "Default";
 	}
 
 	internal abstract class SwitchRow : RuleRow<SwitchRow>
 	{
-		protected SwitchRow(Rule output, NodeGetter<SwitchRow> nodeGetter, bool movable)
-			: base(output, nodeGetter, movable)
+		protected SwitchRow(Rule output, IndexGetter<SwitchRow> indexGetter, bool movable)
+			: base(output, indexGetter, movable)
 		{
 		}
 	}

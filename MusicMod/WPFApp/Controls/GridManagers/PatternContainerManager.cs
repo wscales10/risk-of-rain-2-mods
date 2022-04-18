@@ -18,9 +18,9 @@ namespace WPFApp.Controls.GridManagers
 			yield return item;
 		}
 
-		protected override LinkedListNode<PatternContainer> add(PatternContainer row, bool isDefault)
+		protected override int add(PatternContainer row, bool isDefault)
 		{
-			row.Deleted += Remove;
+			row.Deleted += RemoveAt;
 			return base.add(row, isDefault);
 		}
 	}

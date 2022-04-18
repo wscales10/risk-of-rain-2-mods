@@ -64,83 +64,88 @@ namespace WPFApp.Controls.GridManagers
 
 		protected Grid Grid { get; }
 
-		protected LinkedList<TRow> List { get; } = new();
+		protected List<TRow> List { get; } = new();
 
 		protected abstract double RowMinHeight { get; }
 
-		public LinkedListNode<TRow> Add(TRow row) => Add(row, false);
+		public int Add(TRow row) => Add(row, false);
 
-		public LinkedListNode<TRow> AddDefault(TRow row)
+		public int AddDefault(TRow row)
 		{
 			if (!HasDefault)
 			{
-				LinkedListNode<TRow> node = Add(row, true);
+				int index = Add(row, true);
 				HasDefault = true;
-				return node;
+				return index;
 			}
-
-			return null;
+			else
+			{
+				throw new InvalidOperationException();
+			}
 		}
 
-		public LinkedListNode<TRow> Move(LinkedListNode<TRow> node, bool down)
+		public int Move(int index, bool down)
 		{
-			if (HasDefault && node == List.Last)
+			if (HasDefault && index == List.Count - 1)
 			{
 				throw new InvalidOperationException();
 			}
 
-			LinkedListNode<TRow> neighbour = down ? node.Next : node.Previous;
+			int neighbouringIndex = down ? index + 1 : index - 1;
 
-			if (neighbour is null || (HasDefault && neighbour.Next is null))
+			if (neighbouringIndex < 0 || neighbouringIndex >= List.Count || (HasDefault && neighbouringIndex + 1 >= List.Count))
 			{
-				return node;
+				return index;
 			}
 
 			int diff = down ? 1 : -1;
-			TRow row = node.Value;
-			List.Remove(node);
-			node = down ? List.AddAfter(neighbour, row) : List.AddBefore(neighbour, row);
+			TRow row = List[index];
+			TRow neighbour = List[neighbouringIndex];
+			List.RemoveAt(index);
+			List.Insert(neighbouringIndex, row);
 
 			foreach (UIElement element in GetUIElements(row))
 			{
 				Grid.SetRow(element, Grid.GetRow(element) + diff);
 			}
 
-			foreach (UIElement element in GetUIElements(neighbour.Value))
+			foreach (UIElement element in GetUIElements(neighbour))
 			{
 				Grid.SetRow(element, Grid.GetRow(element) - diff);
 			}
 
-			RefreshUi(row, node.Previous is null, IsAtBottom(node));
-			RefreshUi(neighbour.Value, neighbour.Previous is null, IsAtBottom(neighbour));
+			RefreshUi(row, neighbouringIndex == 0, IsAtBottom(neighbouringIndex));
+			RefreshUi(neighbour, index == 0, IsAtBottom(index));
 
 			OnRowMoved?.Invoke(row, diff);
-			return node;
+			return neighbouringIndex;
 		}
 
-		public void Remove(LinkedListNode<TRow> node)
+		public void Remove(TRow item) => RemoveAt(List.IndexOf(item));
+
+		public void RemoveAt(int index)
 		{
 			bool wasDefault;
 
-			if (wasDefault = HasDefault && node == List.Last)
+			if (wasDefault = (index == List.Count - 1 && HasDefault))
 			{
 				HasDefault = false;
 			}
 
 			Grid.RowDefinitions.RemoveAt(0);
-			TRow row = node.Value;
+			TRow row = List[index];
 
 			foreach (UIElement element in GetUIElements(row))
 			{
 				Grid.Children.Remove(element);
 			}
 
-			Shift(node.Next, false);
-			List.Remove(node);
+			Shift(index + 1, false);
+			List.RemoveAt(index);
 			OnRowRemoved?.Invoke(row, wasDefault);
 		}
 
-#error doesn't work if you allow the value produced by valueGetter to change after the row has been added
+		//#error doesn't work if you allow the value produced by valueGetter to change after the row has been added
 
 		public void BindTo<T>(IList list, Func<T, TRow> rowMaker, Func<TRow, T> valueGetter, Action<TRow> setDefault = null)
 		{
@@ -194,13 +199,13 @@ namespace WPFApp.Controls.GridManagers
 		protected virtual void RefreshUi(TRow item, bool isAtTop, bool isAtBottom)
 		{ }
 
-		protected virtual LinkedListNode<TRow> add(TRow row, bool isDefault)
+		protected virtual int add(TRow row, bool isDefault)
 		{
-			int rowIndex = List.Count;
+			int targetIndex = List.Count;
 
 			if (HasDefault)
 			{
-				rowIndex--;
+				targetIndex--;
 			}
 
 			Grid.RowDefinitions.Add(new RowDefinition { MinHeight = RowMinHeight, Height = GridLength.Auto });
@@ -210,36 +215,33 @@ namespace WPFApp.Controls.GridManagers
 				if (element is not null)
 				{
 					_ = Grid.Children.Add(element);
-					Grid.SetRow(element, rowIndex);
+					Grid.SetRow(element, targetIndex);
 				}
 			}
 
-			LinkedListNode<TRow> node;
-
 			if (HasDefault)
 			{
-				LinkedListNode<TRow> defaultNode = List.Last;
-				_ = Shift(defaultNode, true);
-				node = List.AddBefore(defaultNode, row);
+				_ = Shift(targetIndex, true);
+				List.Insert(targetIndex, row);
 			}
 			else
 			{
-				node = List.AddLast(row);
+				List.Add(row);
 			}
 
-			RefreshUi(row, rowIndex == 0, true);
+			RefreshUi(row, targetIndex == 0, true);
 
-			if (node.Previous is not null)
+			if (targetIndex > 0)
 			{
-				RefreshUi(node.Previous.Value, rowIndex - 1 == 0, isDefault);
+				RefreshUi(List[targetIndex - 1], targetIndex == 1, isDefault);
 			}
 
-			return node;
+			return targetIndex;
 		}
 
-		private bool Shift(LinkedListNode<TRow> node, bool down)
+		private bool Shift(int index, bool down)
 		{
-			if (node is null)
+			if (index < 0 || index >= List.Count)
 			{
 				return false;
 			}
@@ -248,36 +250,34 @@ namespace WPFApp.Controls.GridManagers
 
 			if (down)
 			{
-				isAtBottom = !Shift(node.Next, true);
+				isAtBottom = !Shift(index + 1, true);
 			}
 
-			foreach (UIElement element in GetUIElements(node.Value))
+			foreach (UIElement element in GetUIElements(List[index]))
 			{
 				Grid.SetRow(element, Grid.GetRow(element) + (down ? 1 : -1));
 			}
 
 			if (!down)
 			{
-				isAtTop = !Shift(node.Next, false);
+				isAtTop = !Shift(index + 1, false);
 			}
 
-			RefreshUi(node.Value, isAtTop, isAtBottom);
-
+			RefreshUi(List[index], isAtTop, isAtBottom);
 			return true;
 		}
 
-		private LinkedListNode<TRow> Add(TRow row, bool isDefault)
+		private int Add(TRow row, bool isDefault)
 		{
-			LinkedListNode<TRow> node = add(row, isDefault);
+			int index = add(row, isDefault);
 			OnRowAdded?.Invoke(row, isDefault);
 			added = true;
-			return node;
+			return index;
 		}
 
-		private bool IsAtBottom(LinkedListNode<TRow> node)
+		private bool IsAtBottom(int index)
 		{
-			LinkedListNode<TRow> next = node.Next;
-			return next is null || (HasDefault && next.Next is null);
+			return index == List.Count - 1 || (HasDefault && index == List.Count - 2);
 		}
 
 		private void OnPropertyChanged(string info) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));

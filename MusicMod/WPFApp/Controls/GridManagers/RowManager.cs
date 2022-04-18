@@ -33,9 +33,9 @@ namespace WPFApp.Controls.GridManagers
 
 		protected override void RefreshUi(TRow item, bool isAtTop, bool isAtBottom) => item.RefreshButtons(isAtTop, isAtBottom);
 
-		protected override LinkedListNode<TRow> add(TRow row, bool isDefault)
+		protected override int add(TRow row, bool isDefault)
 		{
-			LinkedListNode<TRow> node = base.add(row, isDefault);
+			int node = base.add(row, isDefault);
 
 			row.OnUiChanged += (oldElement, newElement) =>
 			{
@@ -59,7 +59,7 @@ namespace WPFApp.Controls.GridManagers
 			};
 
 			// TODO: Do I really want to do this even if the row isn't movable / removable?
-			row.OnDelete += (node) => Remove(node);
+			row.OnDelete += (node) => RemoveAt(node);
 			row.OnMoveUp += (node) => Move(node, false);
 			row.OnMoveDown += (node) => Move(node, true);
 

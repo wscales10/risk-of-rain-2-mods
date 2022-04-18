@@ -8,10 +8,12 @@ namespace WPFApp.Controls.Rows
 	internal abstract class RuleRow<TRow> : Row<Rule, TRow>
 		where TRow : RuleRow<TRow>
 	{
-		protected RuleRow(Rule output, NodeGetter<TRow> nodeGetter, bool movable, bool removable = true)
-			: base(output, nodeGetter, movable, removable)
+		protected RuleRow(Rule output, IndexGetter<TRow> indexGetter, bool movable, bool removable = true)
+			: base(output, indexGetter, movable, removable)
 		{
 		}
+
+		public event Func<Rule, ControlBase> OnOutputButtonClick;
 
 		protected override UIElement MakeOutputUi()
 		{
@@ -45,7 +47,5 @@ namespace WPFApp.Controls.Rows
 				((Button)ui).Content = output.ToString();
 			}
 		}
-
-		public event Func<Rule, ControlBase> OnOutputButtonClick;
 	}
 }

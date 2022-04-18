@@ -8,7 +8,7 @@ using Utils;
 
 namespace WPFApp.Controls.Rows
 {
-	public delegate LinkedListNode<TRow> NodeGetter<TRow>(TRow row);
+	public delegate int IndexGetter<TRow>(TRow row);
 
 	internal abstract class Row<TRow>
 		where TRow : Row<TRow>
@@ -19,7 +19,7 @@ namespace WPFApp.Controls.Rows
 
 		private Brush brush;
 
-		protected Row(NodeGetter<TRow> nodeGetter, bool movable, bool removable = true)
+		protected Row(IndexGetter<TRow> indexGetter, bool movable, bool removable = true)
 		{
 			Movable.OnChanged += (value) =>
 			{
@@ -34,8 +34,8 @@ namespace WPFApp.Controls.Rows
 						DownButton.Background = brush;
 					}
 
-					UpButton.Click += (s, e) => Node = OnMoveUp?.Invoke(Node);
-					DownButton.Click += (s, e) => Node = OnMoveDown?.Invoke(Node);
+					UpButton.Click += (s, e) => Node = OnMoveUp?.Invoke(Node.Value);
+					DownButton.Click += (s, e) => Node = OnMoveDown?.Invoke(Node.Value);
 					_ = ButtonsPanel.Children.Add(UpButton);
 					_ = ButtonsPanel.Children.Add(DownButton);
 				}
@@ -55,7 +55,7 @@ namespace WPFApp.Controls.Rows
 				if (value)
 				{
 					DeleteButton = new() { Content = "Delete", Height = 50, MinWidth = 50, Margin = new Thickness(3) };
-					DeleteButton.Click += (s, e) => OnDelete?.Invoke(Node);
+					DeleteButton.Click += (s, e) => OnDelete?.Invoke(Node.Value);
 					_ = ButtonsPanel.Children.Add(DeleteButton);
 				}
 				else
@@ -69,14 +69,14 @@ namespace WPFApp.Controls.Rows
 
 			Grid.SetColumnSpan(Border, int.MaxValue);
 			Grid.SetColumn(ButtonsPanel, 2);
-			Node = nodeGetter((TRow)this);
+			Node = indexGetter((TRow)this);
 		}
 
-		public event Action<LinkedListNode<TRow>> OnDelete;
+		public event Action<int> OnDelete;
 
-		public event Func<LinkedListNode<TRow>, LinkedListNode<TRow>> OnMoveDown;
+		public event Func<int, int> OnMoveDown;
 
-		public event Func<LinkedListNode<TRow>, LinkedListNode<TRow>> OnMoveUp;
+		public event Func<int, int> OnMoveUp;
 
 		public event Action<UIElement, UIElement> OnUiChanged;
 
@@ -86,7 +86,7 @@ namespace WPFApp.Controls.Rows
 
 		public virtual IEnumerable<UIElement> Elements => new UIElement[] { Border, LeftElement, ButtonsPanel };
 
-		public LinkedListNode<TRow> Node { get; private set; }
+		public int? Node { get; private set; }
 
 		public virtual UIElement LeftElement { get; } = new TextBlock() { TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontSize = 14, Margin = new Thickness(4) };
 
@@ -131,8 +131,8 @@ namespace WPFApp.Controls.Rows
 	{
 		private readonly CustomContentPresenter<TOut> outputPresenter = new();
 
-		protected Row(TOut output, NodeGetter<TRow> nodeGetter, bool movable, bool removable = true)
-			: base(nodeGetter, movable, removable)
+		protected Row(TOut output, IndexGetter<TRow> indexGetter, bool movable, bool removable = true)
+			: base(indexGetter, movable, removable)
 		{
 			outputPresenter.OnContentModified += (o, u) => RefreshOutputUi(u, o);
 			outputPresenter.OnUiRequested += MakeOutputUi;

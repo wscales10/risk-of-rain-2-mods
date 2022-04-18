@@ -8,12 +8,12 @@ namespace WPFApp.Controls.Rows
 {
 	internal class PatternRow : Row<IReadableControlWrapper, PatternRow>
 	{
-		public PatternRow(IPattern pattern, NodeGetter<PatternRow> nodeGetter, NavigationContext navigationContext)
-			: this(PatternWrapper.Create(pattern, navigationContext), nodeGetter)
+		public PatternRow(IPattern pattern, IndexGetter<PatternRow> indexGetter, NavigationContext navigationContext)
+			: this(PatternWrapper.Create(pattern, navigationContext), indexGetter)
 		{
 		}
 
-		public PatternRow(IReadableControlWrapper patternWrapper, NodeGetter<PatternRow> nodeGetter) : base(patternWrapper, nodeGetter, true)
+		public PatternRow(IReadableControlWrapper patternWrapper, IndexGetter<PatternRow> indexGetter) : base(patternWrapper, indexGetter, true)
 		{
 		}
 

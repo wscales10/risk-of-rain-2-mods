@@ -15,7 +15,7 @@ namespace WPFApp.Controls.Rows
 	{
 		private FormatString formatString;
 
-		internal BucketRow(Command command, NodeGetter<BucketRow> nodeGetter, NavigationContext navigationContext) : base(command, nodeGetter, true)
+		internal BucketRow(Command command, IndexGetter<BucketRow> indexGetter, NavigationContext navigationContext) : base(command, indexGetter, true)
 		{
 			LeftElement.Click += (s, e) =>
 			{
