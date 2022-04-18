@@ -1,0 +1,23 @@
+﻿using Patterns;
+using System;
+using System.Windows;
+
+namespace WPFApp.Controls.Wrappers.PatternWrappers
+{
+	internal abstract class ReadOnlyPatternWrapper<TPattern, TControl> : PatternWrapper<TPattern, TControl>
+		where TPattern : IPattern
+		where TControl : FrameworkElement
+	{
+		protected ReadOnlyPatternWrapper(TPattern pattern) => Pattern = pattern;
+
+		protected TPattern Pattern { get; }
+
+		protected override void setValue(TPattern value) => throw new InvalidOperationException();
+
+		protected override bool tryGetValue(out TPattern value)
+		{
+			value = Pattern;
+			return true;
+		}
+	}
+}

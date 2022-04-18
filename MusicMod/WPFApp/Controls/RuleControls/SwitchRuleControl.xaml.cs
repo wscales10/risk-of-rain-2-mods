@@ -1,0 +1,62 @@
+﻿using Patterns;
+using Patterns.Patterns;
+using Rules.RuleTypes.Mutable;
+using System.Linq;
+using System.Windows;
+using WPFApp.Controls.GridManagers;
+using WPFApp.Controls.Rows;
+
+namespace WPFApp.Controls.RuleControls
+{
+	/// <summary>
+	/// Interaction logic for SwitchRuleControl.xaml
+	/// </summary>
+	public partial class SwitchRuleControl : RuleControlBase
+	{
+		private readonly RowManager<SwitchRow> rowManager;
+
+		public SwitchRuleControl(StaticSwitchRule rule, NavigationContext ctx) : base(ctx)
+		{
+			Item = rule;
+			InitializeComponent();
+			propertyComboBox.ItemsSource = Info.ContextProperties;
+
+			if (rule.PropertyInfo is not null)
+			{
+				propertyComboBox.SelectedItem = propertyComboBox.Items.Cast<PropertyInfo>().Single(p => p.Name == rule.PropertyInfo.Name);
+			}
+
+			propertyComboBox.SelectionChanged += (s, e) => Item.PropertyInfo = e.AddedItems.Cast<PropertyInfo>().Single();
+
+			rowManager = new(casesGrid, AddDefaultButton);
+			rowManager.OnRowAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
+			rowManager.BindTo(Item.Cases, AddCase, r => (r as CaseRow).Case, r => Item.DefaultRule = r?.Output);
+
+			if (rule.DefaultRule is not null)
+			{
+				AddDefault(rule.DefaultRule);
+			}
+		}
+
+		public override StaticSwitchRule Item { get; }
+
+		protected override bool ShouldAllowExit() => propertyComboBox.SelectedItem is not null && rowManager.TrySaveChanges();
+
+		private CaseRow AddCase(Case<IPattern> c = null)
+		{
+			if (c is null)
+			{
+				c = new Case<IPattern>(null);
+				Item.Cases.Add(c);
+			}
+
+			return new CaseRow(c, Item.PropertyInfo.Type, rowManager.Add, NavigationContext);
+		}
+
+		private void AddCaseButton_Click(object sender, RoutedEventArgs e) => AddCase();
+
+		private void AddDefault(Rule rule = null) => _ = new DefaultRow(rule, rowManager.AddDefault);
+
+		private void AddDefaultButton_Click(object sender, RoutedEventArgs e) => AddDefault();
+	}
+}
