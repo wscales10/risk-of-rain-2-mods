@@ -1,11 +1,11 @@
 ﻿using Rules.RuleTypes.Mutable;
-using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
 using WPFApp.Controls;
+using Utils.Async;
 
 namespace WPFApp
 {
@@ -13,7 +13,7 @@ namespace WPFApp
 	{
 		private readonly CancellationTokenSource exportCancellationTokenSource = new();
 
-		private Task exportTask;
+		private readonly TaskMachine taskMachine = new();
 
 		public void ImportFile(string filename)
 		{
@@ -39,7 +39,12 @@ namespace WPFApp
 				return masterXmlControl;
 			}
 
-			var result = MessageBox.Show(MainView, $"Export everything? (Select No to export only this {CurrentControl.ItemTypeName} and its descendants)", "Export All?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes);
+			MessageBoxResult result = MessageBox.Show(
+				$"Export everything? (Select No to export only this {CurrentControl.ItemTypeName} and its descendants)",
+				"Export All?",
+				MessageBoxButton.YesNoCancel,
+				MessageBoxImage.Question,
+				MessageBoxResult.Yes);
 
 			return result switch
 			{
@@ -49,37 +54,12 @@ namespace WPFApp
 			};
 		}
 
-		private void ExportToFile(IXmlControl xmlControl, string fileName)
-		{
-			if (exportTask is not null)
-			{
-				if (MessageBox.Show("Previous export is still in progress. Would you like to cancel it and continue with this export?") != MessageBoxResult.OK)
-				{
-					return;
-				}
+		private void ExportToFile(IXmlControl xmlControl, string fileName) => taskMachine.Ingest(() => ExportAsync(xmlControl.GetContentXml(), fileName));
 
-				if (MessageBox.Show("Are you sure you would like to cancel the previous export?") != MessageBoxResult.Yes)
-				{
-					return;
-				}
-
-				if (MessageBox.Show("Are you sure you're sure?") != MessageBoxResult.Yes)
-				{
-					return;
-				}
-
-				exportCancellationTokenSource.Cancel();
-			}
-
-			_ = ExportAsync(xmlControl.GetContentXml(), fileName);
-		}
-
-		private async Task ExportAsync(XElement xml, string fileName)
+		private Task ExportAsync(XElement xml, string fileName)
 		{
 			var stream = new FileStream(fileName, FileMode.Create);
-			exportTask = xml.SaveAsync(stream, SaveOptions.None, exportCancellationTokenSource.Token);
-			await exportTask;
-			exportTask = null;
+			return xml.SaveAsync(stream, SaveOptions.None, exportCancellationTokenSource.Token);
 		}
 	}
 }

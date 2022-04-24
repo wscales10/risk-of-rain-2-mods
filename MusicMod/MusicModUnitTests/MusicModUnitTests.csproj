@@ -130,11 +130,11 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MyRoR2\MyRoR2.csproj">
+    <ProjectReference Include="..\..\Common\MyRoR2\MyRoR2.csproj">
       <Project>{fb5b0599-c55f-43d7-ac75-769c4feb4894}</Project>
       <Name>MyRoR2</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Patterns\Patterns.csproj">
+    <ProjectReference Include="..\..\Common\Patterns\Patterns.csproj">
       <Project>{BDF8EE8A-0F67-4C51-8C41-DFC6540B04FA}</Project>
       <Name>Patterns</Name>
     </ProjectReference>
@@ -150,7 +150,7 @@
       <Project>{148bac4f-7540-44fd-b3fc-ab2e16713976}</Project>
       <Name>Spotify</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Utils\Utils.csproj">
+    <ProjectReference Include="..\..\Common\Utils\Utils.csproj">
       <Project>{b76a7040-d9d6-403d-a749-5f9a2a231a76}</Project>
       <Name>Utils</Name>
     </ProjectReference>

@@ -25,7 +25,5 @@ namespace WPFApp.Controls.Wrappers
 		protected override bool Validate(int value)
 			=> (UIElement.Minimum is null || value >= UIElement.Minimum)
 			&& (UIElement.Maximum is null || value <= UIElement.Maximum);
-
-		protected override void SetStatus(bool status) => UIElement.BorderBrush = status ? Brushes.DarkGray : Brushes.Red;
 	}
 }

@@ -21,14 +21,18 @@
 
 	<ItemGroup>
 	  <None Remove="Authorisation\Client\Error.html" />
-	  <None Remove="Authorisation\Client\RequestTokens.html" />
+	  <None Remove="Authorisation\Client\index.html" />
+	  <None Remove="Authorisation\Client\Success.html" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <EmbeddedResource Include="Authorisation\Client\Error.html">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </EmbeddedResource>
-	  <EmbeddedResource Include="Authorisation\Client\RequestTokens.html">
+	  <EmbeddedResource Include="Authorisation\Client\index.html">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </EmbeddedResource>
+	  <EmbeddedResource Include="Authorisation\Client\Success.html">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </EmbeddedResource>
 	</ItemGroup>
@@ -41,7 +45,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <Page Include="Authorisation\Client\RequestTokens.html">
+    <Page Include="Authorisation\Client\Success.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Page>
   </ItemGroup>

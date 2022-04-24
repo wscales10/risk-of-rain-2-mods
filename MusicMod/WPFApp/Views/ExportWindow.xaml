@@ -1,0 +1,11 @@
+﻿<Window x:Class="WPFApp.Views.ExportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPFApp.Views"
+        mc:Ignorable="d"
+        Title="ExportWindow" Height="100" Width="200"
+		WindowStyle="None">
+	<TextBlock FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Center">Saving...</TextBlock>
+</Window>

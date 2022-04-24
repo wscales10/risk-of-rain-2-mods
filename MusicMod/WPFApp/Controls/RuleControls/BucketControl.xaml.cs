@@ -66,7 +66,7 @@ namespace WPFApp.Controls.RuleControls
 			}
 
 			PropertyString.NavigationContext = NavigationContext;
-			return rowManager.Add(new BucketRow(command, NavigationContext));
+			return rowManager.Add(new BucketRow(command));
 		}
 
 		private void AddCommandButton_Click(object sender, RoutedEventArgs e)

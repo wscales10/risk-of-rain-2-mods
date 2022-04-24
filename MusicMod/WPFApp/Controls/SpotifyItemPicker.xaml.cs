@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Utils;
+using Utils.Properties;
 using WPFApp.Properties;
 
 namespace WPFApp.Controls

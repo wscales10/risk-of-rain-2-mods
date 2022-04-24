@@ -1,11 +1,14 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using WPFApp.Controls;
 using WPFApp.Properties;
-using System.Windows.Controls.Primitives;
+using WPFApp.ViewModels;
+using System.ComponentModel;
+using System.Windows.Input;
 
 namespace WPFApp.Views
 {
@@ -14,32 +17,21 @@ namespace WPFApp.Views
 	/// </summary>
 	public partial class MainView : Window
 	{
-		private ControlBase control;
+		private readonly NavigationContext navigationContext;
 
 		public MainView(NavigationContext navigationContext)
 		{
+			DataContext = new MainViewModel(navigationContext);
 			InitializeComponent();
-			Binding binding = new(nameof(navigationContext.IsOffline))
-			{
-				Source = navigationContext,
-				Mode = BindingMode.TwoWay
-			};
-
-			_ = OfflineModeCheckbox.SetBinding(ToggleButton.IsCheckedProperty, binding);
-
-			OfflineModeCheckbox.IsChecked = Settings.Default.OfflineMode;
 			OpenLinksInAppCheckbox.IsChecked = Settings.Default.OpenLinksInApp;
 			newRuleControl.ButtonText = "Create New Rule";
 			newRuleControl.OnAddRule += (r) => navigationContext.GoInto(r);
+			this.navigationContext = navigationContext;
 		}
-
-		public event Action OnGoHome;
 
 		public event Action OnGoBack;
 
 		public event Action OnGoForward;
-
-		public event Action OnGoUp;
 
 		public event Action<string> OnImportFile;
 
@@ -47,42 +39,39 @@ namespace WPFApp.Views
 
 		public event Action OnReset;
 
-		public ControlBase Control
+		public event Func<bool> OnTryEnableAutosave;
+
+		public event Func<bool> OnTryClose;
+
+		public static string GetExportLocation() => TryGetExportLocation(out string fileName) ? fileName : null;
+
+		public void UpdateNavigationButtons(int historyIndex, int reverseIndex)
 		{
-			get => control;
-			set
+			BackButton.IsEnabled = historyIndex > 0;
+			ForwardButton.IsEnabled = reverseIndex > 0;
+		}
+
+		public void Display(ControlBase control) => ControlContainer.Content = control;
+
+		private static bool TryGetExportLocation(out string fileName)
+		{
+			SaveFileDialog dialog = new() { Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*" };
+
+			if (dialog.ShowDialog() == true)
 			{
-				masterGrid.Children.Remove(control);
-				control = value;
-
-				if (control is null)
-				{
-					newRuleControl.Visibility = Visibility.Visible;
-					NewButton.IsEnabled = false;
-				}
-				else
-				{
-					Grid.SetRow(control, 1);
-					_ = masterGrid.Children.Add(control);
-					newRuleControl.Visibility = Visibility.Hidden;
-					NewButton.IsEnabled = true;
-				}
-
-				ExportButton.IsEnabled = control is IXmlControl;
+				fileName = dialog.FileName;
+				return true;
+			}
+			else
+			{
+				fileName = null;
+				return false;
 			}
 		}
 
-		public void UpdateNavigationButtons(bool isHome, int historyIndex, int historyCount)
-		{
-			HomeButton.IsEnabled = !isHome;
-			UpLevelButton.IsEnabled = !isHome;
-			BackButton.IsEnabled = historyIndex > 0;
-			ForwardButton.IsEnabled = historyIndex < historyCount;
-		}
+		private void HomeButton_Click(object sender, RoutedEventArgs e) => navigationContext.GoHome();
 
-		private void HomeButton_Click(object sender, RoutedEventArgs e) => OnGoHome?.Invoke();
-
-		private void UpLevelButton_Click(object sender, RoutedEventArgs e) => OnGoUp?.Invoke();
+		private void UpLevelButton_Click(object sender, RoutedEventArgs e) => navigationContext.GoUp();
 
 		private void ImportButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -96,11 +85,9 @@ namespace WPFApp.Views
 
 		private void ExportButton_Click(object sender, RoutedEventArgs e)
 		{
-			SaveFileDialog dialog = new() { Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*" };
-
-			if (dialog.ShowDialog() == true)
+			if (TryGetExportLocation(out string fileName))
 			{
-				OnExportFile?.Invoke(dialog.FileName);
+				OnExportFile?.Invoke(fileName);
 			}
 		}
 
@@ -108,19 +95,7 @@ namespace WPFApp.Views
 
 		private void ForwardButton_Click(object sender, RoutedEventArgs e) => OnGoForward?.Invoke();
 
-		private void OpenLinksInAppCheckbox_Checked(object sender, RoutedEventArgs e)
-		{
-			Settings.Default.OpenLinksInApp = true;
-			Settings.Default.Save();
-		}
-
-		private void OpenLinksInAppCheckbox_Unchecked(object sender, RoutedEventArgs e)
-		{
-			Settings.Default.OpenLinksInApp = false;
-			Settings.Default.Save();
-		}
-
-		private void Window_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) => _ = masterGrid.Focus();
+		private void Window_MouseDown(object sender, MouseButtonEventArgs e) => _ = masterGrid.Focus();
 
 		private void NewButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -133,5 +108,30 @@ namespace WPFApp.Views
 		private void Window_SizeChanged(object sender, SizeChangedEventArgs e) => masterGrid.Focus();
 
 		private void Window_Deactivated(object sender, EventArgs e) => masterGrid.Focus();
+
+		private void AutosaveCheckbox_Click(object sender, RoutedEventArgs e)
+		{
+			var checkbox = (CheckBox)sender;
+
+			if (checkbox.IsChecked.Value)
+			{
+				if (OnTryEnableAutosave?.Invoke() != true)
+				{
+					checkbox.IsChecked = false;
+				}
+			}
+			else
+			{
+				Settings.Default.Autosave = false;
+			}
+		}
+
+		private void Window_Closing(object sender, CancelEventArgs e)
+		{
+			if (OnTryClose?.Invoke() == false)
+			{
+				e.Cancel = true;
+			}
+		}
 	}
 }

@@ -11,7 +11,7 @@ namespace WPFApp.Controls.Rows
 
 		Border Border { get; }
 
-		StackPanel ButtonsPanel { get; }
+		Border Background { get; }
 
 		IEnumerable<UIElement> Elements { get; }
 

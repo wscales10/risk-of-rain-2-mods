@@ -23,8 +23,8 @@ namespace WPFApp.Controls.RuleControls
 
 			rowManager = new(rulesGrid, AddElseButton);
 			rowButtonsControl.BindTo(rowManager);
-			rowManager.OnRowRemoved += (_, _) => rule.ElseRule = null;
-			rowManager.OnRowAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
+			rowManager.OnItemRemoved += (_, _) => rule.ElseRule = null;
+			rowManager.OnItemAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
 
 			thenRow = rowManager.Add(new ThenRow(rule.Pattern, rule.ThenRule, NavigationContext));
 			thenRow.OnSetOutput += (rule) => Item.ThenRule = rule;

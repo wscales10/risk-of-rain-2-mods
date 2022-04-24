@@ -1,30 +1,88 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using Patterns.TypeDefs;
-using Utils;
+using Utils.Reflection;
 
 namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 {
 	public class EnumPattern : ClassValuePattern<Enum>
 	{
-		internal static TypeDef TypeDef { get; } = TypeDef.Create<Enum, EnumPattern>((s, _, __) => (EnumPattern)new EnumPattern().DefineWith(s), e => Equals(e));
-
 		private readonly IntPattern basePattern = new IntPattern();
 
 		private string minString;
 
 		private string maxString;
 
+		public static TypeDef GenericTypeDef { get; }
+			= TypeDef.Create<Enum, EnumPattern>(
+				(s, _) => (EnumPattern)new EnumPattern().DefineWith(s),
+				Equalizer);
+
+		internal static ParserSpecificTypeDefGetter GenericTypeDef2 { get; } = new ParserSpecificTypeDefGetter(
+				patternParser => new BestTypeDefGetter(typeRef =>
+					new TypeDef(
+					(s, r) => GenericDefiner(s, r, patternParser),
+					Equalizer,
+					typeRef.FullType,
+					(t) => typeof(EnumPattern<>).MakeGenericType(t))
+					)
+				);
+
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<Enum, EnumPattern>((s, _) => (EnumPattern)new EnumPattern().DefineWith(s), e => Equals(e));
+
+		internal static Regex Regex { get; } = new Regex(@"^(?<item1>(?<string1>.*)\((?<num1>-?\d+)\))?(?<dots>\.\.)?(?<item2>(?<string2>.*)\((?<num2>-?\d+)\))?$");
+
 		private (string, int)? Min => Ensure(minString, basePattern.Min);
 
 		private (string, int)? Max => Ensure(maxString, basePattern.Max);
 
-		internal static Regex Regex { get; } = new Regex(@"^(?<item1>(?<string1>.*)\((?<num1>-?\d+)\))?(?<dots>\.\.)?(?<item2>(?<string2>.*)\((?<num2>-?\d+)\))?$");
+		public static void Validate(Type type, int index, string expectedName)
+		{
+			if (!Inherits(type, typeof(Enum)))
+			{
+				throw new ArgumentOutOfRangeException(nameof(type), type, "Not an enum");
+			}
 
-		public static TypeDef GenericTypeDef { get; }
-			= TypeDef.Create<Enum, EnumPattern>(
-				(s, _, __) => (EnumPattern)new EnumPattern().DefineWith(s),
-				Equalizer);
+			string actualName = Enum.GetName(type, index);
+
+			if (actualName != expectedName)
+			{
+				throw new Exception($"Expected {type}[{index}] to be {expectedName} but found {actualName}.");
+			}
+		}
+
+		public static EnumPattern<T> Equals<T>(T value)
+				where T : struct, Enum
+		{
+			return (EnumPattern<T>)new EnumPattern<T>().DefineWith($"{value}({EnumPattern<T>.GetIndex(value)})");
+		}
+
+		public static EnumPattern Equals(Enum value)
+		{
+			return (EnumPattern)new EnumPattern().DefineWith($"{value}({GetIndex(value)})");
+		}
+
+		internal static (string, int)? Ensure(string s, int? n)
+		{
+			if (s is null)
+			{
+				if (n is null)
+				{
+					return null;
+				}
+			}
+			else if (n is int i)
+			{
+				return (s, i);
+			}
+
+			throw new NullReferenceException();
+		}
+
+		internal static int GetIndex(Enum value)
+		{
+			return (int)Convert.ChangeType(value, value.GetTypeCode());
+		}
 
 		protected override bool defineWith(string stringDefinition)
 		{
@@ -63,7 +121,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 
 		protected override bool isMatch(Enum value)
 		{
-			if(Min.HasValue)
+			if (Min.HasValue)
 			{
 				Validate(value.GetType(), Min.Value.Item2, Min.Value.Item1);
 			}
@@ -77,47 +135,10 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 			return (Min is null || (int)converted >= Min.Value.Item2) && (Max is null || (int)converted <= Max.Value.Item2);
 		}
 
-		public static void Validate(Type type, int index, string expectedName)
+		private static IPattern GenericDefiner(string s, TypeRef typeRef, PatternParser patternParser)
 		{
-			if (!typeof(Enum).IsAssignableFrom(type))
-			{
-				throw new ArgumentOutOfRangeException(nameof(type), type, "Not an enum");
-			}
-
-			string actualName = Enum.GetName(type, index);
-
-			if (actualName != expectedName)
-			{
-				throw new Exception($"Expected {type}[{index}] to be {expectedName} but found {actualName}.");
-			}
-		}
-
-		internal static (string, int)? Ensure(string s, int? n)
-		{
-			if (s is null)
-			{
-				if (n is null)
-				{
-					return null;
-				}
-			}
-			else if (n is int i)
-			{
-				return (s, i);
-			}
-
-			throw new NullReferenceException();
-		}
-
-		public static EnumPattern<T> Equals<T>(T value)
-			where T : struct, Enum
-		{
-			return (EnumPattern<T>)new EnumPattern<T>().DefineWith($"{value}({EnumPattern<T>.GetIndex(value)})");
-		}
-
-		public static EnumPattern Equals(Enum value)
-		{
-			return (EnumPattern)new EnumPattern().DefineWith($"{value}({GetIndex(value)})");
+			var pattern = typeof(EnumPattern<>).MakeGenericType(patternParser.GetType(typeRef)).Construct();
+			return pattern.InvokeMethod<IPattern>(nameof(DefineWith), s);
 		}
 
 		private static PatternBase Equalizer(object x)
@@ -126,11 +147,6 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 				.GetMethod("Equals", mi => mi.IsGenericMethod)
 				.MakeGenericMethod(x.GetType())
 				.InvokeStatic(x);
-		}
-
-		internal static int GetIndex(Enum value)
-		{
-			return (int)Convert.ChangeType(value, value.GetTypeCode());
 		}
 	}
 
@@ -146,6 +162,18 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 		private (string, int)? Min => EnumPattern.Ensure(minString, basePattern.Min);
 
 		private (string, int)? Max => EnumPattern.Ensure(maxString, basePattern.Max);
+
+		public static void Validate(int index, string expectedName)
+		{
+			EnumPattern.Validate(typeof(T), index, expectedName);
+		}
+
+		public override IPattern Correct() => new EnumPattern().DefineWith(Definition);
+
+		internal static int GetIndex(T value)
+		{
+			return (int)Convert.ChangeType(value, value.GetTypeCode());
+		}
 
 		protected override bool defineWith(string stringDefinition)
 		{
@@ -199,17 +227,5 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 			var index = GetIndex(value);
 			return (Min is null || index >= Min.Value.Item2) && (Max is null || index <= Max.Value.Item2);
 		}
-
-		public static void Validate(int index, string expectedName)
-		{
-			EnumPattern.Validate(typeof(T), index, expectedName);
-		}
-
-		internal static int GetIndex(T value)
-		{
-			return (int)Convert.ChangeType(value, value.GetTypeCode());
-		}
-
-		public override IPattern Correct() => new EnumPattern().DefineWith(Definition);
 	}
 }

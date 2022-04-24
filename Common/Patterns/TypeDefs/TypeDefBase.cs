@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Xml.Linq;
-using Utils;
+using Utils.Reflection;
 
 namespace Patterns.TypeDefs
 {

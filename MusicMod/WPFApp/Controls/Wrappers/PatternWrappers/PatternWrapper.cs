@@ -6,6 +6,7 @@ using Patterns.Patterns.SmallPatterns;
 using System;
 using System.Windows;
 using Utils;
+using Utils.Reflection;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {

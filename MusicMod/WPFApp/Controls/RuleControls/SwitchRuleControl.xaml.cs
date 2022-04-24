@@ -30,8 +30,8 @@ namespace WPFApp.Controls.RuleControls
 
 			rowManager = new(casesGrid, AddDefaultButton);
 			rowButtonsControl.BindTo(rowManager);
-			rowManager.OnRowAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
-			rowManager.BindTo(Item.Cases, AddCase, r => (r as CaseRow).Case, r => Item.DefaultRule = r?.Output);
+			rowManager.OnItemAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
+			rowManager.BindTo(Item.Cases, AddCase, r => ((CaseRow)r).Case, r => Item.DefaultRule = r?.Output);
 
 			if (rule.DefaultRule is not null)
 			{

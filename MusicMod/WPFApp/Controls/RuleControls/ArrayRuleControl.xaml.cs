@@ -19,7 +19,7 @@ namespace WPFApp.Controls.RuleControls
 			newRuleControl.OnAddRule += r => AddRule(r);
 
 			rowManager = new(rulesGrid);
-			rowManager.OnRowAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
+			rowManager.OnItemAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
 			rowManager.BindTo(Item.Rules, AddRule, r => r.Output);
 
 			rowButtonsControl.BindTo(rowManager);

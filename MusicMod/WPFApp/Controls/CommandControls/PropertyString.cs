@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Utils;
+using Utils.Reflection;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 

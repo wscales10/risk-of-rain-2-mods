@@ -5,7 +5,6 @@ using Patterns.TypeDefs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Utils;
@@ -24,7 +23,7 @@ namespace Patterns
 				[nameof(Boolean)] = BoolPattern.TypeDef,
 				[nameof(String)] = StringPattern.TypeDef,
 				[nameof(Enum)] = EnumPattern.TypeDef,
-				[nameof(Enum) + "`1"] = EnumPattern.GenericTypeDef,
+				[nameof(Enum) + "`1"] = EnumPattern.GenericTypeDef2.Get(this),
 				[typeof(Nullable<>).Name] = NullablePattern.GenericTypeDef.Get(this),
 				["nullable-null"] = NullPattern.NullableTypeDef.Get(this),
 				["class-null"] = NullPattern.ClassTypeDef.Get(this)
@@ -35,7 +34,7 @@ namespace Patterns
 
 		public IPattern Parse(Type type, XElement element)
 		{
-			if(!TryGetTypeDef(type, out var typeDef))
+			if (!TryGetTypeDef(new TypeRef(type), out var typeDef))
 			{
 				throw new NotSupportedException();
 			}
@@ -43,46 +42,54 @@ namespace Patterns
 			return typeDef.GetParser(this)(element);
 		}
 
-		public bool TryGetTypeDef(Type type, out TypeDef typeDef)
+		public bool TryGetTypeDef(TypeRef typeRef, out TypeDef typeDef)
 		{
-			return TryGetTypeDef(type.Name, type.GenericTypeArguments.SingleOrDefault(), out typeDef);
-		}
+			var clone = typeRef.Clone();
 
-		public bool TryGetTypeDef(string typeKey, Type genericTypeArg, out TypeDef typeDef)
-		{
-			if(!TryGetTypeDefGetter(typeKey, out var typeDefGetter))
+			// typeKey and genericTypeArg
+			if (!(typeRef.TypeKey is null))
 			{
-				typeDef = null;
-				return false;
+				if (TryGetTypeDefGetter(typeRef.TypeKey, out var typeDefGetter))
+				{
+					typeDef = typeDefGetter.GetTypeDef(typeRef);
+					return true;
+				}
 			}
 
-			if (genericTypeArg is null)
+			// type only
+			else if (!(typeRef.FullType is null))
 			{
-				typeDef = typeDefGetter.GetTypeDef();
-			}
-			else
-			{
-				typeDef = typeDefGetter.GetTypeDef(genericTypeArg);
+				clone.AssumeTypeKey();
+				return TryGetTypeDef(clone, out typeDef);
 			}
 
-			return true;
+			typeDef = null;
+			return false;
 		}
 
-		public Type GetType(string typeName, string genericTypeKey = null)
+		public TypeDef GetTypeDef(TypeRef typeRef)
 		{
-			return GetTypeDef(typeName, genericTypeKey).Type;
-		}
-
-		public TypeDef GetTypeDef<T>()
-		{
-			var type = typeof(T);
-
-			if (!TryGetTypeDef(PatternBase.GetTypeDefKey(type), type.IsGenericType ? type.GenericTypeArguments.Single() : null, out var typeDef))
+			if (!TryGetTypeDef(typeRef, out var typeDef))
 			{
 				throw new NotSupportedException();
 			}
 
 			return typeDef;
+		}
+
+		public Type GetType(TypeRef typeRef)
+		{
+			return GetTypeDef(typeRef).Type;
+		}
+
+		public Type GetType(string typeKey, string genericTypeKey = null)
+		{
+			return GetTypeDef(typeKey, genericTypeKey).Type;
+		}
+
+		public TypeDef GetTypeDef<T>()
+		{
+			return GetTypeDef(new TypeRef(typeof(T)));
 		}
 
 		/// <summary>
@@ -91,14 +98,16 @@ namespace Patterns
 		/// <param name="typeKey"></param>
 		/// <param name="genericTypeKey"></param>
 		/// <returns></returns>
-		public TypeDef GetTypeDef(string typeKey, string genericTypeKey)
+		public TypeDef GetTypeDef(string typeKey, string genericTypeKey = null)
 		{
-			if(!TryGetTypeDef(typeKey, string.IsNullOrEmpty(genericTypeKey) ? null : GetType(genericTypeKey), out var typeDef))
+			if (genericTypeKey is null)
 			{
-				throw new NotSupportedException();
+				return GetTypeDef(new TypeRef(typeKey));
 			}
-
-			return typeDef;
+			else
+			{
+				return GetTypeDef(new TypeRef(typeKey, GetType(genericTypeKey)));
+			}
 		}
 
 		public PropertyInfo GetPropertyInfo(XElement element)
@@ -124,7 +133,7 @@ namespace Patterns
 				case "Pattern":
 					var type = element.Attribute("type").Value;
 					var genericTypeKey = element.Attribute("of")?.Value;
-					return (IPattern<T>)GetTypeDef(type, genericTypeKey).Definer(element.Value, typeof(T).Name, typeof(T).GenericTypeArguments.SingleOrDefault()?.Name);
+					return (IPattern<T>)GetTypeDef<T>().Definer(element.Value, new TypeRef(typeof(T)));
 
 				case "Or":
 					return OrPattern<T>.Parse(element, this);
@@ -148,8 +157,7 @@ namespace Patterns
 
 		public bool TryParse<T>(string s, out IPattern<T> output)
 		{
-			var (t, gta) = PatternBase.GetTypeDefKeys(typeof(T));
-			IPattern p = GetTypeDef<T>().Definer(s, t, gta);
+			IPattern p = GetTypeDef<T>().Definer(s, new TypeRef(typeof(T)));
 
 			if (string.IsNullOrEmpty(p?.ToString()))
 			{

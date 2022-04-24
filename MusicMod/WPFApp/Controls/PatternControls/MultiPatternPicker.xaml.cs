@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls.Primitives;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Wrappers;
@@ -18,12 +19,12 @@ namespace WPFApp.Controls.PatternControls
 
 		protected override Selector ItemsControl => comboBox.ListBox;
 
-		internal bool TrySaveChanges() => PatternContainerManager.Rows.All(c => c.PatternWrapper.TryGetValue(out object _));
+		internal bool TrySaveChanges() => PatternContainerManager.Items.All(c => c.PatternWrapper.TryGetValue(out object _));
 
 		internal PatternContainer AddPatternWrapper(IReadableControlWrapper patternWrapper) => PatternContainerManager.Add(new(patternWrapper));
 
 		protected override void Init() => InitializeComponent();
 
-		protected override void HandleSelection(IReadableControlWrapper patternWrapper) => _ = AddPatternWrapper(patternWrapper);
+		protected override void handleSelection(IReadableControlWrapper patternWrapper) => _ = AddPatternWrapper(patternWrapper);
 	}
 }

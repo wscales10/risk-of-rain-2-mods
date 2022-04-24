@@ -26,7 +26,7 @@ namespace Rules.RuleTypes.Mutable
 			WherePattern = wherePattern;
 		}
 
-		public IPattern<Context> WherePattern { get; }
+		public IPattern<Context> WherePattern { get; set; }
 
 		IEnumerable<TValue> ICase<TValue>.Arr => Arr;
 
@@ -58,6 +58,7 @@ namespace Rules.RuleTypes.Mutable
 	public class MultiCase<TValue> : ICaseGetter<TValue>
 	{
 		private readonly Func<Rule> ruleGenerator;
+
 		private readonly TValue[] candidates;
 
 		public MultiCase(Func<Rule> ruleGenerator, params TValue[] candidates)

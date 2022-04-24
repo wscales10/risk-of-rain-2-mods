@@ -23,7 +23,7 @@ namespace WPFApp.Controls.PatternControls
 			Binding binding = new(nameof(IsMouseOver))
 			{
 				Source = this,
-				Converter = new Converters.BooleanToVisibilityConverter(false)
+				Converter = new Converters.BooleanToVisibilityConverter(Visibility.Visible, Visibility.Hidden)
 			};
 
 			_ = deleteButton.SetBinding(VisibilityProperty, binding);
@@ -43,7 +43,6 @@ namespace WPFApp.Controls.PatternControls
 
 				if (ui is not null)
 				{
-					ui.HorizontalAlignment = HorizontalAlignment.Center;
 					ui.VerticalAlignment = VerticalAlignment.Center;
 				}
 

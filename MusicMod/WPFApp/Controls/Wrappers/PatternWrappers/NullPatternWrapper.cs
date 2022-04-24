@@ -26,7 +26,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			SetValue(pattern ?? ClassNullPattern<T>.IsNull);
 		}
 
-		public override CheckBox UIElement { get; } = new();
+		public override CheckBox UIElement { get; } = new() { HorizontalAlignment = HorizontalAlignment.Center };
 
 		protected override void setValue(ClassNullPattern<T> value) => UIElement.IsChecked = value.IsMatch(null);
 

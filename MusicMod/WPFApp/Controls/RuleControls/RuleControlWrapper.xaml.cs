@@ -38,7 +38,7 @@ namespace WPFApp.Controls.RuleControls
 		{
 			string text = ruleNameTextBox.Text;
 			ContentControl.Item.Name = text?.Length > 0 ? text : null;
-			return ContentControl.TryExit();
+			return ContentControl.TrySave();
 		}
 	}
 }

@@ -89,14 +89,6 @@ namespace Spotify.Authorisation
 			return output;
 		}
 
-		private void ThrowIfFaulted()
-		{
-			if (IsFaulted)
-			{
-				throw new InvalidOperationException();
-			}
-		}
-
 		public async Task<RefreshTokenInfo> RequestTokensAsync(Sender send)
 		{
 			ThrowIfFaulted();
@@ -107,7 +99,7 @@ namespace Spotify.Authorisation
 				Dictionary<string, string> nameValueCollection = GetAccessTokenRequest();
 				request.Content = new FormUrlEncodedContent(nameValueCollection);
 				var responseMessage = await send(request);
-				var deserialised = await Deserialize<RefreshTokenInfo>(responseMessage);
+				var deserialised = await DeserializeAsync<RefreshTokenInfo>(responseMessage);
 
 				if (deserialised is null)
 				{
@@ -133,7 +125,7 @@ namespace Spotify.Authorisation
 				request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{app.ClientId}:{ app.ClientSecret }")));
 				request.Content = new FormUrlEncodedContent(GetRefreshTokenRequest());
 				var responseMessage = await send(request);
-				var deserialised = await Deserialize<AccessTokenInfo>(responseMessage);
+				var deserialised = await DeserializeAsync<AccessTokenInfo>(responseMessage);
 
 				if (deserialised is null)
 				{
@@ -157,7 +149,7 @@ namespace Spotify.Authorisation
 				return false;
 			}
 
-			if(error == "access_denied")
+			if (error == "access_denied")
 			{
 				ErrorState = ErrorState.UserDenied;
 				return false;
@@ -187,7 +179,15 @@ namespace Spotify.Authorisation
 				{ "refresh_token", RefreshToken },
 			};
 
-		private async Task<T> Deserialize<T>(HttpResponseMessage responseMessage)
+		private void ThrowIfFaulted()
+		{
+			if (IsFaulted)
+			{
+				throw new InvalidOperationException();
+			}
+		}
+
+		private async Task<T> DeserializeAsync<T>(HttpResponseMessage responseMessage)
 			where T : class
 		{
 			var content = responseMessage.Content;

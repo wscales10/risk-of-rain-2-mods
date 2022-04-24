@@ -1,17 +1,15 @@
 ﻿using System.Threading.Tasks;
+using Utils.Async;
 
 namespace Spotify.Commands
 {
-	public class CommandListAsync
+	public class CommandListAsync : BlockableExecutable
 	{
-		public CommandListAsync(ICommandList commands, Task blocker)
+		public CommandListAsync(ICommandList commands, Task blocker) : base(blocker)
 		{
 			Commands = commands;
-			Blocker = blocker;
 		}
 
 		public ICommandList Commands { get; }
-
-		public Task Blocker { get; }
 	}
 }

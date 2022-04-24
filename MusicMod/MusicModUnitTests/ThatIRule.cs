@@ -3,14 +3,11 @@ using MyRoR2;
 using Patterns.Patterns;
 using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using Rules.RuleTypes.Mutable;
-using Spotify.Authorisation;
 using Spotify.Commands;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Utils;
 using static Rules.Examples;
 using static Rules.RuleTypes.Mutable.Case;
@@ -68,8 +65,6 @@ namespace MusicModUnitTests
 			var newContext = new Context { SceneName = Scenes.BazaarBetweenTime };
 			var commands = rule.GetCommands(oldContext, newContext);
 		}
-
-
 
 		[TestMethod]
 		public void ThatMimicRuleXmlMatches()

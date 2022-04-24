@@ -7,20 +7,29 @@ namespace Utils.Async
 {
 	public abstract class SingletonTaskBase
 	{
+		private readonly AsyncManualResetEvent resetEvent = new AsyncManualResetEvent();
+
+		public Task Task { get; protected set; } = Task.CompletedTask;
+
+		public bool IsRunning => !Task.IsCompleted;
+
 		public virtual async Task RunAsync()
 		{
 			Start();
 			await Task;
 		}
 
-		public Task Task { get; protected set; } = Task.CompletedTask;
-
-		public bool IsRunning => !Task.IsCompleted;
+		public void Start()
+		{
+			ThrowIfRunning();
+			Task = resetEvent.WaitAsync();
+			_ = GetTaskAsync().ContinueWith(_ => resetEvent.Set(), TaskScheduler.Default);
+		}
 
 		[SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not async")]
 		protected abstract Task GetTask();
 
-		protected virtual Task GetTaskInTheMoment() => GetTask();
+		protected virtual Task GetTaskAsync() => GetTask();
 
 		private void ThrowIfRunning()
 		{
@@ -29,25 +38,20 @@ namespace Utils.Async
 				throw new InvalidOperationException();
 			}
 		}
-
-		public void Start()
-		{
-			ThrowIfRunning();
-			Task = GetTaskInTheMoment();
-		}
 	}
 
 	public abstract class SingletonTaskWithAsyncSetupBase : SingletonTaskBase
 	{
-		private JoinableTask startTask;
 		private readonly AsyncManager asyncManager;
+
+		private JoinableTask startTask;
 
 		protected SingletonTaskWithAsyncSetupBase(AsyncManager asyncManager)
 		{
 			this.asyncManager = asyncManager;
 		}
 
-		public sealed override async Task RunAsync()
+		public override sealed async Task RunAsync()
 		{
 			await StartAsync();
 			await Task;
@@ -62,7 +66,7 @@ namespace Utils.Async
 		[SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not async")]
 		protected abstract Task Setup();
 
-		protected sealed override Task GetTaskInTheMoment()
+		protected override sealed Task GetTaskAsync()
 		{
 			startTask = asyncManager.RunSafely(Setup);
 			return startTask.Task.ContinueWith((t) => GetTask(), TaskScheduler.Default);
@@ -73,10 +77,10 @@ namespace Utils.Async
 	{
 		protected abstract void Setup();
 
-		protected sealed override Task GetTaskInTheMoment()
+		protected override sealed Task GetTaskAsync()
 		{
 			Setup();
-			return base.GetTaskInTheMoment();
+			return base.GetTaskAsync();
 		}
 	}
 }

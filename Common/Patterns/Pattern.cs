@@ -1,4 +1,5 @@
 ﻿using Patterns.Patterns;
+using Patterns.TypeDefs;
 using System;
 
 namespace Patterns
@@ -9,7 +10,7 @@ namespace Patterns
 
 	public delegate IPattern UntypedEqualizer(object value);
 
-	public delegate IPattern Definer(string s, string typeKey, string genericTypeArgKey);
+	public delegate IPattern Definer(string s, TypeRef typeRef);
 
 	public abstract class Pattern<T> : PatternBase, IPattern<T>
 	{

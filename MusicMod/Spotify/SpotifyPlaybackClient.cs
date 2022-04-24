@@ -1,10 +1,12 @@
-﻿using Spotify.Commands;
+﻿using Newtonsoft.Json;
+using Spotify.Commands;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Utils;
 
@@ -13,16 +15,29 @@ namespace Spotify
 	public class SpotifyPlaybackClient : NiceSpotifyClient
 	{
 		private PlayerState cachedState = PlayerState.Stopped;
+
 		private string deviceId;
 
-		public SpotifyPlaybackClient(Logger logger) : base(logger) { }
+		public SpotifyPlaybackClient(Logger logger) : base(logger)
+		{
+			Preferences.PropertyChanged += (s) =>
+			{
+				if (s == nameof(Preferences.DefaultDevice))
+				{
+					_ = ActivateDeviceAsync();
+				}
+			};
+		}
 
 		private enum PlayerState
 		{
 			Stopped,
+
 			Paused,
+
 			Playing
 		}
+
 		public async Task Pause()
 		{
 			await Do(new PauseCommand());
@@ -44,6 +59,7 @@ namespace Spotify
 			{
 				case PauseCommand _:
 					return await PauseInner();
+
 				case StopCommand _:
 					if (await GetState() == PlayerState.Playing)
 					{
@@ -63,8 +79,10 @@ namespace Spotify
 
 					SetState(PlayerState.Stopped);
 					return true;
+
 				case PlayCommand playCommand:
 					return await PlayInner(playCommand.Item, playCommand.Milliseconds);
+
 				case SeekToCommand seekToCommand:
 					{
 						if (await GetState() == PlayerState.Stopped)
@@ -90,14 +108,18 @@ namespace Spotify
 					}
 
 					return true;
+
 				case TransferCommand transferCommand:
 					var stopwatch = new Stopwatch();
 					stopwatch.Start();
 					var info = await GetCurrentlyPlaying();
 					stopwatch.Stop();
 					var track = info?.Item as FullTrack;
-					int predictedtime = info?.ProgressMs is int time2 ? time2 + ((int)stopwatch.ElapsedMilliseconds / 2) : 0;
-					return await PlayInner(transferCommand.Item, transferCommand.FromTrackId.IsMatch(track?.Id) ? transferCommand.Map(predictedtime) : 0);
+#warning not sure whether this would be helpful or not, difficult to figure out transfercommand - test with transferring to same track
+
+					//int predictedtime = info?.ProgressMs is int time2 ? time2 + ((int)stopwatch.ElapsedMilliseconds / 2) : 0;
+					return await PlayInner(transferCommand.Item, transferCommand.FromTrackId.IsMatch(track?.Id) ? transferCommand.Map(info.ProgressMs ?? 0) : 0);
+
 				case SetPlaybackOptionsCommand optionsCommand:
 					bool success = true;
 					var playback = await Client.Player.GetCurrentPlayback();
@@ -174,6 +196,35 @@ namespace Spotify
 			}
 		}
 
+		protected override async Task InitialiseAsync()
+		{
+			await base.InitialiseAsync();
+			await ActivateDeviceAsync();
+		}
+
+		protected override async Task<bool> HandleErrorAsync(Exception e, CommandListAsync wrapper, List<Type> exceptionTypes = null)
+		{
+			switch (e)
+			{
+				case APIException _:
+					if (!exceptionTypes.Contains(e.GetType()))
+					{
+						await ActivateDeviceAsync();
+						exceptionTypes.Add(e.GetType());
+						return await ExecuteInner(wrapper, exceptionTypes);
+					}
+					break;
+			}
+
+			return await base.HandleErrorAsync(e, wrapper, exceptionTypes);
+		}
+
+		private async Task<List<Device>> GetDevicesAsync()
+		{
+			var response = await Client.Player.GetAvailableDevices();
+			return response?.Devices;
+		}
+
 		private async Task<CurrentlyPlaying> GetCurrentlyPlaying()
 		{
 			return await Client.Player.GetCurrentlyPlaying(new PlayerCurrentlyPlayingRequest());
@@ -214,10 +265,47 @@ namespace Spotify
 			}
 		}
 
-		private async Task<bool> PickDevice()
+		private async Task ActivateDeviceAsync()
 		{
-			var response = await Client.Player.GetAvailableDevices();
-			var devices = response?.Devices;
+			if (await PickDeviceAsync())
+			{
+				await Client.Player.TransferPlayback(new PlayerTransferPlaybackRequest(new[] { deviceId }));
+			}
+		}
+
+		private async Task<bool> PickDeviceAsync()
+		{
+			var defaultDeviceByteArray = Preferences.DefaultDevice;
+
+			var devices = await GetDevicesAsync();
+
+			if (defaultDeviceByteArray?.Length > 0)
+			{
+				var str = Encoding.UTF8.GetString(defaultDeviceByteArray);
+				DeviceInfo defaultDevice = null;
+
+				try
+				{
+					defaultDevice = JsonConvert.DeserializeObject<DeviceInfo>(str);
+				}
+				catch
+				{
+				}
+
+				if (!(defaultDevice?.Id is null) && devices.Any(d => d.Id == defaultDevice.Id))
+				{
+					SaveId(defaultDevice.Id);
+					return true;
+				}
+			}
+
+			var activeDevice = (await Client.Player.GetCurrentPlayback())?.Device;
+
+			if (!(activeDevice is null))
+			{
+				SaveId(activeDevice.Id);
+				return true;
+			}
 
 			if (!(deviceId is null) && devices.Any(d => d.Id == deviceId))
 			{
@@ -266,36 +354,9 @@ namespace Spotify
 			}
 		}
 
-		protected override async Task InitialiseAsync()
-		{
-			await base.InitialiseAsync();
-			await PickDevice();
-		}
-
 		private void SetState(PlayerState value)
 		{
 			cachedState = value;
-		}
-
-		protected override async Task<bool> ExecuteInner(CommandListAsync wrapper, List<Type> exceptionTypes = null)
-		{
-			try
-			{
-				return await base.ExecuteInner(wrapper, exceptionTypes);
-			}
-			catch (APIException e)
-			{
-				if (!exceptionTypes.Contains(e.GetType()))
-				{
-					await PickDevice();
-					exceptionTypes.Add(e.GetType());
-					return await ExecuteInner(wrapper, exceptionTypes);
-				}
-
-				Throw(e);
-			}
-
-			return false;
 		}
 	}
 }

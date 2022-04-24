@@ -2,7 +2,6 @@
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using Utils;
 
 namespace WPFApp.Controls.Wrappers
@@ -18,8 +17,6 @@ namespace WPFApp.Controls.Wrappers
 		public override TextBox UIElement { get; } = new TextBox() { VerticalAlignment = VerticalAlignment.Center };
 
 		protected override void setValue(TimeSpan value) => UIElement.Text = value.ToCompactString();
-
-		protected override void SetStatus(bool status) => UIElement.BorderBrush = status ? Brushes.DarkGray : Brushes.Red;
 
 		protected override bool tryGetValue(out TimeSpan value)
 		{

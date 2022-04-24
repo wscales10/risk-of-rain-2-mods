@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using Microsoft.VisualStudio.Threading;
 using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
@@ -6,18 +7,22 @@ using Spotify;
 using Spotify.Authorisation;
 using Spotify.Commands;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows;
 using Utils;
+using Utils.Async;
 using WPFApp.Controls;
 using WPFApp.Controls.PatternControls;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.RuleControls;
 using WPFApp.Controls.Wrappers.PatternWrappers;
+using WPFApp.Properties;
 using WPFApp.Views;
+using System.Diagnostics.CodeAnalysis;
 
 namespace WPFApp
 {
@@ -26,47 +31,34 @@ namespace WPFApp
 	/// </summary>
 	public partial class App : Application
 	{
-		private readonly List<Navigation> history = new();
+		private readonly History<Navigation> history = new();
 
 		private readonly MutableNavigationContext navigationContext = new();
 
-		// private readonly ChangeProperty<bool, bool> OfflineMode = new(Settings.Default.OfflineMode);
+		private readonly AsyncManager asyncManager = new();
 
-		private int historyIndex;
+		private Action display;
+
+		private string autosaveLocation;
 
 		public App()
 		{
-			MainView = new(NavigationContext);
+			navigationContext.OnGoHome += GoHome;
+			navigationContext.OnGoUp += GoUp;
+			navigationContext.OnGoInto += Display;
+			NavigationContext = new(navigationContext);
+			history.ActionRequested += TryInner;
 			MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x));
 			MetadataClient.OnError += SpotifyClient_OnError;
 			PlaybackClient = new SpotifyPlaybackClient(x => PlaybackClient.Log(x));
 			PlaybackClient.OnError += SpotifyClient_OnError;
 			Authorisation = new Authorisation(Scopes.Metadata.Concat(Scopes.Playback), logger: x => Authorisation.Log(x));
-			navigationContext.PropertyChanged += (s, e) =>
-			{
-				if (e.PropertyName == nameof(navigationContext.IsOffline))
-				{
-					// TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
-					if (navigationContext.IsOffline)
-					{
-						_ = Authorisation.PauseAsync();
-					}
-					else
-					{
-						if (Authorisation.Lifecycle.IsRunning)
-						{
-							Authorisation.Resume();
-						}
-						else
-						{
-							Authorisation.InitiateScopeRequest();
-						}
-
-						SpotifyItemPicker.Refresh();
-					}
-				}
-			};
+			Settings.Default.PropertyChanged += OnSettingChanged;
 		}
+
+		private event Func<string> OnAutosaveLocationRequested;
+
+		public NavigationContext NavigationContext { get; }
 
 		public Authorisation Authorisation { get; }
 
@@ -78,25 +70,21 @@ namespace WPFApp
 
 		public ControlBase CurrentControl => ControlList.LastOrDefault();
 
-		public MainView MainView { get; }
-
-		public NavigationContext NavigationContext => new(navigationContext);
-
 		public void GoBack()
 		{
-			Undo();
+			_ = history.Undo();
 			display();
 		}
 
 		public void GoForward()
 		{
-			Redo();
+			_ = history.Redo();
 			display();
 		}
 
 		public void GoHome()
 		{
-			Try(new RemoveNavigation(ControlList.Skip(1).Reverse()));
+			_ = Try(new RemoveNavigation(ControlList.Skip(1).Reverse()));
 			display();
 		}
 
@@ -120,29 +108,19 @@ namespace WPFApp
 
 		public void GoUp()
 		{
-			goUp();
+			_ = Try(new RemoveNavigation(ControlList.Last()));
 			display();
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
-			SpotifyItemPicker.OnMusicItemInfoRequested += HandleMusicItemInfoRequest;
-			PatternWrapper.OnHtmlWebRequested += HandleHtmlWebRequest;
-			BucketRow.OnCommandPreviewRequested += HandleCommandPreviewRequest;
-			MainView.OnGoHome += GoHome;
-			MainView.OnGoUp += GoUp;
-			MainView.OnGoBack += GoBack;
-			MainView.OnGoForward += GoForward;
-			MainView.OnImportFile += ImportFile;
-			MainView.OnExportFile += ExportToFile;
-			MainView.OnReset += () => Reset();
-			navigationContext.OnGoInto += Display;
+			MainView mainView = new(NavigationContext);
+			Attach(mainView);
+			RegisterRequestHandlers();
 			ImportXml(Rules.Examples.MimicRule.ToXml());
-
-			//ImportXml(new IfRule(Query.Create("SceneName", StringPattern.Equals("foo")) | Query.Create("SceneName", StringPattern.Equals("bar")), new Bucket()).ToXml());
 			display();
-			MainView.Show();
+			mainView.Show();
 
 			//new ControlTestView().Show();
 
@@ -153,9 +131,94 @@ namespace WPFApp
 				SpotifyItemPicker.Refresh();
 			};
 			Authorisation.OnClientRequested += Web.Goto;
-			if (!navigationContext.IsOffline)
+			if (!Settings.Default.OfflineMode)
 			{
 				Authorisation.InitiateScopeRequest();
+			}
+		}
+
+		private void RegisterRequestHandlers()
+		{
+			SpotifyItemPicker.OnMusicItemInfoRequested += HandleMusicItemInfoRequestAsync;
+			PatternWrapper.OnHtmlWebRequested += HandleHtmlWebRequest;
+			BucketRow.OnCommandPreviewRequested += HandleCommandPreviewRequestAsync;
+		}
+
+		private void Attach(MainView mainView)
+		{
+			mainView.OnGoBack += GoBack;
+			mainView.OnGoForward += GoForward;
+			mainView.OnImportFile += ImportFile;
+			mainView.OnExportFile += ExportToFile;
+			mainView.OnReset += () => Reset();
+			mainView.OnTryEnableAutosave += TryEnableAutosave;
+			mainView.OnTryClose += TryClose;
+			OnAutosaveLocationRequested += MainView.GetExportLocation;
+
+			display = () =>
+			{
+				navigationContext.IsHome = ControlList.Count < 2;
+
+				mainView.UpdateNavigationButtons(history.CurrentIndex, history.ReverseIndex);
+				mainView.Display(CurrentControl);
+			};
+		}
+
+		[SuppressMessage("Usage", "VSTHRD001:Avoid legacy thread switching APIs", Justification = "It works, the new one doesn't")]
+		private bool TryClose()
+		{
+			MaybeSave();
+
+			if (taskMachine.IsRunning)
+			{
+				ExportWindow exportWindow = new();
+				_ = taskMachine.Lifecycle.ContinueWith(_ => Dispatcher.Invoke(() =>
+				{
+					exportWindow.Close();
+					Shutdown();
+				}), TaskScheduler.Default);
+				exportWindow.Show();
+				return false;
+			}
+
+			return true;
+		}
+
+		private bool TryEnableAutosave()
+		{
+			if (TrySave())
+			{
+				Settings.Default.Autosave = true;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		private void OnSettingChanged(object s, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(Settings.OfflineMode))
+			{
+				// TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
+				if (((Settings)s).OfflineMode)
+				{
+					_ = Authorisation.PauseAsync();
+				}
+				else
+				{
+					if (Authorisation.Lifecycle.IsRunning)
+					{
+						Authorisation.Resume();
+					}
+					else
+					{
+						Authorisation.InitiateScopeRequest();
+					}
+
+					SpotifyItemPicker.Refresh();
+				}
 			}
 		}
 
@@ -184,20 +247,8 @@ namespace WPFApp
 				ControlList.Add(control);
 			}
 
-			ClearHistory();
-			display();
-		}
-
-		private void ClearHistory()
-		{
 			history.Clear();
-			historyIndex = 0;
-		}
-
-		private void display()
-		{
-			MainView.UpdateNavigationButtons(ControlList.Count < 2, historyIndex, history.Count);
-			MainView.Control = CurrentControl;
+			display();
 		}
 
 		private RuleControlBase GetRuleControl(Rule rule)
@@ -212,11 +263,9 @@ namespace WPFApp
 			});
 		}
 
-		private void goUp() => Try(new RemoveNavigation(ControlList.Last()));
-
-		private async Task HandleMusicItemInfoRequest(SpotifyItem item, Func<MusicItemInfo, Task> callback)
+		private async Task HandleMusicItemInfoRequestAsync(SpotifyItem item, Func<MusicItemInfo, Task> callback)
 		{
-			if (navigationContext.IsOffline)
+			if (Settings.Default.OfflineMode)
 			{
 				await callback(null);
 				return;
@@ -230,11 +279,11 @@ namespace WPFApp
 			}
 		}
 
-		private HtmlWeb HandleHtmlWebRequest() => navigationContext.IsOffline ? null : new HtmlWeb();
+		private HtmlWeb HandleHtmlWebRequest() => Settings.Default.OfflineMode ? null : new HtmlWeb();
 
-		private async Task HandleCommandPreviewRequest(Command command)
+		private async Task HandleCommandPreviewRequestAsync(Command command)
 		{
-			if (navigationContext.IsOffline)
+			if (Settings.Default.OfflineMode)
 			{
 				return;
 			}
@@ -246,38 +295,38 @@ namespace WPFApp
 		{
 			Ping ping = new();
 			var pingReply = ping.Send("accounts.spotify.com");
-			navigationContext.IsOffline = pingReply.Status != IPStatus.Success;
+			Settings.Default.OfflineMode = pingReply.Status != IPStatus.Success;
 		}
 
-		private void Redo(int count = 1)
-		{
-			for (int i = 0; i < count && historyIndex < history.Count; i++)
-			{
-				if (!TryInner(history[historyIndex]))
-				{
-					break;
-				}
+		private bool Try(Navigation navigation) => history.Try(navigation, CurrentControl is not null);
 
-				historyIndex++;
+		private void MaybeSave()
+		{
+			if (Settings.Default.Autosave && !TrySave())
+			{
+				Settings.Default.Autosave = false;
 			}
 		}
 
-		private bool Try(Navigation navigation)
+		private bool TrySave()
 		{
-			if (TryInner(navigation))
+			if (ControlList[0] is not IXmlControl xmlControl)
 			{
-				history.RemoveRange(historyIndex, history.Count - historyIndex);
-
-				if (MainView.Control is not null)
-				{
-					history.Add(navigation);
-					historyIndex++;
-				}
-
-				return true;
+				return false;
 			}
 
-			return false;
+			if (!CurrentControl.TrySave())
+			{
+				return false;
+			}
+
+			if ((autosaveLocation ??= OnAutosaveLocationRequested?.Invoke()) is null)
+			{
+				return false;
+			}
+
+			ExportToFile(xmlControl, autosaveLocation);
+			return true;
 		}
 
 		private bool TryInner(Navigation navigation)
@@ -285,24 +334,28 @@ namespace WPFApp
 			switch (navigation)
 			{
 				case AddNavigation:
-					foreach (var control in navigation.Controls)
+					foreach (ControlBase control in navigation.Controls)
 					{
 						if (!TryLeaveControl())
 						{
 							return false;
 						}
+
+						MaybeSave();
 
 						ControlList.Add(control);
 					}
 					break;
 
 				case RemoveNavigation:
-					foreach (var control in navigation.Controls)
+					foreach (ControlBase control in navigation.Controls)
 					{
 						if (!TryLeaveControl())
 						{
 							return false;
 						}
+
+						MaybeSave();
 
 						if (CurrentControl != control)
 						{
@@ -320,29 +373,6 @@ namespace WPFApp
 			return true;
 		}
 
-		private bool TryLeaveControl()
-		{
-			var currentControl = CurrentControl;
-
-			if (currentControl is null)
-			{
-				return true;
-			}
-
-			return currentControl.TryExit();
-		}
-
-		private void Undo(int count = 1)
-		{
-			for (int i = 0; i < count && historyIndex > 0; i++)
-			{
-				if (!TryInner(history[historyIndex - 1].Reverse))
-				{
-					break;
-				}
-
-				historyIndex--;
-			}
-		}
+		private bool TryLeaveControl() => CurrentControl?.TrySave() != false;
 	}
 }

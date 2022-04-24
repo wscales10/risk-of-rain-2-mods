@@ -12,24 +12,29 @@ namespace WPFApp.Controls.PatternControls
 	{
 		public SinglePatternPicker(Type valueType, NavigationContext navigationContext) : base(valueType, navigationContext)
 		{
+			patternContainer.Deleted += () => SetPatternWrapper(null);
 		}
 
 		protected override Selector ItemsControl => comboBox;
 
+		protected override void handleSelection(IReadableControlWrapper patternWrapper) => SetPatternWrapper(patternWrapper);
+
 		protected override void Init() => InitializeComponent();
 
-		protected override void HandleSelection(IReadableControlWrapper patternWrapper)
+		private void SetPatternWrapper(IReadableControlWrapper value)
 		{
-			comboBox.Visibility = Visibility.Collapsed;
-			patternContainer.Visibility = Visibility.Visible;
-			patternContainer.PatternWrapper = patternWrapper;
-			patternContainer.Deleted += () =>
+			if (value is null)
 			{
-				patternContainer.PatternWrapper = null;
-				comboBox.SelectedItem = null;
 				patternContainer.Visibility = Visibility.Collapsed;
 				comboBox.Visibility = Visibility.Visible;
-			};
+			}
+			else
+			{
+				comboBox.Visibility = Visibility.Collapsed;
+				patternContainer.Visibility = Visibility.Visible;
+			}
+
+			patternContainer.PatternWrapper = value;
 		}
 	}
 }

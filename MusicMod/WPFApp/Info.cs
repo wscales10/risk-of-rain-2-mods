@@ -24,7 +24,9 @@ namespace WPFApp
 
 		public static PatternParser PatternParser { get; } = RoR2PatternParser.Instance;
 
-		public static IEnumerable<PropertyInfo> GetProperties<T>() => typeof(T).GetProperties().Select(p => new PropertyInfo(p.Name, p.PropertyType));
+		public static IEnumerable<PropertyInfo> GetProperties<T>() => GetProperties(typeof(T));
+
+		public static IEnumerable<PropertyInfo> GetProperties(Type type) => type.GetProperties().Select(p => new PropertyInfo(p.Name, p.PropertyType));
 
 		private static Regex GetInvalidFilePathCharsRegex()
 		{

@@ -16,9 +16,9 @@ namespace WPFApp.Controls.Rows
 		{
 			IsMovable = movable;
 			IsRemovable = removable;
+			Grid.SetColumnSpan(Background, int.MaxValue);
 			Grid.SetColumnSpan(Border, int.MaxValue);
-			Grid.SetColumn(ButtonsPanel, 2);
-			Border.PreviewMouseLeftButtonDown += (s, e) =>
+			Background.PreviewMouseLeftButtonDown += (s, e) =>
 			{
 				if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.LeftShift))
 				{
@@ -41,15 +41,17 @@ namespace WPFApp.Controls.Rows
 
 		public bool IsRemovable { get; }
 
-		public Border Border { get; } = new Border { BorderThickness = new Thickness(1), BorderBrush = Brushes.Black, Background = Brushes.White };
+		public Border Border { get; } = new Border { BorderThickness = new Thickness(1), BorderBrush = Brushes.Black, VerticalAlignment = VerticalAlignment.Bottom };
 
-		public StackPanel ButtonsPanel { get; } = new() { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(30) };
+		public Border Background { get; } = new Border { Background = Brushes.White };
 
-		public virtual IEnumerable<UIElement> Elements => new UIElement[] { Border, LeftElement, ButtonsPanel };
+		public IEnumerable<UIElement> Elements => new UIElement[] { Background }.Concat(ExtraUi).Concat(new UIElement[] { LeftElement, Border });
+
+		public virtual IEnumerable<UIElement> ExtraUi => Enumerable.Empty<UIElement>();
 
 		public virtual UIElement LeftElement { get; } = new TextBlock() { TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontSize = 14, Margin = new Thickness(4) };
 
-		public void Paint(Brush brush) => Border.Background = brush;
+		public void Paint(Brush brush) => Background.Background = brush;
 
 		public virtual bool TrySaveChanges() => true;
 
@@ -74,7 +76,7 @@ namespace WPFApp.Controls.Rows
 
 		public event Action<TOut> OnSetOutput;
 
-		public override sealed IEnumerable<UIElement> Elements => base.Elements.Concat(new[] { outputPresenter.UI });
+		public override sealed IEnumerable<UIElement> ExtraUi => new[] { outputPresenter.UI };
 
 		public TOut Output
 		{

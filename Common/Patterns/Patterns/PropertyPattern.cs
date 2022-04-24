@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Xml.Linq;
 using Utils;
+using Utils.Reflection.Properties;
 
 namespace Patterns.Patterns
 {
 	public class PropertyPattern<TObject> : Pattern<TObject>
 	{
-		private PropertyPattern(PropertyInfo propertyInfo, IPattern pattern)
-		{
-			PropertyInfo = propertyInfo;
-			Pattern = pattern;
-		}
-
 		protected PropertyPattern(string propertyName, Type propertyType, IPattern pattern) : this(new PropertyInfo(propertyName, propertyType), pattern)
 		{
 			PropertyInfo = new PropertyInfo(propertyName, propertyType);
+			Pattern = pattern;
+		}
+
+		private PropertyPattern(PropertyInfo propertyInfo, IPattern pattern)
+		{
+			PropertyInfo = propertyInfo;
 			Pattern = pattern;
 		}
 
@@ -22,27 +23,31 @@ namespace Patterns.Patterns
 
 		public IPattern Pattern { get; }
 
-		public override XElement ToXml()
-		{
-			var element = new XElement("Property", Pattern.Correct().ToXml());
-			PropertyInfo.AddAttributesTo(element);
-			return element;
-		}
-
 		public static PropertyPattern<TObject> Parse(XElement element, PatternParser patternParser)
 		{
-			var propertyInfo = PropertyInfo.Parse(element, patternParser);
+			var propertyInfo = PropertyInfo.Parse<TObject>(element, patternParser);
 			return new PropertyPattern<TObject>(propertyInfo, patternParser.Parse(propertyInfo.Type, element.OnlyChild()));
 		}
 
 		public static PropertyPattern<TObject> Create<T>(string propertyName, IPattern pattern)
 		{
-			return new PropertyPattern<TObject>(propertyName, typeof(T), pattern);
+			if (pattern is IPattern<T> typedPattern)
+			{
+				return Create(propertyName, typedPattern);
+			}
+
+			return Create(typeof(T), propertyName, pattern);
 		}
 
-		public static PropertyPattern<TObject> Create<T>(string propertyName, IPattern<T> pattern)
+		public static PropertyPattern<TObject> Create<T>(string propertyName, IPattern<T> pattern) => Create(typeof(T), propertyName, pattern.Simplify());
+
+		public static PropertyPattern<TObject> Create(Type type, string propertyName, IPattern pattern) => new PropertyPattern<TObject>(propertyName, type, pattern);
+
+		public override XElement ToXml()
 		{
-			return new PropertyPattern<TObject>(propertyName, typeof(T), pattern.Simplify());
+			var element = new XElement("Property", Pattern.Correct().ToXml());
+			PropertyInfo.AddAttributesTo(element);
+			return element;
 		}
 
 		public override bool IsMatch(TObject value)

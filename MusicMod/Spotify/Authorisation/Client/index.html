@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="utf-8" />
+	<title>Spotify Authorisation</title>
+</head>
+<body>
+	<main></main>
+	<aside>
+		<label>
+			Default Device:
+			<select id="defaultDeviceSelector"></select>
+		</label>
+		<button id="submitButton">Submit</button>
+	</aside>
+	<script>
+		var defaultDeviceSelector = document.getElementById("defaultDeviceSelector");
+		var submit = document.getElementById("submitButton");
+		var defaultDevice;
+		const map = new Map();
+		const encoder = new TextEncoder();
+
+		submit.addEventListener('click', (ev) => {
+			fetch('defaultDevice.json', {
+				method: "POST",
+				body: getDevice(defaultDeviceSelector.value),
+				mode: "same-origin"
+			});
+		})
+
+		addOption();
+
+		fetch('defaultDevice.json').then(res => {
+			if (res.status == 200) {
+				try {
+					res.json().then(data => {
+						defaultDevice = data;
+						addOption(defaultDevice);
+						defaultDeviceSelector.selectedIndex = 1;
+					})
+				} catch {
+
+				}
+			}
+
+			fetch('devices.json').then(res => {
+				if (res.status == 200) {
+					res.json().then(data => data.devices.filter(device => device.id != defaultDevice?.id).forEach(addOption));
+				}
+			})
+		})
+
+		function addOption(device) {
+			var key = "";
+
+			if (device) {
+				key = `${device.name} (${device.type})`;
+				map.set(key, device);
+			}
+
+			var option = document.createElement('option')
+			option.text = key;
+			defaultDeviceSelector.options.add(option);
+		}
+
+		function getDevice(key) {
+			if (key == "") {
+				return;
+			}
+
+			return encoder.encode(JSON.stringify(map.get(key)));
+		}
+	</script>
+</body>
+</html>

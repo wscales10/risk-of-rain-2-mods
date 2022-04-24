@@ -12,8 +12,8 @@ using WPFApp.Converters;
 
 namespace WPFApp.Controls.GridManagers
 {
-	public abstract class GridManager<TRow> : INotifyPropertyChanged
-		where TRow : class
+	public abstract class GridManager<TItem> : INotifyPropertyChanged
+		where TItem : class
 	{
 		private bool hasDefault;
 
@@ -35,17 +35,21 @@ namespace WPFApp.Controls.GridManagers
 			}
 		}
 
-		public delegate void RowMovedEventHandler(TRow row, int diff);
+		public delegate void ItemMovedEventHandler(int index, int diff);
 
-		public delegate void RowAddedEventHandler(TRow row, bool isDefault);
+		public delegate void ItemAddedEventHandler(TItem row, bool isDefault);
 
-		public delegate void RowRemovedEventHandler(TRow row, bool wasDefault);
+		public delegate void ItemRemovedEventHandler(int index, bool wasDefault);
 
-		public event RowAddedEventHandler OnRowAdded;
+		public delegate bool ValueGetter<T>(TItem row, out T value);
 
-		public event RowMovedEventHandler OnRowMoved;
+		public delegate bool DefaultSetter<T>(TItem row);
 
-		public event RowRemovedEventHandler OnRowRemoved;
+		public event ItemAddedEventHandler OnItemAdded;
+
+		public event ItemMovedEventHandler OnItemMoved;
+
+		public event ItemRemovedEventHandler OnItemRemoved;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -60,21 +64,25 @@ namespace WPFApp.Controls.GridManagers
 			}
 		}
 
-		public ReadOnlyCollection<TRow> Rows => List.ToReadOnlyCollection();
+		public ReadOnlyCollection<TItem> Items => List.ToReadOnlyCollection();
+
+		public ReadOnlyCollection<TItem> ItemsWithoutDefault => (HasDefault ? List.Take(List.Count - 1) : List).ToReadOnlyCollection();
+
+		public TItem DefaultItem => HasDefault ? List.Last() : default;
 
 		protected Grid Grid { get; }
 
-		protected List<TRow> List { get; } = new();
+		protected List<TItem> List { get; } = new();
 
 		protected abstract double RowMinHeight { get; }
 
 		public TDerived Add<TDerived>(TDerived row)
-			where TDerived : TRow
+			where TDerived : TItem
 			=> Add(row, false);
 
-		public TRow Add(TRow row) => Add(row, false);
+		public TItem Add(TItem row) => Add(row, false);
 
-		public TRow AddDefault(TRow row) => HasDefault ? throw new InvalidOperationException() : Add(row, true);
+		public TItem AddDefault(TItem row) => HasDefault ? throw new InvalidOperationException() : Add(row, true);
 
 		public virtual int? Move(int index, bool down)
 		{
@@ -93,8 +101,8 @@ namespace WPFApp.Controls.GridManagers
 				return null;
 			}
 
-			TRow row = List[index];
-			TRow neighbour = List[neighbouringIndex];
+			TItem row = List[index];
+			TItem neighbour = List[neighbouringIndex];
 			List.RemoveAt(index);
 			List.Insert(neighbouringIndex, row);
 
@@ -108,11 +116,11 @@ namespace WPFApp.Controls.GridManagers
 				Grid.SetRow(element, Grid.GetRow(element) - diff);
 			}
 
-			OnRowMoved?.Invoke(row, diff);
+			OnItemMoved?.Invoke(index, diff);
 			return neighbouringIndex;
 		}
 
-		public void Remove(TRow item) => RemoveAt(List.IndexOf(item));
+		public void Remove(TItem item) => RemoveAt(List.IndexOf(item));
 
 		public virtual void RemoveAt(int index)
 		{
@@ -124,7 +132,7 @@ namespace WPFApp.Controls.GridManagers
 			}
 
 			Grid.RowDefinitions.RemoveAt(0);
-			TRow row = List[index];
+			TItem row = List[index];
 
 			foreach (UIElement element in GetUIElements(row))
 			{
@@ -133,34 +141,22 @@ namespace WPFApp.Controls.GridManagers
 
 			Shift(index + 1, false);
 			List.RemoveAt(index);
-			OnRowRemoved?.Invoke(row, wasDefault);
+			OnItemRemoved?.Invoke(index, wasDefault);
 		}
 
-		public void BindTo<T>(IList list, Func<T, TRow> rowMaker, Func<TRow, T> valueGetter, Action<TRow> setDefault = null)
+		public Func<bool> BindLooselyTo<T>(IList list, Func<T, TItem> rowMaker, ValueGetter<T> valueGetter, DefaultSetter<T> setDefault = null)
 		{
-			foreach (T value in list)
-			{
-				added = false;
-				var row = rowMaker(value);
-				if (!added)
-				{
-					_ = Add(row);
-				}
-			}
+			BindTo(list, rowMaker);
 
-			OnRowAdded += (row, isDefault) =>
+			OnItemAdded += (__, isDefault) =>
 			{
-				if (isDefault)
+				if (!isDefault)
 				{
-					setDefault(row);
-				}
-				else
-				{
-					list.Add(valueGetter(row));
+					_ = list.Add(default);
 				}
 			};
 
-			OnRowRemoved += (row, wasDefault) =>
+			OnItemRemoved += (index, wasDefault) =>
 			{
 				if (wasDefault)
 				{
@@ -168,22 +164,69 @@ namespace WPFApp.Controls.GridManagers
 				}
 				else
 				{
-					list.Remove(valueGetter(row));
+					list.RemoveAt(index);
 				}
 			};
 
-			OnRowMoved += (row, diff) =>
+			return () =>
 			{
-				var value = valueGetter(row);
-				int i = list.IndexOf(value);
-				list.RemoveAt(i);
-				list.Insert(i + diff, value);
+				List<T> newList = new();
+
+				foreach (TItem item in ItemsWithoutDefault)
+				{
+					if (!valueGetter(item, out T value))
+					{
+						return false;
+					}
+					else
+					{
+						newList.Add(value);
+					}
+				}
+
+				list.Clear();
+
+				foreach (T value in newList)
+				{
+					_ = list.Add(value);
+				}
+
+				return !HasDefault || setDefault(DefaultItem);
 			};
 		}
 
-		protected virtual bool IsMovable(TRow row) => true;
+		public void BindTo<T>(IList list, Func<T, TItem> itemMaker, Func<TItem, T> valueGetter, Action<TItem> setDefault = null)
+		{
+			BindTo(list, itemMaker);
 
-		protected virtual bool IsRemovable(TRow row) => true;
+			OnItemRemoved += (index, wasDefault) =>
+			{
+				if (wasDefault)
+				{
+					setDefault(null);
+				}
+				else
+				{
+					list.RemoveAt(index);
+				}
+			};
+
+			OnItemAdded += (item, isDefault) =>
+			{
+				if (isDefault)
+				{
+					setDefault(item);
+				}
+				else
+				{
+					list.Add(valueGetter(item));
+				}
+			};
+		}
+
+		protected virtual bool IsMovable(TItem row) => true;
+
+		protected virtual bool IsRemovable(TItem row) => true;
 
 		protected bool IsMoveBlocked(int index, bool down)
 		{
@@ -193,7 +236,7 @@ namespace WPFApp.Controls.GridManagers
 				{
 					if (IsMovable(List[i]))
 					{
-						return true;
+						return false;
 					}
 				}
 			}
@@ -203,21 +246,19 @@ namespace WPFApp.Controls.GridManagers
 				{
 					if (IsMovable(List[i]))
 					{
-						return true;
+						return false;
 					}
 				}
 			}
 
-			return false;
+			return true;
 		}
 
-#warning doesn't work if you allow the value produced by valueGetter to change after the row has been added
+		protected int GetIndex(TItem row) => List.TakeWhile(r => !r.Equals(row)).Count();
 
-		protected int GetIndex(TRow row) => List.TakeWhile(r => !r.Equals(row)).Count();
+		protected abstract IEnumerable<UIElement> GetUIElements(TItem item);
 
-		protected abstract IEnumerable<UIElement> GetUIElements(TRow item);
-
-		protected virtual int add(TRow row, bool isDefault)
+		protected virtual int add(TItem row, bool isDefault)
 		{
 			int targetIndex = List.Count;
 
@@ -250,7 +291,15 @@ namespace WPFApp.Controls.GridManagers
 			return targetIndex;
 		}
 
-		protected virtual bool Shift(int index, bool down)
+		protected virtual void shift(int index, bool down)
+		{
+			foreach (UIElement element in GetUIElements(List[index]))
+			{
+				Grid.SetRow(element, Grid.GetRow(element) + (down ? 1 : -1));
+			}
+		}
+
+		protected bool Shift(int index, bool down)
 		{
 			if (index < 0 || index >= List.Count)
 			{
@@ -262,10 +311,7 @@ namespace WPFApp.Controls.GridManagers
 				_ = Shift(index + 1, true);
 			}
 
-			foreach (UIElement element in GetUIElements(List[index]))
-			{
-				Grid.SetRow(element, Grid.GetRow(element) + (down ? 1 : -1));
-			}
+			shift(index, down);
 
 			if (!down)
 			{
@@ -275,17 +321,37 @@ namespace WPFApp.Controls.GridManagers
 			return true;
 		}
 
-		private TDerived Add<TDerived>(TDerived row, bool isDefault)
-			where TDerived : TRow
+		private void BindTo<T>(IList list, Func<T, TItem> rowMaker)
 		{
-			int index = add(row, isDefault);
-			OnRowAdded?.Invoke(row, isDefault);
+			foreach (T value in list)
+			{
+				added = false;
+				var row = rowMaker(value);
+				if (!added)
+				{
+					_ = Add(row);
+				}
+			}
+
+			OnItemMoved += (index, diff) =>
+			{
+				var value = list[index];
+				list.RemoveAt(index);
+				list.Insert(index + diff, value);
+			};
+		}
+
+		private TDerived Add<TDerived>(TDerived item, bool isDefault)
+			where TDerived : TItem
+		{
+			int index = add(item, isDefault);
+			OnItemAdded?.Invoke(item, isDefault);
 			added = true;
 			if (isDefault)
 			{
 				HasDefault = true;
 			}
-			return row;
+			return item;
 		}
 
 		private void OnPropertyChanged(string info) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));

@@ -22,7 +22,7 @@ namespace WPFApp.Controls.PatternControls
 			ItemsControl.ItemsSource = GetAllowedPatternTypes(ValueType = valueType);
 			ItemsControl.DisplayMemberPath = nameof(TypeWrapper.DisplayName);
 			ItemsControl.SelectedValuePath = nameof(TypeWrapper.Type);
-			if (autoCommit)
+			if (AutoCommit = autoCommit)
 			{
 				ItemsControl.SelectionChanged += (s, e) => CommitSelection();
 			}
@@ -32,19 +32,26 @@ namespace WPFApp.Controls.PatternControls
 
 		public NavigationContext NavigationContext { get; }
 
+		public bool AutoCommit { get; }
+
 		protected abstract Selector ItemsControl { get; }
 
-		public void AddPattern(IPattern pattern) => HandleSelection(PatternWrapper.Create(pattern, NavigationContext));
+		public void AddPattern(IPattern pattern) => HandleSelection(pattern is null ? null : PatternWrapper.Create(pattern, NavigationContext));
 
 		protected abstract void Init();
 
-		protected abstract void HandleSelection(IReadableControlWrapper patternWrapper);
+		protected abstract void handleSelection(IReadableControlWrapper patternWrapper);
 
 		protected void CommitSelection()
 		{
 			if (ItemsControl.SelectedItem is not null)
 			{
 				HandleSelection(PatternWrapper.Create((Type)ItemsControl.SelectedValue, NavigationContext));
+
+				if (AutoCommit)
+				{
+					ItemsControl.SelectedItem = null;
+				}
 			}
 		}
 
@@ -81,6 +88,12 @@ namespace WPFApp.Controls.PatternControls
 			output.Add(typeof(NotPattern<>).MakeGenericType(type));
 
 			return output;
+		}
+
+		private void HandleSelection(IReadableControlWrapper patternWrapper)
+		{
+			handleSelection(patternWrapper);
+			patternWrapper?.Focus();
 		}
 
 		private class TypeWrapper

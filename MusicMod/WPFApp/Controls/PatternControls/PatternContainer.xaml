@@ -6,7 +6,7 @@
 			 xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls"
 			 mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="200">
-	<Grid Background="White">
+	<Grid Background="Transparent" Margin="2">
 		<Border x:Name="border" />
 		<commandcontrols:DeleteButton HorizontalAlignment="Right"
 									  VerticalAlignment="Top"

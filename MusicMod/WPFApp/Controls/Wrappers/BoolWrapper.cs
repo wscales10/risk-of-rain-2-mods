@@ -5,7 +5,7 @@ namespace WPFApp.Controls.Wrappers
 {
 	internal class BoolWrapper : ControlWrapper<bool, CheckBox>
 	{
-		public override CheckBox UIElement { get; } = new CheckBox { VerticalAlignment = VerticalAlignment.Center };
+		public override CheckBox UIElement { get; } = new CheckBox { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
 
 		protected override void setValue(bool value) => UIElement.IsChecked = value;
 

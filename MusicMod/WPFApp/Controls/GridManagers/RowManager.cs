@@ -19,7 +19,7 @@ namespace WPFApp.Controls.GridManagers
 
 		public event Action SelectionChanged;
 
-		IEnumerable<IRow> IRowManager.Rows => Rows;
+		IEnumerable<IRow> IRowManager.Rows => Items;
 
 		public IReadOnlyCollection<IRow> SelectedRows => selectedIndices.Select(i => List[i]).ToReadOnlyCollection();
 
@@ -29,7 +29,7 @@ namespace WPFApp.Controls.GridManagers
 		{
 			bool success = true;
 
-			foreach (TRow row in Rows)
+			foreach (TRow row in Items)
 			{
 				if (!row.TrySaveChanges())
 				{
@@ -129,19 +129,14 @@ namespace WPFApp.Controls.GridManagers
 
 		protected override bool IsMovable(TRow row) => row.IsMovable;
 
-		protected override bool Shift(int index, bool down)
+		protected override void shift(int index, bool down)
 		{
-			if (base.Shift(index, down))
+			base.shift(index, down);
+
+			if (selectedIndices.Remove(index) && !selectedIndices.Add(index + (down ? 1 : -1)))
 			{
-				if (selectedIndices.Remove(index) && !selectedIndices.Add(index + (down ? 1 : -1)))
-				{
-					throw new InvalidOperationException("You're trying to shift rows in the wrong order.");
-				}
-
-				return true;
+				throw new InvalidOperationException("You're trying to shift rows in the wrong order.");
 			}
-
-			return false;
 		}
 
 		protected override IEnumerable<UIElement> GetUIElements(TRow item) => item.Elements;
@@ -171,8 +166,8 @@ namespace WPFApp.Controls.GridManagers
 				}
 			};
 
-			row.JointSelected += () => ToggleSelected(Grid.GetRow(row.Border));
-			row.Selected += () => SetSelection(Grid.GetRow(row.Border));
+			row.JointSelected += () => ToggleSelected(Grid.GetRow(row.Background));
+			row.Selected += () => SetSelection(Grid.GetRow(row.Background));
 			return node;
 		}
 

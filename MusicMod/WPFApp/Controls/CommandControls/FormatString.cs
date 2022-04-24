@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using Utils;
+using Utils.Reflection.Properties;
 using WPFApp.Converters;
 
 namespace WPFApp.Controls.CommandControls

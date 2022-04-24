@@ -1,5 +1,6 @@
-﻿using System;
-using Utils;
+﻿using Patterns.TypeDefs;
+using System;
+using Utils.Reflection;
 
 namespace Patterns.Patterns.SmallPatterns
 {
@@ -11,9 +12,9 @@ namespace Patterns.Patterns.SmallPatterns
 			return (PatternBase)constructedGenericType.GetMethod("Equals").InvokeStatic(x);
 		}
 
-		public static IPattern Definer(string s, string t, string a, PatternParser patternParser)
+		public static IPattern Definer(string s, TypeRef typeRef, PatternParser patternParser)
 		{
-			var type = typeof(ClassNullPattern<>).MakeGenericType(patternParser.GetType(t, a));
+			var type = typeof(ClassNullPattern<>).MakeGenericType(patternParser.GetType(typeRef));
 			return (IPattern)type.Construct(new NullPattern().DefineWith(s));
 		}
 	}
@@ -31,12 +32,12 @@ namespace Patterns.Patterns.SmallPatterns
 
 		public override string Definition => basePattern.Definition;
 
-		public static ClassNullPattern<T> Equals(T value) => value is null ? IsNull : throw new NotImplementedException();
-
-		public override bool IsMatch(T value) => basePattern.IsMatch(value);
-
 		public override string TypeKey => "class-null";
 
+		public static ClassNullPattern<T> Equals(T value) => value is null ? IsNull : throw new NotImplementedException();
+
 		public static explicit operator ClassNullPattern<T>(NullPattern np) => new ClassNullPattern<T>(np);
+
+		public override bool IsMatch(T value) => basePattern.IsMatch(value);
 	}
 }

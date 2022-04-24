@@ -1,7 +1,6 @@
 ﻿using Patterns.Patterns.SmallPatterns;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
@@ -12,15 +11,15 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 		protected ValuePatternWrapper(TPattern pattern) : base(pattern)
 		{
 			TextBox.Text = GetTextBoxText();
+			TextBox.TextAlignment = TextAlignment.Center;
+			TextBox.FontSize = 14;
+			TextBox.Margin = new Thickness(4, 2, 4, 2);
 			Display();
 		}
 
-		protected TextBox TextBox { get; } = new()
-		{
-			TextAlignment = TextAlignment.Center,
-			FontSize = 14,
-			Margin = new Thickness(4, 2, 4, 2)
-		};
+		public override UIElement FocusElement => TextBox;
+
+		protected virtual TextBox TextBox { get; } = new();
 
 		protected override bool Validate(TPattern value) => value.Definition is not null;
 
@@ -50,7 +49,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			}
 		}
 
-		protected override void SetStatus(bool status) => TextBox.BorderBrush = status ? Brushes.DarkGray : Brushes.Red;
+		protected override void SetStatus(bool status) => Outline(TextBox, status);
 	}
 
 	internal class ValuePatternWrapper<TPattern> : ValuePatternWrapper<TPattern, TextBox>

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace WPFApp.Controls.Wrappers
 {
@@ -13,6 +16,8 @@ namespace WPFApp.Controls.Wrappers
 		bool TryGetValue(out object value);
 
 		void ForceGetValue(out object value);
+
+		void Focus();
 	}
 
 	internal interface IReadableControlWrapper<TValue> : IWrapper
@@ -35,9 +40,15 @@ namespace WPFApp.Controls.Wrappers
 	internal abstract class ReadableControlWrapper<TValue, TControl> : IReadableControlWrapper, IReadableControlWrapper<TValue>
 		where TControl : FrameworkElement
 	{
+		private bool wantsFocus;
+
+		private bool isInitialised;
+
 		public abstract TControl UIElement { get; }
 
 		FrameworkElement IWrapper.UIElement => UIElement;
+
+		public virtual UIElement FocusElement => UIElement;
 
 		public void ForceGetValue(out object value)
 		{
@@ -55,10 +66,10 @@ namespace WPFApp.Controls.Wrappers
 
 		public bool TryGetValue(out TValue value)
 		{
-			bool result = tryGetValue(out TValue t) && Validate(t);
+			bool? result = tryGetValue(out TValue t) && Validate(t);
 			SetStatus(result);
 			value = t;
-			return result;
+			return result ?? false;
 		}
 
 		public bool TryGetValue(out object value)
@@ -68,12 +79,55 @@ namespace WPFApp.Controls.Wrappers
 			return result;
 		}
 
+		public void Focus()
+		{
+			if (!isInitialised)
+			{
+				FocusElement.IsVisibleChanged += (s, e) =>
+				{
+					if ((bool)e.NewValue && wantsFocus)
+					{
+						_ = ((UIElement)s).Focus();
+						wantsFocus = false;
+					}
+				};
+
+				isInitialised = true;
+			}
+
+			wantsFocus = true;
+		}
+
+		protected static void Outline(Control control, bool status)
+		{
+			control.BorderBrush = status switch
+			{
+				false => Brushes.Red,
+				_ => Brushes.DarkGray,
+			};
+		}
+
+		protected static void Outline(Control control, bool? status, bool threeWay = false)
+		{
+			control.BorderBrush = status switch
+			{
+				true when threeWay => Brushes.Green,
+				false => Brushes.Red,
+				_ => Brushes.DarkGray,
+			};
+		}
+
 		protected abstract bool tryGetValue(out TValue value);
 
 		protected virtual void SetStatus(bool? status) => SetStatus(status ?? true);
 
 		protected virtual void SetStatus(bool status)
-		{ }
+		{
+			if (UIElement is Control c)
+			{
+				Outline(c, (bool?)status);
+			}
+		}
 
 		protected virtual bool Validate(TValue value) => true;
 	}
@@ -89,6 +143,11 @@ namespace WPFApp.Controls.Wrappers
 
 		public void SetValue(object value)
 		{
+			if (value is not null and not TValue)
+			{
+				Debugger.Break();
+			}
+
 			var typed = (TValue)value;
 			SetValue(typed);
 		}

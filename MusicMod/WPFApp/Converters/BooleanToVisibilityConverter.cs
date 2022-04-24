@@ -1,36 +1,16 @@
-﻿using System;
-using System.Globalization;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Data;
 
 namespace WPFApp.Converters
 {
 	[ValueConversion(typeof(bool), typeof(Visibility))]
-	public class BooleanToVisibilityConverter : IValueConverter
+	public class BooleanToVisibilityConverter : BooleanConverter<Visibility>
 	{
-		private readonly bool collapse;
+		public BooleanToVisibilityConverter(Visibility trueValue, Visibility falseValue) : base(trueValue, falseValue)
+		{ }
 
-		public BooleanToVisibilityConverter(bool collapse) => this.collapse = collapse;
-
-		public object Convert(object value, Type targetType, object parameter,
-			CultureInfo culture)
+		public BooleanToVisibilityConverter() : this(Visibility.Visible, Visibility.Collapsed)
 		{
-			if (targetType != typeof(Visibility))
-			{
-				throw new InvalidOperationException("The target must be a Visibility");
-			}
-
-			if ((bool)value)
-			{
-				return Visibility.Visible;
-			}
-			else
-			{
-				return collapse ? Visibility.Collapsed : (object)Visibility.Hidden;
-			}
 		}
-
-		public object ConvertBack(object value, Type targetType, object parameter,
-			CultureInfo culture) => throw new NotSupportedException();
 	}
 }

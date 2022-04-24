@@ -15,7 +15,7 @@ namespace WPFApp.Controls
 
 		public abstract object Object { get; }
 
-		public bool TryExit()
+		public bool TrySave()
 		{
 			if (ShouldAllowExit())
 			{

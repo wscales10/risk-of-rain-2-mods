@@ -17,7 +17,5 @@ namespace WPFApp.Controls.Wrappers
 		protected override void setValue(Switch<T, TOut> value) => UIElement.SetValue(value, p => p.ToString(), o => o.ToString());
 
 		protected override bool tryGetValue(out Switch<T, TOut> value) => UIElement.GetValue(parser, out value);
-
-		protected override void SetStatus(bool status) => UIElement.BorderBrush = status ? Brushes.DarkGray : Brushes.Red;
 	}
 }

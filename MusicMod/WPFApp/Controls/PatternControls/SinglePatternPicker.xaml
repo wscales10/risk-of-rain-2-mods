@@ -9,8 +9,7 @@
 	<Grid>
 		<ComboBox x:Name="comboBox"
 				  VerticalAlignment="Center"
-				  HorizontalAlignment="Center"
-				  Width="160" />
+				  MaxWidth="160" />
 		<local:PatternContainer x:Name="patternContainer" Visibility="Collapsed" Margin="2" />
 	</Grid>
 </local:PatternPicker>

@@ -97,5 +97,7 @@ namespace Utils
 			output += $"<{string.Join(", ", type.GenericTypeArguments.Select(t => t?.GetDisplayName()))}>";
 			return output;
 		}
+
+		internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
 	}
 }

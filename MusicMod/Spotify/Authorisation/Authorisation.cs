@@ -1,10 +1,12 @@
 ﻿using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
@@ -115,6 +117,20 @@ namespace Spotify.Authorisation
 			await stop.RunAsync();
 		}
 
+		private static async Task MakeResponseAsync(HttpListenerResponse res, byte[] byteArray)
+		{
+			res.ContentLength64 = byteArray?.Length ?? 0;
+			if (!(byteArray is null))
+			{
+				await res.OutputStream.WriteAsync(byteArray, 0, byteArray.Length);
+			}
+			else
+			{
+				res.StatusCode = (int)HttpStatusCode.NoContent;
+			}
+			res.OutputStream.Close();
+		}
+
 		private void SetupServer()
 		{
 			server.On("GET", "/login", (req, res) =>
@@ -146,11 +162,7 @@ namespace Spotify.Authorisation
 					return;
 				}
 
-				res.ContentType = "text/html";
-				var buffer = File.ReadAllBytes(Paths.AssemblyDirectory + "/Authorisation/Client/RequestTokens.html");
-				res.ContentLength64 = buffer.Length;
-				await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-				res.OutputStream.Close();
+				res.Redirect("index.html");
 
 				data = await flow.RequestTokensAsync(async (m) => await client.SendAsync(m));
 
@@ -172,6 +184,50 @@ namespace Spotify.Authorisation
 				Console.WriteLine("Shutdown requested");
 				stop.Start();
 			});
+
+			server.On("GET", "devices.json", async (req, res) =>
+			{
+				res.ContentType = "application/json";
+				var content = await GetDevicesAsync();
+				await MakeResponseAsync(res, await content.ReadAsByteArrayAsync());
+			});
+
+			server.On("GET", "defaultDevice.json", async (req, res) =>
+			{
+				res.ContentType = "application/json";
+				var content = Preferences.DefaultDevice;
+				await MakeResponseAsync(res, content?.Length == 0 ? null : content);
+			});
+
+			server.On("GET", "index.html", async (req, res) =>
+			{
+				res.ContentType = "text/html";
+				await MakeResponseAsync(res, File.ReadAllBytes(Paths.AssemblyDirectory + "/Authorisation/Client/index.html"));
+			});
+
+			server.On("POST", "defaultDevice.json", async (req, res) =>
+			{
+				var arr = await GetRequestBodyAsync(req);
+				Preferences.DefaultDevice = arr?.Length == 0 ? null : arr;
+			});
+		}
+
+		private async Task<byte[]> GetRequestBodyAsync(HttpListenerRequest req)
+		{
+			int len = (int)req.ContentLength64;
+			byte[] buffer = new byte[len];
+			await req.InputStream.ReadAsync(buffer, 0, len);
+			return buffer;
+		}
+
+		private async Task<HttpContent> GetDevicesAsync()
+		{
+			using (var request = new HttpRequestMessage(HttpMethod.Get, "https://api.spotify.com/v1/me/player/devices"))
+			{
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", data.AccessToken);
+				var responseMessage = await client.SendAsync(request);
+				return responseMessage.Content;
+			}
 		}
 
 		private void Start()

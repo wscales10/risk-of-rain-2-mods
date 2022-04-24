@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Windows.Controls;
-using System.Windows.Media;
-using Utils;
+using Utils.Reflection;
 
 namespace WPFApp.Controls.Wrappers
 {
@@ -28,7 +27,5 @@ namespace WPFApp.Controls.Wrappers
 			value = x;
 			return true;
 		}
-
-		protected override void SetStatus(bool status) => UIElement.BorderBrush = status ? Brushes.DarkGray : Brushes.Red;
 	}
 }

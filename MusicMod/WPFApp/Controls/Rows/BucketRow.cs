@@ -8,6 +8,7 @@ using System.Windows.Data;
 using WPFApp.Controls.CommandControls;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Converters;
+using WPFApp.Properties;
 
 namespace WPFApp.Controls.Rows
 {
@@ -15,7 +16,7 @@ namespace WPFApp.Controls.Rows
 	{
 		private FormatString formatString;
 
-		internal BucketRow(Command command, NavigationContext navigationContext) : base(command, true)
+		internal BucketRow(Command command) : base(command, true)
 		{
 			LeftElement.Click += (s, e) =>
 			{
@@ -27,9 +28,9 @@ namespace WPFApp.Controls.Rows
 
 			LeftElement.Content = command?.GetType().Name.Replace(nameof(Command), string.Empty);
 
-			Binding binding = new(nameof(navigationContext.IsOffline))
+			Binding binding = new(nameof(Settings.OfflineMode))
 			{
-				Source = navigationContext,
+				Source = Settings.Default,
 				Converter = new InverseBooleanConverter()
 			};
 

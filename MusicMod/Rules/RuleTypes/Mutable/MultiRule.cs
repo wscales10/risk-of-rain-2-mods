@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Utils;
+using Utils.Reflection.Properties;
 
 namespace Rules.RuleTypes.Mutable
 {
@@ -28,6 +29,16 @@ namespace Rules.RuleTypes.Mutable
 
 		IEnumerable<(T expectedValue, IRule rule)> IMultiRule<T>.Pairs => Pairs.Cast<(T, IRule)>();
 
+		public static explicit operator ArrayRule(MultiRule<T> mr)
+		{
+			return (ArrayRule)new ArrayRule(mr.Pairs.Select((pair) => new IfRule(Query.Create(mr.PropertyName, mr.patternGenerator(pair.expectedValue)), pair.rule)).ToArray()).Named(mr.Name);
+		}
+
+		public static explicit operator StaticSwitchRule(MultiRule<T> mr)
+		{
+			return (StaticSwitchRule)new StaticSwitchRule(new PropertyInfo(mr.PropertyName, typeof(T)), null, mr.Pairs.Select(p => new Case<IPattern>(p.rule, mr.patternGenerator(p.expectedValue))).ToArray()).Named(mr.Name);
+		}
+
 		public override Rule GetRule(Context c)
 		{
 			T seenValue = c.GetPropertyValue<T>(PropertyName);
@@ -41,16 +52,6 @@ namespace Rules.RuleTypes.Mutable
 			}
 
 			return null;
-		}
-
-		public static explicit operator ArrayRule(MultiRule<T> mr)
-		{
-			return (ArrayRule)new ArrayRule(mr.Pairs.Select((pair) => new IfRule(Query.Create(mr.PropertyName, mr.patternGenerator(pair.expectedValue)), pair.rule)).ToArray()).Named(mr.Name);
-		}
-
-		public static explicit operator StaticSwitchRule(MultiRule<T> mr)
-		{
-			return (StaticSwitchRule)new StaticSwitchRule(new PropertyInfo(mr.PropertyName, typeof(T)), null, mr.Pairs.Select(p => new Case<IPattern>(p.rule, mr.patternGenerator(p.expectedValue))).ToArray()).Named(mr.Name);
 		}
 
 		public override XElement ToXml() => ((StaticSwitchRule)this).ToXml();

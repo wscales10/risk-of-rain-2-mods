@@ -36,8 +36,8 @@ namespace Utils.Async
 
 			_ = task.ContinueWith(t =>
 			{
-				// Complete the TCS per task status If the TCS has been cancelled, this
-				// continuation does nothing
+				// Complete the TCS per task status If the TCS has been cancelled, this continuation
+				// does nothing
 				if (task.IsCanceled)
 				{
 					tcs.TrySetCanceled();
@@ -66,5 +66,7 @@ namespace Utils.Async
 		public SingletonTaskWithAsyncSetup CreateSingletonTask(Func<Task> taskGetter) => new SingletonTaskWithAsyncSetup(taskGetter, this);
 
 		public SingletonTaskWithAsyncSetup CreateSingletonTask(Func<Task> setupGetter, Func<Task> taskGetter) => new SingletonTaskWithAsyncSetup(setupGetter, taskGetter, this);
+
+		public async Task SwitchToMainThreadAsync() => await joinableTaskFactory.SwitchToMainThreadAsync();
 	}
 }

@@ -10,7 +10,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 
 		public static BoolPattern True => (BoolPattern)new BoolPattern().DefineWith("True");
 
-		internal static TypeDef TypeDef { get; } = TypeDef.Create<bool, BoolPattern>((s, _, __) => (BoolPattern)new BoolPattern().DefineWith(s), b => Equals(b));
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<bool, BoolPattern>((s, _) => (BoolPattern)new BoolPattern().DefineWith(s), b => Equals(b));
 
 		public static BoolPattern Equals(bool b) => b ? True : False;
 
@@ -42,7 +42,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 
 		public IPattern<bool> SimplifyOr(IPattern<bool> other)
 		{
-			if(!(other is BoolPattern bp))
+			if (!(other is BoolPattern bp))
 			{
 				return null;
 			}

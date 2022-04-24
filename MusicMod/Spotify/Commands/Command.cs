@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Xml.Linq;
 using Utils;
+using Utils.Reflection;
 
 namespace Spotify.Commands
 {

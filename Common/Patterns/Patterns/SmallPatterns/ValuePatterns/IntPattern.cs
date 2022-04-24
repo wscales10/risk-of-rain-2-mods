@@ -12,7 +12,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 
 		private static readonly Regex regex = new Regex(@"^(?<num1>-?\d+)?(?<dots>\.\.)?(?<num2>-?\d+)?$");
 
-		internal static TypeDef TypeDef { get; } = TypeDef.Create<int, IntPattern>((s, _, __) => (IntPattern)new IntPattern().DefineWith(s), i => (IntPattern)(x == i));
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<int, IntPattern>((s, _) => (IntPattern)new IntPattern().DefineWith(s), i => (IntPattern)(x == i));
 
 		internal int? Max { get; private set; }
 
@@ -149,33 +149,5 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 		}
 
 		protected override bool isMatch(int value) => (Min is null || value >= Min) && (Max is null || value <= Max);
-	}
-
-	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "<Pending>")]
-#pragma warning disable CS0660 // Type defines operator == or operator != but does not override Object.Equals(object o)
-#pragma warning disable CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
-	public class IntX
-#pragma warning restore CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
-#pragma warning restore CS0660 // Type defines operator == or operator != but does not override Object.Equals(object o)
-	{
-		public static Pattern<int> operator !=(IntX x, int? i) => !(x == i);
-
-		public static IntPattern operator <(IntX x, int? i) => (IntPattern)new IntPattern().DefineWith($"..{(i is null ? i : i - 1)}");
-
-		public static IntPattern operator <(int? i, IntX x) => x > i;
-
-		public static IntPattern operator <=(IntX x, int? i) => (IntPattern)new IntPattern().DefineWith($"..{i}");
-
-		public static IntPattern operator <=(int? i, IntX x) => x >= i;
-
-		public static Pattern<int> operator ==(IntX x, int? i) => new IntPattern().DefineWith(i?.ToString() ?? "..");
-
-		public static IntPattern operator >(IntX x, int? i) => (IntPattern)new IntPattern().DefineWith($"{(i is null ? i : i + 1)}..");
-
-		public static IntPattern operator >(int? i, IntX x) => x < i;
-
-		public static IntPattern operator >=(IntX x, int? i) => (IntPattern)new IntPattern().DefineWith($"{i}..");
-
-		public static IntPattern operator >=(int? i, IntX x) => x <= i;
 	}
 }

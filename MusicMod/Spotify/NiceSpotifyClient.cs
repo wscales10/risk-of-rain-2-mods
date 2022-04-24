@@ -2,7 +2,6 @@
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Utils;
 
@@ -29,12 +28,6 @@ namespace Spotify
 
 		public event Action<Exception> OnError;
 
-		protected void Throw(Exception e)
-		{
-			Log($"{e.GetType().FullName}: {e.Message}");
-			OnError?.Invoke(e);
-		}
-
 		protected SpotifyClient Client { get; private set; }
 
 		public async Task Do(Command input)
@@ -56,7 +49,33 @@ namespace Spotify
 			}
 		}
 
+		protected void Throw(Exception e)
+		{
+			Log($"{e.GetType().FullName}: {e.Message}");
+			OnError?.Invoke(e);
+		}
+
 		protected abstract Task<bool> Handle(Command command);
+
+		protected virtual async Task<bool> HandleErrorAsync(Exception e, CommandListAsync wrapper, List<Type> exceptionTypes = null)
+		{
+			switch (e)
+			{
+				case APIUnauthorizedException _:
+					if (!exceptionTypes.Contains(e.GetType()))
+					{
+						Authorise();
+						exceptionTypes.Add(e.GetType());
+						return await ExecuteInner(wrapper, exceptionTypes);
+					}
+
+					isAuthorised = false;
+					break;
+			}
+
+			Throw(e);
+			return false;
+		}
 
 		protected virtual async Task<bool> ExecuteInner(CommandListAsync wrapper, List<Type> exceptionTypes = null)
 		{
@@ -83,24 +102,10 @@ namespace Spotify
 
 				return true;
 			}
-			catch (APIUnauthorizedException e)
-			{
-				if (!exceptionTypes.Contains(e.GetType()))
-				{
-					Authorise();
-					exceptionTypes.Add(e.GetType());
-					return await ExecuteInner(wrapper, exceptionTypes);
-				}
-
-				isAuthorised = false;
-				Throw(e);
-			}
 			catch (Exception e)
 			{
-				Throw(e);
+				return await HandleErrorAsync(e, wrapper, exceptionTypes);
 			}
-
-			return false;
 		}
 
 		protected virtual Task InitialiseAsync()
@@ -113,17 +118,7 @@ namespace Spotify
 		{
 			if (backupAccessToken is null)
 			{
-				string configFileName = Path.Combine(Paths.AssemblyDirectory, "spotifyAccessToken.txt");
-				if (File.Exists(configFileName) && DateTime.UtcNow - File.GetLastWriteTimeUtc(configFileName) < TimeSpan.FromHours(1))
-				{
-					accessToken = File.ReadAllText(configFileName).Trim();
-					isAuthorised = true;
-				}
-				else
-				{
-					accessToken = null;
-					isAuthorised = false;
-				}
+				isAuthorised = !((accessToken = Preferences.AccessToken) is null);
 			}
 			else
 			{

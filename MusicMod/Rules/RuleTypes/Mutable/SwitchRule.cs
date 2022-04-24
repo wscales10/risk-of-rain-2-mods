@@ -9,10 +9,12 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Utils;
+using Utils.Reflection.Properties;
 
 namespace Rules.RuleTypes.Mutable
 {
 #warning could have an issue with enums?
+
 	public class SwitchRule<T> : UpperRule
 	{
 		private readonly PatternGenerator<T> patternGenerator;
@@ -45,9 +47,26 @@ namespace Rules.RuleTypes.Mutable
 
 		public Rule DefaultRule { get; }
 
-		private IPattern<T> GeneratePattern(T value)
+		public static explicit operator ArrayRule(SwitchRule<T> sr)
 		{
-			return patternGenerator is null ? RoR2PatternParser.Instance.GetEqualizer(value) : patternGenerator(value);
+			var rules = sr.Cases.Select(c =>
+			{
+				var pattern = new OrPattern<T>(c.Arr.Select(sr.GeneratePattern).ToArray());
+				return new IfRule(Query.Create(sr.PropertyName, pattern) & (c.WherePattern ?? ConstantPattern<Context>.True), c.Output);
+			}).Cast<Rule>().ToList();
+
+			if (!(sr.DefaultRule is null))
+				rules.Add(sr.DefaultRule);
+
+			return (ArrayRule)new ArrayRule(rules).Named(sr.Name);
+		}
+
+		public static explicit operator StaticSwitchRule(SwitchRule<T> sr)
+		{
+			return (StaticSwitchRule)new StaticSwitchRule(
+				new PropertyInfo(sr.PropertyName, typeof(T)),
+				sr.DefaultRule,
+				sr.Cases.Select(c => new Case<IPattern>(c.Output, c.WherePattern, c.Arr.Select(sr.GeneratePattern).ToArray())).ToArray()).Named(sr.Name);
 		}
 
 		public override Rule GetRule(Context c)
@@ -68,25 +87,6 @@ namespace Rules.RuleTypes.Mutable
 			return DefaultRule;
 		}
 
-		public static explicit operator ArrayRule(SwitchRule<T> sr)
-		{
-			var rules = sr.Cases.Select(c =>
-			{
-				var pattern = new OrPattern<T>(c.Arr.Select(sr.GeneratePattern).ToArray());
-				return new IfRule(Query.Create(sr.PropertyName, pattern) & (c.WherePattern ?? ConstantPattern<Context>.True), c.Output);
-			}).Cast<Rule>().ToList();
-
-			if (!(sr.DefaultRule is null))
-				rules.Add(sr.DefaultRule);
-
-			return (ArrayRule)new ArrayRule(rules).Named(sr.Name);
-		}
-
-		public static explicit operator StaticSwitchRule(SwitchRule<T> sr)
-		{
-			return (StaticSwitchRule)new StaticSwitchRule(new PropertyInfo(sr.PropertyName, typeof(T)), sr.DefaultRule, sr.Cases.Select(c => new Case<IPattern>(c.Output, c.Arr.Select(sr.GeneratePattern).ToArray())).ToArray()).Named(sr.Name);
-		}
-
 		public override XElement ToXml()
 		{
 			// return ((ArrayRule)this).ToXml();
@@ -94,18 +94,23 @@ namespace Rules.RuleTypes.Mutable
 		}
 
 		public override IReadOnlyRule ToReadOnly() => ((StaticSwitchRule)this).ToReadOnly();
+
+		private IPattern<T> GeneratePattern(T value)
+		{
+			return patternGenerator is null ? RoR2PatternParser.Instance.GetEqualizer(value) : patternGenerator(value);
+		}
 	}
 
 	public class StaticSwitchRule : UpperRule, ISwitchRule
 	{
-		public PropertyInfo PropertyInfo { get; set; }
-
 		public StaticSwitchRule(PropertyInfo propertyInfo = null, Rule defaultRule = null, params Case<IPattern>[] cases)
 		{
 			PropertyInfo = propertyInfo;
 			DefaultRule = defaultRule;
 			Cases = cases.ToList();
 		}
+
+		public PropertyInfo PropertyInfo { get; set; }
 
 		public List<Case<IPattern>> Cases { get; }
 
@@ -114,6 +119,48 @@ namespace Rules.RuleTypes.Mutable
 		IEnumerable<ICase<IPattern>> ISwitchRule.Cases => Cases;
 
 		IRule ISwitchRule.DefaultRule => DefaultRule;
+
+		public static StaticSwitchRule Parse(XElement element)
+		{
+			PropertyInfo propertyInfo = null;
+			Rule defaultRule = null;
+			var cases = new List<Case<IPattern>>();
+			var list = new List<IPattern>();
+			IPattern<Context> where = null;
+
+			foreach (var child in element.Elements())
+			{
+				switch (child.Name.ToString())
+				{
+					case "On":
+						propertyInfo = PropertyInfo.Parse<Context>(element.Element("On"), RoR2PatternParser.Instance);
+						break;
+
+					case "Case":
+						list.Add(RoR2PatternParser.Instance.Parse(propertyInfo.Type, child.OnlyChild()));
+						break;
+
+					case "Where":
+						where = RoR2PatternParser.Instance.Parse<Context>(child.OnlyChild());
+						break;
+
+					case "Return":
+						cases.Add(new Case<IPattern>(FromXml(child.OnlyChild()), where, list.ToArray()));
+						where = null;
+						list.Clear();
+						break;
+
+					case "Default":
+						defaultRule = FromXml(child.OnlyChild());
+						break;
+
+					default:
+						throw new XmlException();
+				}
+			}
+
+			return new StaticSwitchRule(propertyInfo, defaultRule, cases.ToArray());
+		}
 
 		public override Rule GetRule(Context c)
 		{
@@ -160,42 +207,6 @@ namespace Rules.RuleTypes.Mutable
 			}
 
 			return element;
-		}
-
-		public static StaticSwitchRule Parse(XElement element)
-		{
-			PropertyInfo propertyInfo = null;
-			Rule defaultRule = null;
-			var cases = new List<Case<IPattern>>();
-			var list = new List<IPattern>();
-			IPattern<Context> where = null;
-
-			foreach (var child in element.Elements())
-			{
-				switch (child.Name.ToString())
-				{
-					case "On":
-						propertyInfo = PropertyInfo.Parse(element.Element("On"), RoR2PatternParser.Instance);
-						break;
-					case "Case":
-						list.Add(RoR2PatternParser.Instance.Parse(propertyInfo.Type, child.OnlyChild()));
-						break;
-					case "Where":
-						where = RoR2PatternParser.Instance.Parse<Context>(child.OnlyChild());
-						break;
-					case "Return":
-						cases.Add(new Case<IPattern>(FromXml(child.OnlyChild()), where, list.ToArray()));
-						list.Clear();
-						break;
-					case "Default":
-						defaultRule = FromXml(child.OnlyChild());
-						break;
-					default:
-						throw new XmlException();
-				}
-			}
-
-			return new StaticSwitchRule(propertyInfo, defaultRule, cases.ToArray());
 		}
 
 		public override IReadOnlyRule ToReadOnly() => new ReadOnlySwitchRule(this);

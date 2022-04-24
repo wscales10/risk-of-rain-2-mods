@@ -19,6 +19,8 @@ namespace Patterns
 
 	public interface IPattern : IXmlExportable
 	{
+#error instead of using this when exporting, we should export enum patterns with Enum`1 and only convert to nongeneric EnumPattern if there's a problem during import
+
 		IPattern Correct();
 
 		bool IsMatch(object value);

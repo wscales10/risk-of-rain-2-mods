@@ -24,5 +24,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			value = default;
 			return false;
 		}
+
+		protected override void SetStatus(bool status) => Outline(UIElement.patternContainer, UIElement.patternContainer.PatternWrapper is not null);
 	}
 }

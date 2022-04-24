@@ -8,11 +8,13 @@ namespace Patterns.Patterns
 	{
 		public abstract string Definition { get; }
 
-		public sealed override string ToString() => Definition;
+		public virtual string TypeKey => GetTypeDefKey(typeof(T));
+
+		public override string ToString() => Definition;
 
 		public override XElement ToXml()
 		{
-			if(Definition is null)
+			if (Definition is null)
 			{
 				throw new NullReferenceException();
 			}
@@ -27,7 +29,5 @@ namespace Patterns.Patterns
 
 			return element;
 		}
-
-		public virtual string TypeKey => GetTypeDefKey(typeof(T));
 	}
 }

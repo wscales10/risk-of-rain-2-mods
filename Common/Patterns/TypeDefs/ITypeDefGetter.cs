@@ -4,6 +4,6 @@ namespace Patterns.TypeDefs
 {
 	public interface ITypeDefGetter
 	{
-		TypeDef GetTypeDef(params Type[] genericTypeArgs);
+		TypeDef GetTypeDef(TypeRef typeref);
 	}
 }

@@ -7,13 +7,30 @@ namespace Patterns
 {
 	public abstract class PatternBase : IPattern
 	{
+		public static bool Inherits(Type derivedType, Type baseType)
+		{
+			if (derivedType.IsGenericType(typeof(Nullable<>)))
+			{
+				var genericTypeArg = derivedType.GenericTypeArguments.FirstOrDefault();
+
+				if (!(genericTypeArg is null) && typeof(Enum).IsAssignableFrom(genericTypeArg))
+				{
+					return true;
+				}
+			}
+
+			return baseType?.IsAssignableFrom(derivedType) ?? false;
+		}
+
 		public abstract bool IsMatch(object value);
 
 		public abstract XElement ToXml();
 
+		public virtual IPattern Correct() => this;
+
 		internal static string GetTypeDefKey(Type type)
 		{
-			if(type is null)
+			if (type is null)
 			{
 				return null;
 			}
@@ -25,8 +42,6 @@ namespace Patterns
 
 			return type.Name;
 		}
-
-		protected static bool IsNullableEnumType(Type type) => type.IsGenericType(typeof(Nullable<>)) && typeof(Enum).IsAssignableFrom(type.GenericTypeArguments.Single());
 
 		internal static (string, string) GetTypeDefKeys(Type type)
 		{
@@ -40,6 +55,6 @@ namespace Patterns
 			}
 		}
 
-		public virtual IPattern Correct() => this;
+		protected static bool IsNullableEnumType(Type type) => type.IsGenericType(typeof(Nullable<>)) && typeof(Enum).IsAssignableFrom(type.GenericTypeArguments.Single());
 	}
 }

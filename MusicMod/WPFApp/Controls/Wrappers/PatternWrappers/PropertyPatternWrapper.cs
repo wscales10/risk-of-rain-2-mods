@@ -1,60 +1,31 @@
 ﻿using Patterns;
 using Patterns.Patterns;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Controls;
-using Utils;
-using System.Windows;
-using System.Windows.Media;
+using WPFApp.Controls.PatternControls;
+using Utils.Reflection;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
-	internal class PropertyPatternWrapper<TObject> : PatternWrapper<PropertyPattern<TObject>, StackPanel>
+	internal class PropertyPatternWrapper<TObject> : PatternWrapper<PropertyPattern<TObject>, PropertyPatternControl>
 	{
-		private readonly ComboBox propertyComboBox = new() { Width = 160 };
-
-		private readonly Border patternPickerContainer = new();
-
-		private readonly Dictionary<string, IControlWrapper> patternPickerWrappers = new();
-
-		private readonly SetProperty<IControlWrapper> PatternPickerWrapper = new();
-
-		private readonly NavigationContext navigationContext;
-
-		private IPattern waitingPattern;
-
 		protected PropertyPatternWrapper(PropertyPattern<TObject> pattern, NavigationContext navigationContext)
 		{
-			this.navigationContext = navigationContext;
-			PatternPickerWrapper.OnSet += (_, value) => patternPickerContainer.Child = value?.UIElement;
-			UIElement.Children.Add(propertyComboBox);
-			UIElement.Children.Add(patternPickerContainer);
-
-			propertyComboBox.ItemsSource = Info.GetProperties<TObject>();
-
-			propertyComboBox.SelectionChanged += PropertyComboBox_SelectionChanged;
+			UIElement.NavigationContext = navigationContext;
 			SetValue(pattern);
 		}
 
-		public override StackPanel UIElement { get; } = new();
+		public override PropertyPatternControl UIElement { get; } = new(typeof(TObject));
+
+		protected override void SetStatus(bool status) => Outline(UIElement.propertyComboBox, UIElement.SelectedProperty is not null);
 
 		protected override void setValue(PropertyPattern<TObject> value)
 		{
-			waitingPattern = value?.Pattern;
-			if (((PropertyInfo)propertyComboBox.SelectedItem) == value?.PropertyInfo)
-			{
-				PropertyComboBox_SelectionChanged(this, null);
-			}
-			else
-			{
-				propertyComboBox.SelectedItem = value?.PropertyInfo;
-			}
+			UIElement.WaitingPattern = value?.Pattern;
+			UIElement.SelectedProperty = value?.PropertyInfo;
 		}
 
 		protected override bool tryGetValue(out PropertyPattern<TObject> value)
 		{
-			var propertyInfo = (PropertyInfo)propertyComboBox.SelectedItem;
+			var propertyInfo = UIElement.SelectedProperty;
 
 			if (propertyInfo is null)
 			{
@@ -62,7 +33,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 				return false;
 			}
 
-			if (!PatternPickerWrapper.Get().TryGetValue(out object pattern))
+			if (!UIElement.TryGetPattern(out IPattern pattern))
 			{
 				value = null;
 				return false;
@@ -73,31 +44,6 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 				.MakeGenericMethod(propertyInfo.Type)
 				.InvokeStatic<PropertyPattern<TObject>>(propertyInfo.Name, pattern);
 			return true;
-		}
-
-		private void PropertyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			var selectedItem = (PropertyInfo)propertyComboBox.SelectedItem;
-
-			if (selectedItem is null)
-			{
-				PatternPickerWrapper.Set(null);
-			}
-			else if (patternPickerWrappers.TryGetValue(selectedItem.Name, out var value))
-			{
-				PatternPickerWrapper.Set(value);
-			}
-			else
-			{
-				PatternPickerWrapper.Set((IControlWrapper)typeof(SinglePatternPickerWrapper<>).MakeGenericType(selectedItem.Type).Construct(navigationContext));
-				patternPickerWrappers[selectedItem.Name] = PatternPickerWrapper.Get();
-			}
-
-			if (waitingPattern is not null)
-			{
-				PatternPickerWrapper.Get().SetValue(waitingPattern);
-				waitingPattern = null;
-			}
 		}
 	}
 }
