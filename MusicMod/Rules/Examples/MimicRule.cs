@@ -67,10 +67,6 @@ namespace Rules
 			C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging),
 			C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null)).Named("Environments");
 
-		private static Bucket Dehydrated() => Transfer("3BBYYGOlrDKEVOQvXD4huf", Switch(ms => ms, P<int, MathFunc>(ms => ms - 8000, IntPattern.x > 68000)), StringPattern.Equals("0Q4NqUpiuOnQxYOGjnbuCh"));
-
-		private static Bucket Main() => Transfer("0Q4NqUpiuOnQxYOGjnbuCh", Switch(ms => ms, P<int, MathFunc>(ms => ms + 8000, IntPattern.x > 60000)), StringPattern.Equals("3BBYYGOlrDKEVOQvXD4huf"));
-
 		private static readonly Rule OtherRule = new SwitchRule<MyScene>(
 			nameof(Context.SceneName),
 			ScenePattern.Equals,
@@ -87,6 +83,10 @@ namespace Rules
 			nameof(Context.SceneType),
 			OtherRule,
 			C(EnvironmentRule, SceneType.Stage, SceneType.Intermission)).ToReadOnly();
+
+		private static Bucket Dehydrated() => Transfer("3BBYYGOlrDKEVOQvXD4huf", Switch(ms => ms, P<int, MathFunc>(ms => ms - 8000, IntPattern.x > 68000)), StringPattern.Equals("0Q4NqUpiuOnQxYOGjnbuCh"));
+
+		private static Bucket Main() => Transfer("0Q4NqUpiuOnQxYOGjnbuCh", Switch(ms => ms, P<int, MathFunc>(ms => ms + 8000, IntPattern.x > 60000)), StringPattern.Equals("3BBYYGOlrDKEVOQvXD4huf"));
 
 		private static MultiCase<MyScene> M(string trackId, params DefinedScene[] sceneNames)
 		{

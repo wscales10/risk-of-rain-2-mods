@@ -1,5 +1,4 @@
 ﻿using HtmlAgilityPack;
-using Microsoft.VisualStudio.Threading;
 using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
@@ -7,14 +6,12 @@ using Spotify;
 using Spotify.Authorisation;
 using Spotify.Commands;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows;
 using Utils;
-using Utils.Async;
 using WPFApp.Controls;
 using WPFApp.Controls.PatternControls;
 using WPFApp.Controls.Rows;
@@ -34,8 +31,6 @@ namespace WPFApp
 		private readonly History<Navigation> history = new();
 
 		private readonly MutableNavigationContext navigationContext = new();
-
-		private readonly AsyncManager asyncManager = new();
 
 		private Action display;
 
@@ -90,7 +85,7 @@ namespace WPFApp
 
 		public ControlBase Display(object item)
 		{
-			ControlBase control = ControlList.Find(c => c.Object == item) ?? item switch
+			ControlBase control = ControlList.Find(c => c is IItemControl itemControl && itemControl.ItemObject == item) ?? item switch
 			{
 				Rule rule => GetRuleControl(rule),
 				IPattern pattern => GetPatternControl(pattern),
@@ -251,7 +246,7 @@ namespace WPFApp
 			display();
 		}
 
-		private RuleControlBase GetRuleControl(Rule rule)
+		private ControlBase GetRuleControl(Rule rule)
 		{
 			return new RuleControlWrapper(rule switch
 			{
@@ -315,7 +310,7 @@ namespace WPFApp
 				return false;
 			}
 
-			if (!CurrentControl.TrySave())
+			if (!CurrentControl.TrySave().IsSuccess)
 			{
 				return false;
 			}
@@ -373,6 +368,6 @@ namespace WPFApp
 			return true;
 		}
 
-		private bool TryLeaveControl() => CurrentControl?.TrySave() != false;
+		private bool TryLeaveControl() => CurrentControl?.TrySave().IsSuccess != false;
 	}
 }

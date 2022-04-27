@@ -8,6 +8,7 @@ using WPFApp.Controls.Rows;
 using System.Collections.Specialized;
 using System.Windows.Media;
 using Utils;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.GridManagers
 {
@@ -25,19 +26,9 @@ namespace WPFApp.Controls.GridManagers
 
 		protected override double RowMinHeight => 130;
 
-		public bool TrySaveChanges()
+		public SaveResult TrySaveChanges()
 		{
-			bool success = true;
-
-			foreach (TRow row in Items)
-			{
-				if (!row.TrySaveChanges())
-				{
-					success = false;
-				}
-			}
-
-			return success;
+			return Items.All(r => r.TrySaveChanges());
 		}
 
 		public void Select(int index) => selectedIndices.Add(index);

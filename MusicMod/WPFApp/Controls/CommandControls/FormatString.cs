@@ -7,6 +7,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using Utils;
 using Utils.Reflection.Properties;
+using WPFApp.Controls.Wrappers;
 using WPFApp.Converters;
 
 namespace WPFApp.Controls.CommandControls
@@ -126,27 +127,27 @@ namespace WPFApp.Controls.CommandControls
 			}
 		}
 
-		internal bool TryGetProperties(Command command)
+		internal SaveResult TryGetProperties(Command command, bool trySave)
 		{
-			bool success = true;
-
-			foreach (var propertyString in propertyStrings)
+			return propertyStrings.All(propertyString =>
 			{
 				if (!propertyString.IsRequired && notDisplayed.Contains(propertyString))
 				{
 					command.SetPropertyValue(propertyString.PropertyName, null);
-				}
-				else if (propertyString.ControlWrapper.TryGetValue(out object value))
-				{
-					command.SetPropertyValue(propertyString.PropertyName, value);
+					return null;
 				}
 				else
 				{
-					success = false;
-				}
-			}
+					var result = propertyString.ControlWrapper.TryGetObject(trySave);
 
-			return success;
+					if (result.IsSuccess)
+					{
+						command.SetPropertyValue(propertyString.PropertyName, result.Value);
+					}
+
+					return result;
+				}
+			});
 		}
 
 		private void Display(PropertyString propertyString)

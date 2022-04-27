@@ -133,7 +133,7 @@ namespace Rules.RuleTypes.Mutable
 				switch (child.Name.ToString())
 				{
 					case "On":
-						propertyInfo = PropertyInfo.Parse<Context>(element.Element("On"), RoR2PatternParser.Instance);
+						propertyInfo = PropertyInfo.Parse<Context>(element.Element("On"));
 						break;
 
 					case "Case":
@@ -190,7 +190,7 @@ namespace Rules.RuleTypes.Mutable
 			{
 				foreach (var pattern in @case.Arr)
 				{
-					element.Add(new XElement("Case", pattern.Correct().ToXml()));
+					element.Add(new XElement("Case", pattern.ToXml()));
 				}
 
 				if (!(@case.WherePattern is null))

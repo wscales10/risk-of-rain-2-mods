@@ -26,6 +26,7 @@ namespace WPFApp.Controls.PatternControls
 		{
 			InitializeComponent();
 			PatternPickerWrapper.OnSet += propertySetEventHandler;
+			propertyComboBox.SelectionChanged += (s, e) => ValueChanged?.Invoke();
 		}
 
 		public PropertyPatternControl(NavigationContext navigationContext) : this() => NavigationContext = navigationContext;
@@ -33,6 +34,8 @@ namespace WPFApp.Controls.PatternControls
 		public PropertyPatternControl(Type objectType, NavigationContext navigationContext) : this(navigationContext) => ObjectType = objectType;
 
 		public PropertyPatternControl(Type objectType) : this() => ObjectType = objectType;
+
+		public event Action ValueChanged;
 
 		public IPattern WaitingPattern { private get; set; }
 
@@ -66,23 +69,31 @@ namespace WPFApp.Controls.PatternControls
 			}
 		}
 
-		public bool TryGetPattern(out IPattern pattern)
+		public SaveResult<IPattern> TryGetPattern(bool trySave)
 		{
-			if (PatternPickerWrapper.Get().TryGetValue(out object value))
+			var result = PatternPickerWrapper.Get().TryGetObject(trySave);
+			return SaveResult.Create<IPattern>(result);
+		}
+
+		private void propertySetEventHandler(IControlWrapper oldValue, IControlWrapper value)
+		{
+			if (oldValue is not null)
 			{
-				pattern = (IPattern)value;
-				return true;
+				oldValue.ValueSet -= NotifyValueChanged;
 			}
 
-			pattern = default;
-			return false;
-		}
-
-		private void propertySetEventHandler(IControlWrapper _, IControlWrapper value)
-		{
 			patternPickerContainer.Child = value?.UIElement;
 			patternPickerLabel.Visibility = value is null ? Visibility.Hidden : Visibility.Visible;
+
+			if (value is not null)
+			{
+				value.ValueSet += NotifyValueChanged;
+			}
+
+			NotifyValueChanged();
 		}
+
+		private void NotifyValueChanged(object _ = null) => ValueChanged?.Invoke();
 
 		private void propertyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{

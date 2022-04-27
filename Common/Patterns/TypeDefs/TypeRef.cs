@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Utils;
 
 namespace Patterns.TypeDefs
@@ -19,9 +20,9 @@ namespace Patterns.TypeDefs
 			GenericTypeArguments = genericTypeArgs;
 		}
 
-		public string TypeKey { get; private set; }
+		public string TypeKey { get; set; }
 
-		public IList<string> GenericTypeKeys { get; set; } = Array.Empty<string>();
+		public string[] GenericTypeKeys { get; set; } = Array.Empty<string>();
 
 		public Type FullType
 		{
@@ -32,7 +33,7 @@ namespace Patterns.TypeDefs
 				if (value.IsGenericType)
 				{
 					GenericTypeDef = value.GetGenericTypeDefinition();
-					GenericTypeArguments = value.GenericTypeArguments.ToReadOnlyCollection();
+					GenericTypeArguments = value.GenericTypeArguments;
 				}
 
 				fullType = value;
@@ -41,9 +42,11 @@ namespace Patterns.TypeDefs
 
 		public Type GenericTypeDef { get; set; }
 
-		public IList<Type> GenericTypeArguments { get; set; } = Array.Empty<Type>();
+		public Type[] GenericTypeArguments { get; set; } = Array.Empty<Type>();
 
-		public int GenericSize => Math.Max(GenericTypeKeys.Count, GenericTypeArguments.Count);
+		public int GenericSize => Math.Max(GenericTypeKeys.Length, GenericTypeArguments.Length);
+
+		public Type DenullabledType => (FullType?.IsGenericType(typeof(Nullable<>)) ?? false) ? GenericTypeArguments.SingleOrDefault() : FullType;
 
 		public void AssumeTypeKey()
 		{

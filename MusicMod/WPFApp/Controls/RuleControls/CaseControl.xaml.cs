@@ -6,6 +6,8 @@ using WPFApp.Controls.PatternControls;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using System.Windows;
 using MyRoR2;
+using System.Windows.Media;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.RuleControls
 {
@@ -18,48 +20,38 @@ namespace WPFApp.Controls.RuleControls
 
 		private readonly MultiPatternPicker patternPicker;
 
-		private readonly Func<bool> tryGetValues;
+		private readonly Func<SaveResult> tryGetValues;
 
 		public CaseControl(Case<IPattern> c, Type valueType, NavigationContext navigationContext)
 		{
 			InitializeComponent();
 			whereControl.NavigationContext = navigationContext;
+			whereControl.PatternWrapper.StatusSet += WherePatternWrapper_StatusSet;
 			whereControl.PatternWrapper.SetValue(c.WherePattern);
 			this.navigationContext = navigationContext;
 			patternPicker = new(valueType, navigationContext);
 			patternPicker.VerticalAlignment = VerticalAlignment.Center;
 			patternPickerContainer.Child = patternPicker;
-			tryGetValues = patternPicker.PatternContainerManager.BindLooselyTo(c.Arr, AddPattern, (PatternContainer c, out IPattern p) =>
-			{
-				if (c.PatternWrapper.TryGetValue(out object value))
-				{
-					p = (IPattern)value;
-					return true;
-				}
-
-				p = null;
-				return false;
-			});
+			tryGetValues = patternPicker.PatternContainerManager.BindLooselyTo(c.Arr, AddPattern, (PatternContainer c) => SaveResult.Create<IPattern>(c.PatternWrapper.TryGetObject(true)));
 			Case = c;
 		}
 
 		public Case<IPattern> Case { get; }
 
-		public bool TrySaveChanges()
+		public SaveResult TrySaveChanges()
 		{
-			bool success = tryGetValues();
+			SaveResult success = tryGetValues();
+			var result = whereControl.PatternWrapper.TryGetObject(true);
 
-			if (whereControl.PatternWrapper.TryGetValue(out object value))
+			if (result.IsSuccess)
 			{
-				Case.WherePattern = (IPattern<Context>)value;
-			}
-			else
-			{
-				success = false;
+				Case.WherePattern = (IPattern<Context>)result.Value;
 			}
 
-			return success;
+			return success & result;
 		}
+
+		private void WherePatternWrapper_StatusSet(bool? status) => ToggleButton.Background = status ?? true ? Brushes.White : Brushes.Red;
 
 		private PatternContainer AddPattern(IPattern pattern) => patternPicker.AddPatternWrapper(PatternWrapper.Create(pattern, navigationContext));
 

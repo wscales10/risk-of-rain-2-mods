@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.RuleControls
 {
@@ -41,7 +42,11 @@ namespace WPFApp.Controls.RuleControls
 
 		public override StaticSwitchRule Item { get; }
 
-		protected override bool ShouldAllowExit() => propertyComboBox.SelectedItem is not null && rowManager.TrySaveChanges();
+		protected override SaveResult ShouldAllowExit()
+		{
+			// TODO: should consider whether patterns implement IPattern<selected property type>
+			return new SaveResult(propertyComboBox.SelectedItem is not null) && rowManager.TrySaveChanges();
+		}
 
 		private CaseRow AddCase(Case<IPattern> c = null)
 		{

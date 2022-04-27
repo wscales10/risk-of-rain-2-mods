@@ -13,16 +13,20 @@ namespace WPFApp.Controls.Wrappers
 
 	public interface IReadableControlWrapper : IWrapper
 	{
-		bool TryGetValue(out object value);
+		event Action<bool?> StatusSet;
+
+		event Action<object> ValueSet;
+
+		SaveResult<object> TryGetObject(bool trySave);
 
 		void ForceGetValue(out object value);
 
 		void Focus();
 	}
 
-	internal interface IReadableControlWrapper<TValue> : IWrapper
+	internal interface IReadableControlWrapper<TValue> : IReadableControlWrapper
 	{
-		bool TryGetValue(out TValue value);
+		SaveResult<TValue> TryGetValue(bool trySave);
 
 		void ForceGetValue(out TValue value);
 	}
@@ -37,18 +41,34 @@ namespace WPFApp.Controls.Wrappers
 		void SetValue(TValue value);
 	}
 
-	internal abstract class ReadableControlWrapper<TValue, TControl> : IReadableControlWrapper, IReadableControlWrapper<TValue>
+	internal abstract class ReadableControlWrapper<TValue, TControl> : IReadableControlWrapper<TValue>
 		where TControl : FrameworkElement
 	{
 		private bool wantsFocus;
 
 		private bool isInitialised;
 
+		protected ReadableControlWrapper()
+		{
+			valueSet += ReadableControlWrapper_ValueSet;
+			ValueCleared += ReadableControlWrapper_ValueCleared;
+		}
+
+		public event Action<bool?> StatusSet;
+
+		public event Action<object> ValueSet;
+
+		protected event Action ValueCleared;
+
+		protected event Action<TValue> valueSet;
+
 		public abstract TControl UIElement { get; }
 
 		FrameworkElement IWrapper.UIElement => UIElement;
 
 		public virtual UIElement FocusElement => UIElement;
+
+		protected bool HighlightStatus { get; private set; }
 
 		public void ForceGetValue(out object value)
 		{
@@ -58,25 +78,38 @@ namespace WPFApp.Controls.Wrappers
 
 		public void ForceGetValue(out TValue value)
 		{
-			if (!tryGetValue(out value))
+			var result = tryGetValue(false);
+			if (!result.IsSuccess)
 			{
 				throw new NotSupportedException();
 			}
+
+			value = result.Value;
 		}
 
-		public bool TryGetValue(out TValue value)
+		public SaveResult<TValue> TryGetValue(bool trySave)
 		{
-			bool? result = tryGetValue(out TValue t) && Validate(t);
-			SetStatus(result);
-			value = t;
-			return result ?? false;
-		}
+			if (trySave)
+			{
+				HighlightStatus = true;
+			}
 
-		public bool TryGetValue(out object value)
-		{
-			bool result = TryGetValue(out TValue t);
-			value = t;
+			var result = tryGetValue(trySave);
+			result &= Validate(result.Value);
+
+			if (trySave)
+			{
+				result.ReleaseActions.Enqueue(() => StopHighlighting());
+				SetStatus(result.IsSuccess);
+			}
+
 			return result;
+		}
+
+		public SaveResult<object> TryGetObject(bool trySave)
+		{
+			var result = TryGetValue(trySave);
+			return new(result, result.Value);
 		}
 
 		public void Focus()
@@ -107,6 +140,15 @@ namespace WPFApp.Controls.Wrappers
 			};
 		}
 
+		protected static void Outline(Border border, bool status)
+		{
+			border.BorderBrush = status switch
+			{
+				false => Brushes.Red,
+				_ => Brushes.DarkGray,
+			};
+		}
+
 		protected static void Outline(Control control, bool? status, bool threeWay = false)
 		{
 			control.BorderBrush = status switch
@@ -117,11 +159,37 @@ namespace WPFApp.Controls.Wrappers
 			};
 		}
 
-		protected abstract bool tryGetValue(out TValue value);
+		protected virtual void ReadableControlWrapper_ValueSet(TValue value)
+		{
+			if (Validate(value))
+			{
+				SetStatus(true);
+			}
 
-		protected virtual void SetStatus(bool? status) => SetStatus(status ?? true);
+			ValueSet?.Invoke(value);
+		}
 
-		protected virtual void SetStatus(bool status)
+		protected void NotifyValueChanged()
+		{
+			var result = tryGetValue(false);
+
+			if (result.IsSuccess)
+			{
+				NotifyValueChanged(result.Value);
+			}
+			else
+			{
+				ValueCleared?.Invoke();
+			}
+		}
+
+		protected void NotifyValueChanged(TValue value) => valueSet?.Invoke(value);
+
+		protected abstract SaveResult<TValue> tryGetValue(bool trySave);
+
+		protected virtual void setStatus(bool? status) => setStatus(status ?? true);
+
+		protected virtual void setStatus(bool status)
 		{
 			if (UIElement is Control c)
 			{
@@ -130,6 +198,30 @@ namespace WPFApp.Controls.Wrappers
 		}
 
 		protected virtual bool Validate(TValue value) => true;
+
+		protected virtual void ReadableControlWrapper_ValueCleared()
+		{
+			SetStatus(null);
+			ValueSet?.Invoke(null);
+		}
+
+		protected virtual void StopHighlighting(bool clearStatus = true)
+		{
+			HighlightStatus = false;
+			if (clearStatus)
+			{
+				SetStatus(null);
+			}
+		}
+
+		private void SetStatus(bool? status)
+		{
+			if (HighlightStatus)
+			{
+				setStatus(status);
+				StatusSet?.Invoke(status);
+			}
+		}
 	}
 
 	internal abstract class ControlWrapper<TValue, TControl> : ReadableControlWrapper<TValue, TControl>, IControlWrapper, IControlWrapper<TValue>
@@ -138,7 +230,7 @@ namespace WPFApp.Controls.Wrappers
 		public void SetValue(TValue value)
 		{
 			setValue(value);
-			SetStatus(null);
+			StopHighlighting();
 		}
 
 		public void SetValue(object value)

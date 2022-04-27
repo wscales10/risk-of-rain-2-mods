@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using Xceed.Wpf.Toolkit;
+﻿using Xceed.Wpf.Toolkit;
 
 namespace WPFApp.Controls.Wrappers
 {
@@ -9,17 +8,17 @@ namespace WPFApp.Controls.Wrappers
 		{
 			UIElement.Minimum = min;
 			UIElement.Maximum = max;
+			UIElement.ValueChanged += (s, e) => NotifyValueChanged();
 		}
 
 		public override IntegerUpDown UIElement { get; } = new();
 
 		protected override void setValue(int value) => UIElement.Value = value;
 
-		protected override bool tryGetValue(out int value)
+		protected override SaveResult<int> tryGetValue(bool trySave)
 		{
 			int? input = UIElement.Value;
-			value = input ?? default;
-			return input is not null;
+			return new(input is not null, input ?? 0);
 		}
 
 		protected override bool Validate(int value)

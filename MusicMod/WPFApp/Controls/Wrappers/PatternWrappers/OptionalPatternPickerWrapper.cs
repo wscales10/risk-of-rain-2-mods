@@ -11,24 +11,17 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
 		protected override void setValue(IPattern<T> value) => UIElement.AddPattern(value);
 
-		protected override bool tryGetValue(out IPattern<T> value)
+		protected override SaveResult<IPattern<T>> tryGetValue(bool trySave)
 		{
 			var patternWrapper = UIElement.patternContainer.PatternWrapper;
 
 			if (patternWrapper is null)
 			{
-				value = default;
-				return true;
+				return new(true);
 			}
 
-			if (patternWrapper.TryGetValue(out object output))
-			{
-				value = (IPattern<T>)output;
-				return true;
-			}
-
-			value = default;
-			return false;
+			var result = patternWrapper.TryGetObject(trySave);
+			return new(result, result.IsSuccess ? (IPattern<T>)result.Value : default);
 		}
 	}
 }

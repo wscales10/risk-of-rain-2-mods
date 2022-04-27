@@ -11,11 +11,12 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 		{
 			UIElement.NavigationContext = navigationContext;
 			SetValue(pattern);
+			UIElement.ValueChanged += NotifyValueChanged;
 		}
 
 		public override PropertyPatternControl UIElement { get; } = new(typeof(TObject));
 
-		protected override void SetStatus(bool status) => Outline(UIElement.propertyComboBox, UIElement.SelectedProperty is not null);
+		protected override void setStatus(bool? status) => Outline(UIElement.propertyComboBox, status != false || UIElement.SelectedProperty is not null);
 
 		protected override void setValue(PropertyPattern<TObject> value)
 		{
@@ -23,27 +24,25 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			UIElement.SelectedProperty = value?.PropertyInfo;
 		}
 
-		protected override bool tryGetValue(out PropertyPattern<TObject> value)
+		protected override SaveResult<PropertyPattern<TObject>> tryGetValue(bool trySave)
 		{
 			var propertyInfo = UIElement.SelectedProperty;
 
 			if (propertyInfo is null)
 			{
-				value = null;
-				return false;
+				return new(false);
 			}
 
-			if (!UIElement.TryGetPattern(out IPattern pattern))
-			{
-				value = null;
-				return false;
-			}
+			var result = UIElement.TryGetPattern(trySave);
 
-			value = typeof(PropertyPattern<TObject>)
-				.GetMethod("Create", new[] { typeof(string), typeof(IPattern) })
-				.MakeGenericMethod(propertyInfo.Type)
-				.InvokeStatic<PropertyPattern<TObject>>(propertyInfo.Name, pattern);
-			return true;
+			var value = result.IsSuccess
+				? typeof(PropertyPattern<TObject>)
+					.GetMethod("Create", new[] { typeof(string), typeof(IPattern) })
+					.MakeGenericMethod(propertyInfo.Type)
+					.InvokeStatic<PropertyPattern<TObject>>(propertyInfo.Name, result.Value)
+				: null;
+
+			return new(result, value);
 		}
 	}
 }

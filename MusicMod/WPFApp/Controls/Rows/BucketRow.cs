@@ -47,7 +47,7 @@ namespace WPFApp.Controls.Rows
 			HorizontalAlignment = HorizontalAlignment.Center
 		};
 
-		public override bool TrySaveChanges() => formatString.TryGetProperties(Output);
+		public override SaveResult TrySaveChanges() => formatString.TryGetProperties(Output, true);
 
 		protected override UIElement MakeOutputUi()
 		{

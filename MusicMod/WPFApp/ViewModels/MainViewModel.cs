@@ -1,4 +1,5 @@
 ﻿using WPFApp.Controls;
+using WPFApp.Modes;
 
 namespace WPFApp.ViewModels
 {

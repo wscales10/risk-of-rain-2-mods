@@ -75,6 +75,14 @@
     <Reference Include="Microsoft.Win32.Registry, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Win32.Registry.5.0.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
     </Reference>
+    <Reference Include="MyRoR2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Common\MyRoR2\bin\Debug\netstandard2.0\MyRoR2.dll</HintPath>
+    </Reference>
+    <Reference Include="Patterns, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Common\Patterns\bin\Debug\netstandard2.0\Patterns.dll</HintPath>
+    </Reference>
     <Reference Include="Rewired_Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RiskOfRain2.GameLibs.1.2.2-r.0\lib\netstandard2.0\Rewired_Core.dll</HintPath>
     </Reference>
@@ -112,6 +120,10 @@
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RiskOfRain2.GameLibs.1.2.2-r.0\lib\netstandard2.0\UnityEngine.UI.dll</HintPath>
     </Reference>
+    <Reference Include="Utils, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Common\Utils\bin\Debug\netstandard2.0\Utils.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="Wwise, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RiskOfRain2.GameLibs.1.2.2-r.0\lib\netstandard2.0\Wwise.dll</HintPath>
@@ -130,14 +142,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\MyRoR2\MyRoR2.csproj">
-      <Project>{fb5b0599-c55f-43d7-ac75-769c4feb4894}</Project>
-      <Name>MyRoR2</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Common\Patterns\Patterns.csproj">
-      <Project>{BDF8EE8A-0F67-4C51-8C41-DFC6540B04FA}</Project>
-      <Name>Patterns</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Ror2Mod2\Ror2Mod2.csproj">
       <Project>{ade2e2bf-df66-4c0f-b5e9-bad8e2ea13a2}</Project>
       <Name>Ror2Mod2</Name>
@@ -149,10 +153,6 @@
     <ProjectReference Include="..\Spotify\Spotify.csproj">
       <Project>{148bac4f-7540-44fd-b3fc-ab2e16713976}</Project>
       <Name>Spotify</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Common\Utils\Utils.csproj">
-      <Project>{b76a7040-d9d6-403d-a749-5f9a2a231a76}</Project>
-      <Name>Utils</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

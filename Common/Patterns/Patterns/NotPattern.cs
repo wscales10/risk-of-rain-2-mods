@@ -6,18 +6,18 @@ namespace Patterns.Patterns
 {
 	public class NotPattern<T> : Pattern<T>, INotSimplifiable<T>
 	{
-		private readonly IPattern<T> p;
-
 		public NotPattern(IPattern<T> p)
 		{
-			this.p = p;
+			Child = p;
 		}
 
 		public NotPattern()
 		{
 		}
 
-		public static IPattern<T> operator !(NotPattern<T> p) => p.p;
+		public IPattern<T> Child { get; set; }
+
+		public static IPattern<T> operator !(NotPattern<T> p) => p.Child;
 
 		public static NotPattern<T> Parse(XElement element, PatternParser patternParser)
 		{
@@ -26,13 +26,13 @@ namespace Patterns.Patterns
 
 		public override bool IsMatch(T value) => !IsMatch(value);
 
-		public override XElement ToXml() => new XElement("Not", p.ToXml());
+		public override XElement ToXml() => new XElement("Not", Child.ToXml());
 
-		public override string ToString() => $"Not({p})";
+		public override string ToString() => $"Not({Child})";
 
 		public override IPattern<T> Simplify()
 		{
-			var p = this.p.Simplify();
+			var p = this.Child.Simplify();
 
 			if (p is INotSimplifiable<T> ns)
 			{
@@ -48,7 +48,7 @@ namespace Patterns.Patterns
 		{
 			if (IsNullableEnumPattern)
 			{
-				return new NotPattern<Enum>((IPattern<Enum>)p.Correct());
+				return new NotPattern<Enum>((IPattern<Enum>)Child.Correct());
 			}
 			else
 			{

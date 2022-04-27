@@ -1,5 +1,5 @@
-﻿using System;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls
 {
@@ -7,38 +7,20 @@ namespace WPFApp.Controls
 	{
 		protected ControlBase(NavigationContext navigationContext) => NavigationContext = navigationContext;
 
-		public event Action OnItemChanged;
-
 		public NavigationContext NavigationContext { get; }
 
-		public abstract string ItemTypeName { get; }
-
-		public abstract object Object { get; }
-
-		public bool TrySave()
+		public virtual SaveResult TrySave()
 		{
-			if (ShouldAllowExit())
+			SaveResult result = ShouldAllowExit();
+
+			if (result.IsSuccess)
 			{
-				OnItemChanged?.Invoke();
-				return true;
+				result.Release();
 			}
 
-			return false;
+			return result;
 		}
 
-		protected virtual bool ShouldAllowExit() => true;
-	}
-
-	public abstract class ControlBase<TItem> : ControlBase
-	{
-		protected ControlBase(NavigationContext navigationContext) : base(navigationContext)
-		{
-		}
-
-		public override sealed object Object => Item;
-
-		public abstract TItem Item { get; }
-
-		public override string ItemTypeName => typeof(TItem).Name.ToLower();
+		protected virtual SaveResult ShouldAllowExit() => new(true);
 	}
 }

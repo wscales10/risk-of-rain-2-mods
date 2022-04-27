@@ -45,7 +45,7 @@ namespace Patterns
 
 		internal static (string, string) GetTypeDefKeys(Type type)
 		{
-			if (IsNullableEnumType(type))
+			if (false && IsNullableEnumType(type))
 			{
 				return GetTypeDefKeys(typeof(Enum));
 			}

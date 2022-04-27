@@ -14,10 +14,6 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
 		protected override void setValue(TPattern value) => throw new InvalidOperationException();
 
-		protected override bool tryGetValue(out TPattern value)
-		{
-			value = Pattern;
-			return true;
-		}
+		protected override SaveResult<TPattern> tryGetValue(bool trySave) => new(Pattern);
 	}
 }

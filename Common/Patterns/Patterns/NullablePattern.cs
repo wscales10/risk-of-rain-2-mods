@@ -8,12 +8,15 @@ namespace Patterns.Patterns.SmallPatterns
 	{
 		internal static ParserSpecificTypeDefGetter GenericTypeDef { get; }
 			= new ParserSpecificTypeDefGetter(
-				patternParser => new GenericArgTypeDef(
-					gta => new TypeDef(
-						(_, __) => throw new InvalidOperationException(),
-						(t, x) => Equalizer(t, x, patternParser),
-						typeof(Nullable<>).MakeGenericType(gta),
-						null)));
+				patternParser => new BestTypeDefGetter(
+					typeRef =>
+					{
+						return new TypeDef(
+							(_) => throw new InvalidOperationException(),
+							(t, x) => Equalizer(t, x, patternParser),
+							typeof(Nullable<>).MakeGenericType(typeRef.GenericTypeArguments),
+							null);
+					}));
 
 		private static IPattern Equalizer(Type t, object x, PatternParser patternParser)
 		{

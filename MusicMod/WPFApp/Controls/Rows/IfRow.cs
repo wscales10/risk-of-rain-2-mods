@@ -4,6 +4,7 @@ using Rules.RuleTypes.Mutable;
 using System.Windows.Controls;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Controls.PatternControls;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Rows
 {
@@ -32,7 +33,7 @@ namespace WPFApp.Controls.Rows
 
 		public override SinglePatternPicker LeftElement { get; }
 
-		public override bool TrySaveChanges() => PatternPickerWrapper.TryGetValue(out IPattern<Context> _);
+		public override SaveResult TrySaveChanges() => PatternPickerWrapper.TryGetValue(true);
 	}
 
 	internal class ElseRow : IfRow

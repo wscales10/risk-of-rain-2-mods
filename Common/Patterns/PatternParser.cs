@@ -5,6 +5,7 @@ using Patterns.TypeDefs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Xml;
 using System.Xml.Linq;
 using Utils;
@@ -23,7 +24,7 @@ namespace Patterns
 				[nameof(Boolean)] = BoolPattern.TypeDef,
 				[nameof(String)] = StringPattern.TypeDef,
 				[nameof(Enum)] = EnumPattern.TypeDef,
-				[nameof(Enum) + "`1"] = EnumPattern.GenericTypeDef2.Get(this),
+				[nameof(Enum) + "`1"] = EnumPattern.GenericTypeDef.Get(this),
 				[typeof(Nullable<>).Name] = NullablePattern.GenericTypeDef.Get(this),
 				["nullable-null"] = NullPattern.NullableTypeDef.Get(this),
 				["class-null"] = NullPattern.ClassTypeDef.Get(this)
@@ -131,9 +132,10 @@ namespace Patterns
 					return AndPattern<T>.Parse(element, this);
 
 				case "Pattern":
-					var type = element.Attribute("type").Value;
+					var typeKey = element.Attribute("type").Value;
 					var genericTypeKey = element.Attribute("of")?.Value;
-					return (IPattern<T>)GetTypeDef<T>().Definer(element.Value, new TypeRef(typeof(T)));
+					var typeRef = new TypeRef(typeof(T)) { TypeKey = typeKey, GenericTypeKeys = genericTypeKey is null ? Array.Empty<string>() : new[] { genericTypeKey } };
+					return (IPattern<T>)GetTypeDef(typeRef).Definer(element.Value);
 
 				case "Or":
 					return OrPattern<T>.Parse(element, this);
@@ -157,7 +159,7 @@ namespace Patterns
 
 		public bool TryParse<T>(string s, out IPattern<T> output)
 		{
-			IPattern p = GetTypeDef<T>().Definer(s, new TypeRef(typeof(T)));
+			IPattern p = GetTypeDef<T>().Definer(s);
 
 			if (string.IsNullOrEmpty(p?.ToString()))
 			{

@@ -1,14 +1,14 @@
 ﻿using Rules.RuleTypes.Mutable;
+using System;
 using System.Windows.Controls;
 using System.Windows.Markup;
+using System.Xml.Linq;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.RuleControls
 {
 	[ContentProperty(nameof(ContentControl))]
-	/// <summary>
-	/// Interaction logic for RuleControlWrapper.xaml
-	/// </summary>
-	public partial class RuleControlWrapper : RuleControlBase
+	public partial class RuleControlWrapper : ControlBase, IXmlControl
 	{
 		private RuleControlBase contentControl;
 
@@ -16,6 +16,19 @@ namespace WPFApp.Controls.RuleControls
 		{
 			InitializeComponent();
 			ContentControl = contentControl;
+		}
+
+		public event Action OnItemChanged
+		{
+			add
+			{
+				((IItemControl)ContentControl).OnItemChanged += value;
+			}
+
+			remove
+			{
+				((IItemControl)ContentControl).OnItemChanged -= value;
+			}
 		}
 
 		public RuleControlBase ContentControl
@@ -32,9 +45,15 @@ namespace WPFApp.Controls.RuleControls
 			}
 		}
 
-		public override Rule Item => ContentControl.Item;
+		public Rule Item => ContentControl.Item;
 
-		protected override bool ShouldAllowExit()
+		public string ItemTypeName => ContentControl.ItemTypeName;
+
+		public object ItemObject => ContentControl.ItemObject;
+
+		public XElement GetContentXml() => ContentControl.GetContentXml();
+
+		protected override SaveResult ShouldAllowExit()
 		{
 			string text = ruleNameTextBox.Text;
 			ContentControl.Item.Name = text?.Length > 0 ? text : null;

@@ -12,9 +12,10 @@
 			<ColumnDefinition Width="Auto" />
 			<ColumnDefinition x:Name="ButtonColumn" Width="Auto" />
 		</Grid.ColumnDefinitions>
-		<Border Margin="2" x:Name="patternPickerContainer" />
+		<Border Margin="2 0 2 2" x:Name="patternPickerContainer" />
 		<Border Grid.Column="1">
-			<Popup Height="{Binding ElementName=patternPickerContainer, Path=ActualHeight}"
+			<Popup x:Name="popup"
+				   Height="{Binding ElementName=patternPickerContainer, Path=ActualHeight}"
 				   PlacementTarget="{Binding ElementName=patternPickerContainer}" Placement="Right"
 				   IsOpen="{Binding ElementName=ToggleButton, Path=IsChecked}">
 				<local:WhereControl x:Name="whereControl" />

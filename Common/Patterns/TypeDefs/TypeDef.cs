@@ -49,7 +49,6 @@ namespace Patterns.TypeDefs
 			}
 			else
 			{
-				Debugger.Break();
 				throw new ArgumentOutOfRangeException(nameof(typeRef), typeRef, "TypeDef cannot handle generics");
 			}
 		}

@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Utils;
+using WPFApp.Controls.Wrappers;
 using WPFApp.Converters;
 
 namespace WPFApp.Controls.GridManagers
@@ -41,9 +42,9 @@ namespace WPFApp.Controls.GridManagers
 
 		public delegate void ItemRemovedEventHandler(int index, bool wasDefault);
 
-		public delegate bool ValueGetter<T>(TItem row, out T value);
+		public delegate SaveResult<T> ValueGetter<T>(TItem row);
 
-		public delegate bool DefaultSetter<T>(TItem row);
+		public delegate SaveResult DefaultSetter<T>(TItem row);
 
 		public event ItemAddedEventHandler OnItemAdded;
 
@@ -144,7 +145,7 @@ namespace WPFApp.Controls.GridManagers
 			OnItemRemoved?.Invoke(index, wasDefault);
 		}
 
-		public Func<bool> BindLooselyTo<T>(IList list, Func<T, TItem> rowMaker, ValueGetter<T> valueGetter, DefaultSetter<T> setDefault = null)
+		public Func<SaveResult> BindLooselyTo<T>(IList list, Func<T, TItem> rowMaker, ValueGetter<T> valueGetter, DefaultSetter<T> setDefault = null)
 		{
 			BindTo(list, rowMaker);
 
@@ -168,19 +169,23 @@ namespace WPFApp.Controls.GridManagers
 				}
 			};
 
-			return () =>
+			SaveResult TryGetValues()
 			{
+				SaveResult success = new(true);
 				List<T> newList = new();
 
 				foreach (TItem item in ItemsWithoutDefault)
 				{
-					if (!valueGetter(item, out T value))
+					var result = valueGetter(item);
+
+					if (success.IsSuccess)
 					{
-						return false;
-					}
-					else
-					{
-						newList.Add(value);
+						if (result.IsSuccess)
+						{
+							newList.Add(result.Value);
+						}
+
+						success &= result;
 					}
 				}
 
@@ -191,8 +196,15 @@ namespace WPFApp.Controls.GridManagers
 					_ = list.Add(value);
 				}
 
-				return !HasDefault || setDefault(DefaultItem);
-			};
+				if (HasDefault)
+				{
+					success &= setDefault(DefaultItem);
+				}
+
+				return success;
+			}
+
+			return TryGetValues;
 		}
 
 		public void BindTo<T>(IList list, Func<T, TItem> itemMaker, Func<TItem, T> valueGetter, Action<TItem> setDefault = null)

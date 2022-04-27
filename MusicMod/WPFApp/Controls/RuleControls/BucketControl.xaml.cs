@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using WPFApp.Controls.CommandControls;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.RuleControls
 {
@@ -33,7 +34,7 @@ namespace WPFApp.Controls.RuleControls
 
 		public override Bucket Item { get; }
 
-		protected override bool ShouldAllowExit() => rowManager.TrySaveChanges();
+		protected override SaveResult ShouldAllowExit() => rowManager.TrySaveChanges();
 
 		private static void Shift(LinkedListNode<BucketRow> node, bool down)
 		{

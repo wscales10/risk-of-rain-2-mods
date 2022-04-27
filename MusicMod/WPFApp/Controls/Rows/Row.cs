@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Rows
 {
@@ -53,7 +54,7 @@ namespace WPFApp.Controls.Rows
 
 		public void Paint(Brush brush) => Background.Background = brush;
 
-		public virtual bool TrySaveChanges() => true;
+		public virtual SaveResult TrySaveChanges() => new(true);
 
 		protected void PropagateUiChange(UIElement oldElement, UIElement newElement) => OnUiChanged?.Invoke(oldElement, newElement);
 	}

@@ -46,15 +46,7 @@ namespace WPFApp.Controls
 			}
 		}
 
-		private static TableCell MakeTableCell(string content) => new(new Paragraph(new Run(content)));
-
-		private static string GetCellContent(TableCell tableCell)
-		{
-			var runs = ((Paragraph)tableCell.Blocks.Single()).Inlines.Cast<Run>();
-			return string.Concat(runs.Select(r => r.Text));
-		}
-
-		public bool GetValue<T, TOut>(Parser<TOut> parser2, out Switch<T, TOut> output)
+		public bool TryGetValue<T, TOut>(Parser<TOut> parser2, out Switch<T, TOut> output)
 		{
 			List<Case<IPattern<T>, TOut>> cases = new();
 			TOut defaultOut = default;
@@ -96,6 +88,14 @@ namespace WPFApp.Controls
 				? new Switch<T, TOut>(defaultOut, cases.ToArray())
 				: new Switch<T, TOut>(cases.ToArray());
 			return true;
+		}
+
+		private static TableCell MakeTableCell(string content) => new(new Paragraph(new Run(content)));
+
+		private static string GetCellContent(TableCell tableCell)
+		{
+			var runs = ((Paragraph)tableCell.Blocks.Single()).Inlines.Cast<Run>();
+			return string.Concat(runs.Select(r => r.Text));
 		}
 	}
 }

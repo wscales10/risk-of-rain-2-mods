@@ -20,6 +20,8 @@ namespace WPFApp.Controls
 	/// </summary>
 	public partial class SpotifyItemPicker : UserControl
 	{
+		public event Action<SpotifyItem?> ValueChanged;
+
 		private static readonly Regex regex = new(@"https?:\/\/open.spotify.com\/(?<itemType>.*?)\/(?<id>\w*)");
 
 		private static readonly Brush infoBrush = new SolidColorBrush(Color.FromRgb(244, 244, 244));
@@ -32,7 +34,7 @@ namespace WPFApp.Controls
 		{
 			PreviewMouseLeftButtonUp += (s, e) =>
 			{
-				var info = (s as SpotifyItemPicker)?.Info.Get();
+				MusicItemInfo info = (s as SpotifyItemPicker)?.Info;
 				if (info is not null)
 				{
 					Web.Goto(GetUri(info.PreviewItem));
@@ -52,8 +54,13 @@ namespace WPFApp.Controls
 
 			set
 			{
+				SpotifyItem? oldItem = item;
 				item = value;
 				RequestMusicItemInfo();
+				if (oldItem != value)
+				{
+					ValueChanged?.Invoke(value);
+				}
 			}
 		}
 

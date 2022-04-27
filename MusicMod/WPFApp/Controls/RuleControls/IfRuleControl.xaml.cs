@@ -4,6 +4,7 @@ using Rules.RuleTypes.Mutable;
 using System.Windows;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.RuleControls
 {
@@ -37,15 +38,16 @@ namespace WPFApp.Controls.RuleControls
 
 		public override IfRule Item { get; }
 
-		protected override bool ShouldAllowExit()
+		protected override SaveResult ShouldAllowExit()
 		{
-			if (thenRow.PatternPickerWrapper.TryGetValue(out IPattern<Context> pattern))
+			var result = thenRow.PatternPickerWrapper.TryGetValue(true);
+
+			if (result.IsSuccess)
 			{
-				Item.Pattern = pattern;
-				return true;
+				Item.Pattern = result.Value;
 			}
 
-			return false;
+			return result;
 		}
 
 		private void AddElse(Rule rule = null)

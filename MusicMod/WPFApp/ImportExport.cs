@@ -23,7 +23,13 @@ namespace WPFApp
 
 		public void ImportXml(XElement xml) => Reset(GetRuleControl(Rule.FromXml(xml)));
 
-		private void ExportToFile(string fileName) => ExportToFile(GetControlForExport(), fileName);
+		private void ExportToFile(string fileName)
+		{
+			if (CurrentControl.TrySave())
+			{
+				ExportToFile(GetControlForExport(), fileName);
+			}
+		}
 
 		private IXmlControl GetControlForExport()
 		{
@@ -40,7 +46,7 @@ namespace WPFApp
 			}
 
 			MessageBoxResult result = MessageBox.Show(
-				$"Export everything? (Select No to export only this {CurrentControl.ItemTypeName} and its descendants)",
+				$"Export everything? (Select No to export only this {currentXmlControl.ItemTypeName} and its descendants)",
 				"Export All?",
 				MessageBoxButton.YesNoCancel,
 				MessageBoxImage.Question,

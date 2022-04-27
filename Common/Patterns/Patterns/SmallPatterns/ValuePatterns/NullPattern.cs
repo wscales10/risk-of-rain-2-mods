@@ -1,5 +1,6 @@
 ﻿using Patterns.TypeDefs;
 using System;
+using System.Linq;
 using Utils;
 
 namespace Patterns.Patterns.SmallPatterns
@@ -16,28 +17,29 @@ namespace Patterns.Patterns.SmallPatterns
 
 		public static NullPattern IsNotNull => (NullPattern)new NullPattern().DefineWith("not null");
 
-		internal static TypeDef TypeDef { get; } = TypeDef.Create<object, NullPattern>((s, _) => (NullPattern)new NullPattern().DefineWith(s), x => Equals(x));
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<object, NullPattern>((s) => (NullPattern)new NullPattern().DefineWith(s), x => Equals(x));
 
 		internal static ParserSpecificTypeDefGetter NullableTypeDef { get; }
 			= new ParserSpecificTypeDefGetter(
-				patternParser => new GenericArgTypeDef(
-					gta => new TypeDef(
-						(s, typeRef) => NullableNullPattern.Definer(s, typeRef, patternParser),
+				patternParser => new BestTypeDefGetter(
+					typeRef =>
+						 new TypeDef(
+						(s) => NullableNullPattern.Definer(s, typeRef),
 						NullableNullPattern.Equalizer,
-						typeof(Nullable<>).MakeGenericType(gta),
-						(_) => typeof(NullableNullPattern<>).MakeGenericType(gta)
+						typeof(Nullable<>).MakeGenericType(typeRef.GenericTypeArguments),
+						(_) => typeof(NullableNullPattern<>).MakeGenericType(typeRef.GenericTypeArguments)
 						)
 					)
 				);
 
 		internal static ParserSpecificTypeDefGetter ClassTypeDef { get; }
 			= new ParserSpecificTypeDefGetter(
-				patternParser => new TypeDef(
-					(s, typeRef) => ClassNullPattern.Definer(s, typeRef, patternParser),
+				patternParser => new BestTypeDefGetter(typeRef => new TypeDef(
+					(s) => ClassNullPattern.Definer(s, typeRef, patternParser),
 					ClassNullPattern.Equalizer,
-					typeof(object),
+					typeRef.FullType ?? typeof(object),
 					(t) => typeof(ClassNullPattern<>).MakeGenericType(t)
-					)
+					))
 				);
 
 		protected override bool isMatch(object value)

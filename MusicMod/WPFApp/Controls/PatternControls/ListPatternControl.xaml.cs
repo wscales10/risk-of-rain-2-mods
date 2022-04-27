@@ -14,7 +14,7 @@ namespace WPFApp.Controls.PatternControls
 	{
 		private readonly RowManager<PatternRow> rowManager;
 
-		private readonly Func<bool> tryGetValues;
+		private readonly Func<SaveResult> tryGetValues;
 
 		public ListPatternControl(IListPattern pattern, Type valueType, NavigationContext ctx) : base(ctx)
 		{
@@ -24,19 +24,18 @@ namespace WPFApp.Controls.PatternControls
 			patternPicker.SelectionMade += (w) => AddPatternWrapper(w);
 			patternPickerContainer.Child = patternPicker;
 			rowManager = new(patternsGrid);
-			tryGetValues = rowManager.BindLooselyTo<IPattern>(Item.Children, (_) => throw new InvalidOperationException(), valuegetter);
+			tryGetValues = rowManager.BindLooselyTo(Item.Children, (_) => throw new InvalidOperationException(), valuegetter);
 			rowButtonsControl.BindTo(rowManager);
 		}
 
 		public override IListPattern Item { get; }
 
-		protected override bool ShouldAllowExit() => tryGetValues();
+		protected override SaveResult ShouldAllowExit() => tryGetValues();
 
-		private static bool valuegetter(PatternRow row, out IPattern value)
+		private static SaveResult<IPattern> valuegetter(PatternRow row)
 		{
-			bool result = row.Output.TryGetValue(out object obj);
-			value = (IPattern)obj;
-			return result;
+			var result = row.Output.TryGetObject(true);
+			return SaveResult.Create<IPattern>(result);
 		}
 
 		private PatternRow AddPatternWrapper(IReadableControlWrapper patternWrapper) => rowManager.Add(new(patternWrapper));

@@ -1,5 +1,4 @@
 ﻿using Patterns;
-using System.Windows.Media;
 using System.Windows;
 
 namespace WPFApp.Controls.Wrappers
@@ -16,6 +15,6 @@ namespace WPFApp.Controls.Wrappers
 
 		protected override void setValue(Switch<T, TOut> value) => UIElement.SetValue(value, p => p.ToString(), o => o.ToString());
 
-		protected override bool tryGetValue(out Switch<T, TOut> value) => UIElement.GetValue(parser, out value);
+		protected override SaveResult<Switch<T, TOut>> tryGetValue(bool trySave) => new(UIElement.TryGetValue(parser, out Switch<T, TOut> value), value);
 	}
 }

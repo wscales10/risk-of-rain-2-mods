@@ -22,32 +22,10 @@ namespace Patterns.Patterns
 
 		public (string typeKey, string genericTypeKey) TypeDefKeys => PatternBase.GetTypeDefKeys(Type);
 
-		public static PropertyInfo Parse(XElement element, PatternParser patternParser)
+		public static PropertyInfo Parse<TObject>(XElement element)
 		{
-			var typeName = element.Attribute("type").Value;
-			var genericTypeKey = element.Attribute("of")?.Value;
-			var type = patternParser.GetType(typeName, genericTypeKey);
-			return new PropertyInfo(element.Attribute("name").Value, type);
-		}
-
-		public static PropertyInfo Parse<TObject>(XElement element, PatternParser patternParser)
-		{
-			var typeName = element.Attribute("type").Value;
-			var genericTypeKey = element.Attribute("of")?.Value;
-			var type = patternParser.GetType(typeName, genericTypeKey);
 			string name = element.Attribute("name").Value;
-			var cached = cache[typeof(TObject)].SingleOrDefault(p => p.Name == name);
-
-			if (PatternBase.Inherits(cached.Type, type))
-			{
-				return cached;
-			}
-			else
-			{
-				Debugger.Break();
-			}
-
-			return new PropertyInfo(name, type);
+			return cache[typeof(TObject)].SingleOrDefault(p => p.Name == name);
 		}
 
 		public static bool operator ==(PropertyInfo info1, PropertyInfo info2) => info1 is null ? info2 is null : info1.Equals(info2);
@@ -56,13 +34,13 @@ namespace Patterns.Patterns
 
 		public void AddAttributesTo(XElement element)
 		{
-			var (typeKey, genericTypeKey) = Correct().TypeDefKeys;
+			/*var (typeKey, genericTypeKey) = TypeDefKeys;
 			element.SetAttributeValue("type", typeKey);
 
 			if (!(genericTypeKey is null))
 			{
 				element.SetAttributeValue("of", genericTypeKey);
-			}
+			}*/
 
 			element.SetAttributeValue("name", Name);
 		}

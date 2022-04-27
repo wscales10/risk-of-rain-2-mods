@@ -25,7 +25,7 @@ namespace Patterns.Patterns
 
 		public static PropertyPattern<TObject> Parse(XElement element, PatternParser patternParser)
 		{
-			var propertyInfo = PropertyInfo.Parse<TObject>(element, patternParser);
+			var propertyInfo = PropertyInfo.Parse<TObject>(element);
 			return new PropertyPattern<TObject>(propertyInfo, patternParser.Parse(propertyInfo.Type, element.OnlyChild()));
 		}
 
@@ -45,7 +45,7 @@ namespace Patterns.Patterns
 
 		public override XElement ToXml()
 		{
-			var element = new XElement("Property", Pattern.Correct().ToXml());
+			var element = new XElement("Property", Pattern.ToXml());
 			PropertyInfo.AddAttributesTo(element);
 			return element;
 		}

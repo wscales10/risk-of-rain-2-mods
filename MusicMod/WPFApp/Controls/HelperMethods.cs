@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls
 {
@@ -32,6 +34,21 @@ namespace WPFApp.Controls
 		}
 
 		public static BitmapImage ImageFromUri(string imageUri) => imageUri is null ? null : ImageFromUri(new Uri(imageUri));
+
+		public static SaveResult All<T>(this IEnumerable<T> source, Func<T, SaveResult> predicate)
+		{
+			SaveResult result = new(true);
+
+			foreach (SaveResult r in source.Select(predicate))
+			{
+				if (r is not null)
+				{
+					result &= r;
+				}
+			}
+
+			return result;
+		}
 
 		[DllImport("shlwapi.dll")]
 		private static extern int ColorHLSToRGB(int H, int L, int S);

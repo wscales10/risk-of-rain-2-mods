@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controls\Rows\RowControl.xaml.cs" />
     <Compile Remove="Settings.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="Controls\Rows\RowControl.xaml" />
   </ItemGroup>
 
   <ItemGroup>

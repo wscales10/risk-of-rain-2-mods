@@ -3,6 +3,7 @@ using Rules.RuleTypes.Mutable;
 using System;
 using System.Windows.Controls;
 using WPFApp.Controls.RuleControls;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Rows
 {
@@ -20,7 +21,7 @@ namespace WPFApp.Controls.Rows
 
 		public override CaseControl LeftElement { get; }
 
-		public override bool TrySaveChanges() => LeftElement.TrySaveChanges();
+		public override SaveResult TrySaveChanges() => LeftElement.TrySaveChanges();
 	}
 
 	internal class DefaultRow : SwitchRow

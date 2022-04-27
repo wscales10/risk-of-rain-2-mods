@@ -7,7 +7,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 	{
 		private Regex regex;
 
-		internal static TypeDef TypeDef { get; } = TypeDef.Create<string, StringPattern>((s, _) => (StringPattern)new StringPattern().DefineWith(s), s => Equals(s));
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<string, StringPattern>((s) => (StringPattern)new StringPattern().DefineWith(s), s => Equals(s));
 
 		public static StringPattern Equals(string s)
 		{

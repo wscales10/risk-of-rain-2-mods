@@ -12,20 +12,12 @@ namespace WPFApp.Controls.Wrappers
 	internal class EnumWrapper<T> : ControlWrapper<T, ComboBox>
 		where T : struct, Enum
 	{
+		public EnumWrapper() => UIElement.SelectionChanged += (s, e) => NotifyValueChanged();
+
 		public override ComboBox UIElement { get; } = new ComboBox { ItemsSource = Enum.GetValues<T>(), IsTextSearchEnabled = true };
 
 		protected override void setValue(T value) => UIElement.SelectedItem = value;
 
-		protected override bool tryGetValue(out T value)
-		{
-			if (UIElement.SelectedItem is not T x)
-			{
-				value = default;
-				return false;
-			}
-
-			value = x;
-			return true;
-		}
+		protected override SaveResult<T> tryGetValue(bool trySave) => UIElement.SelectedItem is not T x ? (new(false)) : (new(x));
 	}
 }

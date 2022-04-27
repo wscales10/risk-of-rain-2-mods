@@ -66,7 +66,7 @@ namespace WPFApp.Controls.PatternControls
 			}
 			else
 			{
-				if (Info.PatternParser.TryGetTypeDef(type, out TypeDef typeDef))
+				if (Info.PatternParser.TryGetTypeDef(new TypeRef(type), out TypeDef typeDef))
 				{
 					Type patternType = typeDef.PatternTypeGetter(type);
 					output.Add(patternType);

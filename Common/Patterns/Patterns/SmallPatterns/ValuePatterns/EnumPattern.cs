@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Patterns.TypeDefs;
+using Utils;
 using Utils.Reflection;
 
 namespace Patterns.Patterns.SmallPatterns.ValuePatterns
@@ -13,22 +16,17 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 
 		private string maxString;
 
-		public static TypeDef GenericTypeDef { get; }
-			= TypeDef.Create<Enum, EnumPattern>(
-				(s, _) => (EnumPattern)new EnumPattern().DefineWith(s),
-				Equalizer);
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<Enum, EnumPattern>((s) => (EnumPattern)new EnumPattern().DefineWith(s), e => Equals(e));
 
-		internal static ParserSpecificTypeDefGetter GenericTypeDef2 { get; } = new ParserSpecificTypeDefGetter(
+		internal static ParserSpecificTypeDefGetter GenericTypeDef { get; } = new ParserSpecificTypeDefGetter(
 				patternParser => new BestTypeDefGetter(typeRef =>
-					new TypeDef(
-					(s, r) => GenericDefiner(s, r, patternParser),
+					typeRef.FullType is null ? TypeDef : new TypeDef(
+					(s) => GenericDefiner(s, typeRef, patternParser),
 					Equalizer,
-					typeRef.FullType,
+					typeRef.DenullabledType,
 					(t) => typeof(EnumPattern<>).MakeGenericType(t))
 					)
 				);
-
-		internal static TypeDef TypeDef { get; } = TypeDef.Create<Enum, EnumPattern>((s, _) => (EnumPattern)new EnumPattern().DefineWith(s), e => Equals(e));
 
 		internal static Regex Regex { get; } = new Regex(@"^(?<item1>(?<string1>.*)\((?<num1>-?\d+)\))?(?<dots>\.\.)?(?<item2>(?<string2>.*)\((?<num2>-?\d+)\))?$");
 

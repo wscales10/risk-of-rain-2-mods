@@ -5,26 +5,29 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
 	internal class SinglePatternPickerWrapper<T> : ControlWrapper<IPattern<T>, SinglePatternPicker>
 	{
-		public SinglePatternPickerWrapper(NavigationContext navigationContext) => UIElement = new(typeof(T), navigationContext);
+		public SinglePatternPickerWrapper(NavigationContext navigationContext)
+		{
+			UIElement = new(typeof(T), navigationContext);
+			UIElement.ValueChanged += NotifyValueChanged;
+			SetValue(null);
+		}
 
 		public override SinglePatternPicker UIElement { get; }
 
 		protected override void setValue(IPattern<T> value) => UIElement.AddPattern(value);
 
-		protected override bool tryGetValue(out IPattern<T> value)
+		protected override SaveResult<IPattern<T>> tryGetValue(bool trySave)
 		{
 			var patternWrapper = UIElement.patternContainer.PatternWrapper;
 
-			if (patternWrapper is not null && patternWrapper.TryGetValue(out object output))
+			if (patternWrapper is null)
 			{
-				value = (IPattern<T>)output;
-				return true;
+				return new(false);
 			}
 
-			value = default;
-			return false;
+			return SaveResult.Create<IPattern<T>>(patternWrapper.TryGetObject(trySave));
 		}
 
-		protected override void SetStatus(bool status) => Outline(UIElement.patternContainer, UIElement.patternContainer.PatternWrapper is not null);
+		protected override void setStatus(bool? status) => Outline(UIElement.comboBox, status is null ? null : UIElement.patternContainer.PatternWrapper is not null);
 	}
 }

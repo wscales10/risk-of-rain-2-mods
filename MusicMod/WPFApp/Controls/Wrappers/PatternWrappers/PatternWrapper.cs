@@ -33,6 +33,11 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 				return new ListPatternWrapper(pattern as IListPattern, navigationContext);
 			}
 
+			if (patternType.IsGenericType(typeof(NotPattern<>)))
+			{
+				return (IReadableControlWrapper)typeof(NotPatternWrapper<>).MakeGenericType(patternType.GenericTypeArguments).Construct(pattern, navigationContext);
+			}
+
 			if (patternType == typeof(ScenePattern))
 			{
 				return new ScenePatternWrapper(pattern as ScenePattern);

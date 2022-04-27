@@ -9,6 +9,7 @@
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" MinHeight="30" />
+			<RowDefinition Height="Auto" />
 			<RowDefinition />
 		</Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
@@ -16,9 +17,9 @@
 			<ColumnDefinition Width="*" />
 			<ColumnDefinition Width="Auto" />
 		</Grid.ColumnDefinitions>
-		<Border Grid.Row="1" Grid.ColumnSpan="2147483647" BorderBrush="Black" BorderThickness="1" VerticalAlignment="Top" />
+		<Border Grid.Row="1" Grid.ColumnSpan="2147483647" BorderBrush="Black" BorderThickness="1" />
 		<TextBlock VerticalAlignment="Center" Margin="3">First match from:</TextBlock>
-		<ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" Panel.ZIndex="-1">
+		<ScrollViewer Grid.Row="2" Grid.ColumnSpan="2" Panel.ZIndex="-1">
 			<Grid>
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
@@ -39,6 +40,6 @@
 				<local:NewRuleControl Grid.Row="2" x:Name="newRuleControl" />
 			</Grid>
 		</ScrollViewer>
-		<rows:RowButtonsControl x:Name="rowButtonsControl" Grid.Row="1" Grid.Column="2" />
+		<rows:RowButtonsControl x:Name="rowButtonsControl" Grid.Row="2" Grid.Column="2" />
 	</Grid>
 </local:RuleControlBase>

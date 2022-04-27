@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Rows
 {
@@ -21,6 +22,6 @@ namespace WPFApp.Controls.Rows
 
 		bool IsRemovable { get; }
 
-		bool TrySaveChanges();
+		SaveResult TrySaveChanges();
 	}
 }

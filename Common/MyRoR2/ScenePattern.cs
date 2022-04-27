@@ -10,7 +10,7 @@ namespace MyRoR2
 
 		public string DisplayName => scene?.DisplayName;
 
-		internal static TypeDef TypeDef { get; } = TypeDef.Create<MyScene, ScenePattern>((s, _) => (ScenePattern)new ScenePattern().DefineWith(s), s => Equals(s));
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<MyScene, ScenePattern>((s) => (ScenePattern)new ScenePattern().DefineWith(s), s => Equals(s));
 
 		public static ScenePattern Equals(MyScene s)
 		{

@@ -10,7 +10,7 @@ namespace Patterns
 
 	public delegate IPattern UntypedEqualizer(object value);
 
-	public delegate IPattern Definer(string s, TypeRef typeRef);
+	public delegate IPattern Definer(string s);
 
 	public abstract class Pattern<T> : PatternBase, IPattern<T>
 	{

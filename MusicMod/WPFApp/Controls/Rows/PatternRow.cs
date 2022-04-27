@@ -17,7 +17,7 @@ namespace WPFApp.Controls.Rows
 		{
 		}
 
-		public override bool TrySaveChanges() => Output.TryGetValue(out object _);
+		public override SaveResult TrySaveChanges() => Output.TryGetObject(true);
 
 		protected override UIElement MakeOutputUi() => new Border()
 		{

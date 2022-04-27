@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using WPFApp.Controls.Rows;
+using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.GridManagers
 {
@@ -12,7 +13,7 @@ namespace WPFApp.Controls.GridManagers
 
 		IReadOnlyCollection<IRow> SelectedRows { get; }
 
-		bool TrySaveChanges();
+		SaveResult TrySaveChanges();
 
 		void MoveSelected(bool down);
 

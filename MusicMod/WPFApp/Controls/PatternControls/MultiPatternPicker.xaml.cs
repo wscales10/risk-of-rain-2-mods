@@ -19,7 +19,7 @@ namespace WPFApp.Controls.PatternControls
 
 		protected override Selector ItemsControl => comboBox.ListBox;
 
-		internal bool TrySaveChanges() => PatternContainerManager.Items.All(c => c.PatternWrapper.TryGetValue(out object _));
+		internal SaveResult TrySaveChanges() => PatternContainerManager.Items.All(c => c.PatternWrapper.TryGetObject(true));
 
 		internal PatternContainer AddPatternWrapper(IReadableControlWrapper patternWrapper) => PatternContainerManager.Add(new(patternWrapper));
 

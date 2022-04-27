@@ -47,16 +47,15 @@ namespace Patterns.Patterns.SmallPatterns
 			return (PatternBase)constructedGenericType.GetMethod("Equals").InvokeStatic(x);
 		}
 
-		public static IPattern Definer(string s, TypeRef typeRef, PatternParser patternParser)
+		public static IPattern Definer(string s, TypeRef typeRef)
 		{
-			string a = typeRef.GenericTypeKeys.Single();
-			if (typeRef.GenericTypeKeys.Single() == "Enum`1")
+			if (false && typeRef.GenericTypeKeys.Single() == "Enum`1")
 			{
 				return (ClassNullPattern<Enum>)new NullPattern().DefineWith(s);
 			}
 			else
 			{
-				return (IPattern)typeof(NullableNullPattern<>).MakeGenericType(patternParser.GetType(a)).Construct(new NullPattern().DefineWith(s));
+				return (IPattern)typeof(NullableNullPattern<>).MakeGenericType(typeRef.GenericTypeArguments).Construct(new NullPattern().DefineWith(s));
 			}
 		}
 	}

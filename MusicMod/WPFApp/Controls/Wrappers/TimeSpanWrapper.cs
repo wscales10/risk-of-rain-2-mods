@@ -14,11 +14,13 @@ namespace WPFApp.Controls.Wrappers
 
 		private static readonly Regex withSeconds = new(@"^(?<neg>-)?(?<s>\d?\d)(\.(?<ms>\d{1,3}))?s$");
 
+		public TimeSpanWrapper() => UIElement.TextChanged += (s, e) => NotifyValueChanged();
+
 		public override TextBox UIElement { get; } = new TextBox() { VerticalAlignment = VerticalAlignment.Center };
 
 		protected override void setValue(TimeSpan value) => UIElement.Text = value.ToCompactString();
 
-		protected override bool tryGetValue(out TimeSpan value)
+		protected override SaveResult<TimeSpan> tryGetValue(bool trySave)
 		{
 			static int ParseInt(string s)
 			{
@@ -37,8 +39,7 @@ namespace WPFApp.Controls.Wrappers
 
 			if (!SetVariables())
 			{
-				value = default;
-				return false;
+				return new(false);
 			}
 
 			hours = ParseInt(match.Groups["h"].Value);
@@ -47,9 +48,7 @@ namespace WPFApp.Controls.Wrappers
 			milliseconds = ParseInt(match.Groups["ms"].Value.PadRight(3, '0'));
 
 			sign = match.Groups["neg"].Success ? -1 : 1;
-
-			value = sign * new TimeSpan(0, hours, minutes, seconds, milliseconds);
-			return true;
+			return new(sign * new TimeSpan(0, hours, minutes, seconds, milliseconds));
 		}
 	}
 }

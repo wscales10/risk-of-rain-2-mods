@@ -15,7 +15,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			Margin = new Thickness(4)
 		};
 
-		protected override void SetStatus(bool status)
+		protected override void setStatus(bool status)
 		{ }
 	}
 }

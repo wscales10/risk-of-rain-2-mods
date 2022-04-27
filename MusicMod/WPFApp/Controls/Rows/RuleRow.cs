@@ -28,7 +28,7 @@ namespace WPFApp.Controls.Rows
 			Button button = new() { FontSize = 14, Margin = new Thickness(40, 4, 4, 4), VerticalAlignment = VerticalAlignment.Center, MinWidth = 150, HorizontalAlignment = HorizontalAlignment.Left };
 			button.Click += (s, e) =>
 			{
-				ControlBase control = OnOutputButtonClick?.Invoke(Output);
+				var control = OnOutputButtonClick?.Invoke(Output) as ItemControlBase;
 
 				if (control is not null)
 				{

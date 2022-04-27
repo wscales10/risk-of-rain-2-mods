@@ -14,6 +14,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			TextBox.TextAlignment = TextAlignment.Center;
 			TextBox.FontSize = 14;
 			TextBox.Margin = new Thickness(4, 2, 4, 2);
+			TextBox.TextChanged += (s, e) => NotifyValueChanged();
 			Display();
 		}
 
@@ -27,10 +28,14 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
 		protected virtual string GetTextBoxText() => Pattern.Definition;
 
-		protected override bool tryGetValue(out TPattern value)
+		protected override SaveResult<TPattern> tryGetValue(bool trySave)
 		{
-			Display();
-			return base.tryGetValue(out value);
+			if (trySave)
+			{
+				Display();
+			}
+
+			return base.tryGetValue(trySave);
 		}
 
 		protected virtual void Display()
@@ -49,7 +54,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			}
 		}
 
-		protected override void SetStatus(bool status) => Outline(TextBox, status);
+		protected override void setStatus(bool status) => Outline(TextBox, status);
 	}
 
 	internal class ValuePatternWrapper<TPattern> : ValuePatternWrapper<TPattern, TextBox>
