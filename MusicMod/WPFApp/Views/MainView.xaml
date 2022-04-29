@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:rulecontrols="clr-namespace:WPFApp.Controls.RuleControls"
+		xmlns:views="clr-namespace:WPFApp.Views"
 		xmlns:local="clr-namespace:WPFApp"
 		xmlns:viewmodels="clr-namespace:WPFApp.ViewModels"
 		xmlns:converters="clr-namespace:WPFApp.Converters" xmlns:properties="clr-namespace:WPFApp.Properties"
@@ -35,14 +36,13 @@
 			<RowDefinition />
 		</Grid.RowDefinitions>
 		<StackPanel Orientation="Horizontal">
-			<Button x:Name="BackButton" Click="BackButton_Click" IsEnabled="False">Back</Button>
-			<Button x:Name="ForwardButton" Click="ForwardButton_Click" IsEnabled="False">Forward</Button>
-			<Button x:Name="UpLevelButton" Click="UpLevelButton_Click" IsEnabled="{Binding NavigationContext.IsHome, Converter={StaticResource InverseBooleanConverter}}">Up
-			</Button>
-			<Button x:Name="HomeButton" Click="HomeButton_Click" IsEnabled="{Binding NavigationContext.IsHome, Converter={StaticResource InverseBooleanConverter}}">Home</Button>
-			<Button x:Name="ImportButton" Click="ImportButton_Click">Import XML</Button>
-			<Button x:Name="ExportButton" Click="ExportButton_Click" IsEnabled="{Binding IsXmlControl}">Export XML</Button>
-			<Button x:Name="NewButton" Click="NewButton_Click" IsEnabled="{Binding HasContent}">New...</Button>
+			<Button x:Name="BackButton" Command="{Binding BackCommand}">Back</Button>
+			<Button x:Name="ForwardButton" Command="{Binding ForwardCommand}">Forward</Button>
+			<Button x:Name="UpLevelButton" Command="{Binding UpCommand}">Up</Button>
+			<Button x:Name="HomeButton" Command="{Binding HomeCommand}">Home</Button>
+			<Button x:Name="ImportButton" Command="{Binding ImportCommand}">Import XML</Button>
+			<Button x:Name="ExportButton" Command="{Binding ExportCommand}">Export XML</Button>
+			<Button x:Name="NewButton" Command="{Binding NewCommand}">New...</Button>
 			<CheckBox x:Name="OfflineModeCheckbox"
 					  IsChecked="{Binding Source={StaticResource Settings}, Path=Default.OfflineMode}">Offline Mode</CheckBox>
 			<CheckBox x:Name="OpenLinksInAppCheckbox"
@@ -58,13 +58,13 @@
 			<TreeView ItemsSource="{Binding MasterNode.Children}">
 				<TreeView.ItemTemplate>
 					<HierarchicalDataTemplate DataType="{x:Type local:TreeNode}" ItemsSource="{Binding Children}">
-						<Button Content="{Binding Label}" Command="{Binding Path=DataContext.Command, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+						<Button Content="{Binding Label}" Command="{Binding Path=DataContext.NavigateTreeCommand, RelativeSource={RelativeSource AncestorType=views:MainView}}" CommandParameter="{Binding}" />
 					</HierarchicalDataTemplate>
 				</TreeView.ItemTemplate>
 			</TreeView>
 			<GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
 			<ContentPresenter Grid.Column="2" x:Name="ControlContainer"
-				Content="{Binding Control, Mode=OneWayToSource}" />
+				Content="{Binding Control}" />
 			<rulecontrols:NewRuleControl Grid.Column="2" x:Name="newRuleControl"
 									 VerticalAlignment="Center"
 									 Visibility="{Binding HasContent, Converter={StaticResource ReverseBooleanToVisibilityConverter}}" />

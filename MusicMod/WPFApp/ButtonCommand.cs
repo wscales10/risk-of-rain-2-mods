@@ -1,5 +1,7 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Input;
+using Utils.Reflection.Properties;
 
 namespace WPFApp
 {
@@ -7,25 +9,43 @@ namespace WPFApp
 	{
 		private readonly Action<object> action;
 
-		private bool isEnabled = true;
+		private bool canExecute = true;
 
-		public ButtonCommand(Action<object> action) => this.action = action;
+		public ButtonCommand(Action<object> action, bool canExecute = true)
+		{
+			this.action = action;
+			this.canExecute = canExecute;
+		}
+
+		public ButtonCommand(Action<object> action, INotifyPropertyChanged bindingSource, string propertyName, Func<object, bool> predicate = null)
+		{
+			predicate ??= obj => (bool)obj;
+			this.action = action;
+			canExecute = predicate(bindingSource.GetPropertyValue(propertyName));
+			bindingSource.PropertyChanged += (s, e) =>
+			{
+				if (e.PropertyName == propertyName)
+				{
+					CanExecute = predicate(s.GetPropertyValue(propertyName));
+				}
+			};
+		}
 
 		public event EventHandler CanExecuteChanged;
 
-		public bool IsEnabled
+		public bool CanExecute
 		{
-			get => isEnabled;
+			get => canExecute;
 
 			set
 			{
-				isEnabled = value;
+				canExecute = value;
 				CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 			}
 		}
 
-		public bool CanExecute(object parameter) => IsEnabled;
-
 		public void Execute(object parameter) => action(parameter);
+
+		bool ICommand.CanExecute(object parameter) => CanExecute;
 	}
 }

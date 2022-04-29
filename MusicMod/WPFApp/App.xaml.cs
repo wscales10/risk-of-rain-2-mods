@@ -162,22 +162,22 @@ namespace WPFApp
 
 		private void Attach(MainView mainView)
 		{
-			mainView.OnGoBack += GoBack;
-			mainView.OnGoForward += GoForward;
-			mainView.OnImportFile += ImportFile;
-			mainView.OnExportFile += ExportToFile;
-			mainView.OnReset += () => Reset();
+			mainViewModel = (MainViewModel)mainView.DataContext;
+			mainViewModel.OnGoBack += GoBack;
+			mainViewModel.OnGoForward += GoForward;
+			mainViewModel.OnImportFile += ImportFile;
+			mainViewModel.OnExportFile += ExportToFile;
+			mainViewModel.OnReset += () => Reset();
 			mainView.OnTryEnableAutosave += TryEnableAutosave;
 			mainView.OnTryClose += TryClose;
 			OnAutosaveLocationRequested += MainView.GetExportLocation;
-			mainViewModel = (MainViewModel)mainView.DataContext;
 
 			display = () =>
 			{
 				navigationContext.IsHome = ControlList.Count < 2;
-
-				mainView.UpdateNavigationButtons(history.CurrentIndex, history.ReverseIndex);
-				mainView.Display(CurrentControl);
+				mainViewModel.BackCommand.CanExecute = history.CurrentIndex > 0;
+				mainViewModel.ForwardCommand.CanExecute = history.ReverseIndex > 0;
+				mainViewModel.Control = CurrentControl;
 			};
 		}
 
