@@ -3,6 +3,7 @@ using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Spotify.Commands;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
@@ -12,13 +13,17 @@ namespace Rules.RuleTypes.Mutable
 {
 	public delegate Pattern<T> PatternGenerator<T>(T input);
 
-	public abstract class Rule : IRule
+	public abstract class Rule : IRule, ITreeItem<Rule>, ITreeItem
 	{
 		public string Name
 		{
 			get;
 			set;
 		}
+
+		public virtual IEnumerable<(string, Rule)> Children => Enumerable.Empty<(string, Rule)>();
+
+		IEnumerable<(string, ITreeItem)> ITreeItem.Children => Children.Select(p => (p.Item1, (ITreeItem)p.Item2));
 
 		public static Rule FromXml(XElement element)
 		{
@@ -56,6 +61,27 @@ namespace Rules.RuleTypes.Mutable
 		public static implicit operator Rule(Command c) => new Bucket(c);
 
 		public static implicit operator Rule(CommandList commands) => new Bucket(commands);
+
+		public static Rule Create(Type ruleType)
+		{
+			switch (ruleType.Name)
+			{
+				case nameof(IfRule):
+					return new IfRule();
+
+				case nameof(StaticSwitchRule):
+					return new StaticSwitchRule();
+
+				case nameof(ArrayRule):
+					return new ArrayRule();
+
+				case nameof(Bucket):
+					return new Bucket();
+
+				default:
+					return null;
+			}
+		}
 
 		public abstract Bucket GetBucket(Context c);
 
@@ -109,23 +135,6 @@ namespace Rules.RuleTypes.Mutable
 		{
 			Name = name;
 			return this;
-		}
-
-		public static Rule Create(Type ruleType)
-		{
-			switch (ruleType.Name)
-			{
-				case nameof(IfRule):
-					return new IfRule();
-				case nameof(StaticSwitchRule):
-					return new StaticSwitchRule();
-				case nameof(ArrayRule):
-					return new ArrayRule();
-				case nameof(Bucket):
-					return new Bucket();
-				default:
-					return null;
-			}
 		}
 	}
 }

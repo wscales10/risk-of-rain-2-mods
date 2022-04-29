@@ -3,6 +3,7 @@ using MyRoR2;
 using Patterns.Patterns;
 using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using Rules.RuleTypes.Mutable;
+using Rules.RuleTypes.Readonly;
 using Spotify.Commands;
 using System;
 using System.Diagnostics;
@@ -117,6 +118,13 @@ namespace MusicModUnitTests
 			var simplified = op.Simplify();
 			var expected = (x < 9) | (9 < x <= 19) | (x > 100);
 			Assert.AreEqual(simplified.ToString(), expected.ToString());
+		}
+
+		[TestMethod]
+		public void ThatCaseToStringWorks()
+		{
+			var c = ((ReadOnlySwitchRule)MimicRule).Cases.First().ToString();
+			Assert.AreEqual(c, "Environments");
 		}
 	}
 }

@@ -17,6 +17,8 @@ namespace Rules.RuleTypes.Mutable
 
 		public List<Rule> Rules { get; }
 
+		public override IEnumerable<(string, Rule)> Children => Rules.SelectMany(r => r.Children);
+
 		IEnumerable<IRule> IArrayRule.Rules => Rules;
 
 		public override Bucket GetBucket(Context c)

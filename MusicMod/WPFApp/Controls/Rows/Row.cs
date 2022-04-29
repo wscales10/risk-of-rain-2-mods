@@ -11,7 +11,7 @@ namespace WPFApp.Controls.Rows
 {
 	public delegate int IndexGetter<TRow>(TRow row);
 
-	internal abstract class Row<TRow> : IRow where TRow : Row<TRow>
+	internal abstract class Row<TRow> : NotifyPropertyChangedBase, IRow where TRow : Row<TRow>
 	{
 		protected Row(bool movable, bool removable = true)
 		{
@@ -83,7 +83,11 @@ namespace WPFApp.Controls.Rows
 		{
 			get => outputPresenter.Content;
 
-			protected set => outputPresenter.Content = value;
+			protected set
+			{
+				outputPresenter.Content = value;
+				NotifyPropertyChanged();
+			}
 		}
 
 		protected abstract UIElement MakeOutputUi();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Utils
 {
@@ -27,6 +28,8 @@ namespace Utils
 		protected virtual TDictionary Dictionary { get; } = new TDictionary();
 
 		protected IReadOnlyDictionary<TKey, TValue> ReadOnlyDictionary => Dictionary;
+
+		public IEnumerable<TValue> this[IEnumerable<TKey> index] => index.Select(key => this[key]);
 
 		public virtual TValue this[TKey key]
 		{

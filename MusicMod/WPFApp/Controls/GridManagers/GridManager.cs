@@ -65,7 +65,7 @@ namespace WPFApp.Controls.GridManagers
 			}
 		}
 
-		public ReadOnlyCollection<TItem> Items => List.ToReadOnlyCollection();
+		public ReadOnlyObservableCollection<TItem> Items => new(List);
 
 		public ReadOnlyCollection<TItem> ItemsWithoutDefault => (HasDefault ? List.Take(List.Count - 1) : List).ToReadOnlyCollection();
 
@@ -73,7 +73,7 @@ namespace WPFApp.Controls.GridManagers
 
 		protected Grid Grid { get; }
 
-		protected List<TItem> List { get; } = new();
+		protected ObservableCollection<TItem> List { get; } = new();
 
 		protected abstract double RowMinHeight { get; }
 

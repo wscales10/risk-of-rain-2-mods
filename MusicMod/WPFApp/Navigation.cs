@@ -5,7 +5,7 @@ using WPFApp.Controls;
 
 namespace WPFApp
 {
-	internal abstract class Navigation : IChange<Navigation>
+	public abstract class Navigation : IChange<Navigation>
 	{
 		protected Navigation(IEnumerable<ControlBase> controls) => Controls = new ReadOnlyCollection<ControlBase>(controls.ToList());
 
@@ -14,7 +14,7 @@ namespace WPFApp
 		public abstract Navigation Reversed { get; }
 	}
 
-	internal class AddNavigation : Navigation
+	public class AddNavigation : Navigation
 	{
 		internal AddNavigation(IEnumerable<ControlBase> controls) : base(controls)
 		{
@@ -27,7 +27,7 @@ namespace WPFApp
 		public override Navigation Reversed => new RemoveNavigation(Controls);
 	}
 
-	internal class RemoveNavigation : Navigation
+	public class RemoveNavigation : Navigation
 	{
 		internal RemoveNavigation(IEnumerable<ControlBase> controls) : base(controls)
 		{

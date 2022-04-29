@@ -26,10 +26,7 @@ namespace WPFApp.Controls.GridManagers
 
 		protected override double RowMinHeight => 130;
 
-		public SaveResult TrySaveChanges()
-		{
-			return Items.All(r => r.TrySaveChanges());
-		}
+		public SaveResult TrySaveChanges() => Items.All(r => r.TrySaveChanges());
 
 		public void Select(int index) => selectedIndices.Add(index);
 

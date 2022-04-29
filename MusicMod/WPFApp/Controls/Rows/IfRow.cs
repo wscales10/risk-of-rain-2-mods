@@ -33,11 +33,15 @@ namespace WPFApp.Controls.Rows
 
 		public override SinglePatternPicker LeftElement { get; }
 
+		public override string Label => PatternPickerWrapper.TryGetValue(false)?.ToString();
+
 		public override SaveResult TrySaveChanges() => PatternPickerWrapper.TryGetValue(true);
 	}
 
 	internal class ElseRow : IfRow
 	{
 		public ElseRow(Rule rule) : base(rule) => ((TextBlock)LeftElement).Text = "Else";
+
+		public override string Label => "Otherwise";
 	}
 }

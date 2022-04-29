@@ -20,6 +20,8 @@ using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Properties;
 using WPFApp.Views;
 using System.Diagnostics.CodeAnalysis;
+using WPFApp.ViewModels;
+using System.Collections;
 
 namespace WPFApp
 {
@@ -32,15 +34,30 @@ namespace WPFApp
 
 		private readonly MutableNavigationContext navigationContext = new();
 
+		private readonly Cache<object, ControlBase> controls;
+
 		private Action display;
 
 		private string autosaveLocation;
 
+		private MainViewModel mainViewModel;
+
 		public App()
 		{
+			controls = new(item => item switch
+			{
+				Rule rule => GetRuleControl(rule),
+				IPattern pattern => GetPatternControl(pattern),
+				_ => null,
+			});
+
 			navigationContext.OnGoHome += GoHome;
 			navigationContext.OnGoUp += GoUp;
 			navigationContext.OnGoInto += Display;
+			navigationContext.OnControlRequested += (obj) =>
+			{
+				return obj is null ? null : controls[obj];
+			};
 			NavigationContext = new(navigationContext);
 			history.ActionRequested += TryInner;
 			MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x));
@@ -83,27 +100,31 @@ namespace WPFApp
 			display();
 		}
 
-		public ControlBase Display(object item)
+		public ControlBase Display(IEnumerable list)
 		{
-			ControlBase control = ControlList.Find(c => c is IItemControl itemControl && itemControl.ItemObject == item) ?? item switch
+			ControlBase output = null;
+			foreach (object item in list)
 			{
-				Rule rule => GetRuleControl(rule),
-				IPattern pattern => GetPatternControl(pattern),
-				_ => null,
-			};
+				ControlBase control = controls[item];
 
-			if (Try(new AddNavigation(control)))
-			{
-				display();
-				return CurrentControl;
+				if (Try(new AddNavigation(control)))
+				{
+					display();
+					output = CurrentControl;
+				}
+				else
+				{
+					break;
+				}
 			}
 
-			return null;
+			display();
+			return output;
 		}
 
-		public void GoUp()
+		public void GoUp(int count)
 		{
-			_ = Try(new RemoveNavigation(ControlList.Last()));
+			_ = Try(new RemoveNavigation(ControlList.Reverse<ControlBase>().Take(count)));
 			display();
 		}
 
@@ -149,6 +170,7 @@ namespace WPFApp
 			mainView.OnTryEnableAutosave += TryEnableAutosave;
 			mainView.OnTryClose += TryClose;
 			OnAutosaveLocationRequested += MainView.GetExportLocation;
+			mainViewModel = (MainViewModel)mainView.DataContext;
 
 			display = () =>
 			{
@@ -240,6 +262,15 @@ namespace WPFApp
 			if (control is not null)
 			{
 				ControlList.Add(control);
+
+				if (control is ITreeItem treeItem)
+				{
+					mainViewModel.CurrentNode = mainViewModel.MasterNode = new(null, treeItem);
+				}
+				else
+				{
+					mainViewModel.CurrentNode = mainViewModel.MasterNode = null;
+				}
 			}
 
 			history.Clear();
@@ -339,6 +370,11 @@ namespace WPFApp
 						MaybeSave();
 
 						ControlList.Add(control);
+
+						if (control is IItemControl itemControl)
+						{
+							mainViewModel.CurrentNode = mainViewModel.CurrentNode.Children.Single(n => n.Value == itemControl.ItemObject);
+						}
 					}
 					break;
 
@@ -355,6 +391,11 @@ namespace WPFApp
 						if (CurrentControl != control)
 						{
 							throw new InvalidOperationException();
+						}
+
+						if (CurrentControl is IItemControl)
+						{
+							mainViewModel.CurrentNode = mainViewModel.CurrentNode.Parent;
 						}
 
 						ControlList.RemoveAt(ControlList.Count - 1);

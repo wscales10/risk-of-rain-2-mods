@@ -50,7 +50,7 @@ namespace Patterns.Patterns
 			return typeof(Enum).IsAssignableFrom(Type) ? new PropertyInfo(Name, typeof(Enum)) : this;
 		}
 
-		public override string ToString() => Name;
+		public override string ToString() => Utils.HelperMethods.AddSpacesToPascalCaseString(Name);
 
 		public override bool Equals(object o) => Equals(o as PropertyInfo);
 

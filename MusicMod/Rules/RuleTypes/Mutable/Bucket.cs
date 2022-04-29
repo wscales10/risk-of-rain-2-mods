@@ -5,6 +5,7 @@ using Rules.RuleTypes.Readonly;
 using Spotify;
 using Spotify.Commands;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Mutable
@@ -13,6 +14,20 @@ namespace Rules.RuleTypes.Mutable
 
 	public class Bucket : Rule, IBucket
 	{
+		public Bucket(params Command[] commands)
+		{
+			Commands = commands;
+		}
+
+		public Bucket(IList<Command> commands)
+		{
+			Commands = new CommandList(commands);
+		}
+
+		public CommandList Commands { get; set; }
+
+		ICommandList IBucket.Commands => Commands;
+
 		public static Bucket Play(string trackId, int milliseconds = 0)
 		{
 			return new PlayCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds).Then(new SetPlaybackOptionsCommand(RepeatMode.Track));
@@ -28,29 +43,15 @@ namespace Rules.RuleTypes.Mutable
 			return new TransferCommand(SpotifyItemType.Track, trackId, mapping.Select(m => m(ms)), fromTrackId).Then(new SetPlaybackOptionsCommand(RepeatMode.Track));
 		}
 
-		public CommandList Commands { get; set; }
-
-		ICommandList IBucket.Commands => Commands;
-
-		public Bucket(params Command[] commands)
-		{
-			Commands = commands;
-		}
-
-		public Bucket(IList<Command> commands)
-		{
-			Commands = new CommandList(commands);
-		}
+		public static implicit operator Bucket(CommandList cl) => new Bucket(cl);
 
 		public override Bucket GetBucket(Context c) => this;
-
-		public static implicit operator Bucket(CommandList cl) => new Bucket(cl);
 
 		public override XElement ToXml()
 		{
 			var element = base.ToXml();
 
-			foreach(var command in Commands)
+			foreach (var command in Commands)
 			{
 				element.Add(command.ToXml());
 			}

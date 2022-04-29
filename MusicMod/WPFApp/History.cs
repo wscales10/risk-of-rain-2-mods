@@ -32,7 +32,7 @@ namespace WPFApp
 		{
 			if (Try(change))
 			{
-				for (int i = changes.Count - 1; i > CurrentIndex; i--)
+				for (int i = changes.Count - 1; i >= CurrentIndex; i--)
 				{
 					changes.RemoveAt(i);
 				}

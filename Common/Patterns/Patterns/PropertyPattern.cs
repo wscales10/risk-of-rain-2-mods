@@ -55,6 +55,6 @@ namespace Patterns.Patterns
 			return Pattern.IsMatch(value.GetPropertyValue(PropertyInfo.Name));
 		}
 
-		public override string ToString() => $".{PropertyInfo.Name} matches {Pattern}";
+		public override string ToString() => $"{PropertyInfo}: {Pattern}";
 	}
 }

@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:rulecontrols="clr-namespace:WPFApp.Controls.RuleControls"
+		xmlns:local="clr-namespace:WPFApp"
 		xmlns:viewmodels="clr-namespace:WPFApp.ViewModels"
 		xmlns:converters="clr-namespace:WPFApp.Converters" xmlns:properties="clr-namespace:WPFApp.Properties"
 		mc:Ignorable="d"
@@ -48,12 +49,25 @@
 					  IsChecked="{Binding Source={StaticResource Settings}, Path=Default.OpenLinksInApp}">Open links in app</CheckBox>
 			<CheckBox x:Name="AutosaveCheckbox" IsChecked="{Binding Source={StaticResource Settings}, Path=Default.Autosave, Mode=OneWay}" Click="AutosaveCheckbox_Click">Autosave</CheckBox>
 		</StackPanel>
-		<ContentPresenter x:Name="ControlContainer"
-				Grid.Row="1"
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="200" />
+				<ColumnDefinition Width="1" />
+				<ColumnDefinition />
+			</Grid.ColumnDefinitions>
+			<TreeView ItemsSource="{Binding MasterNode.Children}">
+				<TreeView.ItemTemplate>
+					<HierarchicalDataTemplate DataType="{x:Type local:TreeNode}" ItemsSource="{Binding Children}">
+						<Button Content="{Binding Label}" Command="{Binding Path=DataContext.Command, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+					</HierarchicalDataTemplate>
+				</TreeView.ItemTemplate>
+			</TreeView>
+			<GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+			<ContentPresenter Grid.Column="2" x:Name="ControlContainer"
 				Content="{Binding Control, Mode=OneWayToSource}" />
-		<rulecontrols:NewRuleControl x:Name="newRuleControl"
-									 Grid.Row="1"
+			<rulecontrols:NewRuleControl Grid.Column="2" x:Name="newRuleControl"
 									 VerticalAlignment="Center"
 									 Visibility="{Binding HasContent, Converter={StaticResource ReverseBooleanToVisibilityConverter}}" />
+		</Grid>
 	</Grid>
 </Window>

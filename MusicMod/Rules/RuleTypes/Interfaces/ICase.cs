@@ -12,6 +12,7 @@ namespace Rules.RuleTypes.Interfaces
 		IEnumerable<T> Arr { get; }
 
 		IRule Output { get; }
+		string Name { get; }
 	}
 
 	public interface ICaseGetter<T>

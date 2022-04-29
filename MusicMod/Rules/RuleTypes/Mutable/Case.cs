@@ -32,6 +32,8 @@ namespace Rules.RuleTypes.Mutable
 
 		IRule ICase<TValue>.Output => Output;
 
+		public string Name { get; set; }
+
 		public static implicit operator Case<TValue>((TValue, Rule) pair)
 		{
 			return new Case<TValue>(pair.Item2, pair.Item1);
@@ -44,7 +46,19 @@ namespace Rules.RuleTypes.Mutable
 
 		public override string ToString()
 		{
-			return base.ToString() + (WherePattern is null ? "" : " where ...");
+			if (!(Name is null))
+			{
+				return Name;
+			}
+
+			if (WherePattern is null)
+			{
+				return base.ToString();
+			}
+			else
+			{
+				return $"{base.ToString()} with {WherePattern}";
+			}
 		}
 
 		public ReadOnlyCase<TValue> ToReadOnly() => new ReadOnlyCase<TValue>(this);
@@ -52,6 +66,12 @@ namespace Rules.RuleTypes.Mutable
 		public IEnumerable<Case<TValue>> GetCases()
 		{
 			yield return this;
+		}
+
+		internal Case<TValue> Named(string name)
+		{
+			Name = name;
+			return this;
 		}
 	}
 

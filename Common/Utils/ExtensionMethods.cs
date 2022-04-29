@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -98,6 +99,57 @@ namespace Utils
 			return output;
 		}
 
+		public static IEnumerable<T> With<T>(this IEnumerable<T> source, params T[] items) => source.Concat(items);
+
 		internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
+
+		internal static int InsertRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
+		{
+			int i = startingIndex;
+
+			foreach (var item in collection)
+			{
+				source.Insert(i++, item);
+			}
+
+			return i;
+		}
+
+		internal static void RemoveRange(this IList source, int index, int count)
+		{
+			for (int i = 0; i < count; i++)
+			{
+				source.RemoveAt(index);
+			}
+		}
+
+		internal static int ReplaceRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
+		{
+			int i = startingIndex;
+
+			foreach (var item in collection)
+			{
+				source[i++] = item;
+			}
+
+			return i;
+		}
+
+		internal static int ReplaceRange<T, TList>(this TList source, int startingIndex, IEnumerable<T> newList, int oldCount)
+			where TList : IList<T>, IList
+		{
+			int i = source.ReplaceRange(startingIndex, newList.Take(oldCount));
+
+			if (i < startingIndex + oldCount)
+			{
+				source.RemoveRange(i, oldCount + startingIndex - i);
+			}
+			else
+			{
+				i = source.InsertRange(i, newList.Skip(oldCount));
+			}
+
+			return i;
+		}
 	}
 }

@@ -1,14 +1,13 @@
 ﻿using Rules.RuleTypes.Mutable;
-using System;
+using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Markup;
-using System.Xml.Linq;
 using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.RuleControls
 {
 	[ContentProperty(nameof(ContentControl))]
-	public partial class RuleControlWrapper : ControlBase, IXmlControl
+	public partial class RuleControlWrapper : RuleControlBase
 	{
 		private RuleControlBase contentControl;
 
@@ -16,19 +15,7 @@ namespace WPFApp.Controls.RuleControls
 		{
 			InitializeComponent();
 			ContentControl = contentControl;
-		}
-
-		public event Action OnItemChanged
-		{
-			add
-			{
-				((IItemControl)ContentControl).OnItemChanged += value;
-			}
-
-			remove
-			{
-				((IItemControl)ContentControl).OnItemChanged -= value;
-			}
+			ContentControl.OnItemChanged += NotifyItemChanged;
 		}
 
 		public RuleControlBase ContentControl
@@ -45,13 +32,11 @@ namespace WPFApp.Controls.RuleControls
 			}
 		}
 
-		public Rule Item => ContentControl.Item;
+		public override Rule Item => ContentControl.Item;
 
-		public string ItemTypeName => ContentControl.ItemTypeName;
+		public override ReadOnlyObservableCollection<(string, RuleControlBase)> Children => ContentControl.Children;
 
-		public object ItemObject => ContentControl.ItemObject;
-
-		public XElement GetContentXml() => ContentControl.GetContentXml();
+		public override string ToString() => $"{GetType().Name}({ContentControl})";
 
 		protected override SaveResult ShouldAllowExit()
 		{

@@ -40,10 +40,10 @@ namespace Rules
 				Query.Create<bool>(nameof(Context.IsBossEncounter), BoolPattern.True),
 				new SwitchRule<int>(
 					nameof(Context.ScenePart),
-					C(Play("3KE5ossIfDAnBqNJFF8LfF", 6280).Named("Phase 1"), 0),
-					C(Play("3KE5ossIfDAnBqNJFF8LfF", 85675).Named("Phase 2"), 1),
-					C(Play("3KE5ossIfDAnBqNJFF8LfF", 148045).Named("Phase 3"), 2),
-					C(Play("3KE5ossIfDAnBqNJFF8LfF", 259950).Named("Phase 4"), 3),
+					C(Play("3KE5ossIfDAnBqNJFF8LfF", 6280), 0).Named("Phase 1"),
+					C(Play("3KE5ossIfDAnBqNJFF8LfF", 85675), 1).Named("Phase 2"),
+					C(Play("3KE5ossIfDAnBqNJFF8LfF", 148045), 2).Named("Phase 3"),
+					C(Play("3KE5ossIfDAnBqNJFF8LfF", 259950), 3).Named("Phase 4"),
 					C(new SetPlaybackOptionsCommand(RepeatMode.Off), 4)),
 				Play("7G349JbUH3PRdj5e7780Iz").Named("Escape sequence")).Named("Commencement"), Scenes.Commencement),
 			C<MyScene>(new IfRule(
@@ -59,13 +59,13 @@ namespace Rules
 			M("1XMfSk9yWjZdUNo1WuEIWF", Scenes.RallypointDelta, Scenes.AbyssalDepths, Scenes.SunderedGrove),
 			M("0F5ZMhyD9Msd7mRSFSHgY5", Scenes.SkyMeadow),
 			M("0G44J59yRCMqJp5k8JVYcz", Scenes.SiphonedForest, Scenes.AphelianSanctuary),
-			M("6uwL79qmtMJZA3Cxxd94c7", Scenes.SulfurPools)).Named("Teleporter");
+			M("6uwL79qmtMJZA3Cxxd94c7", Scenes.SulfurPools));
 
 		private static readonly Rule EnvironmentRule = new SwitchRule<ActivationState?>(
 			nameof(Context.TeleporterState),
 			C<ActivationState?>(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand(RepeatMode.Off)), ActivationState.Charged),
-			C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging),
-			C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null)).Named("Environments");
+			C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging).Named("Teleporter"),
+			C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null));
 
 		private static readonly Rule OtherRule = new SwitchRule<MyScene>(
 			nameof(Context.SceneName),
@@ -82,7 +82,7 @@ namespace Rules
 		public static IReadOnlyRule MimicRule { get; } = new SwitchRule<SceneType>(
 			nameof(Context.SceneType),
 			OtherRule,
-			C(EnvironmentRule, SceneType.Stage, SceneType.Intermission)).ToReadOnly();
+			C(EnvironmentRule, SceneType.Stage, SceneType.Intermission).Named("Environments")).ToReadOnly();
 
 		private static Bucket Dehydrated() => Transfer("3BBYYGOlrDKEVOQvXD4huf", Switch(ms => ms, P<int, MathFunc>(ms => ms - 8000, IntPattern.x > 68000)), StringPattern.Equals("0Q4NqUpiuOnQxYOGjnbuCh"));
 

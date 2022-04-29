@@ -21,7 +21,7 @@ namespace WPFApp
 			ImportXml(xml);
 		}
 
-		public void ImportXml(XElement xml) => Reset(GetRuleControl(Rule.FromXml(xml)));
+		public void ImportXml(XElement xml) => Reset(controls[Rule.FromXml(xml)]);
 
 		private void ExportToFile(string fileName)
 		{

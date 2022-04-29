@@ -15,6 +15,7 @@ namespace Rules.RuleTypes.Readonly
 		public ReadOnlyCase(Case<TValue> mutable)
 		{
 			toString = mutable.ToString();
+			Name = mutable.Name;
 			WherePattern = new ReadOnlyPattern<Context>(mutable.WherePattern);
 			Arr = mutable.Arr.ToReadOnlyCollection();
 			Output = mutable.Output.ToReadOnly();
@@ -25,6 +26,8 @@ namespace Rules.RuleTypes.Readonly
 		public ReadOnlyCollection<TValue> Arr { get; }
 
 		public IRule Output { get; }
+
+		public string Name { get; }
 
 		IPattern<Context> ICase<TValue>.WherePattern => WherePattern;
 

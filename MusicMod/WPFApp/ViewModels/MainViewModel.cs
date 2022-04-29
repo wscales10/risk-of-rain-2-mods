@@ -1,5 +1,7 @@
-﻿using WPFApp.Controls;
-using WPFApp.Modes;
+﻿using System.Collections.Generic;
+using System.Linq;
+using WPFApp.Controls;
+using Rules.RuleTypes.Mutable;
 
 namespace WPFApp.ViewModels
 {
@@ -11,7 +13,36 @@ namespace WPFApp.ViewModels
 
 		private bool isXmlControl;
 
-		public MainViewModel(NavigationContext navigationContext) => NavigationContext = navigationContext;
+		private TreeNode masterNode;
+
+		public MainViewModel(NavigationContext navigationContext)
+		{
+			NavigationContext = navigationContext;
+			Command = new(o =>
+			{
+				var node = CurrentNode;
+				int count = 0;
+				while ((node = node.Parent) is not null)
+				{
+					count++;
+				}
+
+				node = (TreeNode)o;
+				List<TreeNode> nodes = new();
+				while (node.Parent is not null)
+				{
+					nodes.Add(node);
+					node = node.Parent;
+				}
+
+				nodes.Reverse();
+
+				NavigationContext.GoUp(count);
+				_ = NavigationContext.GoInto(nodes.Select(n => n.Value as Rule));
+			});
+		}
+
+		public ButtonCommand Command { get; }
 
 		public NavigationContext NavigationContext { get; }
 
@@ -49,5 +80,18 @@ namespace WPFApp.ViewModels
 				NotifyPropertyChanged();
 			}
 		}
+
+		public TreeNode MasterNode
+		{
+			get => masterNode;
+
+			set
+			{
+				masterNode = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		public TreeNode CurrentNode { get; set; }
 	}
 }

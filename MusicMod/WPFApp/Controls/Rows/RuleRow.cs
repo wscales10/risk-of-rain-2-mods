@@ -15,13 +15,18 @@ namespace WPFApp.Controls.Rows
 
 		public event Func<Rule, ControlBase> OnOutputButtonClick;
 
+		public virtual string Label => null;
+
 		protected override UIElement MakeOutputUi()
 		{
 			if (Output is null)
 			{
 				ComboBox comboBox = new() { FontSize = 14, Margin = new Thickness(40, 4, 4, 4), VerticalAlignment = VerticalAlignment.Center, MinWidth = 150, HorizontalAlignment = HorizontalAlignment.Left };
 				HelperMethods.MakeRulesComboBox(comboBox);
-				comboBox.SelectionChanged += (s, e) => Output = Rule.Create((Type)comboBox.SelectedItem);
+				comboBox.SelectionChanged += (s, e) =>
+				{
+					Output = Rule.Create((Type)comboBox.SelectedItem);
+				};
 				return comboBox;
 			}
 

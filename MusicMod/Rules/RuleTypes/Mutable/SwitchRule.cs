@@ -66,7 +66,7 @@ namespace Rules.RuleTypes.Mutable
 			return (StaticSwitchRule)new StaticSwitchRule(
 				new PropertyInfo(sr.PropertyName, typeof(T)),
 				sr.DefaultRule,
-				sr.Cases.Select(c => new Case<IPattern>(c.Output, c.WherePattern, c.Arr.Select(sr.GeneratePattern).ToArray())).ToArray()).Named(sr.Name);
+				sr.Cases.Select(c => new Case<IPattern>(c.Output, c.WherePattern, c.Arr.Select(sr.GeneratePattern).ToArray()).Named(c.Name)).ToArray()).Named(sr.Name);
 		}
 
 		public override Rule GetRule(Context c)
@@ -120,18 +120,25 @@ namespace Rules.RuleTypes.Mutable
 
 		IRule ISwitchRule.DefaultRule => DefaultRule;
 
+		public override IEnumerable<(string, Rule)> Children => Cases.Select(c => (c.ToString(), c.Output)).With(($"Other {PropertyInfo}", DefaultRule));
+
 		public static StaticSwitchRule Parse(XElement element)
 		{
 			PropertyInfo propertyInfo = null;
 			Rule defaultRule = null;
 			var cases = new List<Case<IPattern>>();
 			var list = new List<IPattern>();
+			string name = null;
 			IPattern<Context> where = null;
 
 			foreach (var child in element.Elements())
 			{
 				switch (child.Name.ToString())
 				{
+					case "Name":
+						name = child.Value;
+						break;
+
 					case "On":
 						propertyInfo = PropertyInfo.Parse<Context>(element.Element("On"));
 						break;
@@ -145,8 +152,9 @@ namespace Rules.RuleTypes.Mutable
 						break;
 
 					case "Return":
-						cases.Add(new Case<IPattern>(FromXml(child.OnlyChild()), where, list.ToArray()));
+						cases.Add(new Case<IPattern>(FromXml(child.OnlyChild()), where, list.ToArray()).Named(name));
 						where = null;
+						name = null;
 						list.Clear();
 						break;
 
@@ -188,6 +196,11 @@ namespace Rules.RuleTypes.Mutable
 			element.Add(onElement);
 			foreach (var @case in Cases)
 			{
+				if (!(@case.Name is null))
+				{
+					element.Add(new XElement("Name", @case.Name));
+				}
+
 				foreach (var pattern in @case.Arr)
 				{
 					element.Add(new XElement("Case", pattern.ToXml()));

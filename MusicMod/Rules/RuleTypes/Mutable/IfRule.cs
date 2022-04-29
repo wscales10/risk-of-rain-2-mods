@@ -2,12 +2,20 @@
 using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Readonly;
+using System.Collections.Generic;
 using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Mutable
 {
 	public class IfRule : UpperRule, IIfRule
 	{
+		public IfRule(IPattern<Context> pattern = null, Rule thenRule = null, Rule elseRule = null)
+		{
+			Pattern = pattern;
+			ThenRule = thenRule;
+			ElseRule = elseRule;
+		}
+
 		public IPattern<Context> Pattern { get; set; }
 
 		public Rule ThenRule { get; set; }
@@ -18,12 +26,7 @@ namespace Rules.RuleTypes.Mutable
 
 		IRule IIfRule.ElseRule => ElseRule;
 
-		public IfRule(IPattern<Context> pattern = null, Rule thenRule = null, Rule elseRule = null)
-		{
-			Pattern = pattern;
-			ThenRule = thenRule;
-			ElseRule = elseRule;
-		}
+		public override IEnumerable<(string, Rule)> Children => new[] { (Pattern.ToString(), ThenRule), ("Otherwise", ElseRule) };
 
 		public override Rule GetRule(Context c) => Pattern.IsMatch(c) ? ThenRule : ElseRule;
 

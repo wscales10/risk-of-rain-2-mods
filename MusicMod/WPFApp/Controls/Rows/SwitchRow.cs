@@ -1,4 +1,5 @@
 ﻿using Patterns;
+using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
 using System;
 using System.Windows.Controls;
@@ -21,12 +22,22 @@ namespace WPFApp.Controls.Rows
 
 		public override CaseControl LeftElement { get; }
 
+		public override string Label => Case.ToString();
+
 		public override SaveResult TrySaveChanges() => LeftElement.TrySaveChanges();
 	}
 
 	internal class DefaultRow : SwitchRow
 	{
-		public DefaultRow(Rule rule) : base(rule, false) => ((TextBlock)LeftElement).Text = "Default";
+		private readonly PropertyInfo propertyInfo;
+
+		public DefaultRow(Rule rule, PropertyInfo propertyInfo) : base(rule, false)
+		{
+			((TextBlock)LeftElement).Text = "Default";
+			this.propertyInfo = propertyInfo;
+		}
+
+		public override string Label => $"Other {propertyInfo}";
 	}
 
 	internal abstract class SwitchRow : RuleRow<SwitchRow>

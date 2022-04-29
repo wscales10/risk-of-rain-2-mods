@@ -16,13 +16,16 @@ namespace Utils
 
 		public static LazyList<T> Create(IEnumerable<T> enumerable)
 		{
-			if (enumerable is LazyList<T> list)
+			switch (enumerable)
 			{
-				return list;
-			}
-			else
-			{
-				return new LazyList<T>(enumerable);
+				case null:
+					return null;
+
+				case LazyList<T> list:
+					return list;
+
+				default:
+					return new LazyList<T>(enumerable);
 			}
 		}
 

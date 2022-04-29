@@ -1,8 +1,10 @@
 ﻿using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using Utils;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
@@ -38,9 +40,13 @@ namespace WPFApp.Controls.RuleControls
 			{
 				AddDefault(rule.DefaultRule);
 			}
+
+			Children = MappedObservableCollection.Create(rowManager.Items, row => (row.Label, ctx.GetControl(row.Output)));
 		}
 
 		public override StaticSwitchRule Item { get; }
+
+		public override ReadOnlyObservableCollection<(string, RuleControlBase)> Children { get; }
 
 		protected override SaveResult ShouldAllowExit()
 		{
@@ -53,7 +59,6 @@ namespace WPFApp.Controls.RuleControls
 			if (c is null)
 			{
 				c = new Case<IPattern>(null);
-				Item.Cases.Add(c);
 			}
 
 			return rowManager.Add(new CaseRow(c, Item.PropertyInfo.Type, NavigationContext));
@@ -61,7 +66,7 @@ namespace WPFApp.Controls.RuleControls
 
 		private void AddCaseButton_Click(object sender, RoutedEventArgs e) => AddCase();
 
-		private void AddDefault(Rule rule = null) => _ = rowManager.AddDefault(new DefaultRow(rule));
+		private void AddDefault(Rule rule = null) => _ = rowManager.AddDefault(new DefaultRow(rule, Item.PropertyInfo));
 
 		private void AddDefaultButton_Click(object sender, RoutedEventArgs e) => AddDefault();
 	}

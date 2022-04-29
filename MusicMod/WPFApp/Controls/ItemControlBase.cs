@@ -15,17 +15,21 @@ namespace WPFApp.Controls
 
 		public abstract object ItemObject { get; }
 
+		protected virtual bool Notify => true;
+
 		public sealed override SaveResult TrySave()
 		{
 			SaveResult result = base.TrySave();
 
-			if (result)
+			if (Notify && result.IsSuccess)
 			{
 				OnItemChanged?.Invoke();
 			}
 
 			return result;
 		}
+
+		protected void NotifyItemChanged() => OnItemChanged?.Invoke();
 	}
 
 	public abstract class ItemControlBase<TItem> : ItemControlBase
