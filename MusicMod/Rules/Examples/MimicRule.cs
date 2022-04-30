@@ -31,7 +31,7 @@ namespace Rules
 					M("5MtbLsBAmW4VmXQvVfkvtc", Scenes.AphelianSanctuary),
 					M("6MiEIwSj9Z4UbxBdjxtBFB", Scenes.SunderedGrove),
 					M("0YPqWkd7ad07IJfaGDgBLE", Scenes.SulfurPools)
-			);
+			).Named("Other");
 
 		private static readonly Rule SpecialRule = new SwitchRule<MyScene>(
 			nameof(Context.SceneName),
@@ -44,12 +44,12 @@ namespace Rules
 					C(Play("3KE5ossIfDAnBqNJFF8LfF", 85675), 1).Named("Phase 2"),
 					C(Play("3KE5ossIfDAnBqNJFF8LfF", 148045), 2).Named("Phase 3"),
 					C(Play("3KE5ossIfDAnBqNJFF8LfF", 259950), 3).Named("Phase 4"),
-					C(new SetPlaybackOptionsCommand(RepeatMode.Off), 4)),
+					C(new SetPlaybackOptionsCommand(RepeatMode.Off), 4).Named("Death Animation")),
 				Play("7G349JbUH3PRdj5e7780Iz").Named("Escape sequence")).Named("Commencement"), Scenes.Commencement),
 			C<MyScene>(new IfRule(
 				Query.Create<bool>(nameof(Context.IsBossEncounter), BoolPattern.True),
 				Play("5fdiSSxvIsrCJ7sVkuhxnD"),
-				Play("2pl3Mzh2LeeUyzFacnHyZc")).Named("The Planetarium"), Scenes.ThePlanetarium));
+				Play("2pl3Mzh2LeeUyzFacnHyZc")).Named("The Planetarium"), Scenes.ThePlanetarium)).Named("Final Stages");
 
 		private static readonly Rule BossRule = new SwitchRule<MyScene>(
 			nameof(Context.SceneName),
@@ -63,9 +63,9 @@ namespace Rules
 
 		private static readonly Rule EnvironmentRule = new SwitchRule<ActivationState?>(
 			nameof(Context.TeleporterState),
-			C<ActivationState?>(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand(RepeatMode.Off)), ActivationState.Charged),
+			C<ActivationState?>(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand(RepeatMode.Off)), ActivationState.Charged).Named("Teleporter Charged"),
 			C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging).Named("Teleporter"),
-			C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null));
+			C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null).Named("Other"));
 
 		private static readonly Rule OtherRule = new SwitchRule<MyScene>(
 			nameof(Context.SceneName),
@@ -77,7 +77,7 @@ namespace Rules
 			C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Normal)), Scenes.CharacterSelect),
 			C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Eclipse)), Scenes.EclipseMenu, Scenes.CharacterSelect),
 			C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.PrismaticTrial)), Scenes.PrismaticTrialsMenu, Scenes.CharacterSelect),
-			C<MyScene>(Play("6umrQw3KWPFS6CQHN7J5BW"), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Simulacrum)), Scenes.SimulacrumMenu, Scenes.CharacterSelect)).Named("Other");
+			C<MyScene>(Play("6umrQw3KWPFS6CQHN7J5BW"), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Simulacrum)), Scenes.SimulacrumMenu, Scenes.CharacterSelect));
 
 		public static IReadOnlyRule MimicRule { get; } = new SwitchRule<SceneType>(
 			nameof(Context.SceneType),

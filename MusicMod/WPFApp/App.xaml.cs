@@ -22,6 +22,7 @@ using WPFApp.Views;
 using System.Diagnostics.CodeAnalysis;
 using WPFApp.ViewModels;
 using System.Collections;
+using System.ComponentModel;
 
 namespace WPFApp
 {
@@ -105,7 +106,7 @@ namespace WPFApp
 			ControlBase output = null;
 			foreach (object item in list)
 			{
-				ControlBase control = controls[item];
+				ControlBase control = (item as ControlBase) ?? (item is null ? null : controls[item]);
 
 				if (Try(new AddNavigation(control)))
 				{
@@ -145,6 +146,7 @@ namespace WPFApp
 				MetadataClient.GiftNewAccessToken(t);
 				PlaybackClient.GiftNewAccessToken(t);
 				SpotifyItemPicker.Refresh();
+				Settings.Default.Save();
 			};
 			Authorisation.OnClientRequested += Web.Goto;
 			if (!Settings.Default.OfflineMode)
@@ -214,32 +216,29 @@ namespace WPFApp
 			}
 		}
 
-		private void OnSettingChanged(object s, System.ComponentModel.PropertyChangedEventArgs e)
+		private void OnSettingChanged(object sender, PropertyChangedEventArgs e)
 		{
+			var settings = (Settings)sender;
 			if (e.PropertyName == nameof(Settings.OfflineMode))
 			{
 				// TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
-				if (((Settings)s).OfflineMode)
+				if (settings.OfflineMode)
 				{
 					_ = Authorisation.PauseAsync();
 				}
+				else if (Authorisation.Lifecycle.IsRunning)
+				{
+					Authorisation.Resume();
+					SpotifyItemPicker.Refresh();
+				}
 				else
 				{
-					if (Authorisation.Lifecycle.IsRunning)
-					{
-						Authorisation.Resume();
-					}
-					else
-					{
-						Authorisation.InitiateScopeRequest();
-					}
-
-					SpotifyItemPicker.Refresh();
+					Authorisation.InitiateScopeRequest();
 				}
 			}
 		}
 
-		private void SpotifyClient_OnError(Exception e) => MessageBox.Show(
+		private void SpotifyClient_OnError(Exception e) => _ = MessageBox.Show(
 			e.Message,
 			Utils.HelperMethods.AddSpacesToPascalCaseString(e.GetType().Name) + " (Spotify Client)",
 			MessageBoxButton.OK,
@@ -262,15 +261,10 @@ namespace WPFApp
 			if (control is not null)
 			{
 				ControlList.Add(control);
-
-				if (control is ITreeItem treeItem)
-				{
-					mainViewModel.CurrentNode = mainViewModel.MasterNode = new(null, treeItem);
-				}
-				else
-				{
-					mainViewModel.CurrentNode = mainViewModel.MasterNode = null;
-				}
+			}
+			else
+			{
+				mainViewModel.MainRows = null;
 			}
 
 			history.Clear();
@@ -291,7 +285,7 @@ namespace WPFApp
 
 		private async Task HandleMusicItemInfoRequestAsync(SpotifyItem item, Func<MusicItemInfo, Task> callback)
 		{
-			if (Settings.Default.OfflineMode)
+			if (Settings.Default.OfflineMode || !MetadataClient.IsAuthorised)
 			{
 				await callback(null);
 				return;
@@ -369,12 +363,12 @@ namespace WPFApp
 
 						MaybeSave();
 
-						ControlList.Add(control);
-
-						if (control is IItemControl itemControl)
+						if (ControlList.Count == 0)
 						{
-							mainViewModel.CurrentNode = mainViewModel.CurrentNode.Children.Single(n => n.Value == itemControl.ItemObject);
+							mainViewModel.MainRows = Row.Filter((control as IRowControl)?.RowManager.Rows, r => (r as IRuleRow)?.Output is not null);
 						}
+
+						ControlList.Add(control);
 					}
 					break;
 
@@ -391,11 +385,6 @@ namespace WPFApp
 						if (CurrentControl != control)
 						{
 							throw new InvalidOperationException();
-						}
-
-						if (CurrentControl is IItemControl)
-						{
-							mainViewModel.CurrentNode = mainViewModel.CurrentNode.Parent;
 						}
 
 						ControlList.RemoveAt(ControlList.Count - 1);

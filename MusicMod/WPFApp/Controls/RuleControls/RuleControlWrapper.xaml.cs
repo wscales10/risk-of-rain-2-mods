@@ -2,12 +2,14 @@
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Markup;
+using WPFApp.Controls.GridManagers;
+using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.RuleControls
 {
 	[ContentProperty(nameof(ContentControl))]
-	public partial class RuleControlWrapper : RuleControlBase
+	public partial class RuleControlWrapper : RuleControlBase, IRowControl
 	{
 		private RuleControlBase contentControl;
 
@@ -35,6 +37,8 @@ namespace WPFApp.Controls.RuleControls
 		public override Rule Item => ContentControl.Item;
 
 		public override ReadOnlyObservableCollection<(string, RuleControlBase)> Children => ContentControl.Children;
+
+		IRowManager IRowControl.RowManager => (ContentControl as IRowControl)?.RowManager;
 
 		public override string ToString() => $"{GetType().Name}({ContentControl})";
 

@@ -8,7 +8,7 @@ namespace WPFApp.Controls.RuleControls
 	/// <summary>
 	/// Interaction logic for ArrayRuleControl.xaml
 	/// </summary>
-	public partial class ArrayRuleControl : RuleControlBase
+	public partial class ArrayRuleControl : RuleControlBase, IRowControl
 	{
 		private readonly RowManager<ArrayRow> rowManager;
 
@@ -20,12 +20,14 @@ namespace WPFApp.Controls.RuleControls
 			newRuleControl.OnAddRule += r => AddRule(r);
 
 			rowManager = new(rulesGrid);
-			rowManager.OnItemAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
+			rowManager.BeforeItemAdded += AttachRowEventHandlers;
 			rowManager.BindTo(Item.Rules, AddRule, r => r.Output);
 
 			rowButtonsControl.BindTo(rowManager);
 			Children = MappedObservableCollection.Create(MappedObservableCollection.Create(rowManager.Items, row => ctx.GetControl(row.Output).Children));
 		}
+
+		IRowManager IRowControl.RowManager => rowManager;
 
 		public override ArrayRule Item { get; }
 

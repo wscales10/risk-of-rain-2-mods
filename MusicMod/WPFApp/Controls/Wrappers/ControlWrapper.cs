@@ -100,7 +100,7 @@ namespace WPFApp.Controls.Wrappers
 			if (trySave)
 			{
 				result.ReleaseActions.Enqueue(() => StopHighlighting());
-				SetStatus(result.IsSuccess);
+				SetStatus(result.Status);
 			}
 
 			return result;

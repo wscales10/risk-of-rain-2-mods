@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Rows
 {
-	internal interface IRow
+	public interface IRow
 	{
 		event Action<UIElement, UIElement> OnUiChanged;
 

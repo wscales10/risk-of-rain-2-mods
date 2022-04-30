@@ -7,6 +7,8 @@ namespace WPFApp.Controls.Wrappers
 	{
 		bool IsSuccess { get; }
 
+		bool? Status { get; }
+
 		Queue<Action> ReleaseActions { get; }
 	}
 

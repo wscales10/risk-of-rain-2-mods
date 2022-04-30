@@ -13,7 +13,7 @@ namespace WPFApp.Controls.RuleControls
 	/// <summary>
 	/// Interaction logic for IfRuleControl.xaml
 	/// </summary>
-	public partial class IfRuleControl : RuleControlBase
+	public partial class IfRuleControl : RuleControlBase, IRowControl
 	{
 		private readonly RowManager<IfRow> rowManager;
 
@@ -27,8 +27,7 @@ namespace WPFApp.Controls.RuleControls
 			rowManager = new(rulesGrid, AddElseButton);
 			rowButtonsControl.BindTo(rowManager);
 			rowManager.OnItemRemoved += (_, _) => rule.ElseRule = null;
-			rowManager.OnItemAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
-
+			rowManager.BeforeItemAdded += AttachRowEventHandlers;
 			thenRow = rowManager.Add(new ThenRow(rule.Pattern, rule.ThenRule, NavigationContext));
 			thenRow.OnSetOutput += (rule) => Item.ThenRule = rule;
 
@@ -39,6 +38,8 @@ namespace WPFApp.Controls.RuleControls
 
 			Children = MappedObservableCollection.Create(rowManager.Items, row => (row.Label, ctx.GetControl(row.Output)));
 		}
+
+		IRowManager IRowControl.RowManager => rowManager;
 
 		public override IfRule Item { get; }
 

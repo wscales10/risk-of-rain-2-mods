@@ -50,7 +50,7 @@ namespace Utils
 		{
 			var info = new CollectionChangeInfo<TIn>(e)
 			{
-				NewItems = e.NewItems.Cast<TIn>(),
+				NewItems = e.NewItems?.Cast<TIn>(),
 			};
 
 			HandleCollectionChange(info, map);

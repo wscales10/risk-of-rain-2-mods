@@ -17,7 +17,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
 			if (patternWrapper is null)
 			{
-				return new(true);
+				return new((bool?)null);
 			}
 
 			var result = patternWrapper.TryGetObject(trySave);

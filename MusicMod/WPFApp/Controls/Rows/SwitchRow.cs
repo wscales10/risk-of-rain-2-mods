@@ -10,19 +10,31 @@ namespace WPFApp.Controls.Rows
 {
 	internal class CaseRow : SwitchRow
 	{
+		private Case<IPattern> @case;
+
 		public CaseRow(Case<IPattern> c, Type valueType, NavigationContext navigationContext) : base(c.Output, true)
 		{
+			SetPropertyDependency(nameof(Label), nameof(Case));
 			LeftElement = new(c, valueType, navigationContext);
 			PropagateUiChange(null, LeftElement);
 			Case = c;
 			OnSetOutput += (rule) => Case.Output = rule;
 		}
 
-		public Case<IPattern> Case { get; set; }
+		public Case<IPattern> Case
+		{
+			get => @case;
+
+			set
+			{
+				@case = value;
+				NotifyPropertyChanged();
+			}
+		}
 
 		public override CaseControl LeftElement { get; }
 
-		public override string Label => Case.ToString();
+		public override string Label => Case?.ToString();
 
 		public override SaveResult TrySaveChanges() => LeftElement.TrySaveChanges();
 	}

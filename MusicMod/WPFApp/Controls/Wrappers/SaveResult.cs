@@ -6,23 +6,25 @@ namespace WPFApp.Controls.Wrappers
 {
 	public class SaveResult
 	{
-		public SaveResult(bool success, params Action[] release) : this(success, new Queue<Action>(release))
+		public SaveResult(bool? status, params Action[] release) : this(status, new Queue<Action>(release))
 		{
 		}
 
-		public SaveResult(bool success, IEnumerable<Action> release)
+		public SaveResult(bool? status, IEnumerable<Action> release)
 		{
-			IsSuccess = success;
-			ReleaseActions = success ? new Queue<Action>(release) : new Queue<Action>();
+			Status = status;
+			ReleaseActions = IsSuccess ? new Queue<Action>(release) : new Queue<Action>();
 		}
 
-		private SaveResult(bool success, Queue<Action> release1, Queue<Action> release2) : this(success, release1.Concat(release2))
+		private SaveResult(bool? status, Queue<Action> release1, Queue<Action> release2) : this(status, release1.Concat(release2))
 		{
 		}
 
 		public Queue<Action> ReleaseActions { get; }
 
-		public bool IsSuccess { get; }
+		public bool IsSuccess => Status ?? true;
+
+		public bool? Status { get; }
 
 		public static SaveResult operator &(SaveResult result1, SaveResult result2) => new(result1.IsSuccess && result2.IsSuccess, result1.ReleaseActions, result2.ReleaseActions);
 
@@ -59,12 +61,12 @@ namespace WPFApp.Controls.Wrappers
 		{
 		}
 
-		public SaveResult(bool success, T value = default) : base(success) => Value = value;
+		public SaveResult(bool? status, T value = default) : base(status) => Value = value;
 
-		private SaveResult(bool success, Queue<Action> releaseActions, T value) : base(success, releaseActions) => Value = value;
+		private SaveResult(bool? status, Queue<Action> releaseActions, T value) : base(status, releaseActions) => Value = value;
 
 		public T Value { get; }
 
-		public static SaveResult<T> operator &(SaveResult<T> result, bool b) => new(result.IsSuccess && b, result.ReleaseActions, result.Value);
+		public static SaveResult<T> operator &(SaveResult<T> result, bool b) => new(b ? result.Status : false, result.ReleaseActions, result.Value);
 	}
 }

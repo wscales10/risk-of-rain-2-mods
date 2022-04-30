@@ -27,6 +27,8 @@ namespace WPFApp
 		RuleControlBase GetControl(Rule rule);
 
 		ItemControlBase GetControl(IPattern pattern);
+
+		void GoInto(ControlBase control);
 	}
 
 	public class MutableNavigationContext : NotifyPropertyChangedBase, INavigationContext
@@ -64,6 +66,8 @@ namespace WPFApp
 
 		public void GoUp() => GoUp(1);
 
+		public void GoInto(ControlBase control) => OnGoInto?.Invoke(new[] { control });
+
 		public RuleControlBase GetControl(Rule rule) => (RuleControlBase)(OnControlRequested?.Invoke(rule));
 
 		public ItemControlBase GetControl(IPattern pattern) => (ItemControlBase)(OnControlRequested?.Invoke(pattern));
@@ -78,6 +82,8 @@ namespace WPFApp
 		public bool IsHome => mutable.IsHome;
 
 		public ControlBase GoInto(IEnumerable<Rule> sequence) => mutable.GoInto(sequence);
+
+		public void GoInto(ControlBase control) => mutable.GoInto(control);
 
 		public ControlBase GoInto(IPattern pattern) => mutable.GoInto(pattern);
 

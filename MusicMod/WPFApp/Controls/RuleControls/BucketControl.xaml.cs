@@ -14,7 +14,7 @@ namespace WPFApp.Controls.RuleControls
 	/// <summary>
 	/// Interaction logic for BucketControl.xaml
 	/// </summary>
-	public partial class BucketControl : RuleControlBase
+	public partial class BucketControl : RuleControlBase, IRowControl
 	{
 		private readonly RowManager<BucketRow> rowManager;
 
@@ -31,6 +31,8 @@ namespace WPFApp.Controls.RuleControls
 
 			rowButtonsControl.BindTo(rowManager);
 		}
+
+		IRowManager IRowControl.RowManager => rowManager;
 
 		public override Bucket Item { get; }
 

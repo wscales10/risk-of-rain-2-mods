@@ -9,6 +9,7 @@ using System.Collections.Specialized;
 using System.Windows.Media;
 using Utils;
 using WPFApp.Controls.Wrappers;
+using System.Collections.ObjectModel;
 
 namespace WPFApp.Controls.GridManagers
 {
@@ -20,9 +21,12 @@ namespace WPFApp.Controls.GridManagers
 
 		public event Action SelectionChanged;
 
-		IEnumerable<IRow> IRowManager.Rows => Items;
+		ReadOnlyObservableCollection<IRow> IRowManager.Rows => new MappedObservableCollection<TRow, IRow>(Items, r => r);
 
 		public IReadOnlyCollection<IRow> SelectedRows => selectedIndices.Select(i => List[i]).ToReadOnlyCollection();
+
+		// TODO: Binding?
+		public IRow Parent { get; set; }
 
 		protected override double RowMinHeight => 130;
 
@@ -156,6 +160,12 @@ namespace WPFApp.Controls.GridManagers
 
 			row.JointSelected += () => ToggleSelected(Grid.GetRow(row.Background));
 			row.Selected += () => SetSelection(Grid.GetRow(row.Background));
+
+			if (row is IRuleRow ruleRow)
+			{
+				ruleRow.Parent = Parent as IRuleRow;
+			}
+
 			return node;
 		}
 

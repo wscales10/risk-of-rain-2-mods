@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using WPFApp.Controls.Wrappers;
@@ -10,6 +13,21 @@ using WPFApp.Controls.Wrappers;
 namespace WPFApp.Controls.Rows
 {
 	public delegate int IndexGetter<TRow>(TRow row);
+
+	internal static class Row
+	{
+		internal static ICollectionView Filter<T>(ICollection<T> source, Func<T, bool> predicate)
+		{
+			ICollectionView output = CollectionViewSource.GetDefaultView(source);
+
+			if (output is not null)
+			{
+				output.Filter = x => predicate((T)x);
+			}
+
+			return output;
+		}
+	}
 
 	internal abstract class Row<TRow> : NotifyPropertyChangedBase, IRow where TRow : Row<TRow>
 	{
@@ -52,6 +70,10 @@ namespace WPFApp.Controls.Rows
 
 		public virtual UIElement LeftElement { get; } = new TextBlock() { TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontSize = 14, Margin = new Thickness(4) };
 
+		public ICollectionView Children => Row.Filter(AllChildren, r => (r as IRuleRow)?.Output is not null);
+
+		public virtual ReadOnlyObservableCollection<IRow> AllChildren { protected get; set; } = new(new());
+
 		public void Paint(Brush brush) => Background.Background = brush;
 
 		public virtual SaveResult TrySaveChanges() => new(true);
@@ -79,7 +101,7 @@ namespace WPFApp.Controls.Rows
 
 		public override sealed IEnumerable<UIElement> ExtraUi => new[] { outputPresenter.UI };
 
-		public TOut Output
+		public virtual TOut Output
 		{
 			get => outputPresenter.Content;
 

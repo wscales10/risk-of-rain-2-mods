@@ -7,5 +7,7 @@ namespace WPFApp.Controls.Rows
 		internal ArrayRow(Rule rule) : base(rule, true)
 		{
 		}
+
+		public override string Label => Output.ToString();
 	}
 }

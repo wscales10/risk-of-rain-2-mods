@@ -51,7 +51,14 @@ namespace WPFApp.Controls.RuleControls
 			return success & result;
 		}
 
-		private void WherePatternWrapper_StatusSet(bool? status) => ToggleButton.Background = status ?? true ? Brushes.White : Brushes.Red;
+		private void WherePatternWrapper_StatusSet(bool? status)
+		{
+			ToggleButton.Background = status switch
+			{
+				false => Brushes.Red,
+				_ => Brushes.White
+			};
+		}
 
 		private PatternContainer AddPattern(IPattern pattern) => patternPicker.AddPatternWrapper(PatternWrapper.Create(pattern, navigationContext));
 

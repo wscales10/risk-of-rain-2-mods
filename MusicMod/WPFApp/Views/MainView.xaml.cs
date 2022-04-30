@@ -7,6 +7,8 @@ using WPFApp.Properties;
 using WPFApp.ViewModels;
 using System.ComponentModel;
 using System.Windows.Input;
+using System.Windows.Data;
+using WPFApp.Controls.Rows;
 
 namespace WPFApp.Views
 {
@@ -15,8 +17,6 @@ namespace WPFApp.Views
 	/// </summary>
 	public partial class MainView : Window
 	{
-		private readonly NavigationContext navigationContext;
-
 		public MainView(NavigationContext navigationContext)
 		{
 			DataContext = new MainViewModel(navigationContext);
@@ -24,7 +24,6 @@ namespace WPFApp.Views
 			OpenLinksInAppCheckbox.IsChecked = Settings.Default.OpenLinksInApp;
 			newRuleControl.ButtonText = "Create New Rule";
 			newRuleControl.OnAddRule += (r) => navigationContext.GoInto(r);
-			this.navigationContext = navigationContext;
 		}
 
 		public event Func<bool> OnTryEnableAutosave;
@@ -81,5 +80,7 @@ namespace WPFApp.Views
 				e.Cancel = true;
 			}
 		}
+
+		private void CollectionViewSource_Filter(object sender, FilterEventArgs e) => e.Accepted = e.Item is IRuleRow;
 	}
 }

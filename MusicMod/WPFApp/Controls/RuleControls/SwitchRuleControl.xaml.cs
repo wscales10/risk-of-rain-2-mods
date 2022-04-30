@@ -14,7 +14,7 @@ namespace WPFApp.Controls.RuleControls
 	/// <summary>
 	/// Interaction logic for SwitchRuleControl.xaml
 	/// </summary>
-	public partial class SwitchRuleControl : RuleControlBase
+	public partial class SwitchRuleControl : RuleControlBase, IRowControl
 	{
 		private readonly RowManager<SwitchRow> rowManager;
 
@@ -33,7 +33,7 @@ namespace WPFApp.Controls.RuleControls
 
 			rowManager = new(casesGrid, AddDefaultButton);
 			rowButtonsControl.BindTo(rowManager);
-			rowManager.OnItemAdded += (row, _) => row.OnOutputButtonClick += NavigationContext.GoInto;
+			rowManager.BeforeItemAdded += AttachRowEventHandlers;
 			rowManager.BindTo(Item.Cases, AddCase, r => ((CaseRow)r).Case, r => Item.DefaultRule = r?.Output);
 
 			if (rule.DefaultRule is not null)
@@ -43,6 +43,8 @@ namespace WPFApp.Controls.RuleControls
 
 			Children = MappedObservableCollection.Create(rowManager.Items, row => (row.Label, ctx.GetControl(row.Output)));
 		}
+
+		IRowManager IRowControl.RowManager => rowManager;
 
 		public override StaticSwitchRule Item { get; }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
 
@@ -9,7 +10,9 @@ namespace WPFApp.Controls.GridManagers
 	{
 		event Action SelectionChanged;
 
-		IEnumerable<IRow> Rows { get; }
+		IRow Parent { get; set; }
+
+		ReadOnlyObservableCollection<IRow> Rows { get; }
 
 		IReadOnlyCollection<IRow> SelectedRows { get; }
 

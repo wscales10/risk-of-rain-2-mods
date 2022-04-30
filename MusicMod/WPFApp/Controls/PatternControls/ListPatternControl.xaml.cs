@@ -10,7 +10,7 @@ namespace WPFApp.Controls.PatternControls
 	/// <summary>
 	/// Interaction logic for ListPatternControl.xaml
 	/// </summary>
-	public partial class ListPatternControl : PatternControlBase
+	public partial class ListPatternControl : PatternControlBase, IRowControl
 	{
 		private readonly RowManager<PatternRow> rowManager;
 
@@ -27,6 +27,8 @@ namespace WPFApp.Controls.PatternControls
 			tryGetValues = rowManager.BindLooselyTo(Item.Children, (_) => throw new InvalidOperationException(), valuegetter);
 			rowButtonsControl.BindTo(rowManager);
 		}
+
+		IRowManager IRowControl.RowManager => rowManager;
 
 		public override IListPattern Item { get; }
 

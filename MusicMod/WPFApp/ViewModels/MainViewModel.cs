@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using WPFApp.Controls;
-using Rules.RuleTypes.Mutable;
 using System;
 using Microsoft.Win32;
 using System.Windows;
+using System.Collections.ObjectModel;
+using WPFApp.Controls.Rows;
+using System.ComponentModel;
 
 namespace WPFApp.ViewModels
 {
@@ -14,11 +16,7 @@ namespace WPFApp.ViewModels
 
 		private bool hasContent;
 
-		private bool isXmlControl;
-
-		private TreeNode masterNode;
-
-		private bool hasContent2;
+		private ICollectionView mainRows;
 
 		public MainViewModel(NavigationContext navigationContext)
 		{
@@ -105,18 +103,16 @@ namespace WPFApp.ViewModels
 			}
 		}
 
-		public TreeNode MasterNode
+		public ICollectionView MainRows
 		{
-			get => masterNode;
+			get => mainRows;
 
 			set
 			{
-				masterNode = value;
+				mainRows = value;
 				NotifyPropertyChanged();
 			}
 		}
-
-		public TreeNode CurrentNode { get; set; }
 
 		private static bool TryGetExportLocation(out string fileName)
 		{
@@ -134,27 +130,24 @@ namespace WPFApp.ViewModels
 			}
 		}
 
-		private void action(object treeNodeObject)
+		private void action(object rowObject)
 		{
-			var node = CurrentNode;
-			int count = 0;
-			while ((node = node.Parent) is not null)
+			while (!NavigationContext.IsHome)
 			{
-				count++;
+				NavigationContext.GoUp();
 			}
 
-			node = (TreeNode)treeNodeObject;
-			List<TreeNode> nodes = new();
-			while (node.Parent is not null)
+			var node = (IRuleRow)rowObject;
+			List<IRuleRow> rows = new();
+			do
 			{
-				nodes.Add(node);
+				rows.Add(node);
 				node = node.Parent;
-			}
+			} while (node is not null);
 
-			nodes.Reverse();
+			rows.Reverse();
 
-			NavigationContext.GoUp(count);
-			_ = NavigationContext.GoInto(nodes.Select(n => n.Value as Rule));
+			_ = NavigationContext.GoInto(rows.Select(r => r.Output));
 		}
 	}
 }

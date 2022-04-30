@@ -1,6 +1,5 @@
 ﻿using MyRoR2;
 using System.Windows.Controls;
-using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 
 namespace WPFApp.Controls.RuleControls
@@ -21,6 +20,8 @@ namespace WPFApp.Controls.RuleControls
 			}
 		}
 
-		internal IControlWrapper PatternWrapper { get; private set; }
+		internal bool HasPattern => PatternWrapper.UIElement.patternContainer.PatternWrapper is not null;
+
+		internal OptionalPatternPickerWrapper<Context> PatternWrapper { get; private set; }
 	}
 }

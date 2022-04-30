@@ -33,7 +33,7 @@ namespace WPFApp.Controls.Rows
 
 		public override SinglePatternPicker LeftElement { get; }
 
-		public override string Label => PatternPickerWrapper.TryGetValue(false)?.ToString();
+		public override string Label => PatternPickerWrapper?.TryGetValue(false).Value?.ToString();
 
 		public override SaveResult TrySaveChanges() => PatternPickerWrapper.TryGetValue(true);
 	}

@@ -15,8 +15,6 @@ namespace Spotify
 
 		private string backupAccessToken;
 
-		private bool isAuthorised;
-
 		private Task<bool> lastQueued;
 
 		protected NiceSpotifyClient(Logger logger)
@@ -27,6 +25,8 @@ namespace Spotify
 		}
 
 		public event Action<Exception> OnError;
+
+		public bool IsAuthorised { get; private set; }
 
 		protected SpotifyClient Client { get; private set; }
 
@@ -43,7 +43,7 @@ namespace Spotify
 		public void GiftNewAccessToken(string accessToken)
 		{
 			backupAccessToken = accessToken;
-			if (!isAuthorised)
+			if (!IsAuthorised)
 			{
 				Authorise();
 			}
@@ -69,7 +69,7 @@ namespace Spotify
 						return await ExecuteInner(wrapper, exceptionTypes);
 					}
 
-					isAuthorised = false;
+					IsAuthorised = false;
 					break;
 			}
 
@@ -118,13 +118,13 @@ namespace Spotify
 		{
 			if (backupAccessToken is null)
 			{
-				isAuthorised = !((accessToken = Preferences.AccessToken) is null);
+				IsAuthorised = !((accessToken = Preferences.AccessToken) is null);
 			}
 			else
 			{
 				accessToken = backupAccessToken;
 				backupAccessToken = null;
-				isAuthorised = true;
+				IsAuthorised = true;
 			}
 
 			Client = new SpotifyClient(accessToken);

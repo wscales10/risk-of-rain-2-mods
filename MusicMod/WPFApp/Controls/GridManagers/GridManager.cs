@@ -48,6 +48,8 @@ namespace WPFApp.Controls.GridManagers
 
 		public event ItemAddedEventHandler OnItemAdded;
 
+		public event ItemAddedEventHandler BeforeItemAdded;
+
 		public event ItemMovedEventHandler OnItemMoved;
 
 		public event ItemRemovedEventHandler OnItemRemoved;
@@ -356,6 +358,7 @@ namespace WPFApp.Controls.GridManagers
 		private TDerived Add<TDerived>(TDerived item, bool isDefault)
 			where TDerived : TItem
 		{
+			BeforeItemAdded?.Invoke(item, isDefault);
 			int index = add(item, isDefault);
 			OnItemAdded?.Invoke(item, isDefault);
 			added = true;
