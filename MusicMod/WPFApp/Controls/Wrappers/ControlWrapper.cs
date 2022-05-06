@@ -17,6 +17,10 @@ namespace WPFApp.Controls.Wrappers
 
 		event Action<object> ValueSet;
 
+		event Action ValueStringChanged;
+
+		string ValueString { get; }
+
 		SaveResult<object> TryGetObject(bool trySave);
 
 		void ForceGetValue(out object value);
@@ -41,7 +45,30 @@ namespace WPFApp.Controls.Wrappers
 		void SetValue(TValue value);
 	}
 
-	internal abstract class ReadableControlWrapper<TValue, TControl> : IReadableControlWrapper<TValue>
+	public abstract class ControlWrapper<TValue, TControl> : ReadableControlWrapper<TValue, TControl>, IControlWrapper, IControlWrapper<TValue>
+		where TControl : FrameworkElement
+	{
+		public void SetValue(TValue value)
+		{
+			setValue(value);
+			StopHighlighting();
+		}
+
+		public void SetValue(object value)
+		{
+			if (value is not null and not TValue)
+			{
+				Debugger.Break();
+			}
+
+			var typed = (TValue)value;
+			SetValue(typed);
+		}
+
+		protected abstract void setValue(TValue value);
+	}
+
+	public abstract class ReadableControlWrapper<TValue, TControl> : IReadableControlWrapper<TValue>
 		where TControl : FrameworkElement
 	{
 		private bool wantsFocus;
@@ -50,6 +77,7 @@ namespace WPFApp.Controls.Wrappers
 
 		protected ReadableControlWrapper()
 		{
+			Init();
 			valueSet += ReadableControlWrapper_ValueSet;
 			ValueCleared += ReadableControlWrapper_ValueCleared;
 		}
@@ -57,6 +85,8 @@ namespace WPFApp.Controls.Wrappers
 		public event Action<bool?> StatusSet;
 
 		public event Action<object> ValueSet;
+
+		public event Action ValueStringChanged;
 
 		protected event Action ValueCleared;
 
@@ -67,6 +97,8 @@ namespace WPFApp.Controls.Wrappers
 		FrameworkElement IWrapper.UIElement => UIElement;
 
 		public virtual UIElement FocusElement => UIElement;
+
+		public virtual string ValueString => throw new NotImplementedException();
 
 		protected bool HighlightStatus { get; private set; }
 
@@ -181,6 +213,8 @@ namespace WPFApp.Controls.Wrappers
 			{
 				ValueCleared?.Invoke();
 			}
+
+			ValueStringChanged?.Invoke();
 		}
 
 		protected void NotifyValueChanged(TValue value) => valueSet?.Invoke(value);
@@ -214,6 +248,10 @@ namespace WPFApp.Controls.Wrappers
 			}
 		}
 
+		protected virtual void Init()
+		{
+		}
+
 		private void SetStatus(bool? status)
 		{
 			if (HighlightStatus)
@@ -222,28 +260,5 @@ namespace WPFApp.Controls.Wrappers
 				StatusSet?.Invoke(status);
 			}
 		}
-	}
-
-	internal abstract class ControlWrapper<TValue, TControl> : ReadableControlWrapper<TValue, TControl>, IControlWrapper, IControlWrapper<TValue>
-		where TControl : FrameworkElement
-	{
-		public void SetValue(TValue value)
-		{
-			setValue(value);
-			StopHighlighting();
-		}
-
-		public void SetValue(object value)
-		{
-			if (value is not null and not TValue)
-			{
-				Debugger.Break();
-			}
-
-			var typed = (TValue)value;
-			SetValue(typed);
-		}
-
-		protected abstract void setValue(TValue value);
 	}
 }

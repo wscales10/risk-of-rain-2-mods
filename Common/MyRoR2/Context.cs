@@ -14,7 +14,7 @@ namespace MyRoR2
 
 		public int? LoopIndex { get; set; }
 
-		public string BossBodyName { get; set; }
+		public Entity BossBodyName { get; set; }
 
 		public bool IsBossEncounter { get; set; }
 

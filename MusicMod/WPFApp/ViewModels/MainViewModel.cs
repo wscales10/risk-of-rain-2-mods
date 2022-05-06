@@ -1,22 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using WPFApp.Controls;
 using System;
 using Microsoft.Win32;
 using System.Windows;
-using System.Collections.ObjectModel;
 using WPFApp.Controls.Rows;
 using System.ComponentModel;
+using System.IO;
 
 namespace WPFApp.ViewModels
 {
 	public class MainViewModel : ViewModelBase
 	{
-		private ControlBase control;
+		private NavigationViewModelBase itemViewModel;
 
 		private bool hasContent;
 
 		private ICollectionView mainRows;
+
+		private string title;
 
 		public MainViewModel(NavigationContext navigationContext)
 		{
@@ -49,6 +50,7 @@ namespace WPFApp.ViewModels
 			}, this, nameof(HasContent));
 			HomeCommand = new(_ => NavigationContext.GoHome(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
 			UpCommand = new(_ => NavigationContext.GoUp(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
+			ClearCacheCommand = new(_ => ClearCache());
 		}
 
 		public event Action OnReset;
@@ -77,17 +79,19 @@ namespace WPFApp.ViewModels
 
 		public ButtonCommand NewCommand { get; }
 
+		public ButtonCommand ClearCacheCommand { get; }
+
 		public NavigationContext NavigationContext { get; }
 
-		public ControlBase Control
+		public NavigationViewModelBase ItemViewModel
 		{
-			get => control;
+			get => itemViewModel;
 
 			set
 			{
-				control = value;
+				itemViewModel = value;
 				HasContent = value is not null;
-				ExportCommand.CanExecute = value is IXmlControl;
+				ExportCommand.CanExecute = value is IXmlViewModel;
 				NotifyPropertyChanged();
 			}
 		}
@@ -96,23 +100,24 @@ namespace WPFApp.ViewModels
 		{
 			get => hasContent;
 
-			set
-			{
-				hasContent = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref hasContent, value);
 		}
 
 		public ICollectionView MainRows
 		{
 			get => mainRows;
 
-			set
-			{
-				mainRows = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref mainRows, value);
 		}
+
+		public string Title
+		{
+			get => "Rule Builder" + (title is null ? string.Empty : $" ({title})");
+
+			set => SetProperty(ref title, value);
+		}
+
+		private static void ClearCache() => Images.ClearCache();
 
 		private static bool TryGetExportLocation(out string fileName)
 		{
@@ -134,7 +139,10 @@ namespace WPFApp.ViewModels
 		{
 			while (!NavigationContext.IsHome)
 			{
-				NavigationContext.GoUp();
+				if (!NavigationContext.GoUp())
+				{
+					return;
+				}
 			}
 
 			var node = (IRuleRow)rowObject;

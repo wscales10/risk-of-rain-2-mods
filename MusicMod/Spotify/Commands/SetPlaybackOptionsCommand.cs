@@ -6,17 +6,16 @@ namespace Spotify.Commands
 	public enum RepeatMode
 	{
 		Off,
+
 		Track,
+
 		Context
 	}
 
 	public class SetPlaybackOptionsCommand : Command
 	{
-		public SetPlaybackOptionsCommand(RepeatMode? repeatMode = null, int? volumePercent = null, bool? shuffle = null)
+		public SetPlaybackOptionsCommand()
 		{
-			RepeatMode = repeatMode;
-			Shuffle = shuffle;
-			VolumePercent = volumePercent;
 		}
 
 		internal SetPlaybackOptionsCommand(XElement element)

@@ -2,40 +2,68 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
 using WPFApp.Controls.Rows;
 using System.Collections.Specialized;
-using System.Windows.Media;
 using Utils;
 using WPFApp.Controls.Wrappers;
 using System.Collections.ObjectModel;
 
 namespace WPFApp.Controls.GridManagers
 {
-	internal class RowManager<TRow> : GridManager<TRow>, IRowManager where TRow : Row<TRow>
+	public class RowManager<TRow> : GridManager<TRow>, IRowManager where TRow : Row<TRow>
 	{
 		private readonly ObservableHashSet<int> selectedIndices = new();
 
-		public RowManager(Grid grid, Button addDefaultButton = null) : base(grid, addDefaultButton) => selectedIndices.CollectionChanged += SelectedIndices_CollectionChanged;
+		private IRow parent;
+
+		public RowManager() => selectedIndices.CollectionChanged += SelectedIndices_CollectionChanged;
 
 		public event Action SelectionChanged;
 
-		ReadOnlyObservableCollection<IRow> IRowManager.Rows => new MappedObservableCollection<TRow, IRow>(Items, r => r);
+		public ReadOnlyObservableCollection<IRow> Rows => new MappedObservableCollection<TRow, IRow>(Items, r => r);
 
 		public IReadOnlyCollection<IRow> SelectedRows => selectedIndices.Select(i => List[i]).ToReadOnlyCollection();
 
-		// TODO: Binding?
-		public IRow Parent { get; set; }
+		public IRow Parent
+		{
+			get => parent;
 
-		protected override double RowMinHeight => 130;
+			set
+			{
+				if (value is not null)
+				{
+					if (parent is null)
+					{
+						OnItemAdded += RowManager_OnItemAdded;
+					}
+				}
+				else if (parent is not null)
+				{
+					OnItemAdded -= RowManager_OnItemAdded;
+				}
 
-		public SaveResult TrySaveChanges() => Items.All(r => r.TrySaveChanges());
+				SetProperty(ref parent, value);
+
+				foreach (TRow row in Items)
+				{
+					SetParent(row);
+				}
+			}
+		}
+
+		private int? MinSelectedIndex => selectedIndices?.Count > 0 ? selectedIndices.Min() : null;
+
+		public override TRow Add(TRow row) => Add(row, false, MinSelectedIndex);
+
+		public override TDerived Add<TDerived>(TDerived row) => Add(row, false, MinSelectedIndex);
+
+		public override SaveResult TrySaveChanges() => base.TrySaveChanges() & Items.All(r => r.TrySaveChanges());
 
 		public void Select(int index) => selectedIndices.Add(index);
 
-		public void SetSelection(params int[] indices)
+		public void SetSelection(params IRow[] rows)
 		{
+			var indices = rows.Cast<TRow>().Select(List.IndexOf).ToList();
 			selectedIndices.RemoveWhere(i => !indices.Contains(i));
 
 			foreach (int i in indices)
@@ -117,6 +145,21 @@ namespace WPFApp.Controls.GridManagers
 
 		public bool CanRemoveSelected() => selectedIndices.Count > 0 && selectedIndices.All(i => IsRemovable(List[i]));
 
+		public bool ToggleSelected(IRow row)
+		{
+			int index = List.IndexOf((TRow)row);
+			if (selectedIndices.Contains(index))
+			{
+				selectedIndices.Remove(index);
+				return false;
+			}
+			else
+			{
+				selectedIndices.Add(index);
+				return true;
+			}
+		}
+
 		protected override bool IsRemovable(TRow row) => row.IsRemovable;
 
 		protected override bool IsMovable(TRow row) => row.IsMovable;
@@ -131,42 +174,14 @@ namespace WPFApp.Controls.GridManagers
 			}
 		}
 
-		protected override IEnumerable<UIElement> GetUIElements(TRow item) => item.Elements;
+		private void RowManager_OnItemAdded(TRow row, bool isDefault, int index) => SetParent(row);
 
-		protected override int add(TRow row, bool isDefault)
+		private void SetParent(TRow row)
 		{
-			int node = base.add(row, isDefault);
-
-			row.OnUiChanged += (oldElement, newElement) =>
-			{
-				int rowIndex;
-
-				if (oldElement is null)
-				{
-					rowIndex = GetIndex(row);
-				}
-				else
-				{
-					rowIndex = Grid.GetRow(oldElement);
-					Grid.Children.Remove(oldElement);
-				}
-
-				if (newElement is not null)
-				{
-					_ = Grid.Children.Add(newElement);
-					Grid.SetRow(newElement, rowIndex);
-				}
-			};
-
-			row.JointSelected += () => ToggleSelected(Grid.GetRow(row.Background));
-			row.Selected += () => SetSelection(Grid.GetRow(row.Background));
-
 			if (row is IRuleRow ruleRow)
 			{
 				ruleRow.Parent = Parent as IRuleRow;
 			}
-
-			return node;
 		}
 
 		private void ReplaceSelectedIndex(int rowOldIndex, int rowNewIndex)
@@ -187,27 +202,13 @@ namespace WPFApp.Controls.GridManagers
 			}
 		}
 
-		private bool ToggleSelected(int index)
-		{
-			if (selectedIndices.Contains(index))
-			{
-				selectedIndices.Remove(index);
-				return false;
-			}
-			else
-			{
-				selectedIndices.Add(index);
-				return true;
-			}
-		}
-
 		private void SelectedIndices_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.NewItems is not null)
 			{
-				foreach (object oldItem in e.NewItems)
+				foreach (object newItem in e.NewItems)
 				{
-					RowAt(oldItem).Paint(Brushes.PaleTurquoise);
+					RowAt(newItem).IsSelected = true;
 				}
 			}
 
@@ -215,7 +216,7 @@ namespace WPFApp.Controls.GridManagers
 			{
 				foreach (object oldItem in e.OldItems)
 				{
-					RowAt(oldItem).Paint(Brushes.White);
+					RowAt(oldItem).IsSelected = false;
 				}
 			}
 

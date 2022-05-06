@@ -1,18 +1,18 @@
 ﻿using Spotify.Commands;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using Utils;
 using Utils.Reflection.Properties;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Converters;
 
 namespace WPFApp.Controls.CommandControls
 {
-	internal sealed class FormatString
+	internal sealed class FormatString : NotifyPropertyChangedBase
 	{
 		private readonly PropertyString[] propertyStrings;
 
@@ -23,10 +23,16 @@ namespace WPFApp.Controls.CommandControls
 		internal FormatString(Type type, params PropertyString[] propertyStrings)
 		{
 			Type = type;
-			this.propertyStrings = propertyStrings;
+
+			foreach (PropertyString propertyString in this.propertyStrings = propertyStrings)
+			{
+				propertyString.PropertyChanged += PropertyString_PropertyChanged;
+			}
+
+			notDisplayed.CollectionChanged += (s, e) => NotifyPropertyChanged(nameof(AsString));
 		}
 
-		public string Name { get; }
+		public string AsString => string.Join(" ", propertyStrings.Except(notDisplayed).Select(ps => ps.AsString));
 
 		public Type Type { get; }
 
@@ -38,7 +44,7 @@ namespace WPFApp.Controls.CommandControls
 
 			propertiesPanel = new() { Orientation = Orientation.Horizontal };
 
-			foreach (var propertyString in propertyStrings)
+			foreach (PropertyString propertyString in propertyStrings)
 			{
 				_ = propertiesPanel.Children.Add(propertyString.UI);
 				Hide(propertyString);
@@ -148,6 +154,14 @@ namespace WPFApp.Controls.CommandControls
 					return result;
 				}
 			});
+		}
+
+		private void PropertyString_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(PropertyString.AsString))
+			{
+				NotifyPropertyChanged(nameof(AsString));
+			}
 		}
 
 		private void Display(PropertyString propertyString)

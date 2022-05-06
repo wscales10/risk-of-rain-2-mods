@@ -16,6 +16,8 @@ namespace WPFApp.Controls.Wrappers
 
 		public override ComboBox UIElement { get; } = new ComboBox { ItemsSource = Enum.GetValues<T>(), IsTextSearchEnabled = true };
 
+		public override string ValueString => Utils.HelperMethods.GetNullSafeString(UIElement.SelectedItem);
+
 		protected override void setValue(T value) => UIElement.SelectedItem = value;
 
 		protected override SaveResult<T> tryGetValue(bool trySave) => UIElement.SelectedItem is not T x ? (new(false)) : (new(x));

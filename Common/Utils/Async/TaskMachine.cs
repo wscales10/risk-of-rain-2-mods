@@ -1,41 +1,52 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Utils.Async
 {
+	public delegate Task CancellableTask(CancellationToken cancellationToken);
+
 	public class TaskMachine
 	{
-		private readonly Queue<Func<Task>> tasks = new Queue<Func<Task>>();
+		private readonly CancellationToken cancellationToken;
 
-		private readonly SingletonTask lifecycle;
+		private readonly Channel<CancellableTask> tasks = Channel.CreateUnbounded<CancellableTask>();
 
-		public TaskMachine()
+		public TaskMachine(CancellationToken cancellationToken)
 		{
-			lifecycle = new SingletonTask(ExecuteAsync);
+			this.cancellationToken = cancellationToken;
+			Lifecycle = ExecuteAsync();
 		}
 
-		public Task Lifecycle => lifecycle.Task;
+		public Task Lifecycle { get; }
 
-		public bool IsRunning => lifecycle.IsRunning;
-
-		public void Ingest(Func<Task> task)
+		public void Close()
 		{
-			tasks.Enqueue(task);
-
-			if (tasks.Count == 1)
-			{
-				lifecycle.Start();
-			}
+			tasks.Writer.Complete();
 		}
+
+		public bool TryIngest(CancellableTask task) => tasks.Writer.TryWrite(task);
 
 		private async Task ExecuteAsync()
 		{
-			this.Log(lifecycle.Task.Status);
-			while (tasks.Count > 0)
+			while (await tasks.Reader.WaitToReadAsync(cancellationToken))
 			{
-				await tasks.Peek()();
-				tasks.Dequeue();
+				CancellableTask cancellableTask = await tasks.Reader.ReadAsync(cancellationToken);
+				MaybeCancel();
+				if (!cancellationToken.IsCancellationRequested)
+				{
+					await cancellableTask(cancellationToken);
+				}
+				MaybeCancel();
+			}
+
+			void MaybeCancel()
+			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					throw new OperationCanceledException(cancellationToken);
+				}
 			}
 		}
 	}

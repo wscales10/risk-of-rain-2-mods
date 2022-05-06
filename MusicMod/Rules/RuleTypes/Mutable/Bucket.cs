@@ -5,7 +5,6 @@ using Rules.RuleTypes.Readonly;
 using Spotify;
 using Spotify.Commands;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Mutable
@@ -30,17 +29,17 @@ namespace Rules.RuleTypes.Mutable
 
 		public static Bucket Play(string trackId, int milliseconds = 0)
 		{
-			return new PlayCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds).Then(new SetPlaybackOptionsCommand(RepeatMode.Track));
+			return new Bucket(new LoopCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds));
 		}
 
 		public static Bucket Transfer(string trackId, MathFunc mapping, IPattern<string> fromTrackId = null)
 		{
-			return new TransferCommand(SpotifyItemType.Track, trackId, mapping(ms), fromTrackId).Then(new SetPlaybackOptionsCommand(RepeatMode.Track));
+			return new TransferCommand(SpotifyItemType.Track, trackId, mapping(ms), fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
 		}
 
 		public static Bucket Transfer(string trackId, Switch<int, MathFunc> mapping, IPattern<string> fromTrackId = null)
 		{
-			return new TransferCommand(SpotifyItemType.Track, trackId, mapping.Select(m => m(ms)), fromTrackId).Then(new SetPlaybackOptionsCommand(RepeatMode.Track));
+			return new TransferCommand(SpotifyItemType.Track, trackId, mapping.Select(m => m(ms)), fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
 		}
 
 		public static implicit operator Bucket(CommandList cl) => new Bucket(cl);
@@ -53,7 +52,7 @@ namespace Rules.RuleTypes.Mutable
 
 			foreach (var command in Commands)
 			{
-				element.Add(command.ToXml());
+				element.Add(command?.ToXml());
 			}
 
 			return element;

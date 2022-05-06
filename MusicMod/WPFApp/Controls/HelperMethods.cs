@@ -1,39 +1,21 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls
 {
 	internal static class HelperMethods
 	{
-		public static void MakeRulesComboBox(ComboBox comboBox, bool selectFirst = false)
-		{
-			if (selectFirst)
-			{
-				comboBox.SelectedIndex = 0;
-			}
+		public static void MakeRulesComboBox(ComboBox comboBox, bool selectFirst = false) => MakeComboBox(comboBox, Info.SupportedRuleTypes, nameof(Type.Name), selectFirst);
 
-			comboBox.ItemsSource = Info.SupportedRuleTypes;
-			comboBox.DisplayMemberPath = nameof(Type.Name);
-		}
+		public static void MakeCommandsComboBox(ComboBox comboBox, bool selectFirst = false) => MakeComboBox(comboBox, Info.SupportedCommandTypes, nameof(Type.Name), selectFirst);
 
 		public static Color GetColorFromHSL(int H, int S, int L) => System.Drawing.ColorTranslator.FromWin32(ColorHLSToRGB(H, L, S)).ToMediaColor();
-
-		public static BitmapImage ImageFromUri(Uri imageUri)
-		{
-			BitmapImage bmp = new();
-			bmp.BeginInit();
-			bmp.UriSource = imageUri;
-			bmp.EndInit();
-			return bmp;
-		}
-
-		public static BitmapImage ImageFromUri(string imageUri) => imageUri is null ? null : ImageFromUri(new Uri(imageUri));
 
 		public static SaveResult All<T>(this IEnumerable<T> source, Func<T, SaveResult> predicate)
 		{
@@ -48,6 +30,17 @@ namespace WPFApp.Controls
 			}
 
 			return result;
+		}
+
+		private static void MakeComboBox(ComboBox comboBox, IEnumerable itemsSource, string displayMemberPath, bool selectFirst)
+		{
+			if (selectFirst)
+			{
+				comboBox.SelectedIndex = 0;
+			}
+
+			comboBox.ItemsSource = itemsSource;
+			comboBox.DisplayMemberPath = displayMemberPath;
 		}
 
 		[DllImport("shlwapi.dll")]

@@ -24,5 +24,7 @@ namespace Utils
 
 			return string.Concat(list);
 		}
+
+		public static string GetNullSafeString(object obj) => obj?.ToString() ?? "null";
 	}
 }

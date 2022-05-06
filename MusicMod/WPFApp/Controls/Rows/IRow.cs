@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Controls;
 using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Rows
@@ -11,17 +8,15 @@ namespace WPFApp.Controls.Rows
 	{
 		event Action<UIElement, UIElement> OnUiChanged;
 
-		Border Border { get; }
-
-		Border Background { get; }
-
-		IEnumerable<UIElement> Elements { get; }
-
 		UIElement LeftElement { get; }
 
 		bool IsMovable { get; }
 
 		bool IsRemovable { get; }
+
+		bool IsSelected { get; set; }
+
+		UIElement RightElement { get; }
 
 		SaveResult TrySaveChanges();
 	}

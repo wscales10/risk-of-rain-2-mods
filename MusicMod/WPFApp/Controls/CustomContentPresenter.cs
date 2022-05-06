@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace WPFApp.Controls
 {
 	internal class CustomContentPresenter<TContent>
 	{
-		private TContent content;
-
 		private UIElement ui;
+
+		private TContent content;
 
 		public event Func<UIElement> OnUiRequested;
 
@@ -38,13 +37,7 @@ namespace WPFApp.Controls
 			private set
 			{
 				UIElement oldElement = ui;
-
-				if ((ui = value) is not null)
-				{
-					Grid.SetColumn(ui = value, 1);
-				}
-
-				PropagateUiChange(oldElement, value);
+				PropagateUiChange(oldElement, ui = value);
 			}
 		}
 

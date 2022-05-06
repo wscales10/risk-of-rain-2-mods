@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Utils.Reflection;
 using WPFApp.Controls.CommandControls;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Converters;
@@ -14,19 +15,19 @@ namespace WPFApp.Controls.Rows
 {
 	internal class BucketRow : Row<Command, BucketRow>
 	{
-		private FormatString formatString;
-
 		internal BucketRow(Command command) : base(command, true)
 		{
 			LeftElement.Click += (s, e) =>
 			{
 				if (TrySaveChanges())
 				{
-					_ = OnCommandPreviewRequested?.Invoke(command);
+					_ = OnCommandPreviewRequested?.Invoke(Output);
 				}
 			};
 
-			LeftElement.Content = command?.GetType().Name.Replace(nameof(Command), string.Empty);
+			UpdateButtonLabel(command);
+
+			OnSetOutput += UpdateButtonLabel;
 
 			Binding binding = new(nameof(Settings.OfflineMode))
 			{
@@ -39,6 +40,8 @@ namespace WPFApp.Controls.Rows
 
 		public static event Func<Command, Task> OnCommandPreviewRequested;
 
+		public FormatString FormatString { get; private set; }
+
 		public override Button LeftElement { get; } = new()
 		{
 			VerticalAlignment = VerticalAlignment.Center,
@@ -47,13 +50,31 @@ namespace WPFApp.Controls.Rows
 			HorizontalAlignment = HorizontalAlignment.Center
 		};
 
-		public override SaveResult TrySaveChanges() => formatString.TryGetProperties(Output, true);
+		public override SaveResult TrySaveChanges() => (FormatString is null || Output is null) ? (new(false)) : FormatString.TryGetProperties(Output, true);
 
 		protected override UIElement MakeOutputUi()
 		{
-			formatString = GetFormatString(Output);
-			var stackPanel = formatString.BuildControl();
-			formatString.SetProperties(Output);
+			if (Output is null)
+			{
+				ComboBox comboBox = new()
+				{
+					FontSize = 14,
+					Margin = new Thickness(40, 4, 4, 4),
+					VerticalAlignment = VerticalAlignment.Center,
+					MinWidth = 150,
+					HorizontalAlignment = HorizontalAlignment.Left
+				};
+				HelperMethods.MakeCommandsComboBox(comboBox);
+				comboBox.SelectionChanged += (s, e) =>
+				{
+					Output = (Command)((Type)comboBox.SelectedItem).Construct();
+				};
+				return comboBox;
+			}
+
+			FormatString = GetFormatString(Output);
+			var stackPanel = FormatString.BuildControl();
+			FormatString.SetProperties(Output);
 			return stackPanel;
 		}
 
@@ -62,9 +83,11 @@ namespace WPFApp.Controls.Rows
 			switch (command)
 			{
 				case PlayCommand:
+				case LoopCommand:
+				case PlayOnceCommand:
 					return FormatString.Create(
 						PropertyString.Create<PlayCommand>(true, nameof(PlayCommand.Item)),
-						PropertyString.Create<PlayCommand>(false, "at", nameof(PlayCommand.At)));
+						PropertyString.Create<PlayCommand>(false, "at ", nameof(PlayCommand.At)));
 
 				case SeekToCommand:
 					return FormatString.Create(PropertyString.Create<SeekToCommand>(true, nameof(SeekToCommand.At)));
@@ -109,5 +132,7 @@ namespace WPFApp.Controls.Rows
 					return null;
 			}
 		}
+
+		private void UpdateButtonLabel(Command command) => LeftElement.Content = command?.GetType().Name.Replace(nameof(Command), string.Empty);
 	}
 }

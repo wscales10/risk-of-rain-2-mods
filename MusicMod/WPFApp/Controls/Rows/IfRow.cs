@@ -35,7 +35,7 @@ namespace WPFApp.Controls.Rows
 
 		public override string Label => PatternPickerWrapper?.TryGetValue(false).Value?.ToString();
 
-		public override SaveResult TrySaveChanges() => PatternPickerWrapper.TryGetValue(true);
+		public override SaveResult TrySaveChanges() => base.TrySaveChanges() & PatternPickerWrapper.TryGetValue(true);
 	}
 
 	internal class ElseRow : IfRow

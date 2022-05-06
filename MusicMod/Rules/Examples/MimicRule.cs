@@ -44,7 +44,7 @@ namespace Rules
 					C(Play("3KE5ossIfDAnBqNJFF8LfF", 85675), 1).Named("Phase 2"),
 					C(Play("3KE5ossIfDAnBqNJFF8LfF", 148045), 2).Named("Phase 3"),
 					C(Play("3KE5ossIfDAnBqNJFF8LfF", 259950), 3).Named("Phase 4"),
-					C(new SetPlaybackOptionsCommand(RepeatMode.Off), 4).Named("Death Animation")),
+					C(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }, 4).Named("Death Animation")),
 				Play("7G349JbUH3PRdj5e7780Iz").Named("Escape sequence")).Named("Commencement"), Scenes.Commencement),
 			C<MyScene>(new IfRule(
 				Query.Create<bool>(nameof(Context.IsBossEncounter), BoolPattern.True),
@@ -63,7 +63,7 @@ namespace Rules
 
 		private static readonly Rule EnvironmentRule = new SwitchRule<ActivationState?>(
 			nameof(Context.TeleporterState),
-			C<ActivationState?>(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand(RepeatMode.Off)), ActivationState.Charged).Named("Teleporter Charged"),
+			C<ActivationState?>(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }), ActivationState.Charged).Named("Teleporter Charged"),
 			C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging).Named("Teleporter"),
 			C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null).Named("Other"));
 

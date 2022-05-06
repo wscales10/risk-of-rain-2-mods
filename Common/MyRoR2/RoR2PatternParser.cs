@@ -13,14 +13,18 @@ namespace MyRoR2
 
 		protected override bool TryGetTypeDefGetter(string typeKey, out ITypeDefGetter typeDefGetter)
 		{
-			if (typeKey == nameof(MyScene))
+			switch (typeKey)
 			{
-				typeDefGetter = ScenePattern.TypeDef;
-				return true;
-			}
-			else
-			{
-				return base.TryGetTypeDefGetter(typeKey, out typeDefGetter);
+				case nameof(MyScene):
+					typeDefGetter = ScenePattern.TypeDef;
+					return true;
+
+				case nameof(Entity):
+					typeDefGetter = EntityPattern.TypeDef;
+					return true;
+
+				default:
+					return base.TryGetTypeDefGetter(typeKey, out typeDefGetter);
 			}
 		}
 	}

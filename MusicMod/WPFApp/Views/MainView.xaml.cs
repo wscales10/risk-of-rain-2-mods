@@ -2,13 +2,13 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using WPFApp.Controls;
 using WPFApp.Properties;
 using WPFApp.ViewModels;
 using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Data;
 using WPFApp.Controls.Rows;
+using System.IO;
 
 namespace WPFApp.Views
 {
@@ -30,9 +30,9 @@ namespace WPFApp.Views
 
 		public event Func<bool> OnTryClose;
 
-		public static string GetExportLocation() => TryGetExportLocation(out string fileName) ? fileName : null;
+		public static FileInfo GetExportLocation() => TryGetExportLocation(out string fileName) ? new(fileName) : null;
 
-		public void Display(ControlBase control) => ControlContainer.Content = control;
+		public void Display(NavigationViewModelBase control) => ControlContainer.Content = control;
 
 		private static bool TryGetExportLocation(out string fileName)
 		{

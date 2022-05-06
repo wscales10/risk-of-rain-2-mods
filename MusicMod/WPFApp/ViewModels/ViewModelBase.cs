@@ -1,5 +1,4 @@
-﻿using WPFApp.Controls;
-using WPFApp.Properties;
+﻿using WPFApp.Properties;
 
 namespace WPFApp.ViewModels
 {

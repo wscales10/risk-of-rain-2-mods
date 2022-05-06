@@ -15,33 +15,21 @@ namespace WPFApp.ViewModels
 		{
 			get => itemsSource;
 
-			set
-			{
-				itemsSource = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref itemsSource, value);
 		}
 
 		public ICommand NavigateTreeCommand
 		{
 			get => navigateTreeCommand;
 
-			set
-			{
-				navigateTreeCommand = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref navigateTreeCommand, value);
 		}
 
 		public bool IsCollapsed
 		{
 			get => isCollapsed;
 
-			set
-			{
-				isCollapsed = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref isCollapsed, value);
 		}
 	}
 }

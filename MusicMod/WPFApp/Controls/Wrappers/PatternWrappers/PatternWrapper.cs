@@ -43,6 +43,11 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 				return new ScenePatternWrapper(pattern as ScenePattern);
 			}
 
+			if (patternType == typeof(EntityPattern))
+			{
+				return new EntityPatternWrapper(pattern as EntityPattern);
+			}
+
 			if (patternType.IsGenericType(typeof(PropertyPattern<>)))
 			{
 				return (IReadableControlWrapper)typeof(PropertyPatternWrapper<>).MakeGenericType(patternType.GenericTypeArguments).GetAnyConstructor(patternType, typeof(NavigationContext)).Invoke(new object[] { pattern, navigationContext });

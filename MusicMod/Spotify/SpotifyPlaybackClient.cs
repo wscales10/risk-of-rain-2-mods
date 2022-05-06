@@ -83,6 +83,12 @@ namespace Spotify
 				case PlayCommand playCommand:
 					return await PlayInner(playCommand.Item, playCommand.Milliseconds);
 
+				case PlayOnceCommand playOnceCommand:
+					return await PlayInner(playOnceCommand.Item, playOnceCommand.Milliseconds) && await Handle(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off });
+
+				case LoopCommand loopCommand:
+					return await PlayInner(loopCommand.Item, loopCommand.Milliseconds) && await Handle(new SetPlaybackOptionsCommand { RepeatMode = loopCommand.Item?.Type == SpotifyItemType.Track ? RepeatMode.Track : RepeatMode.Context });
+
 				case SeekToCommand seekToCommand:
 					{
 						if (await GetState() == PlayerState.Stopped)

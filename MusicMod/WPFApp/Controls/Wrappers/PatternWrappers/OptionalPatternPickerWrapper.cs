@@ -3,7 +3,7 @@ using WPFApp.Controls.PatternControls;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
-	internal class OptionalPatternPickerWrapper<T> : ControlWrapper<IPattern<T>, OptionalPatternPicker>
+	public class OptionalPatternPickerWrapper<T> : ControlWrapper<IPattern<T>, OptionalPatternPicker>
 	{
 		public OptionalPatternPickerWrapper(NavigationContext navigationContext) => UIElement = new(typeof(T), navigationContext);
 

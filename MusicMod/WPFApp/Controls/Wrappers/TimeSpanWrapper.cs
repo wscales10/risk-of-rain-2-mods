@@ -16,7 +16,7 @@ namespace WPFApp.Controls.Wrappers
 
 		public TimeSpanWrapper() => UIElement.TextChanged += (s, e) => NotifyValueChanged();
 
-		public override TextBox UIElement { get; } = new TextBox() { VerticalAlignment = VerticalAlignment.Center };
+		public override TextBox UIElement { get; } = new TextBox() { VerticalAlignment = VerticalAlignment.Center, MinWidth = 30 };
 
 		protected override void setValue(TimeSpan value) => UIElement.Text = value.ToCompactString();
 

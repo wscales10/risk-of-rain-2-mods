@@ -3,8 +3,7 @@ using Rules.RuleTypes.Mutable;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using WPFApp.Controls;
-using WPFApp.Controls.RuleControls;
+using WPFApp.ViewModels;
 
 namespace WPFApp
 {
@@ -14,63 +13,59 @@ namespace WPFApp
 
 		void GoHome();
 
-		void GoUp();
+		bool GoUp();
 
-		void GoUp(int count);
+		bool GoUp(int count);
 
-		ControlBase GoInto(IEnumerable<Rule> sequence);
+		NavigationViewModelBase GoInto(IEnumerable<Rule> sequence);
 
-		ControlBase GoInto(Rule rule);
+		NavigationViewModelBase GoInto(Rule rule);
 
-		ControlBase GoInto(IPattern pattern);
+		NavigationViewModelBase GoInto(IPattern pattern);
 
-		RuleControlBase GetControl(Rule rule);
+		NavigationViewModelBase GetViewModel(Rule rule);
 
-		ItemControlBase GetControl(IPattern pattern);
+		NavigationViewModelBase GetViewModel(IPattern pattern);
 
-		void GoInto(ControlBase control);
+		void GoInto(NavigationViewModelBase viewModel);
 	}
 
 	public class MutableNavigationContext : NotifyPropertyChangedBase, INavigationContext
 	{
 		private bool isHome;
 
-		public event Func<IEnumerable<object>, ControlBase> OnGoInto;
+		public event Func<IEnumerable<object>, NavigationViewModelBase> OnGoInto;
 
 		public event Action OnGoHome;
 
-		public event Action<int> OnGoUp;
+		public event Func<int, bool> OnGoUp;
 
-		public event Func<object, ControlBase> OnControlRequested;
+		public event Func<object, NavigationViewModelBase> ViewModelRequested;
 
 		public bool IsHome
 		{
 			get => isHome;
 
-			set
-			{
-				isHome = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref isHome, value);
 		}
 
 		public void GoHome() => OnGoHome?.Invoke();
 
-		public ControlBase GoInto(Rule rule) => GoInto(new[] { rule });
+		public NavigationViewModelBase GoInto(Rule rule) => GoInto(new[] { rule });
 
-		public ControlBase GoInto(IEnumerable<Rule> sequence) => OnGoInto?.Invoke(sequence);
+		public NavigationViewModelBase GoInto(IEnumerable<Rule> sequence) => OnGoInto?.Invoke(sequence);
 
-		public ControlBase GoInto(IPattern pattern) => OnGoInto?.Invoke(new[] { pattern });
+		public NavigationViewModelBase GoInto(IPattern pattern) => OnGoInto?.Invoke(new[] { pattern });
 
-		public void GoUp(int count) => OnGoUp?.Invoke(count);
+		public bool GoUp(int count) => OnGoUp?.Invoke(count) ?? false;
 
-		public void GoUp() => GoUp(1);
+		public bool GoUp() => GoUp(1);
 
-		public void GoInto(ControlBase control) => OnGoInto?.Invoke(new[] { control });
+		public void GoInto(NavigationViewModelBase viewModel) => OnGoInto?.Invoke(new[] { viewModel });
 
-		public RuleControlBase GetControl(Rule rule) => (RuleControlBase)(OnControlRequested?.Invoke(rule));
+		public NavigationViewModelBase GetViewModel(Rule rule) => ViewModelRequested?.Invoke(rule);
 
-		public ItemControlBase GetControl(IPattern pattern) => (ItemControlBase)(OnControlRequested?.Invoke(pattern));
+		public NavigationViewModelBase GetViewModel(IPattern pattern) => ViewModelRequested?.Invoke(pattern);
 	}
 
 	public class NavigationContext : NotifyPropertyChangedBase, INavigationContext
@@ -81,22 +76,22 @@ namespace WPFApp
 
 		public bool IsHome => mutable.IsHome;
 
-		public ControlBase GoInto(IEnumerable<Rule> sequence) => mutable.GoInto(sequence);
+		public NavigationViewModelBase GoInto(IEnumerable<Rule> sequence) => mutable.GoInto(sequence);
 
-		public void GoInto(ControlBase control) => mutable.GoInto(control);
+		public void GoInto(NavigationViewModelBase viewModel) => mutable.GoInto(viewModel);
 
-		public ControlBase GoInto(IPattern pattern) => mutable.GoInto(pattern);
+		public NavigationViewModelBase GoInto(IPattern pattern) => mutable.GoInto(pattern);
 
 		public void GoHome() => mutable.GoHome();
 
-		public void GoUp(int count) => mutable.GoUp(count);
+		public bool GoUp(int count) => mutable.GoUp(count);
 
-		public void GoUp() => mutable.GoUp();
+		public bool GoUp() => mutable.GoUp();
 
-		public ControlBase GoInto(Rule rule) => mutable.GoInto(rule);
+		public NavigationViewModelBase GoInto(Rule rule) => mutable.GoInto(rule);
 
-		public RuleControlBase GetControl(Rule rule) => mutable.GetControl(rule);
+		public NavigationViewModelBase GetViewModel(Rule rule) => mutable.GetViewModel(rule);
 
-		public ItemControlBase GetControl(IPattern pattern) => mutable.GetControl(pattern);
+		public NavigationViewModelBase GetViewModel(IPattern pattern) => mutable.GetViewModel(pattern);
 	}
 }

@@ -4,22 +4,28 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using WPFApp.Controls.Wrappers;
+using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
 	internal abstract class RuleRow<TRow> : Row<Rule, TRow>, IRuleRow
 		where TRow : RuleRow<TRow>
 	{
-		private ReadOnlyObservableCollection<IRow> children;
+		private Func<Rule, NavigationViewModelBase> outputViewModelRequestHandler;
 
 		private IRuleRow parent;
 
+		private NavigationViewModelBase outputViewModel;
+
 		protected RuleRow(Rule output, bool movable, bool removable = true)
-			: base(output, movable, removable) => SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label));
+			: base(output, movable, removable)
+		{
+			SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label));
+			SetPropertyDependency(nameof(AllChildren), nameof(OutputViewModel));
+		}
 
-		public event Func<Rule, ControlBase> OnOutputControlRequested;
-
-		public event Action<ControlBase> OnOutputButtonClick;
+		public event Action<NavigationViewModelBase> OnOutputButtonClick;
 
 		public virtual string Label => null;
 
@@ -27,11 +33,7 @@ namespace WPFApp.Controls.Rows
 		{
 			get => parent;
 
-			set
-			{
-				parent = value;
-				NotifyPropertyChanged();
-			}
+			set => SetProperty(ref parent, value);
 		}
 
 		public override Rule Output
@@ -41,22 +43,64 @@ namespace WPFApp.Controls.Rows
 			protected set
 			{
 				base.Output = value;
-				AllChildren = (OnOutputControlRequested?.Invoke(Output) as IRowControl)?.RowManager.Rows;
+				OutputViewModel = OutputViewModelRequestHandler?.Invoke(value);
 			}
 		}
 
-		public override ReadOnlyObservableCollection<IRow> AllChildren
+		public Func<Rule, NavigationViewModelBase> OutputViewModelRequestHandler
 		{
-			protected get => children;
+			private get => outputViewModelRequestHandler;
 
 			set
 			{
-				children = value;
-				NotifyPropertyChanged();
+				outputViewModelRequestHandler = value;
+				OutputViewModel = value?.Invoke(Output);
 			}
 		}
 
-		public string ButtonContent => string.IsNullOrEmpty(Label) ? Output?.ToString() : Label;
+		public NavigationViewModelBase OutputViewModel
+		{
+			get => outputViewModel;
+
+			private set
+			{
+				if (outputViewModel is ItemViewModelBase oldItemViewModel)
+				{
+					oldItemViewModel.OnItemChanged -= RefreshOutputUi;
+				}
+
+				if (value is ItemViewModelBase newItemViewModel)
+				{
+					newItemViewModel.OnItemChanged += RefreshOutputUi;
+				}
+
+				if (value is RowViewModelBase rowViewModel)
+				{
+					rowViewModel.RowManager.Parent = this;
+				}
+
+				SetProperty(ref outputViewModel, value);
+			}
+		}
+
+		public string ButtonContent
+		{
+			get
+			{
+				if (Output is Bucket b)
+				{
+					return b?.ToString();
+				}
+				else
+				{
+					return string.IsNullOrEmpty(Label) ? Output?.ToString() : Label;
+				}
+			}
+		}
+
+		protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
+
+		public override SaveResult TrySaveChanges() => new(Output is not null);
 
 		public override string ToString() => Label ?? base.ToString();
 
@@ -64,30 +108,21 @@ namespace WPFApp.Controls.Rows
 		{
 			if (Output is null)
 			{
-				ComboBox comboBox = new() { FontSize = 14, Margin = new Thickness(40, 4, 4, 4), VerticalAlignment = VerticalAlignment.Center, MinWidth = 150, HorizontalAlignment = HorizontalAlignment.Left };
+				ComboBox comboBox = new()
+				{
+					FontSize = 14,
+					Margin = new Thickness(40, 4, 4, 4),
+					VerticalAlignment = VerticalAlignment.Center,
+					MinWidth = 150,
+					HorizontalAlignment = HorizontalAlignment.Left
+				};
 				HelperMethods.MakeRulesComboBox(comboBox);
 				comboBox.SelectionChanged += (s, e) => Output = Rule.Create((Type)comboBox.SelectedItem);
 				return comboBox;
 			}
 
 			Button button = new() { FontSize = 14, Margin = new Thickness(40, 4, 4, 4), VerticalAlignment = VerticalAlignment.Center, MinWidth = 150, HorizontalAlignment = HorizontalAlignment.Left };
-			button.Click += (s, e) =>
-			{
-				var control = OnOutputControlRequested.Invoke(Output) as ItemControlBase;
-				var rowControl = control as IRowControl;
-
-				if (rowControl is not null)
-				{
-					rowControl.RowManager.Parent = this;
-				}
-
-				OnOutputButtonClick?.Invoke(control);
-
-				if (control is not null)
-				{
-					control.OnItemChanged += RefreshOutputUi;
-				}
-			};
+			button.Click += (s, e) => OnOutputButtonClick?.Invoke(OutputViewModel);
 
 			Binding binding = new(nameof(ButtonContent)) { Source = this };
 			_ = button.SetBinding(ContentControl.ContentProperty, binding);

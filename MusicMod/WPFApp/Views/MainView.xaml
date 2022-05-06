@@ -9,7 +9,7 @@
 		xmlns:viewmodels="clr-namespace:WPFApp.ViewModels"
 		xmlns:converters="clr-namespace:WPFApp.Converters" xmlns:properties="clr-namespace:WPFApp.Properties"
 		mc:Ignorable="d"
-        Title="Rule Builder" Height="850" Width="1500"
+        Title="{Binding Title}" Height="850" Width="1500"
 		MouseDown="Window_MouseDown"
 		SizeChanged="Window_SizeChanged"
 		Deactivated="Window_Deactivated"
@@ -36,13 +36,14 @@
 			<RowDefinition />
 		</Grid.RowDefinitions>
 		<StackPanel Orientation="Horizontal">
-			<Button x:Name="BackButton" Command="{Binding BackCommand}">Back</Button>
-			<Button x:Name="ForwardButton" Command="{Binding ForwardCommand}">Forward</Button>
-			<Button x:Name="UpLevelButton" Command="{Binding UpCommand}">Up</Button>
-			<Button x:Name="HomeButton" Command="{Binding HomeCommand}">Home</Button>
-			<Button x:Name="ImportButton" Command="{Binding ImportCommand}">Import XML</Button>
-			<Button x:Name="ExportButton" Command="{Binding ExportCommand}">Export XML</Button>
-			<Button x:Name="NewButton" Command="{Binding NewCommand}">New...</Button>
+			<Button Command="{Binding BackCommand}">Back</Button>
+			<Button Command="{Binding ForwardCommand}">Forward</Button>
+			<Button Command="{Binding UpCommand}">Up</Button>
+			<Button Command="{Binding HomeCommand}">Home</Button>
+			<Button Command="{Binding ImportCommand}">Import XML</Button>
+			<Button Command="{Binding ExportCommand}">Export XML</Button>
+			<Button Command="{Binding NewCommand}">New...</Button>
+			<Button Command="{Binding ClearCacheCommand}">Clear Cache</Button>
 			<CheckBox x:Name="OfflineModeCheckbox"
 					  IsChecked="{Binding Source={StaticResource Settings}, Path=Default.OfflineMode}">Offline Mode</CheckBox>
 			<CheckBox x:Name="OpenLinksInAppCheckbox"
@@ -50,8 +51,11 @@
 			<CheckBox x:Name="AutosaveCheckbox" IsChecked="{Binding Source={StaticResource Settings}, Path=Default.Autosave, Mode=OneWay}" Click="AutosaveCheckbox_Click">Autosave</CheckBox>
 		</StackPanel>
 		<Grid Grid.Row="1">
+			<Grid.Resources>
+				<converters:ViewModelToControlConverter x:Key="Converter" />
+			</Grid.Resources>
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="200" MinWidth="15" MaxWidth="500"/>
+				<ColumnDefinition Width="200" MinWidth="15" MaxWidth="500" />
 				<ColumnDefinition Width="1" />
 				<ColumnDefinition />
 			</Grid.ColumnDefinitions>
@@ -64,7 +68,7 @@
 			</TreeView>
 			<GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
 			<ContentPresenter Grid.Column="2" x:Name="ControlContainer"
-				Content="{Binding Control}" />
+				Content="{Binding ItemViewModel, Converter={StaticResource Converter}}" />
 			<rulecontrols:NewRuleControl Grid.Column="2" x:Name="newRuleControl"
 									 VerticalAlignment="Center"
 									 Visibility="{Binding HasContent, Converter={StaticResource ReverseBooleanToVisibilityConverter}}" />

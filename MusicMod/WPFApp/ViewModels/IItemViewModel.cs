@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Xml.Linq;
 using WPFApp.Controls.Wrappers;
 
-namespace WPFApp.Controls
+namespace WPFApp.ViewModels
 {
-	public interface IItemControl
+	public interface IItemViewModel
 	{
 		event Action OnItemChanged;
 
@@ -13,10 +12,5 @@ namespace WPFApp.Controls
 		object ItemObject { get; }
 
 		SaveResult TrySave();
-	}
-
-	public interface IXmlControl : IItemControl
-	{
-		XElement GetContentXml();
 	}
 }

@@ -6,20 +6,4 @@
              xmlns:local="clr-namespace:WPFApp.Controls.Rows"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
-	<UserControl.Resources>
-		<Style TargetType="Button">
-			<Setter Property="MinWidth" Value="60" />
-			<Setter Property="Margin" Value="3" />
-			<Setter Property="HorizontalAlignment" Value="Center" />
-			<Setter Property="FontSize" Value="14" />
-			<Setter Property="Padding" Value="2" />
-		</Style>
-	</UserControl.Resources>
-	<StackPanel Margin="10">
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-			<Button x:Name="UpButton" Content="Up" />
-			<Button x:Name="DownButton" Content="Down" />
-		</StackPanel>
-		<Button x:Name="DeleteButton" Content="Delete" />
-	</StackPanel>
 </UserControl>

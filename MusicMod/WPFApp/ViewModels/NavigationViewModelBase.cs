@@ -1,11 +1,10 @@
-﻿using System.Windows.Controls;
-using WPFApp.Controls.Wrappers;
+﻿using WPFApp.Controls.Wrappers;
 
-namespace WPFApp.Controls
+namespace WPFApp.ViewModels
 {
-	public abstract class ControlBase : UserControl
+	public abstract class NavigationViewModelBase : ViewModelBase
 	{
-		protected ControlBase(NavigationContext navigationContext) => NavigationContext = navigationContext;
+		protected NavigationViewModelBase(NavigationContext navigationContext) => NavigationContext = navigationContext;
 
 		public NavigationContext NavigationContext { get; }
 

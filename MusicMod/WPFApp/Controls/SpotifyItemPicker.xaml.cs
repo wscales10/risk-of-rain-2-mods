@@ -20,8 +20,6 @@ namespace WPFApp.Controls
 	/// </summary>
 	public partial class SpotifyItemPicker : UserControl
 	{
-		public event Action<SpotifyItem?> ValueChanged;
-
 		private static readonly Regex regex = new(@"https?:\/\/open.spotify.com\/(?<itemType>.*?)\/(?<id>\w*)");
 
 		private static readonly Brush infoBrush = new SolidColorBrush(Color.FromRgb(244, 244, 244));
@@ -44,6 +42,8 @@ namespace WPFApp.Controls
 			OnConnectionMade += RequestMusicItemInfo;
 		}
 
+		public event Action<SpotifyItem?> ValueChanged;
+
 		internal static event MusicItemInfoRequestHandler OnMusicItemInfoRequested;
 
 		private static event Action OnConnectionMade;
@@ -56,6 +56,8 @@ namespace WPFApp.Controls
 			{
 				SpotifyItem? oldItem = item;
 				item = value;
+
+				// TODO: before requesting new info, clear old album art. Also consider caching music item info.
 				RequestMusicItemInfo();
 				if (oldItem != value)
 				{
@@ -104,6 +106,13 @@ namespace WPFApp.Controls
 			string id = match.Groups["id"]?.Value;
 
 			Item = new(itemType.AsEnum<SpotifyItemType>(true), id);
+		}
+
+		private Task SetImageSourceAsync()
+		{
+			string imageUrl = Info.Get().Images.OrderBy(i => i.Width * i.Height).FirstOrDefault()?.Url;
+			image.Source = Images.BuildFromUri(imageUrl);
+			return Task.CompletedTask;
 		}
 
 		private Task DisplayMusicItemInfoAsync(MusicItemInfo info)
@@ -162,8 +171,7 @@ namespace WPFApp.Controls
 					infoPanel.Children.RemoveAt(infoPanel.Children.Count - 1);
 				}
 
-				string imageUrl = info.Images.OrderBy(i => i.Width * i.Height).FirstOrDefault()?.Url;
-				image.Source = HelperMethods.ImageFromUri(imageUrl);
+				_ = SetImageSourceAsync();
 			}
 
 			return Task.CompletedTask;

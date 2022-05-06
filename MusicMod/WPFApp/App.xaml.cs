@@ -13,9 +13,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Utils;
 using WPFApp.Controls;
-using WPFApp.Controls.PatternControls;
 using WPFApp.Controls.Rows;
-using WPFApp.Controls.RuleControls;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Properties;
 using WPFApp.Views;
@@ -23,6 +21,8 @@ using System.Diagnostics.CodeAnalysis;
 using WPFApp.ViewModels;
 using System.Collections;
 using System.ComponentModel;
+using System.IO;
+using System.Xml;
 
 namespace WPFApp
 {
@@ -35,19 +35,23 @@ namespace WPFApp
 
 		private readonly MutableNavigationContext navigationContext = new();
 
-		private readonly Cache<object, ControlBase> controls;
+		private readonly Cache<object, NavigationViewModelBase> viewModels;
 
 		private Action display;
-
-		private string autosaveLocation;
 
 		private MainViewModel mainViewModel;
 
 		public App()
 		{
-			controls = new(item => item switch
+			exportTaskMachine = new(exportCancellationTokenSource.Token);
+
+			// TODO: (not sure where to put this) Would be nice to have options to define "playlists" in app rather than in spotify:
+			// - Play track
+			// - Wait length of track (+delay?) (abort if bucket switches)
+			// - Play next track, etc.
+			viewModels = new(item => item switch
 			{
-				Rule rule => GetRuleControl(rule),
+				Rule rule => GetRuleViewModel(rule),
 				IPattern pattern => GetPatternControl(pattern),
 				_ => null,
 			});
@@ -55,10 +59,7 @@ namespace WPFApp
 			navigationContext.OnGoHome += GoHome;
 			navigationContext.OnGoUp += GoUp;
 			navigationContext.OnGoInto += Display;
-			navigationContext.OnControlRequested += (obj) =>
-			{
-				return obj is null ? null : controls[obj];
-			};
+			navigationContext.ViewModelRequested += (obj) => obj is null ? null : viewModels[obj];
 			NavigationContext = new(navigationContext);
 			history.ActionRequested += TryInner;
 			MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x));
@@ -69,7 +70,16 @@ namespace WPFApp
 			Settings.Default.PropertyChanged += OnSettingChanged;
 		}
 
-		private event Func<string> OnAutosaveLocationRequested;
+		private event Func<FileInfo> OnAutosaveLocationRequested;
+
+		public static FileInfo EffectiveAutosaveLocation => Settings.Default.Autosave ? AutosaveLocation : null;
+
+		public static FileInfo AutosaveLocation
+		{
+			get => string.IsNullOrEmpty(Settings.Default.AutosaveLocation) ? null : new(Settings.Default.AutosaveLocation);
+
+			set => Settings.Default.AutosaveLocation = value?.FullName;
+		}
 
 		public NavigationContext NavigationContext { get; }
 
@@ -79,9 +89,9 @@ namespace WPFApp
 
 		public SpotifyPlaybackClient PlaybackClient { get; }
 
-		public List<ControlBase> ControlList { get; set; } = new();
+		public List<NavigationViewModelBase> ViewModelList { get; set; } = new();
 
-		public ControlBase CurrentControl => ControlList.LastOrDefault();
+		public NavigationViewModelBase CurrentViewModel => ViewModelList.LastOrDefault();
 
 		public void GoBack()
 		{
@@ -97,36 +107,37 @@ namespace WPFApp
 
 		public void GoHome()
 		{
-			_ = Try(new RemoveNavigation(ControlList.Skip(1).Reverse()));
+			_ = Try(new RemoveNavigation(ViewModelList.Skip(1).Reverse()));
 			display();
 		}
 
-		public ControlBase Display(IEnumerable list)
+		public NavigationViewModelBase Display(IEnumerable list)
 		{
-			ControlBase output = null;
+			NavigationViewModelBase output = null;
 			foreach (object item in list)
 			{
-				ControlBase control = (item as ControlBase) ?? (item is null ? null : controls[item]);
+				NavigationViewModelBase viewModel = (item as NavigationViewModelBase) ?? (item is null ? null : viewModels[item]);
 
-				if (Try(new AddNavigation(control)))
+				if (Try(new AddNavigation(viewModel)))
 				{
 					display();
-					output = CurrentControl;
+					output = CurrentViewModel;
 				}
 				else
 				{
+					display();
 					break;
 				}
 			}
 
-			display();
 			return output;
 		}
 
-		public void GoUp(int count)
+		public bool GoUp(int count)
 		{
-			_ = Try(new RemoveNavigation(ControlList.Reverse<ControlBase>().Take(count)));
+			var result = Try(new RemoveNavigation(ViewModelList.Reverse<NavigationViewModelBase>().Take(count)));
 			display();
+			return result;
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
@@ -135,7 +146,23 @@ namespace WPFApp
 			MainView mainView = new(NavigationContext);
 			Attach(mainView);
 			RegisterRequestHandlers();
-			ImportXml(Rules.Examples.MimicRule.ToXml());
+
+			if (EffectiveAutosaveLocation is not null)
+			{
+				try
+				{
+					ImportFile(EffectiveAutosaveLocation.FullName);
+				}
+				catch (XmlException)
+				{
+					Settings.Default.Autosave = false;
+				}
+			}
+			else
+			{
+				ImportXml(Rules.Examples.MimicRule.ToXml());
+			}
+
 			display();
 			mainView.Show();
 
@@ -146,7 +173,6 @@ namespace WPFApp
 				MetadataClient.GiftNewAccessToken(t);
 				PlaybackClient.GiftNewAccessToken(t);
 				SpotifyItemPicker.Refresh();
-				Settings.Default.Save();
 			};
 			Authorisation.OnClientRequested += Web.Goto;
 			if (!Settings.Default.OfflineMode)
@@ -176,10 +202,10 @@ namespace WPFApp
 
 			display = () =>
 			{
-				navigationContext.IsHome = ControlList.Count < 2;
+				navigationContext.IsHome = ViewModelList.Count < 2;
 				mainViewModel.BackCommand.CanExecute = history.CurrentIndex > 0;
 				mainViewModel.ForwardCommand.CanExecute = history.ReverseIndex > 0;
-				mainViewModel.Control = CurrentControl;
+				mainViewModel.ItemViewModel = CurrentViewModel;
 			};
 		}
 
@@ -188,10 +214,10 @@ namespace WPFApp
 		{
 			MaybeSave();
 
-			if (taskMachine.IsRunning)
+			if (!exportTaskMachine.Lifecycle.IsCompleted)
 			{
 				ExportWindow exportWindow = new();
-				_ = taskMachine.Lifecycle.ContinueWith(_ => Dispatcher.Invoke(() =>
+				_ = exportTaskMachine.Lifecycle.ContinueWith(_ => Dispatcher.Invoke(() =>
 				{
 					exportWindow.Close();
 					Shutdown();
@@ -219,22 +245,33 @@ namespace WPFApp
 		private void OnSettingChanged(object sender, PropertyChangedEventArgs e)
 		{
 			var settings = (Settings)sender;
-			if (e.PropertyName == nameof(Settings.OfflineMode))
+			settings.Save();
+
+			switch (e.PropertyName)
 			{
-				// TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
-				if (settings.OfflineMode)
-				{
-					_ = Authorisation.PauseAsync();
-				}
-				else if (Authorisation.Lifecycle.IsRunning)
-				{
-					Authorisation.Resume();
-					SpotifyItemPicker.Refresh();
-				}
-				else
-				{
-					Authorisation.InitiateScopeRequest();
-				}
+				case nameof(Settings.OfflineMode):
+
+					// TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
+					if (settings.OfflineMode)
+					{
+						_ = Authorisation.PauseAsync();
+					}
+					else if (Authorisation.Lifecycle.IsRunning)
+					{
+						Authorisation.Resume();
+						SpotifyItemPicker.Refresh();
+					}
+					else
+					{
+						Authorisation.InitiateScopeRequest();
+					}
+
+					break;
+
+				case nameof(Settings.AutosaveLocation):
+				case nameof(Settings.Autosave):
+					mainViewModel.Title = EffectiveAutosaveLocation?.Name;
+					break;
 			}
 		}
 
@@ -244,23 +281,29 @@ namespace WPFApp
 			MessageBoxButton.OK,
 			MessageBoxImage.Error);
 
-		private PatternControlBase GetPatternControl(IPattern pattern)
+		private NavigationViewModelBase GetPatternControl(IPattern pattern)
 		{
 			if (pattern is IListPattern lp)
 			{
-				return new ListPatternControl(lp, lp.ValueType, NavigationContext);
+				return new ListPatternViewModel(lp, lp.ValueType, NavigationContext);
 			}
 
 			return null;
 		}
 
-		private void Reset(ControlBase control = null)
+		private void Reset(NavigationViewModelBase viewModel = null, bool resetAutosave = true)
 		{
-			ControlList.Clear();
-
-			if (control is not null)
+			if (resetAutosave)
 			{
-				ControlList.Add(control);
+				AutosaveLocation = null;
+			}
+
+			ViewModelList.Clear();
+
+			if (viewModel is not null)
+			{
+				ViewModelList.Add(viewModel);
+				SetMainRows();
 			}
 			else
 			{
@@ -271,17 +314,14 @@ namespace WPFApp
 			display();
 		}
 
-		private ControlBase GetRuleControl(Rule rule)
+		private NavigationViewModelBase GetRuleViewModel(Rule rule) => rule switch
 		{
-			return new RuleControlWrapper(rule switch
-			{
-				StaticSwitchRule sr => new SwitchRuleControl(sr, NavigationContext),
-				ArrayRule ar => new ArrayRuleControl(ar, NavigationContext),
-				IfRule ir => new IfRuleControl(ir, NavigationContext),
-				Bucket b => new BucketControl(b, NavigationContext),
-				_ => null,
-			});
-		}
+			StaticSwitchRule sr => new SwitchRuleViewModel(sr, NavigationContext),
+			ArrayRule ar => new ArrayRuleViewModel(ar, NavigationContext),
+			IfRule ir => new IfRuleViewModel(ir, NavigationContext),
+			Bucket b => new BucketViewModel(b, NavigationContext),
+			_ => null,
+		};
 
 		private async Task HandleMusicItemInfoRequestAsync(SpotifyItem item, Func<MusicItemInfo, Task> callback)
 		{
@@ -318,34 +358,34 @@ namespace WPFApp
 			Settings.Default.OfflineMode = pingReply.Status != IPStatus.Success;
 		}
 
-		private bool Try(Navigation navigation) => history.Try(navigation, CurrentControl is not null);
+		private bool Try(Navigation navigation) => history.Try(navigation, CurrentViewModel is not null);
 
-		private void MaybeSave()
+		private void MaybeSave(bool isViewModelSaved = false)
 		{
-			if (Settings.Default.Autosave && !TrySave())
+			if (Settings.Default.Autosave && !TrySave(isViewModelSaved))
 			{
 				Settings.Default.Autosave = false;
 			}
 		}
 
-		private bool TrySave()
+		private bool TrySave(bool isViewModelSaved = false)
 		{
-			if (ControlList[0] is not IXmlControl xmlControl)
+			if (ViewModelList[0] is not IXmlViewModel xmlViewModel)
 			{
 				return false;
 			}
 
-			if (!CurrentControl.TrySave().IsSuccess)
+			if (!isViewModelSaved && !CurrentViewModel.TrySave().IsSuccess)
 			{
 				return false;
 			}
 
-			if ((autosaveLocation ??= OnAutosaveLocationRequested?.Invoke()) is null)
+			if ((AutosaveLocation ??= OnAutosaveLocationRequested?.Invoke()) is null)
 			{
 				return false;
 			}
 
-			ExportToFile(xmlControl, autosaveLocation);
+			ExportToFile(xmlViewModel, AutosaveLocation.FullName);
 			return true;
 		}
 
@@ -354,40 +394,38 @@ namespace WPFApp
 			switch (navigation)
 			{
 				case AddNavigation:
-					foreach (ControlBase control in navigation.Controls)
+					foreach (NavigationViewModelBase viewModel in navigation.ViewModels)
 					{
-						if (!TryLeaveControl())
+						if (!TrySaveViewModel())
 						{
 							return false;
 						}
 
-						MaybeSave();
-
-						if (ControlList.Count == 0)
+						MaybeSave(true);
+						ViewModelList.Add(viewModel);
+						if (ViewModelList.Count == 1)
 						{
-							mainViewModel.MainRows = Row.Filter((control as IRowControl)?.RowManager.Rows, r => (r as IRuleRow)?.Output is not null);
+							SetMainRows();
 						}
-
-						ControlList.Add(control);
 					}
 					break;
 
 				case RemoveNavigation:
-					foreach (ControlBase control in navigation.Controls)
+					foreach (NavigationViewModelBase viewModel in navigation.ViewModels)
 					{
-						if (!TryLeaveControl())
+						if (!TrySaveViewModel())
 						{
 							return false;
 						}
 
-						MaybeSave();
+						MaybeSave(true);
 
-						if (CurrentControl != control)
+						if (CurrentViewModel != viewModel)
 						{
 							throw new InvalidOperationException();
 						}
 
-						ControlList.RemoveAt(ControlList.Count - 1);
+						ViewModelList.RemoveAt(ViewModelList.Count - 1);
 					}
 					break;
 
@@ -398,6 +436,8 @@ namespace WPFApp
 			return true;
 		}
 
-		private bool TryLeaveControl() => CurrentControl?.TrySave().IsSuccess != false;
+		private void SetMainRows() => mainViewModel.MainRows = Row.Filter((ViewModelList[0] as RowViewModelBase)?.RowManager.Rows, r => (r as IRuleRow)?.Output is not null);
+
+		private bool TrySaveViewModel() => CurrentViewModel?.TrySave().IsSuccess != false;
 	}
 }

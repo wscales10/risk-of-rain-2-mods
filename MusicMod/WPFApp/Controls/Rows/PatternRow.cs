@@ -1,31 +1,47 @@
 ﻿using Patterns;
+using System;
 using System.Windows;
-using System.Windows.Controls;
+using Utils.Reflection;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 
 namespace WPFApp.Controls.Rows
 {
-	internal class PatternRow : Row<IReadableControlWrapper, PatternRow>
+	internal class PatternRow : Row<IPattern, PatternRow>
 	{
-		public PatternRow(IPattern pattern, NavigationContext navigationContext)
-			: this(PatternWrapper.Create(pattern, navigationContext))
+		private readonly IControlWrapper singlePatternPickerWrapper;
+
+		public PatternRow(IPattern pattern, Type valueType, NavigationContext navigationContext) : base(pattern, true)
 		{
+			singlePatternPickerWrapper = (IControlWrapper)typeof(SinglePatternPickerWrapper<>).MakeGenericType(valueType).Construct(navigationContext);
+			singlePatternPickerWrapper.ValueSet += SinglePatternPickerWrapper_ValueSet;
+			singlePatternPickerWrapper.SetValue(pattern);
 		}
 
-		public PatternRow(IReadableControlWrapper patternWrapper) : base(patternWrapper, true)
+		public override SaveResult TrySaveChanges() => singlePatternPickerWrapper.TryGetObject(true);
+
+		protected override UIElement MakeOutputUi()
 		{
+			var output = singlePatternPickerWrapper?.UIElement;
+
+			if(output is not null)
+			{
+				output.Margin = new Thickness(40, 4, 4, 4);
+				output.MinWidth = 150;
+				output.HorizontalAlignment = HorizontalAlignment.Left;
+			}
+
+			return output;
 		}
 
-		public override SaveResult TrySaveChanges() => Output.TryGetObject(true);
+		private void SinglePatternPickerWrapper_ValueSet(object obj) => Output = (IPattern)obj;
 
-		protected override UIElement MakeOutputUi() => new Border()
-		{
-			Margin = new Thickness(40, 4, 4, 4),
-			VerticalAlignment = VerticalAlignment.Center,
-			MinWidth = 150,
-			HorizontalAlignment = HorizontalAlignment.Left,
-			Child = Output?.UIElement
-		};
+		/*		new SinglePatternPicker(valueType, navigationContext)
+				{
+					Margin = new Thickness(40, 4, 4, 4),
+					VerticalAlignment = VerticalAlignment.Center,
+					MinWidth = 150,
+					HorizontalAlignment = HorizontalAlignment.Left,
+				};*/
 	}
 }

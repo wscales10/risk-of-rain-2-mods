@@ -1,6 +1,4 @@
-﻿using MyRoR2;
-using System.Windows.Controls;
-using WPFApp.Controls.Wrappers.PatternWrappers;
+﻿using System.Windows.Controls;
 
 namespace WPFApp.Controls.RuleControls
 {
@@ -10,18 +8,5 @@ namespace WPFApp.Controls.RuleControls
 	public partial class WhereControl : UserControl
 	{
 		public WhereControl() => InitializeComponent();
-
-		internal NavigationContext NavigationContext
-		{
-			set
-			{
-				PatternWrapper = new OptionalPatternPickerWrapper<Context>(value);
-				container.Child = PatternWrapper.UIElement;
-			}
-		}
-
-		internal bool HasPattern => PatternWrapper.UIElement.patternContainer.PatternWrapper is not null;
-
-		internal OptionalPatternPickerWrapper<Context> PatternWrapper { get; private set; }
 	}
 }

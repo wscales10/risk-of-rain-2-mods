@@ -18,7 +18,7 @@ namespace Spotify.Commands
 		{
 		}
 
-		public TransferCommand(SpotifyItem? item = null, Switch<int, SymbolicExpression> mapping = null, IPattern<string> fromTrackId = null)
+		public TransferCommand(SpotifyItem? item, Switch<int, SymbolicExpression> mapping = null, IPattern<string> fromTrackId = null)
 		{
 			Item = item;
 			Mapping = mapping ?? new Switch<int, SymbolicExpression>();
@@ -31,6 +31,10 @@ namespace Spotify.Commands
 		}
 
 		public TransferCommand(SpotifyItem? item, SymbolicExpression mapping, IPattern<string> fromTrackId = null) : this(item, new Switch<int, SymbolicExpression>(mapping), fromTrackId)
+		{
+		}
+
+		public TransferCommand() : this((SpotifyItem?)null)
 		{
 		}
 

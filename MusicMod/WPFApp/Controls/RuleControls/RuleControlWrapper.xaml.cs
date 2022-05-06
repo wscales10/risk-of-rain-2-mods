@@ -3,24 +3,24 @@ using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Markup;
 using WPFApp.Controls.GridManagers;
-using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
+using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.RuleControls
 {
 	[ContentProperty(nameof(ContentControl))]
-	public partial class RuleControlWrapper : RuleControlBase, IRowControl
+	public partial class RuleControlWrapper : UserControl
 	{
-		private RuleControlBase contentControl;
+		private RuleViewModelBase contentControl;
 
-		public RuleControlWrapper(RuleControlBase contentControl) : base(contentControl.NavigationContext)
+		public RuleControlWrapper(RuleViewModelBase contentControl) : base(contentControl.NavigationContext)
 		{
 			InitializeComponent();
 			ContentControl = contentControl;
 			ContentControl.OnItemChanged += NotifyItemChanged;
 		}
 
-		public RuleControlBase ContentControl
+		public RuleViewModelBase ContentControl
 		{
 			get => contentControl;
 
@@ -36,9 +36,9 @@ namespace WPFApp.Controls.RuleControls
 
 		public override Rule Item => ContentControl.Item;
 
-		public override ReadOnlyObservableCollection<(string, RuleControlBase)> Children => ContentControl.Children;
+		public override ReadOnlyObservableCollection<(string, RuleViewModelBase)> Children => ContentControl.Children;
 
-		IRowManager IRowControl.RowManager => (ContentControl as IRowControl)?.RowManager;
+		IRowManager IRowViewModel.RowManager => (ContentControl as IRowViewModel)?.RowManager;
 
 		public override string ToString() => $"{GetType().Name}({ContentControl})";
 

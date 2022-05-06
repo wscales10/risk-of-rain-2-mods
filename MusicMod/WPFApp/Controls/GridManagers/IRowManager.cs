@@ -6,7 +6,7 @@ using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.GridManagers
 {
-	internal interface IRowManager
+	public interface IRowManager
 	{
 		event Action SelectionChanged;
 
@@ -25,5 +25,9 @@ namespace WPFApp.Controls.GridManagers
 		bool CanRemoveSelected();
 
 		void RemoveSelected();
+
+		bool ToggleSelected(IRow row);
+
+		void SetSelection(params IRow[] rows);
 	}
 }

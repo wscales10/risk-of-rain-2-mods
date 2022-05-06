@@ -12,12 +12,18 @@ namespace Ror2Mod2
 	internal partial class ContextHelper
 	{
 		private const bool WaitForBosses = false;
-		private int scenePart;
-		private bool isBossEncounter;
-		private RunType runType;
-		private MyScene oldScene;
-		private Scene? currentScene;
+
 		private readonly Logger Log;
+
+		private int scenePart;
+
+		private bool isBossEncounter;
+
+		private RunType runType;
+
+		private MyScene oldScene;
+
+		private Scene? currentScene;
 
 		public ContextHelper(Func<Task> update, Logger logger)
 		{
@@ -57,16 +63,56 @@ namespace Ror2Mod2
 			On.EntityStates.VoidRaidCrab.DeathState.OnExit += DeathState_OnExit;
 		}
 
+		public Action UpdateMusic { get; }
+
+		private MyScene SceneName => new MyScene(currentScene?.name?.ToUpper());
+
+		public Context GetContext()
+		{
+			Log("returning new Context");
+			var bossGroup = TeleporterInteraction.instance?.GetComponent<BossGroup>() ?? InstanceTracker.GetInstancesList<BossGroup>().SingleOrDefault();
+			return new Context()
+			{
+				SceneName = oldScene = SceneName,
+				SceneType = SceneCatalog.mostRecentSceneDef?.sceneType ?? SceneType.Invalid,
+				StageNumber = Run.instance?.stageClearCount + 1,
+				WaveNumber = (Run.instance as InfiniteTowerRun)?.waveIndex,
+				LoopIndex = Run.instance?.loopClearCount,
+				BossBodyName = new Entity(bossGroup?.bestObservedName?.ToUpper()),
+				TeleporterState = TeleporterInteraction.instance?.activationState,
+				IsBossEncounter = isBossEncounter || !(bossGroup is null),
+				ScenePart = scenePart,
+				RunType = GetRunType(Run.instance) ?? runType
+			};
+		}
+
+		public RunType? GetRunType(Run run)
+		{
+			switch (run)
+			{
+				case null:
+					return null;
+
+				case EclipseRun _:
+					return RunType.Eclipse;
+
+				case InfiniteTowerRun _:
+					return RunType.Simulacrum;
+
+				case WeeklyRun _:
+					return RunType.PrismaticTrial;
+
+				default:
+					return RunType.Normal;
+			}
+		}
+
 		private void BrotherEncounterPhaseBaseState_OnExit(On.EntityStates.Missions.BrotherEncounter.BrotherEncounterPhaseBaseState.orig_OnExit orig, EntityStates.Missions.BrotherEncounter.BrotherEncounterPhaseBaseState self)
 		{
 			orig(self);
 			scenePart++;
 			UpdateMusic();
 		}
-
-		private MyScene SceneName => new MyScene(currentScene?.name?.ToUpper());
-
-		public Action UpdateMusic { get; }
 
 		private void CreditsController_OnEnable(On.RoR2.CreditsController.orig_OnEnable orig, CreditsController self)
 		{
@@ -88,42 +134,6 @@ namespace Ror2Mod2
 				);
 			Log(oldScene);
 			Log(runType);
-		}
-
-		public Context GetContext()
-		{
-			Log("returning new Context");
-			var bossGroup = TeleporterInteraction.instance?.GetComponent<BossGroup>() ?? InstanceTracker.GetInstancesList<BossGroup>().SingleOrDefault();
-			return new Context()
-			{
-				SceneName = oldScene = SceneName,
-				SceneType = SceneCatalog.mostRecentSceneDef?.sceneType ?? SceneType.Invalid,
-				StageNumber = Run.instance?.stageClearCount + 1,
-				WaveNumber = (Run.instance as InfiniteTowerRun)?.waveIndex,
-				LoopIndex = Run.instance?.loopClearCount,
-				BossBodyName = bossGroup?.bestObservedName,
-				TeleporterState = TeleporterInteraction.instance?.activationState,
-				IsBossEncounter = isBossEncounter || !(bossGroup is null),
-				ScenePart = scenePart,
-				RunType = GetRunType(Run.instance) ?? runType
-			};
-		}
-
-		public RunType? GetRunType(Run run)
-		{
-			switch (run)
-			{
-				case null:
-					return null;
-				case EclipseRun _:
-					return RunType.Eclipse;
-				case InfiniteTowerRun _:
-					return RunType.Simulacrum;
-				case WeeklyRun _:
-					return RunType.PrismaticTrial;
-				default:
-					return RunType.Normal;
-			}
 		}
 	}
 }

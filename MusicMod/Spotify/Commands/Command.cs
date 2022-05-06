@@ -11,7 +11,7 @@ namespace Spotify.Commands
 
 	public abstract class Command
 	{
-		private static readonly Type[] types = new Type[] { typeof(PauseCommand), typeof(PlayCommand), typeof(ResumeCommand), typeof(SeekToCommand), typeof(SetPlaybackOptionsCommand), typeof(StopCommand), typeof(TransferCommand) };
+		private static readonly Type[] types = new Type[] { typeof(PauseCommand), typeof(PlayCommand), typeof(ResumeCommand), typeof(SeekToCommand), typeof(SetPlaybackOptionsCommand), typeof(StopCommand), typeof(TransferCommand), typeof(PlayOnceCommand), typeof(LoopCommand) };
 
 		protected Command()
 		{ }

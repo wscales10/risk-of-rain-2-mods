@@ -13,6 +13,8 @@ namespace WPFApp.Controls.Wrappers
 
 		public override CheckBox UIElement { get; } = new CheckBox { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
 
+		public override string ValueString => UIElement?.IsChecked?.ToString() ?? "null";
+
 		protected override void setValue(bool value) => UIElement.IsChecked = value;
 
 		protected override SaveResult<bool> tryGetValue(bool trySave) => new(true, (bool)UIElement.IsChecked);

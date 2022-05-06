@@ -1,6 +1,7 @@
 ﻿using Patterns;
 using Spotify;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -11,12 +12,15 @@ using Utils;
 using Utils.Reflection;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
+using System.Reflection;
 
 namespace WPFApp.Controls.CommandControls
 {
-	internal abstract class PropertyString
+	internal abstract class PropertyString : NotifyPropertyChangedBase
 	{
 		private readonly StackPanel stackPanel = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(2) };
+
+		private readonly ArrayList stringParts = new();
 
 		protected PropertyString(Type objectType, bool required, IControlWrapper controlWrapper, string[] chunks)
 		{
@@ -24,23 +28,34 @@ namespace WPFApp.Controls.CommandControls
 
 			foreach (string chunk in chunks)
 			{
-				var propertyInfo = objectType.GetProperty(chunk);
+				PropertyInfo propertyInfo = objectType.GetProperty(chunk);
 
 				if (propertyInfo is null)
 				{
 					stackPanel.Children.Add(GetLabel(chunk));
+					stringParts.Add(chunk);
 				}
 				else
 				{
 					PropertyName = chunk;
 					ControlWrapper = controlWrapper ?? GetControlWrapper(propertyInfo.PropertyType);
+					ControlWrapper.ValueStringChanged += () => NotifyPropertyChanged(nameof(AsString));
+
+					if (!required && propertyInfo.PropertyType.IsGenericType(typeof(Nullable<>)))
+					{
+						ControlWrapper.SetValue(Activator.CreateInstance(propertyInfo.PropertyType.GenericTypeArguments[0]));
+					}
+
 					ControlWrapper.UIElement.Margin = new Thickness(1);
 					stackPanel.Children.Add(ControlWrapper.UIElement);
+					stringParts.Add(ControlWrapper);
 				}
 			}
 
 			IsRequired = required;
 		}
+
+		public string AsString => string.Join(' ', GetString());
 
 		public UIElement UI { get; private set; }
 
@@ -85,6 +100,26 @@ namespace WPFApp.Controls.CommandControls
 			}
 
 			return Controls.TryGetValue(type, out var func) ? func() : Controls[valueType]();
+		}
+
+		private IEnumerable<string> GetString()
+		{
+			foreach (object obj in stringParts)
+			{
+				switch (obj)
+				{
+					case string s:
+						yield return s;
+						break;
+
+					case IControlWrapper wrapper:
+						yield return wrapper.ValueString;
+						break;
+
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
 		}
 
 		private void MakeUi()

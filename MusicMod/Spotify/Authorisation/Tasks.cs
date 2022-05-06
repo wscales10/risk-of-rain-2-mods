@@ -38,9 +38,12 @@ namespace Spotify.Authorisation
 
 				data = await flow.TryRefreshTokenAsync(client.SendAsync);
 
-				foreach (var scope in data.Scope.Split(' '))
+				if (!(data?.Scope is null))
 				{
-					scopes[scope] = true;
+					foreach (var scope in data.Scope.Split(' '))
+					{
+						scopes[scope] = true;
+					}
 				}
 
 				if (data is null)

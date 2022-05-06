@@ -58,5 +58,17 @@ namespace WPFApp.Properties {
                 this["Autosave"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AutosaveLocation {
+            get {
+                return ((string)(this["AutosaveLocation"]));
+            }
+            set {
+                this["AutosaveLocation"] = value;
+            }
+        }
     }
 }
