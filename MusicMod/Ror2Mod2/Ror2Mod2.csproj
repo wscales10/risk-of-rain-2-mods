@@ -1,66 +1,67 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
 	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DebugType>full</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="spotifyAccessToken.txt" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="spotifyAccessToken.txt" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="spotifyAccessToken.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="spotifyAccessToken.txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</EmbeddedResource>
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MathNet.Symbolics" Version="0.24.0" />
-    <PackageReference Include="Mono.Unofficial.pdb2mdb" Version="4.2.3.4" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Mono.Unofficial.pdb2mdb" Version="4.2.3.4" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Rules\Rules.csproj" />
-    <ProjectReference Include="..\Spotify\Spotify.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Rules\Rules.csproj" />
+		<ProjectReference Include="..\Spotify\Spotify.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="BepInEx">
-      <HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\core\BepInEx.dll</HintPath>
-    </Reference>
-    <Reference Include="com.unity.multiplayer-hlapi.Runtime">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\com.unity.multiplayer-hlapi.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="MMHOOK_RoR2">
-      <HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\MMHOOK\MMHOOK_RoR2.dll</HintPath>
-    </Reference>
-    <Reference Include="MyRoR2">
-      <HintPath>..\..\Common\MyRoR2\bin\Debug\netstandard2.0\MyRoR2.dll</HintPath>
-    </Reference>
-    <Reference Include="Patterns">
-      <HintPath>..\..\Common\Patterns\bin\Debug\netstandard2.0\Patterns.dll</HintPath>
-    </Reference>
-    <Reference Include="R2API">
-      <HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\tristanmcpherson-R2API\R2API\R2API.dll</HintPath>
-    </Reference>
-    <Reference Include="RoR2">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\RoR2.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="Utils">
-      <HintPath>..\..\Common\Utils\bin\Debug\netstandard2.0\Utils.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+	<ItemGroup>
+		<Reference Include="BepInEx">
+			<HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\core\BepInEx.dll</HintPath>
+		</Reference>
+		<Reference Include="com.unity.multiplayer-hlapi.Runtime">
+			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\com.unity.multiplayer-hlapi.Runtime.dll</HintPath>
+		</Reference>
+		<Reference Include="MMHOOK_RoR2">
+			<HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\MMHOOK\MMHOOK_RoR2.dll</HintPath>
+		</Reference>
+		<Reference Include="MyRoR2">
+			<HintPath>..\..\Common\MyRoR2\bin\Debug\netstandard2.0\MyRoR2.dll</HintPath>
+		</Reference>
+		<Reference Include="Patterns">
+			<HintPath>..\..\Common\Patterns\bin\Debug\netstandard2.0\Patterns.dll</HintPath>
+		</Reference>
+		<Reference Include="R2API">
+			<HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\tristanmcpherson-R2API\R2API\R2API.dll</HintPath>
+		</Reference>
+		<Reference Include="RoR2">
+			<HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\RoR2.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine">
+			<HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
+		<Reference Include="Utils">
+			<HintPath>..\..\Common\Utils\bin\Debug\netstandard2.0\Utils.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 
 </Project>

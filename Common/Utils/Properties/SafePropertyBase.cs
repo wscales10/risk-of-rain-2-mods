@@ -3,50 +3,55 @@ using Utils.Properties;
 
 namespace Utils
 {
-	public abstract class SafePropertyBase<T> : IEquatable<SafePropertyBase<T>>
-	{
-		protected T fieldValue;
+    public interface ISafeProperty<T>
+    {
+        T Get();
+    }
 
-		protected SafePropertyBase()
-		{ }
+    public abstract class SafePropertyBase<T> : IEquatable<SafePropertyBase<T>>, ISafeProperty<T>
+    {
+        protected T fieldValue;
 
-		protected SafePropertyBase(T fieldValue)
-		{
-			this.fieldValue = fieldValue;
-		}
+        protected SafePropertyBase()
+        { }
 
-		public static implicit operator T(SafePropertyBase<T> prop) => prop.Get();
+        protected SafePropertyBase(T fieldValue)
+        {
+            this.fieldValue = fieldValue;
+        }
 
-		public static bool operator ==(SafePropertyBase<T> p1, SafePropertyBase<T> p2) => p1 is null ? p2 is null : p1.Equals(p2);
+        public static implicit operator T(SafePropertyBase<T> prop) => prop.Get();
 
-		public static bool operator !=(SafePropertyBase<T> p1, SafePropertyBase<T> p2) => !(p1 == p2);
+        public static bool operator ==(SafePropertyBase<T> p1, SafePropertyBase<T> p2) => p1 is null ? p2 is null : p1.Equals(p2);
 
-		public T Get() => fieldValue;
+        public static bool operator !=(SafePropertyBase<T> p1, SafePropertyBase<T> p2) => !(p1 == p2);
 
-		public override string ToString() => fieldValue.ToString();
+        public T Get() => fieldValue;
 
-		public override bool Equals(object o) => Equals(o as SafePropertyBase<T>);
+        public override string ToString() => fieldValue.ToString();
 
-		public bool Equals(SafePropertyBase<T> p)
-		{
-			if (p is null)
-			{
-				return false;
-			}
+        public override bool Equals(object o) => Equals(o as SafePropertyBase<T>);
 
-			if (ReferenceEquals(this, p))
-			{
-				return true;
-			}
+        public bool Equals(SafePropertyBase<T> p)
+        {
+            if (p is null)
+            {
+                return false;
+            }
 
-			if (GetType() != p.GetType())
-			{
-				return false;
-			}
+            if (ReferenceEquals(this, p))
+            {
+                return true;
+            }
 
-			return SafeProperty.AmbiguousEquals(fieldValue, p.fieldValue);
-		}
+            if (GetType() != p.GetType())
+            {
+                return false;
+            }
 
-		public override int GetHashCode() => fieldValue.GetHashCode();
-	}
+            return SafeProperty.AmbiguousEquals(fieldValue, p.fieldValue);
+        }
+
+        public override int GetHashCode() => fieldValue.GetHashCode();
+    }
 }

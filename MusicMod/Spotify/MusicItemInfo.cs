@@ -3,21 +3,34 @@ using System.Collections.Generic;
 
 namespace Spotify
 {
-	public class MusicItemInfo
-	{
-		public MusicItemInfo(SpotifyItem musicItem)
-		{
-			PreviewItem = MusicItem = musicItem;
-		}
+    public struct Creator
+    {
+        public Creator(string name, SpotifyItem spotifyItem) : this()
+        {
+            Name = name;
+            SpotifyItem = spotifyItem;
+        }
 
-		public SpotifyItem MusicItem { get; }
+        public string Name { get; }
 
-		public List<Image> Images { get; set; }
+        public SpotifyItem SpotifyItem { get; }
+    }
 
-		public string Name { get; set; }
+    public class MusicItemInfo
+    {
+        public MusicItemInfo(SpotifyItem musicItem)
+        {
+            PreviewItem = MusicItem = musicItem;
+        }
 
-		public (string name, SpotifyItem item)[] Creators { get; set; }
+        public SpotifyItem MusicItem { get; }
 
-		public SpotifyItem PreviewItem { get; set; }
-	}
+        public List<Image> Images { get; set; }
+
+        public string Name { get; set; }
+
+        public Creator[] Creators { get; set; }
+
+        public SpotifyItem PreviewItem { get; set; }
+    }
 }

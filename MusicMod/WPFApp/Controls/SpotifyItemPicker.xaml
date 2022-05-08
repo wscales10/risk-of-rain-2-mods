@@ -3,22 +3,100 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:WPFApp.Controls"
+             xmlns:local="clr-namespace:WPFApp.Controls" xmlns:converters="clr-namespace:WPFApp.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="56" d:DesignWidth="637">
-	<Border x:Name="border" BorderThickness="1" CornerRadius="3" Background="#2A2A2A" AllowDrop="True" PreviewDrop="Border_PreviewDrop" VerticalAlignment="Center">
-		<Grid>
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="58" />
-				<ColumnDefinition />
-			</Grid.ColumnDefinitions>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="30" />
-				<RowDefinition Height="26" />
-			</Grid.RowDefinitions>
-			<Image Grid.RowSpan="2" Margin="9 8" x:Name="image" />
-			<Label Grid.Column="1" Foreground="#1ed15e" x:Name="nameLabel" FontSize="15" VerticalContentAlignment="Bottom" Padding="7 0" Margin="0 0 10 0" />
-			<StackPanel Grid.Column="1" Grid.Row ="1" x:Name="infoPanel" Orientation="Horizontal" Margin="8 0 18 0" />
-		</Grid>
-	</Border>
+             d:DesignHeight="56" d:DesignWidth="637"
+             d:DataContext="{d:DesignInstance Type=local:SpotifyItemPickerViewModel}"
+             PreviewMouseLeftButtonUp="SpotifyItemPicker_PreviewMouseLeftButtonUp">
+    <UserControl.Resources>
+        <converters:IsNullConverter x:Key="IsNullConverter" />
+    </UserControl.Resources>
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Item, Converter={StaticResource IsNullConverter}}" Value="True">
+                    <Setter Property="Cursor" Value="{x:Null}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Item, Converter={StaticResource IsNullConverter}}" Value="False">
+                    <Setter Property="Cursor" Value="Hand" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+    <Border x:Name="Border" BorderThickness="1" CornerRadius="3" Background="#2A2A2A"
+            AllowDrop="True" PreviewDrop="Border_PreviewDrop"
+            MouseMove="Border_MouseMove"
+            VerticalAlignment="Center">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="58" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30" />
+                <RowDefinition Height="26" />
+            </Grid.RowDefinitions>
+            <Image Grid.RowSpan="2" Margin="9 8" Source="{Binding ImageSource}"/>
+            <Label Grid.Column="1" Foreground="#1ed15e" Content="{Binding Name}" FontSize="15" VerticalContentAlignment="Bottom" Padding="7 0" Margin="0 0 10 0" />
+            <Grid Grid.Column="1" Grid.Row="1" x:Name="infoGrid" Margin="8 0 18 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.Resources>
+                    <SolidColorBrush Color="#F4F4F4" x:Key="InfoBrush" />
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{StaticResource InfoBrush}" />
+                        <Setter Property="FontSize" Value="14" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0" />
+                    </Style>
+                    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+                </Grid.Resources>
+                <TextBlock Text="{Binding Type}" />
+                <TextBlock Grid.Column="1" Text=" - " Visibility="{Binding HasCreators, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <ItemsControl Grid.Column="2" ItemsSource="{Binding Info.Creators}">
+                    <ItemsControl.Resources>
+                        <converters:BooleanToTextDecorationConverter x:Key="UnderlineConverter" True="Underline" False="None" />
+                    </ItemsControl.Resources>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="commaTextBlock" Text=", " Style="{StaticResource {x:Type TextBlock}}" />
+                                <TextBlock Text="{Binding Name, Mode=OneTime}"
+                                           PreviewMouseLeftButtonUp="TextBlock_PreviewMouseLeftButtonUp">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SpotifyItem, Converter={StaticResource IsNullConverter}}" Value="False">
+                                                    <Setter Property="Cursor" Value="Hand" />
+                                                    <Setter Property="TextDecorations" Value="{Binding SpotifyItem, Converter={StaticResource UnderlineConverter}}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SpotifyItem, Converter={StaticResource IsNullConverter}}" Value="True">
+                                                    <Setter Property="Cursor" Value="{x:Null}" />
+                                                    <Setter Property="TextDecorations" Value="None" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                    <Setter Property="Visibility" TargetName="commaTextBlock" Value="Collapsed" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+            <StackPanel Grid.Column="1" Grid.Row ="1" x:Name="infoPanel" Orientation="Horizontal" Margin="8 0 18 0" />
+        </Grid>
+    </Border>
 </UserControl>

@@ -15,7 +15,7 @@ namespace Rules.RuleTypes.Readonly
 
 		public IBucket GetBucket(Context c) => mutable.GetBucket(c);
 
-		public ICommandList GetCommands(Context oldContext, Context newContext, bool force = false) => mutable.GetCommands(oldContext, newContext, force).ToReadOnly();
+		public ICommandList GetCommands(Context oldContext, Context newContext, bool force = false) => mutable.GetCommands(oldContext, newContext, force)?.ToReadOnly();
 
 		public IReadOnlyRule ToReadOnly() => this;
 

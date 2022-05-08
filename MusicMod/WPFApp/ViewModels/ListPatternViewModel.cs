@@ -10,9 +10,7 @@ namespace WPFApp.ViewModels
 {
 	internal class ListPatternViewModel : PatternViewModelBase<IListPattern>
 	{
-		private readonly Func<SaveResult> tryGetValues;
-
-		private readonly Type valueType;
+        private readonly Type valueType;
 
 		public ListPatternViewModel(IListPattern pattern, Type valueType, NavigationContext navigationContext) : base(pattern, navigationContext)
 		{

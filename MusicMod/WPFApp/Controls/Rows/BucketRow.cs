@@ -1,5 +1,4 @@
-﻿using MathNet.Symbolics;
-using Spotify.Commands;
+﻿using Spotify.Commands;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,126 +12,135 @@ using WPFApp.Properties;
 
 namespace WPFApp.Controls.Rows
 {
-	internal class BucketRow : Row<Command, BucketRow>
-	{
-		internal BucketRow(Command command) : base(command, true)
-		{
-			LeftElement.Click += (s, e) =>
-			{
-				if (TrySaveChanges())
-				{
-					_ = OnCommandPreviewRequested?.Invoke(Output);
-				}
-			};
+    internal class BucketRow : Row<Command, BucketRow>
+    {
+        private readonly Button previewButton = new()
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = 14,
+            Margin = new Thickness(4),
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
 
-			UpdateButtonLabel(command);
+        internal BucketRow(Command command) : base(command, true)
+        {
+            previewButton.Click += (s, e) =>
+            {
+                if (TrySaveChanges())
+                {
+                    _ = OnCommandPreviewRequested?.Invoke(Output);
+                }
+            };
 
-			OnSetOutput += UpdateButtonLabel;
+            UpdateButtonLabel(command);
 
-			Binding binding = new(nameof(Settings.OfflineMode))
-			{
-				Source = Settings.Default,
-				Converter = new InverseBooleanConverter()
-			};
+            OnSetOutput += UpdateButtonLabel;
 
-			_ = LeftElement.SetBinding(UIElement.IsEnabledProperty, binding);
-		}
+            Binding binding = new(nameof(Settings.OfflineMode))
+            {
+                Source = Settings.Default,
+                Converter = new InverseBooleanConverter()
+            };
 
-		public static event Func<Command, Task> OnCommandPreviewRequested;
+            _ = previewButton.SetBinding(UIElement.IsEnabledProperty, binding);
+        }
 
-		public FormatString FormatString { get; private set; }
+        public static event Func<Command, Task> OnCommandPreviewRequested;
 
-		public override Button LeftElement { get; } = new()
-		{
-			VerticalAlignment = VerticalAlignment.Center,
-			FontSize = 14,
-			Margin = new Thickness(4),
-			HorizontalAlignment = HorizontalAlignment.Center
-		};
+        public FormatString FormatString { get; private set; }
 
-		public override SaveResult TrySaveChanges() => (FormatString is null || Output is null) ? (new(false)) : FormatString.TryGetProperties(Output, true);
+        public string AsString => $"{CommandString}({FormatString?.AsString ?? "..."})";
 
-		protected override UIElement MakeOutputUi()
-		{
-			if (Output is null)
-			{
-				ComboBox comboBox = new()
-				{
-					FontSize = 14,
-					Margin = new Thickness(40, 4, 4, 4),
-					VerticalAlignment = VerticalAlignment.Center,
-					MinWidth = 150,
-					HorizontalAlignment = HorizontalAlignment.Left
-				};
-				HelperMethods.MakeCommandsComboBox(comboBox);
-				comboBox.SelectionChanged += (s, e) =>
-				{
-					Output = (Command)((Type)comboBox.SelectedItem).Construct();
-				};
-				return comboBox;
-			}
+        public override UIElement LeftElement => previewButton;
 
-			FormatString = GetFormatString(Output);
-			var stackPanel = FormatString.BuildControl();
-			FormatString.SetProperties(Output);
-			return stackPanel;
-		}
+        public string CommandString => Output?.GetType().Name.Replace(nameof(Command), string.Empty);
 
-		private static FormatString GetFormatString(Command command)
-		{
-			switch (command)
-			{
-				case PlayCommand:
-				case LoopCommand:
-				case PlayOnceCommand:
-					return FormatString.Create(
-						PropertyString.Create<PlayCommand>(true, nameof(PlayCommand.Item)),
-						PropertyString.Create<PlayCommand>(false, "at ", nameof(PlayCommand.At)));
+        public override SaveResult TrySaveChanges() => (FormatString is null || Output is null) ? (new(false)) : FormatString.TryGetProperties(Output, true);
 
-				case SeekToCommand:
-					return FormatString.Create(PropertyString.Create<SeekToCommand>(true, nameof(SeekToCommand.At)));
+        protected override UIElement MakeOutputUi()
+        {
+            if (Output is null)
+            {
+                ComboBox comboBox = new()
+                {
+                    FontSize = 14,
+                    Margin = new Thickness(40, 4, 4, 4),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    MinWidth = 150,
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
+                HelperMethods.MakeCommandsComboBox(comboBox);
+                comboBox.SelectionChanged += (s, e) =>
+                {
+                    Output = (Command)((Type)comboBox.SelectedItem).Construct();
+                };
+                return comboBox;
+            }
 
-				case SetPlaybackOptionsCommand:
-					return FormatString.Create(
-						PropertyString.Create<SetPlaybackOptionsCommand>(false, "Repeat Mode: ", nameof(SetPlaybackOptionsCommand.RepeatMode)),
-						PropertyString.Create<SetPlaybackOptionsCommand>(false, "Shuffle: ", nameof(SetPlaybackOptionsCommand.Shuffle)),
-						PropertyString.Create<SetPlaybackOptionsCommand>(false, new IntWrapper(0, 100), "Volume %: ", nameof(SetPlaybackOptionsCommand.VolumePercent)));
+            FormatString = GetFormatString(Output);
+            var stackPanel = FormatString.BuildControl();
+            FormatString.SetProperties(Output);
+            return stackPanel;
+        }
 
-				case TransferCommand:
-					return FormatString.Create(
-						PropertyString.Create<TransferCommand>(true, "From ", nameof(TransferCommand.FromTrackId)),
-						PropertyString.Create<TransferCommand>(true, "to ", nameof(TransferCommand.Item)),
-						PropertyString.Create<TransferCommand>(true, new SwitchWrapper<int, SymbolicExpression>(TryParse), "at ", nameof(TransferCommand.Mapping))
-						);
-					static bool TryParse(string s, out SymbolicExpression output)
-					{
-						try
-						{
-							output = SymbolicExpression.Parse(s);
-						}
-						catch (Exception)
-						{
-							output = null;
-							return false;
-						}
+        private static FormatString GetFormatString(Command command)
+        {
+            switch (command)
+            {
+                case PlayCommand:
+                case LoopCommand:
+                case PlayOnceCommand:
+                    return FormatString.Create(
+                        PropertyString.Create<PlayCommand>(true, nameof(PlayCommand.Item)),
+                        PropertyString.Create<PlayCommand>(false, "at ", nameof(PlayCommand.At)));
 
-						try
-						{
-							_ = TransferCommand.Map(0, output);
-						}
-						catch (Exception e) when (e.Message.StartsWith("Failed to find symbol"))
-						{
-							output = null;
-							return false;
-						}
+                case SeekToCommand:
+                    return FormatString.Create(PropertyString.Create<SeekToCommand>(true, nameof(SeekToCommand.At)));
 
-						return true;
-					}
-				default:
-					return null;
-			}
-		}
+                case SetPlaybackOptionsCommand:
+                    return FormatString.Create(
+                        PropertyString.Create<SetPlaybackOptionsCommand>(false, "Repeat Mode: ", nameof(SetPlaybackOptionsCommand.RepeatMode)),
+                        PropertyString.Create<SetPlaybackOptionsCommand>(false, "Shuffle: ", nameof(SetPlaybackOptionsCommand.Shuffle)),
+                        PropertyString.Create<SetPlaybackOptionsCommand>(false, new IntWrapper(0, 100), "Volume %: ", nameof(SetPlaybackOptionsCommand.VolumePercent)));
 
-		private void UpdateButtonLabel(Command command) => LeftElement.Content = command?.GetType().Name.Replace(nameof(Command), string.Empty);
-	}
+                case TransferCommand:
+                    return FormatString.Create(
+                        PropertyString.Create<TransferCommand>(true, "From ", nameof(TransferCommand.FromTrackId)),
+                        PropertyString.Create<TransferCommand>(true, "to ", nameof(TransferCommand.Item)),
+                        PropertyString.Create<TransferCommand>(true, new SwitchWrapper<int, string>(TryParse), "at ", nameof(TransferCommand.Mapping))
+                        );
+                    static bool TryParse(string s, out string output)
+                    {
+                        output = s;
+                        return true;
+
+                        //try
+                        //{
+                        //    output = SymbolicExpression.Parse(s);
+                        //}
+                        //catch (Exception)
+                        //{
+                        //    output = null;
+                        //    return false;
+                        //}
+
+                        //try
+                        //{
+                        //    _ = TransferCommand.Map(0, output);
+                        //}
+                        //catch (Exception e) when (e.Message.StartsWith("Failed to find symbol"))
+                        //{
+                        //    output = null;
+                        //    return false;
+                        //}
+
+                        //return true;
+                    }
+                default:
+                    return new FormatString(command?.GetType());
+            }
+        }
+
+        private void UpdateButtonLabel(Command _) => previewButton.Content = CommandString;
+    }
 }

@@ -4,6 +4,7 @@ $pdbs = Get-ChildItem -Path $inputDir\* -Include *.pdb
 $mono = "D:\Program Files\Unity\2019.4.26f1\Editor\Data\MonoBleedingEdge\bin\mono"
 
 robocopy $inputDir $outputDir /s
+Write-Output $pdbs
 foreach ($pdb in $pdbs)
 {
     $dll = $pdb.Basename + ".dll"

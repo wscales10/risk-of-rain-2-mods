@@ -8,107 +8,109 @@ using Utils;
 
 namespace Patterns
 {
-	public class Switch<T, TOut> : IXmlExportable<TOut>
-	{
-		private readonly List<Case<IPattern<T>, TOut>> cases;
+    public class Switch<T, TOut> : IXmlExportable<TOut>
+    {
+        private readonly List<Case<IPattern<T>, TOut>> cases;
 
-		public Switch(params Case<IPattern<T>, TOut>[] cases)
-		{
-			this.cases = cases.ToList();
-		}
+        public Switch(params Case<IPattern<T>, TOut>[] cases)
+        {
+            this.cases = cases.ToList();
+        }
 
-		public Switch(TOut defaultOut, params Case<IPattern<T>, TOut>[] cases) : this(cases)
-		{
-			DefaultOut = defaultOut;
-			HasDefault = true;
-		}
+        public Switch(TOut defaultOut, params Case<IPattern<T>, TOut>[] cases) : this(cases)
+        {
+            DefaultOut = defaultOut;
+            HasDefault = true;
+        }
 
-		public bool HasDefault { get; }
+        public bool HasDefault { get; }
 
-		public TOut DefaultOut { get; }
+        public TOut DefaultOut { get; }
 
-		public ReadOnlyCollection<Case<IPattern<T>, TOut>> Cases => cases.ToReadOnlyCollection();
+        public ReadOnlyCollection<Case<IPattern<T>, TOut>> Cases => cases.ToReadOnlyCollection();
 
-		public static Switch<T, TOut> Parse(XElement element, Func<XElement, TOut> outFunc, PatternParser patternParser)
-		{
-			if (element.Name != "Switch")
-			{
-				throw new XmlException();
-			}
+        public static Switch<T, TOut> Parse(XElement element, Func<XElement, TOut> outFunc, PatternParser patternParser)
+        {
+            if (element.Name != "Switch")
+            {
+                throw new XmlException();
+            }
 
-			var cases = new List<Case<IPattern<T>, TOut>>();
-			var patterns = new List<IPattern<T>>();
-			XElement defaultElement = null;
-			foreach (var child in element.Elements())
-			{
-				switch (child.Name.ToString())
-				{
-					case "Case":
-						patterns.Add(patternParser.Parse<T>(child.OnlyChild()));
-						break;
+            var cases = new List<Case<IPattern<T>, TOut>>();
+            var patterns = new List<IPattern<T>>();
+            XElement defaultElement = null;
+            foreach (var child in element.Elements())
+            {
+                switch (child.Name.ToString())
+                {
+                    case "Case":
+                        patterns.Add(patternParser.Parse<T>(child.OnlyChild()));
+                        break;
 
-					case "Output":
-						cases.Add(new Case<IPattern<T>, TOut>(outFunc(child.OnlyChild()), patterns.ToArray()));
-						patterns.Clear();
-						break;
+                    case "Output":
+                        cases.Add(new Case<IPattern<T>, TOut>(outFunc(child.OnlyChild()), patterns.ToArray()));
+                        patterns.Clear();
+                        break;
 
-					case "Default" when defaultElement is null:
-						defaultElement = child;
-						break;
+                    case "Default" when defaultElement is null:
+                        defaultElement = child;
+                        break;
 
-					default:
-						throw new XmlException();
-				}
-			}
+                    default:
+                        throw new XmlException();
+                }
+            }
 
-			if (defaultElement is null)
-			{
-				return new Switch<T, TOut>(cases.ToArray());
-			}
-			else
-			{
-				return new Switch<T, TOut>(outFunc(defaultElement.OnlyChild()), cases.ToArray());
-			}
-		}
+            if (defaultElement is null)
+            {
+                return new Switch<T, TOut>(cases.ToArray());
+            }
+            else
+            {
+                return new Switch<T, TOut>(outFunc(defaultElement.OnlyChild()), cases.ToArray());
+            }
+        }
 
-		public TOut GetOut(T seenValue)
-		{
-			foreach (var @case in cases)
-			{
-				if (@case.Arr.Any(allowedValue => allowedValue.IsMatch(seenValue)))
-				{
-					return @case.Output;
-				}
-			}
+        public override string ToString() => "switch...";
 
-			return DefaultOut;
-		}
+        public TOut GetOut(T seenValue)
+        {
+            foreach (var @case in cases)
+            {
+                if (@case.Arr.Any(allowedValue => allowedValue.IsMatch(seenValue)))
+                {
+                    return @case.Output;
+                }
+            }
 
-		public XElement ToXml(Func<TOut, XElement> outFunc)
-		{
-			var switchElement = new XElement("Switch");
+            return DefaultOut;
+        }
 
-			foreach (var @case in cases)
-			{
-				foreach (var input in @case.Arr)
-				{
-					switchElement.Add(new XElement("Case", input.ToXml()));
-				}
+        public XElement ToXml(Func<TOut, XElement> outFunc)
+        {
+            var switchElement = new XElement("Switch");
 
-				switchElement.Add(new XElement("Output", outFunc(@case.Output)));
-			}
+            foreach (var @case in cases)
+            {
+                foreach (var input in @case.Arr)
+                {
+                    switchElement.Add(new XElement("Case", input.ToXml()));
+                }
 
-			if (HasDefault)
-			{
-				switchElement.Add(new XElement("Default", outFunc(DefaultOut)));
-			}
+                switchElement.Add(new XElement("Output", outFunc(@case.Output)));
+            }
 
-			return switchElement;
-		}
+            if (HasDefault)
+            {
+                switchElement.Add(new XElement("Default", outFunc(DefaultOut)));
+            }
 
-		public Switch<T, TOut2> Select<TOut2>(Func<TOut, TOut2> func)
-		{
-			return new Switch<T, TOut2>(func(DefaultOut), cases.Select(c => new Case<IPattern<T>, TOut2>(func(c.Output), c.Arr)).ToArray());
-		}
-	}
+            return switchElement;
+        }
+
+        public Switch<T, TOut2> Select<TOut2>(Func<TOut, TOut2> func)
+        {
+            return new Switch<T, TOut2>(func(DefaultOut), cases.Select(c => new Case<IPattern<T>, TOut2>(func(c.Output), c.Arr)).ToArray());
+        }
+    }
 }

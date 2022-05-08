@@ -14,7 +14,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
 		public override SinglePatternPicker UIElement { get; }
 
-		protected override void setValue(IPattern<T> value) => UIElement.AddPattern(value);
+        protected override void setValue(IPattern<T> value) => UIElement.AddPattern(value);
 
 		protected override SaveResult<IPattern<T>> tryGetValue(bool trySave)
 		{

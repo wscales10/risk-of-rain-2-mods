@@ -21,5 +21,7 @@ namespace WPFApp.ViewModels
 		}
 
 		protected virtual SaveResult ShouldAllowExit() => new(true);
+
+		public virtual string AsString => null;
 	}
 }

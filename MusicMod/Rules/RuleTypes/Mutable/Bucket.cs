@@ -9,57 +9,57 @@ using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Mutable
 {
-	using static TransferCommand;
+    using static TransferCommand;
 
-	public class Bucket : Rule, IBucket
-	{
-		public Bucket(params Command[] commands)
-		{
-			Commands = commands;
-		}
+    public class Bucket : Rule, IBucket
+    {
+        public Bucket(params Command[] commands)
+        {
+            Commands = commands;
+        }
 
-		public Bucket(IList<Command> commands)
-		{
-			Commands = new CommandList(commands);
-		}
+        public Bucket(IList<Command> commands)
+        {
+            Commands = new CommandList(commands);
+        }
 
-		public CommandList Commands { get; set; }
+        public CommandList Commands { get; set; }
 
-		ICommandList IBucket.Commands => Commands;
+        ICommandList IBucket.Commands => Commands;
 
-		public static Bucket Play(string trackId, int milliseconds = 0)
-		{
-			return new Bucket(new LoopCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds));
-		}
+        public static Bucket Play(string trackId, int milliseconds = 0)
+        {
+            return new Bucket(new LoopCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds));
+        }
 
-		public static Bucket Transfer(string trackId, MathFunc mapping, IPattern<string> fromTrackId = null)
-		{
-			return new TransferCommand(SpotifyItemType.Track, trackId, mapping(ms), fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
-		}
+        public static Bucket Transfer(string trackId, string mapping, IPattern<string> fromTrackId = null)
+        {
+            return new TransferCommand(SpotifyItemType.Track, trackId, mapping, fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
+        }
 
-		public static Bucket Transfer(string trackId, Switch<int, MathFunc> mapping, IPattern<string> fromTrackId = null)
-		{
-			return new TransferCommand(SpotifyItemType.Track, trackId, mapping.Select(m => m(ms)), fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
-		}
+        public static Bucket Transfer(string trackId, Switch<int, string> mapping, IPattern<string> fromTrackId = null)
+        {
+            return new TransferCommand(SpotifyItemType.Track, trackId, mapping, fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
+        }
 
-		public static implicit operator Bucket(CommandList cl) => new Bucket(cl);
+        public static implicit operator Bucket(CommandList cl) => new Bucket(cl);
 
-		public override Bucket GetBucket(Context c) => this;
+        public override Bucket GetBucket(Context c) => this;
 
-		public override XElement ToXml()
-		{
-			var element = base.ToXml();
+        public override XElement ToXml()
+        {
+            var element = base.ToXml();
 
-			foreach (var command in Commands)
-			{
-				element.Add(command?.ToXml());
-			}
+            foreach (var command in Commands)
+            {
+                element.Add(command?.ToXml());
+            }
 
-			return element;
-		}
+            return element;
+        }
 
-		public override string ToString() => Name ?? base.ToString() + $"({string.Join(", ", Commands)})";
+        public override string ToString() => Name ?? base.ToString() + $"({string.Join(", ", Commands)})";
 
-		public override IReadOnlyRule ToReadOnly() => new ReadOnlyBucket(this);
-	}
+        public override IReadOnlyRule ToReadOnly() => new ReadOnlyBucket(this);
+    }
 }

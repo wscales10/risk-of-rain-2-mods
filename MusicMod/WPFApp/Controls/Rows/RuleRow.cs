@@ -21,7 +21,7 @@ namespace WPFApp.Controls.Rows
 		protected RuleRow(Rule output, bool movable, bool removable = true)
 			: base(output, movable, removable)
 		{
-			SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label));
+			SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label), nameof(OutputViewModel));
 			SetPropertyDependency(nameof(AllChildren), nameof(OutputViewModel));
 		}
 
@@ -64,6 +64,8 @@ namespace WPFApp.Controls.Rows
 
 			private set
 			{
+				RemovePropertyDependency(nameof(ButtonContent), outputViewModel, nameof(NavigationViewModelBase.AsString));
+
 				if (outputViewModel is ItemViewModelBase oldItemViewModel)
 				{
 					oldItemViewModel.OnItemChanged -= RefreshOutputUi;
@@ -79,26 +81,18 @@ namespace WPFApp.Controls.Rows
 					rowViewModel.RowManager.Parent = this;
 				}
 
+				if(value is not null)
+                {
+					SetPropertyDependency(nameof(ButtonContent), value, nameof(NavigationViewModelBase.AsString));
+				}
+				
 				SetProperty(ref outputViewModel, value);
 			}
 		}
 
-		public string ButtonContent
-		{
-			get
-			{
-				if (Output is Bucket b)
-				{
-					return b?.ToString();
-				}
-				else
-				{
-					return string.IsNullOrEmpty(Label) ? Output?.ToString() : Label;
-				}
-			}
-		}
+        public string ButtonContent => OutputViewModel?.AsString ?? (string.IsNullOrEmpty(Label) ? Output?.ToString() : Label);
 
-		protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
+        protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
 
 		public override SaveResult TrySaveChanges() => new(Output is not null);
 

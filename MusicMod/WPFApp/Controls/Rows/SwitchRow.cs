@@ -6,65 +6,59 @@ using System.Windows.Controls;
 using WPFApp.Controls.RuleControls;
 using WPFApp.Controls.Wrappers;
 using WPFApp.ViewModels;
-using System.ComponentModel;
+using System.Windows;
 
 namespace WPFApp.Controls.Rows
 {
-	internal class CaseRow : SwitchRow
-	{
-		private readonly CaseViewModel caseViewModel;
+    internal class CaseRow : SwitchRow
+    {
+        private readonly CaseViewModel caseViewModel;
 
-		private Case<IPattern> @case;
+        private readonly CaseControl caseControl = new();
 
-		public CaseRow(Case<IPattern> c, Type valueType, NavigationContext navigationContext) : base(c.Output, true)
-		{
-			SetPropertyDependency(nameof(Label), nameof(Case));
-			LeftElement.DataContext = caseViewModel = new CaseViewModel(c, valueType, navigationContext);
-			caseViewModel.PropertyChanged += CaseViewModel_PropertyChanged;
-			PropagateUiChange(null, LeftElement);
-			Case = c;
-			OnSetOutput += (rule) => Case.Output = rule;
-		}
+        private Case<IPattern> @case;
 
-		public Case<IPattern> Case
-		{
-			get => @case;
+        public CaseRow(Case<IPattern> c, Type valueType, NavigationContext navigationContext) : base(c.Output, true)
+        {
+            SetPropertyDependency(nameof(Label), nameof(Case));
+            SetPropertyDependency(nameof(Label), caseViewModel, nameof(CaseViewModel.CaseName));
+            caseControl.DataContext = caseViewModel = new CaseViewModel(c, valueType, navigationContext);
+            PropagateUiChange(null, LeftElement);
+            Case = c;
+            OnSetOutput += (rule) => Case.Output = rule;
+        }
 
-			set => SetProperty(ref @case, value);
-		}
+        public Case<IPattern> Case
+        {
+            get => @case;
 
-		public override CaseControl LeftElement { get; } = new();
+            set => SetProperty(ref @case, value);
+        }
 
-		public override string Label => Case?.ToString();
+        public override UIElement LeftElement => caseControl;
 
-		public override SaveResult TrySaveChanges() => base.TrySaveChanges() & caseViewModel.TrySaveChanges();
+        public override string Label => Case?.ToString();
 
-		private void CaseViewModel_PropertyChanged(object _, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(CaseViewModel.CaseName))
-			{
-				NotifyPropertyChanged(nameof(Label));
-			}
-		}
-	}
+        public override SaveResult TrySaveChanges() => base.TrySaveChanges() & caseViewModel.TrySaveChanges();
+    }
 
-	internal class DefaultRow : SwitchRow
-	{
-		private readonly PropertyInfo propertyInfo;
+    internal class DefaultRow : SwitchRow
+    {
+        private readonly PropertyInfo propertyInfo;
 
-		public DefaultRow(Rule rule, PropertyInfo propertyInfo) : base(rule, false)
-		{
-			((TextBlock)LeftElement).Text = "Default";
-			this.propertyInfo = propertyInfo;
-		}
+        public DefaultRow(Rule rule, PropertyInfo propertyInfo) : base(rule, false)
+        {
+            ((TextBlock)LeftElement).Text = "Default";
+            this.propertyInfo = propertyInfo;
+        }
 
-		public override string Label => $"Other {propertyInfo}";
-	}
+        public override string Label => $"Other {propertyInfo}";
+    }
 
-	internal abstract class SwitchRow : RuleRow<SwitchRow>
-	{
-		protected SwitchRow(Rule output, bool movable) : base(output, movable)
-		{
-		}
-	}
+    internal abstract class SwitchRow : RuleRow<SwitchRow>
+    {
+        protected SwitchRow(Rule output, bool movable) : base(output, movable)
+        {
+        }
+    }
 }

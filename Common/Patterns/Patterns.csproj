@@ -5,11 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Patterns\SmallPatterns\ValuePatterns\AdvancedIntPattern.cs" />
     <Compile Remove="StructPattern.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="MathNet.Symbolics" Version="0.24.0" />
   </ItemGroup>
 
   <ItemGroup>

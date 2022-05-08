@@ -8,62 +8,71 @@ using Utils;
 
 namespace Ror2Mod2
 {
-	public class SpotifyController : MusicBase
-	{
-		private readonly RulePicker rulePicker;
+    public class SpotifyController : MusicBase
+    {
+        private readonly RulePicker rulePicker;
 
-		private readonly ContextHelper contextHelper;
+        private readonly ContextHelper contextHelper;
 
-		public SpotifyController(RulePicker rulePicker, Logger logger) : base(logger)
-		{
-			this.rulePicker = rulePicker;
-			Client = new SpotifyPlaybackClient(logger);
-			Authorisation = new Authorisation(Scopes.Playback, logger: logger);
-			Authorisation.OnAccessTokenReceived += Authorisation_OnAccessTokenReceived;
-			Authorisation.OnClientRequested += Web.Goto;
-			Authorisation.InitiateScopeRequest();
-			contextHelper = new ContextHelper(Update, logger);
-		}
+        public SpotifyController(RulePicker rulePicker, Logger logger) : base(logger)
+        {
+            this.rulePicker = rulePicker;
+            Client = new SpotifyPlaybackClient(logger);
+            Client.OnError += e => this.Log(e);
+            Authorisation = new Authorisation(Scopes.Playback, logger: logger);
+            Authorisation.OnAccessTokenReceived += Authorisation_OnAccessTokenReceived;
+            Authorisation.OnClientRequested += Web.Goto;
+            Authorisation.InitiateScopeRequest();
+            contextHelper = new ContextHelper(Update, logger);
+        }
 
-		private void Authorisation_OnAccessTokenReceived(Authorisation sender, string accessToken)
-		{
-			Client.GiftNewAccessToken(accessToken);
-		}
+        public Authorisation Authorisation { get; }
 
-		protected SpotifyPlaybackClient Client { get; }
+        protected SpotifyPlaybackClient Client { get; }
 
-		public Authorisation Authorisation { get; }
+        public override void Pause()
+        {
+            _ = Client.Pause();
+        }
 
-		public override void Pause()
-		{
-			_ = Client.Pause();
-		}
+        public override void Resume()
+        {
+            _ = Client.Resume();
+        }
 
-		public override void Resume()
-		{
-			_ = Client.Resume();
-		}
+        protected override async Task Play(object musicIdentifier)
+        {
+            if (!(musicIdentifier is null))
+            {
+                switch (musicIdentifier)
+                {
+                    case Command c:
+                        await Client.Do(c);
+                        break;
 
-		protected override async Task Play(object musicIdentifier)
-		{
-			if (!(musicIdentifier is null))
-			{
-				if (musicIdentifier is Command c)
-				{
-					await Client.Do(c);
-				}
-				else
-				{
-					throw new ArgumentException($"Expected a {nameof(Command)} but received a {musicIdentifier.GetType().Name} instead", nameof(musicIdentifier));
-				}
-			}
-		}
 
-		protected override object GetMusicIdentifier(Context oldContext, Context newContext)
-		{
-			return rulePicker.GetRule().GetCommands(oldContext, newContext);
-		}
+                    case ICommandList commands:
+                        await Client.Do(commands);
+                        break;
 
-		protected override Context GetContext() => contextHelper.GetContext();
-	}
+
+                    default:
+                        throw new ArgumentException($"Expected a {nameof(ICommandList)} but received a {musicIdentifier.GetType().Name} instead", nameof(musicIdentifier));
+                }
+            }
+        }
+
+        protected override object GetMusicIdentifier(Context oldContext, Context newContext)
+        {
+            var commands = rulePicker.GetRule().GetCommands(oldContext, newContext);
+            return commands;
+        }
+
+        protected override Context GetContext() => contextHelper.GetContext();
+
+        private void Authorisation_OnAccessTokenReceived(Authorisation sender, string accessToken)
+        {
+            Client.GiftNewAccessToken(accessToken);
+        }
+    }
 }

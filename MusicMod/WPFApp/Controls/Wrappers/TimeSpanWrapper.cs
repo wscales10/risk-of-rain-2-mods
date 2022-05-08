@@ -14,7 +14,9 @@ namespace WPFApp.Controls.Wrappers
 
 		private static readonly Regex withSeconds = new(@"^(?<neg>-)?(?<s>\d?\d)(\.(?<ms>\d{1,3}))?s$");
 
-		public TimeSpanWrapper() => UIElement.TextChanged += (s, e) => NotifyValueChanged();
+		public override string ValueString => UIElement.Text;
+
+        public TimeSpanWrapper() => UIElement.TextChanged += (s, e) => NotifyValueChanged();
 
 		public override TextBox UIElement { get; } = new TextBox() { VerticalAlignment = VerticalAlignment.Center, MinWidth = 30 };
 

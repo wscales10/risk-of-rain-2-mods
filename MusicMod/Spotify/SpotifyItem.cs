@@ -4,57 +4,61 @@ using Utils;
 
 namespace Spotify
 {
-	public enum SpotifyItemType
-	{
-		Track,
-		Playlist,
-		Album,
-		Artist,
-		User
-	}
+    public enum SpotifyItemType
+    {
+        Track,
 
-	public struct SpotifyItem : IEquatable<SpotifyItem>
-	{
-		public SpotifyItem(SpotifyItemType type, string id) : this()
-		{
-			Type = type;
-			Id = id ?? throw new ArgumentNullException(nameof(id));
-		}
+        Playlist,
 
-		internal SpotifyItem(XElement element) : this(element.Attribute(nameof(Type)).Value.AsEnum<SpotifyItemType>(), element.Attribute(nameof(Id)).Value)
-		{
-		}
+        Album,
 
-		public string Id { get; }
+        Artist,
 
-		public SpotifyItemType Type { get; }
+        User
+    }
 
-		public static bool operator !=(SpotifyItem mi1, SpotifyItem mi2) => !mi1.Equals(mi2);
+    public struct SpotifyItem : IEquatable<SpotifyItem>
+    {
+        public SpotifyItem(SpotifyItemType type, string id) : this()
+        {
+            Type = type;
+            Id = id ?? throw new ArgumentNullException(nameof(id));
+        }
 
-		public static bool operator ==(SpotifyItem mi1, SpotifyItem mi2) => mi1.Equals(mi2);
+        internal SpotifyItem(XElement element) : this(element.Attribute(nameof(Type)).Value.AsEnum<SpotifyItemType>(), element.Attribute(nameof(Id)).Value)
+        {
+        }
 
-		public override bool Equals(object o) => o is SpotifyItem mi && Equals(mi);
+        public string Id { get; }
 
-		public bool Equals(SpotifyItem mi) => Type == mi.Type && Id == mi.Id;
+        public SpotifyItemType Type { get; }
 
-		public XElement FillAttributesTo(XElement itemElement)
-		{
-			foreach (var property in GetType().GetProperties())
-			{
-				itemElement.SetAttributeValue(property.Name, property.GetValue(this));
-			}
+        public static bool operator !=(SpotifyItem mi1, SpotifyItem mi2) => !mi1.Equals(mi2);
 
-			return itemElement;
-		}
+        public static bool operator ==(SpotifyItem mi1, SpotifyItem mi2) => mi1.Equals(mi2);
 
-		public override int GetHashCode() => Id.GetHashCode();
+        public override bool Equals(object o) => o is SpotifyItem mi && Equals(mi);
 
-		public Uri GetUri() => new Uri($"spotify:{ToUriString()}");
+        public bool Equals(SpotifyItem mi) => Type == mi.Type && Id == mi.Id;
 
-		public Uri GetUrl() => new Uri($"https://open.spotify.com/{Type.ToString().ToLower()}/{Id}");
+        public XElement FillAttributesTo(XElement itemElement)
+        {
+            foreach (var property in GetType().GetProperties())
+            {
+                itemElement.SetAttributeValue(property.Name, property.GetValue(this));
+            }
 
-		public override string ToString() => ToUriString();
+            return itemElement;
+        }
 
-		private string ToUriString() => $"{Type.ToString().ToLower()}:{Id}";
-	}
+        public override int GetHashCode() => Id.GetHashCode();
+
+        public Uri GetUri() => new Uri($"spotify:{ToUriString()}");
+
+        public Uri GetUrl() => new Uri($"https://open.spotify.com/{Type.ToString().ToLower()}/{Id}");
+
+        public override string ToString() => ToUriString();
+
+        private string ToUriString() => $"{Type.ToString().ToLower()}:{Id}";
+    }
 }
