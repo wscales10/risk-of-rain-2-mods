@@ -10,12 +10,13 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Utils;
 
 namespace WPFApp
 {
     internal static class Info
     {
+        public static ObservableCollection<Playlist> Playlists { get; } = new();
+
         public static ReadOnlyCollection<PropertyInfo> ContextProperties { get; } = new(GetProperties<Context>().ToList());
 
         public static ReadOnlyCollection<Type> SupportedRuleTypes { get; } = new(new Type[] { typeof(StaticSwitchRule), typeof(ArrayRule), typeof(IfRule), typeof(Bucket) });

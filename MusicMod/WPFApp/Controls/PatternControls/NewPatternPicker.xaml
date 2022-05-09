@@ -1,4 +1,4 @@
-﻿<local:PatternPicker x:Class="WPFApp.Controls.PatternControls.NewPatternPicker"
+﻿<local:Picker x:Class="WPFApp.Controls.PatternControls.NewPicker"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -18,4 +18,4 @@
 				IsEnabled="False"
 				Click="AddPatternButton_Click">Add Pattern</Button>
 	</StackPanel>
-</local:PatternPicker>
+</local:Picker>

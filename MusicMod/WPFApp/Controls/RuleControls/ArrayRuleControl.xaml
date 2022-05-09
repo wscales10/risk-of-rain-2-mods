@@ -14,13 +14,13 @@
 			<RowDefinition Height="Auto" />
 			<RowDefinition />
 		</Grid.RowDefinitions>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="200" />
-			<ColumnDefinition Width="*" />
-			<ColumnDefinition Width="Auto" />
-		</Grid.ColumnDefinitions>
-		<Border Grid.Row="1" Grid.ColumnSpan="2147483647" BorderBrush="Black" BorderThickness="1" />
-		<TextBlock VerticalAlignment="Center" Margin="3">First match from:</TextBlock>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBlock VerticalAlignment="Center" Margin="3">First match from:</TextBlock>
+        <Border Grid.Row="1" Grid.ColumnSpan="2147483647" BorderBrush="Black" BorderThickness="1" />
 		<rows:RowControl Grid.Row="2" Grid.ColumnSpan="2" />
 	</Grid>
 </UserControl>

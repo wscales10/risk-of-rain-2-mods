@@ -40,7 +40,7 @@ namespace Spotify.Commands
 
         internal TransferCommand(XElement element)
         {
-            Item = new SpotifyItem(element.Element(nameof(Item)));
+            Item = new SpotifyItem(element.Element(nameof(Item)).OnlyChild());
             Mapping = Switch<int, string>.Parse(element.Element(nameof(Mapping)).Element("Switch"), e => e.Value, RoR2PatternParser.Instance);
             FromTrackId = PatternParser.Instance.Parse<string>(element.Element(nameof(FromTrackId)).OnlyChild());
         }
@@ -66,7 +66,7 @@ namespace Spotify.Commands
 
         protected override void AddDetail(XElement element)
         {
-            element.Add(Item.Value.FillAttributesTo(new XElement(nameof(Item))));
+            element.Add(new XElement(nameof(Item), Item.Value.ToXml()));
             element.Add(new XElement(nameof(FromTrackId), FromTrackId.ToXml()));
             element.Add(new XElement(nameof(Mapping), Mapping.ToXml(se => new XElement("Expr", se))));
         }

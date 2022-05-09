@@ -3,6 +3,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -13,192 +14,194 @@ using Utils;
 
 namespace Spotify.Authorisation
 {
-	public delegate Task<HttpResponseMessage> Sender(HttpRequestMessage request);
+    public delegate Task<HttpResponseMessage> Sender(HttpRequestMessage request);
 
-	internal class CodeFlow
-	{
-		protected readonly App app;
+    internal class CodeFlow
+    {
+        protected readonly App app;
 
-		private ErrorState errorState;
+        private ErrorState errorState;
 
-		private FlowState state;
+        private FlowState state;
 
-		public CodeFlow(App app)
-		{
-			using (RandomNumberGenerator rng = new RNGCryptoServiceProvider())
-			{
-				byte[] stateData = new byte[12];
-				rng.GetBytes(stateData);
-				StateString = Convert.ToBase64String(stateData);
-			}
+        public CodeFlow(App app)
+        {
+            using (RandomNumberGenerator rng = new RNGCryptoServiceProvider())
+            {
+                byte[] stateData = new byte[12];
+                rng.GetBytes(stateData);
+                StateString = Convert.ToBase64String(stateData);
+            }
 
-			this.app = app;
-		}
+            this.app = app;
+        }
 
-		public string Code { get; private set; }
+        public string Code { get; private set; }
 
-		public ErrorState ErrorState
-		{
-			get => errorState;
+        public ErrorState ErrorState
+        {
+            get => errorState;
 
-			private set
-			{
-				if ((errorState = value) == ErrorState.None)
-				{
-					throw new InvalidOperationException();
-				}
-				else
-				{
-					state = FlowState.Error;
-				}
-			}
-		}
+            private set
+            {
+                if ((errorState = value) == ErrorState.None)
+                {
+                    throw new InvalidOperationException();
+                }
+                else
+                {
+                    state = FlowState.Error;
+                }
+            }
+        }
 
-		public string RefreshToken { get; private set; }
+        public string RefreshToken { get; private set; }
 
-		public FlowState State
-		{
-			get => state;
+        public FlowState State
+        {
+            get => state;
 
-			private set
-			{
-				if ((state = value) == FlowState.Error)
-				{
-					throw new InvalidOperationException();
-				}
-				else
-				{
-					errorState = ErrorState.None;
-				}
-			}
-		}
+            private set
+            {
+                if ((state = value) == FlowState.Error)
+                {
+                    throw new InvalidOperationException();
+                }
+                else
+                {
+                    errorState = ErrorState.None;
+                }
+            }
+        }
 
-		public string StateString { get; }
+        public string StateString { get; }
 
-		public bool IsFaulted => State == FlowState.Error;
+        public bool IsFaulted => State == FlowState.Error;
 
-		public virtual NameValueCollection GetLoginQueryString(IEnumerable<string> scopes)
-		{
-			State = FlowState.Login;
-			var output = HttpUtility.ParseQueryString(string.Empty);
-			output.Add("response_type", "code");
-			output.Add("client_id", app.ClientId);
-			output.Add("scope", string.Join(" ", scopes));
-			output.Add("redirect_uri", app.RedirectUri.ToString());
-			output.Add("state", StateString);
-			return output;
-		}
+        public virtual NameValueCollection GetLoginQueryString(IEnumerable<string> scopes)
+        {
+            State = FlowState.Login;
+            var output = HttpUtility.ParseQueryString(string.Empty);
+            output.Add("response_type", "code");
+            output.Add("client_id", app.ClientId);
+            output.Add("scope", string.Join(" ", scopes));
+            output.Add("redirect_uri", app.RedirectUri.ToString());
+            output.Add("state", StateString);
+            return output;
+        }
 
-		public async Task<RefreshTokenInfo> RequestTokensAsync(Sender send)
-		{
-			ThrowIfFaulted();
+        public async Task<RefreshTokenInfo> RequestTokensAsync(Sender send)
+        {
+            ThrowIfFaulted();
 
-			using (var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token"))
-			{
-				request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ app.ClientId }:{ app.ClientSecret }")));
-				Dictionary<string, string> nameValueCollection = GetAccessTokenRequest();
-				request.Content = new FormUrlEncodedContent(nameValueCollection);
-				var responseMessage = await send(request);
-				var deserialised = await DeserializeAsync<RefreshTokenInfo>(responseMessage);
+            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token"))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ app.ClientId }:{ app.ClientSecret }")));
+                Dictionary<string, string> nameValueCollection = GetAccessTokenRequest();
+                request.Content = new FormUrlEncodedContent(nameValueCollection);
+                var responseMessage = await send(request);
+                var deserialised = await DeserializeAsync<RefreshTokenInfo>(responseMessage);
 
-				if (deserialised is null)
-				{
-					State = FlowState.Error;
-				}
-				else
-				{
-					State = FlowState.TokenGranted;
-					RefreshToken = deserialised.RefreshToken;
-				}
+                if (deserialised is null)
+                {
+                    State = FlowState.Error;
+                }
+                else
+                {
+                    State = FlowState.TokenGranted;
+                    RefreshToken = deserialised.RefreshToken;
+                }
 
-				return deserialised;
-			}
-		}
+                return deserialised;
+            }
+        }
 
-		public async Task<AccessTokenInfo> TryRefreshTokenAsync(Sender send)
-		{
-			ThrowIfFaulted();
-			State = FlowState.Refreshing;
+        public async Task<AccessTokenInfo> TryRefreshTokenAsync(Sender send)
+        {
+            ThrowIfFaulted();
+            State = FlowState.Refreshing;
 
-			using (var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token"))
-			{
-				request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{app.ClientId}:{ app.ClientSecret }")));
-				request.Content = new FormUrlEncodedContent(GetRefreshTokenRequest());
-				var responseMessage = await send(request);
-				var deserialised = await DeserializeAsync<AccessTokenInfo>(responseMessage);
+            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token"))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{app.ClientId}:{ app.ClientSecret }")));
+                request.Content = new FormUrlEncodedContent(GetRefreshTokenRequest());
+                var responseMessage = await send(request);
+                var deserialised = await DeserializeAsync<AccessTokenInfo>(responseMessage);
 
-				if (deserialised is null)
-				{
-					State = FlowState.Error;
-				}
-				else
-				{
-					State = FlowState.TokenRefreshed;
-				}
+                if (deserialised is null)
+                {
+                    // Possibly not connection - check responseMessage please!
+                    Debugger.Break();
+                    ErrorState = ErrorState.Connection;
+                }
+                else
+                {
+                    State = FlowState.TokenRefreshed;
+                }
 
-				return deserialised;
-			}
-		}
+                return deserialised;
+            }
+        }
 
-		public bool TryTransitionToTokenRequestState(string state, string code, ref string error)
-		{
-			if (state != StateString)
-			{
-				ErrorState = ErrorState.StateMismatch;
-				error = "state mismatch";
-				return false;
-			}
+        public bool TryTransitionToTokenRequestState(string state, string code, ref string error)
+        {
+            if (state != StateString)
+            {
+                ErrorState = ErrorState.StateMismatch;
+                error = "state mismatch";
+                return false;
+            }
 
-			if (error == "access_denied")
-			{
-				ErrorState = ErrorState.UserDenied;
-				return false;
-			}
+            if (error == "access_denied")
+            {
+                ErrorState = ErrorState.UserDenied;
+                return false;
+            }
 
-			if (code is null)
-			{
-				State = FlowState.Error;
-				return false;
-			}
+            if (code is null)
+            {
+                State = FlowState.Error;
+                return false;
+            }
 
-			State = FlowState.TokenRequest;
-			Code = code;
-			return true;
-		}
+            State = FlowState.TokenRequest;
+            Code = code;
+            return true;
+        }
 
-		protected virtual Dictionary<string, string> GetAccessTokenRequest() => new Dictionary<string, string>()
-			{
-				{"grant_type", "authorization_code" },
-				{ "code", Code },
-				{"redirect_uri", app.RedirectUri.ToString() }
-			};
+        protected virtual Dictionary<string, string> GetAccessTokenRequest() => new Dictionary<string, string>()
+            {
+                {"grant_type", "authorization_code" },
+                { "code", Code },
+                {"redirect_uri", app.RedirectUri.ToString() }
+            };
 
-		protected virtual Dictionary<string, string> GetRefreshTokenRequest() => new Dictionary<string, string>()
-			{
-				{"grant_type", "refresh_token" },
-				{ "refresh_token", RefreshToken },
-			};
+        protected virtual Dictionary<string, string> GetRefreshTokenRequest() => new Dictionary<string, string>()
+            {
+                {"grant_type", "refresh_token" },
+                { "refresh_token", RefreshToken },
+            };
 
-		private void ThrowIfFaulted()
-		{
-			if (IsFaulted)
-			{
-				throw new InvalidOperationException();
-			}
-		}
+        private void ThrowIfFaulted()
+        {
+            if (IsFaulted)
+            {
+                throw new InvalidOperationException();
+            }
+        }
 
-		private async Task<T> DeserializeAsync<T>(HttpResponseMessage responseMessage)
-			where T : class
-		{
-			var content = responseMessage.Content;
-			var str = await content.ReadAsStringAsync();
-			return JsonConvert.DeserializeObject<T>(str, new JsonSerializerSettings { Error = HandleDeserializationError });
-		}
+        private async Task<T> DeserializeAsync<T>(HttpResponseMessage responseMessage)
+            where T : class
+        {
+            var content = responseMessage.Content;
+            var str = await content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<T>(str, new JsonSerializerSettings { Error = HandleDeserializationError });
+        }
 
-		private void HandleDeserializationError(object sender, ErrorEventArgs errorArgs)
-		{
-			this.Log(errorArgs.ErrorContext.Error.Message);
-			errorArgs.ErrorContext.Handled = true;
-		}
-	}
+        private void HandleDeserializationError(object sender, ErrorEventArgs errorArgs)
+        {
+            this.Log(errorArgs.ErrorContext.Error.Message);
+            errorArgs.ErrorContext.Handled = true;
+        }
+    }
 }

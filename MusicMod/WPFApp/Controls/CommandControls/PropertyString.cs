@@ -72,6 +72,7 @@ namespace WPFApp.Controls.CommandControls
         private static ReadOnlyDictionary<Type, Func<IControlWrapper>> Controls { get; } = new(new Dictionary<Type, Func<IControlWrapper>>
         {
             [typeof(TimeSpan)] = () => new TimeSpanWrapper(),
+            [typeof(ISpotifyItem)] = () => new SpotifyItemWrapper2(NavigationContext),
             [typeof(SpotifyItem?)] = () => new SpotifyItemWrapper(),
             [typeof(bool)] = () => new BoolWrapper()
         });

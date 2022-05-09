@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controls\PatternControls\NewPatternPicker.xaml.cs" />
     <Compile Remove="Controls\Rows\ButtonsControl.xaml.cs" />
     <Compile Remove="Controls\Rows\RowButtonsControl.xaml.cs" />
     <Compile Remove="Controls\RuleControls\RuleControlWrapper.xaml.cs" />
@@ -20,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Remove="Controls\PatternControls\NewPatternPicker.xaml" />
     <Page Remove="Controls\Rows\ButtonsControl.xaml" />
     <Page Remove="Controls\Rows\RowButtonsControl.xaml" />
     <Page Remove="Controls\RuleControls\RuleControlWrapper.xaml" />

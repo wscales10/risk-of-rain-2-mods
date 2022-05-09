@@ -63,7 +63,7 @@ namespace WPFApp.Controls
             string itemType = match.Groups["itemType"]?.Value;
             string id = match.Groups["id"]?.Value;
 
-            ViewModel.Item = new(itemType.AsEnum<SpotifyItemType>(true), id);
+            ViewModel.TrySetItem(new(itemType.AsEnum<SpotifyItemType>(true), id));
         }
 
         private void TextBlock_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)

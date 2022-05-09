@@ -3,25 +3,32 @@ using WPFApp.Controls.PatternControls;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
-	public class OptionalPatternPickerWrapper<T> : ControlWrapper<IPattern<T>, OptionalPatternPicker>
-	{
-		public OptionalPatternPickerWrapper(NavigationContext navigationContext) => UIElement = new(typeof(T), navigationContext);
+    public class OptionalPickerWrapper<T> : ControlWrapper<IPattern<T>, OptionalPicker>
+    {
+        private readonly NavigationContext navigationContext;
 
-		public override OptionalPatternPicker UIElement { get; }
+        public OptionalPickerWrapper(NavigationContext navigationContext)
+        {
+            var config = new PatternPickerInfo(typeof(T), navigationContext);
+            UIElement = new(new(config));
+            this.navigationContext = navigationContext;
+        }
 
-		protected override void setValue(IPattern<T> value) => UIElement.AddPattern(value);
+        public override OptionalPicker UIElement { get; }
 
-		protected override SaveResult<IPattern<T>> tryGetValue(bool trySave)
-		{
-			var patternWrapper = UIElement.patternContainer.PatternWrapper;
+        protected override void setValue(IPattern<T> value) => UIElement.ViewModel.HandleSelection(value is null ? null : PatternWrapper.Create(value, navigationContext));
 
-			if (patternWrapper is null)
-			{
-				return new((bool?)null);
-			}
+        protected override SaveResult<IPattern<T>> tryGetValue(bool trySave)
+        {
+            var patternWrapper = UIElement.ViewModel.ValueWrapper;
 
-			var result = patternWrapper.TryGetObject(trySave);
-			return new(result, result.IsSuccess ? (IPattern<T>)result.Value : default);
-		}
-	}
+            if (patternWrapper is null)
+            {
+                return new((bool?)null);
+            }
+
+            var result = patternWrapper.TryGetObject(trySave);
+            return new(result, result.IsSuccess ? (IPattern<T>)result.Value : default);
+        }
+    }
 }

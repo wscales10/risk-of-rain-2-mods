@@ -18,9 +18,8 @@
 			<ColumnDefinition Width="*" />
 			<ColumnDefinition Width="Auto" />
 		</Grid.ColumnDefinitions>
-		<Border Grid.Row="1" Grid.ColumnSpan="2147483647" BorderBrush="Black" BorderThickness="1" />
-		<Border Grid.Row="2" Grid.RowSpan="2147483647" BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Right" />
-		<StackPanel Orientation="Horizontal" Margin="3">
+        <Border Grid.Row="1" Grid.ColumnSpan="2147483647" BorderBrush="Black" BorderThickness="1" />
+        <StackPanel Orientation="Horizontal" Margin="3">
 			<TextBlock VerticalAlignment="Center">Execute in order:</TextBlock>
 			<TextBlock VerticalAlignment="Center" Text=" 66" Foreground="#F8F8F8" />
 		</StackPanel>

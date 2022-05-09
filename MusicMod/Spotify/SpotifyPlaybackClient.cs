@@ -14,6 +14,10 @@ namespace Spotify
 {
     public class SpotifyPlaybackClient : NiceSpotifyClient
     {
+        private Playlist currentPlaylist;
+
+        private int playlistIndex;
+
         private PlayerState cachedState = PlayerState.Stopped;
 
         private string deviceId;
@@ -61,24 +65,7 @@ namespace Spotify
                     return await PauseInner();
 
                 case StopCommand _:
-                    if (await GetState() == PlayerState.Playing)
-                    {
-                        if (!await PauseInner())
-                        {
-                            return false;
-                        }
-                    }
-
-                    if (await GetState() != PlayerState.Stopped)
-                    {
-                        if (!await SeekToInner(0))
-                        {
-                            return false;
-                        }
-                    }
-
-                    SetState(PlayerState.Stopped);
-                    return true;
+                    return await StopInner();
 
                 case PlayCommand playCommand:
                     return await PlayInner(playCommand.Item, playCommand.Milliseconds);
@@ -87,7 +74,7 @@ namespace Spotify
                     return await PlayInner(playOnceCommand.Item, playOnceCommand.Milliseconds) && await Handle(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off });
 
                 case LoopCommand loopCommand:
-                    return await PlayInner(loopCommand.Item, loopCommand.Milliseconds) && await Handle(new SetPlaybackOptionsCommand { RepeatMode = loopCommand.Item?.Type == SpotifyItemType.Track ? RepeatMode.Track : RepeatMode.Context });
+                    return await PlayInner(loopCommand.Item, loopCommand.Milliseconds) && await Handle(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Context });
 
                 case SeekToCommand seekToCommand:
                     {
@@ -124,7 +111,7 @@ namespace Spotify
 #warning not sure whether this would be helpful or not, difficult to figure out transfercommand - test with transferring to same track
 
                     //int predictedtime = info?.ProgressMs is int time2 ? time2 + ((int)stopwatch.ElapsedMilliseconds / 2) : 0;
-                    return await PlayInner(transferCommand.Item, transferCommand.FromTrackId.IsMatch(track?.Id) ? transferCommand.Map(info.ProgressMs ?? 0) : 0);
+                    return await PlayItem(transferCommand.Item, transferCommand.FromTrackId.IsMatch(track?.Id) ? transferCommand.Map(info.ProgressMs ?? 0) : 0);
 
                 case SetPlaybackOptionsCommand optionsCommand:
                     bool success = true;
@@ -181,7 +168,7 @@ namespace Spotify
                 return await Client.Player.SeekTo(request);
             }
 
-            async Task<bool> PlayInner(SpotifyItem? item, int milliseconds)
+            async Task<bool> PlayItem(SpotifyItem? item, int milliseconds)
             {
                 if (item is null)
                 {
@@ -199,6 +186,112 @@ namespace Spotify
                 }
 
                 return false;
+            }
+
+            async Task<bool> PlayPlaylist(Playlist playlist, int milliseconds)
+            {
+                playlistIndex = -1;
+                currentPlaylist = playlist;
+                return await NextPlaylistItem(milliseconds);
+            }
+
+            async Task SetPlaylistIndex()
+            {
+                var playbackState = (await Client.Player.GetCurrentPlayback());
+                var repeatMode = playbackState.RepeatState.AsEnum<RepeatMode>(true);
+
+                if (repeatMode == RepeatMode.Track)
+                {
+                    playlistIndex--;
+                }
+
+                playlistIndex++;
+
+                if (playlistIndex == currentPlaylist.Count)
+                {
+                    switch (repeatMode)
+                    {
+                        case RepeatMode.Off:
+                            playlistIndex = -1;
+                            break;
+
+                        case RepeatMode.Context:
+                            playlistIndex = 0;
+                            break;
+                    }
+                }
+            }
+
+            async Task<bool> NextPlaylistItem(int milliseconds = 0)
+            {
+                await SetPlaylistIndex();
+
+                if (playlistIndex != -1)
+                {
+                    bool result = await PlayItem(currentPlaylist[playlistIndex], milliseconds);
+                    var info = (await GetCurrentlyPlaying()).Item;
+
+                    int durationMs;
+                    switch (info)
+                    {
+                        case FullTrack t:
+                            durationMs = t.DurationMs;
+                            break;
+
+                        case FullEpisode e:
+                            durationMs = e.DurationMs;
+                            break;
+
+                        default:
+                            return false;
+                    }
+
+                    _ = Task.Delay(durationMs).ContinueWith(_ => NextPlaylistItem(), TaskScheduler.Default);
+
+                    return result;
+                }
+                else
+                {
+                    currentPlaylist = null;
+                    return await StopInner();
+                }
+            }
+
+            async Task<bool> StopInner()
+            {
+                if (await GetState() == PlayerState.Playing)
+                {
+                    if (!await PauseInner())
+                    {
+                        return false;
+                    }
+                }
+
+                if (await GetState() != PlayerState.Stopped)
+                {
+                    if (!await SeekToInner(0))
+                    {
+                        return false;
+                    }
+                }
+
+                SetState(PlayerState.Stopped);
+                return true;
+            }
+
+            async Task<bool> PlayInner(ISpotifyItem item, int milliseconds)
+            {
+                switch (item)
+                {
+                    case SpotifyItem spotifyItem:
+                        return await PlayItem(spotifyItem, milliseconds);
+
+                    case Playlist playlist:
+                        return await PlayPlaylist(playlist, milliseconds);
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(item));
+                }
             }
         }
 

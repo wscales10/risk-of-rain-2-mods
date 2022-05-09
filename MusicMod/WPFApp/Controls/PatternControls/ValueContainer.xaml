@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="WPFApp.Controls.PatternControls.ValueContainer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:WPFApp.Controls.PatternControls"
+			 xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls"
+             xmlns:converters="clr-namespace:WPFApp.Converters"
+             xmlns:wrappers="clr-namespace:WPFApp.Controls.Wrappers"
+             mc:Ignorable="d"
+             d:DesignHeight="200" d:DesignWidth="200">
+    <d:UserControl.DataContext>
+        <x:Type Type="wrappers:IReadableControlWrapper" />
+    </d:UserControl.DataContext>
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter False="Hidden" x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
+    <Grid Background="Transparent" Margin="2" MinWidth="100">
+        <ContentPresenter x:Name="border" Content="{Binding UIElement}" />
+        <commandcontrols:DeleteButton HorizontalAlignment="Right"
+									  VerticalAlignment="Top"
+									  Margin="7"
+									  x:Name="deleteButton"
+									  Click="deleteButton_Click"
+									  Visibility="{Binding IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}" />
+    </Grid>
+</UserControl>

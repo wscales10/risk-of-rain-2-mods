@@ -5,27 +5,64 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
-	<RichTextBox Width="300" FontSize="16" Height="Auto" BorderThickness="0">
-		<FlowDocument TextAlignment="Center">
-			<Table>
-				<Table.Columns>
-					<TableColumn />
-					<TableColumn />
-					<TableColumn />
-				</Table.Columns>
-				<TableRowGroup>
-					<TableRow>
-						<TableCell>
-							<Paragraph x:Name="inputHeader">Input</Paragraph>
-						</TableCell>
-						<TableCell />
-						<TableCell>
-							<Paragraph x:Name="outputHeader">Output</Paragraph>
-						</TableCell>
-					</TableRow>
-				</TableRowGroup>
-				<TableRowGroup x:Name="rowGroup" />
-			</Table>
-		</FlowDocument>
-	</RichTextBox>
+    <Border BorderBrush="DarkGray" BorderThickness="1">
+        <Grid Width="300" d:Background="White">
+            <Grid.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="FontSize" Value="16" />
+                    <Setter Property="TextAlignment" Value="Center" />
+                </Style>
+            </Grid.Resources>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130" />
+                <ColumnDefinition SharedSizeGroup="Comma" />
+                <ColumnDefinition Width="130" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Input" />
+            <TextBlock Grid.Column="2" Text="Output" />
+            <ListBox x:Name="ListBox" Grid.Row="1" Grid.ColumnSpan="3" HorizontalContentAlignment="Stretch" BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Loaded="Grid_Loaded">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition SharedSizeGroup="Comma" />
+                                <ColumnDefinition Width="130" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="inputTextBox" Text="{Binding Item1}" GotKeyboardFocus="TextBox_GotKeyboardFocus" PreviewKeyDown="TextBox1_PreviewKeyDown" />
+                            <TextBlock Grid.Column="1" TextAlignment="Center"  Text="," />
+                            <TextBox x:Name="outputTextBox" Grid.Column="2" GotKeyboardFocus="TextBox_GotKeyboardFocus" Text="{Binding Item2}" PreviewKeyDown="TextBox2_PreviewKeyDown" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </Border>
+    <!--<RichTextBox Width="300" FontSize="16" Height="Auto" BorderThickness="0">
+        <FlowDocument TextAlignment="Center">
+            <Table>
+                <Table.Columns>
+                    <TableColumn />
+                    <TableColumn />
+                    <TableColumn />
+                </Table.Columns>
+                <TableRowGroup>
+                    <TableRow>
+                        <TableCell>
+                            <Paragraph x:Name="inputHeader">Input</Paragraph>
+                        </TableCell>
+                        <TableCell />
+                        <TableCell>
+                            <Paragraph x:Name="outputHeader">Output</Paragraph>
+                        </TableCell>
+                    </TableRow>
+                </TableRowGroup>
+                <TableRowGroup x:Name="rowGroup" />
+            </Table>
+        </FlowDocument>
+    </RichTextBox>-->
 </UserControl>

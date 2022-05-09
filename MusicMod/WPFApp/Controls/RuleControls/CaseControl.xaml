@@ -41,9 +41,9 @@
 			</Grid.Resources>
 			<Grid.RowDefinitions>
 				<RowDefinition />
-				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
-			<ContentPresenter Content="{Binding PatternPicker}" />
+			<ContentPresenter Content="{Binding Picker}" />
 			<Border Grid.Row="1" VerticalAlignment="Bottom" Margin="2" HorizontalAlignment="Center" BorderBrush="{Binding IsFocused, ElementName=textBox, Converter={StaticResource BorderConverter}}" BorderThickness="1">
 				<StackPanel Background="White" Orientation="Horizontal">
 					<TextBlock VerticalAlignment="Center" Text="(" Visibility="{Binding CaseName, Converter={StaticResource VisibilityConverter}}" />

@@ -85,8 +85,6 @@ namespace WPFApp.Controls.Wrappers
 
         public event Action<object> ValueSet;
 
-        public event Action ValueStringChanged;
-
         protected event Action ValueCleared;
 
         protected event Action<TValue> valueSet;

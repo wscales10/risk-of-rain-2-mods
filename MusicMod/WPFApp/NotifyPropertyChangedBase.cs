@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Utils;
 using Utils.Reflection.Properties;
@@ -33,6 +34,32 @@ namespace WPFApp
         public void SubscribeTo(INotifyPropertyChanged obj) => obj.PropertyChanged += (s, e) => NotifyPropertyChanged(e);
 
         protected void NotifyPropertyChanged([CallerMemberName] string propertyName = null) => NotifyPropertyChanged(new PropertyChangedEventArgs(propertyName));
+
+        protected void RemovePropertyDependency(string propertyName, params string[] dependentOn)
+        {
+            foreach (var pair in cache)
+            {
+                var source = pair.Key;
+                var dict = pair.Value;
+
+                foreach (string s in dependentOn)
+                {
+                    if (dict.ContainsKey(s))
+                    {
+                        _ = dict[s].Remove(propertyName);
+
+                        // TODO: remove HashSet and event handler if set is now empty
+
+                        if (source.GetPropertyValue(s) is INotifyCollectionChanged collection)
+                        {
+                            _ = cache2[collection].Remove(propertyName);
+
+                            // TODO: remove HashSet and event handler if set is now empty
+                        }
+                    }
+                }
+            }
+        }
 
         protected void RemovePropertyDependency(string propertyName, INotifyPropertyChanged source, params string[] dependentOn)
         {

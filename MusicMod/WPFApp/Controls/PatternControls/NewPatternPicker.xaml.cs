@@ -5,25 +5,25 @@ using System.Windows.Controls;
 
 namespace WPFApp.Controls.PatternControls
 {
-	/// <summary>
-	/// Interaction logic for NewPatternPicker.xaml
-	/// </summary>
-	public partial class NewPatternPicker : PatternPicker
-	{
-		public NewPatternPicker(Type valueType, NavigationContext navigationContext) : base(valueType, navigationContext, false)
-		{
-		}
+    /// <summary>
+    /// Interaction logic for NewPicker.xaml
+    /// </summary>
+    public partial class NewPicker : Picker
+    {
+        public NewPicker(Type valueType, NavigationContext navigationContext) : base(valueType, navigationContext, false)
+        {
+        }
 
-		public event Action<IReadableControlWrapper> SelectionMade;
+        public event Action<IReadableControlWrapper> SelectionMade;
 
-		protected override Selector ItemsControl => newPatternTypeComboBox;
+        protected override Selector ItemsControl => newPatternTypeComboBox;
 
-		protected override void Init() => InitializeComponent();
+        protected override void Init() => InitializeComponent();
 
-		protected override void handleSelection(IReadableControlWrapper patternWrapper) => SelectionMade?.Invoke(patternWrapper);
+        protected override void handleSelection(IReadableControlWrapper patternWrapper) => SelectionMade?.Invoke(patternWrapper);
 
-		private void AddPatternButton_Click(object sender, System.Windows.RoutedEventArgs e) => CommitSelection();
+        private void AddPatternButton_Click(object sender, System.Windows.RoutedEventArgs e) => CommitSelection();
 
-		private void newPatternTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => AddPatternButton.IsEnabled = e.AddedItems?.Count > 0;
-	}
+        private void newPatternTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => AddPatternButton.IsEnabled = e.AddedItems?.Count > 0;
+    }
 }

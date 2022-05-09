@@ -18,7 +18,6 @@
 		</Grid.ColumnDefinitions>
 		<TextBlock VerticalAlignment="Center" Margin="3">If:</TextBlock>
 		<Border x:Name="HorizontalSeparator" Grid.Row="1" Grid.ColumnSpan="2147483647" BorderBrush="Black" BorderThickness="1" />
-		<rows:RowControl Grid.Row="2" Grid.ColumnSpan="2" />
-		<Border Grid.Row="2" Grid.RowSpan="2147483647" BorderBrush="Black" BorderThickness="1" HorizontalAlignment="Right" />
-	</Grid>
+        <rows:RowControl Grid.Row="2" Grid.ColumnSpan="2" />
+    </Grid>
 </UserControl>

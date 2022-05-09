@@ -20,22 +20,22 @@ namespace WPFApp.Controls.Rows
     {
         public ThenRow(IPattern<Context> pattern, Rule rule, NavigationContext navigationContext) : base(rule, false)
         {
-            PatternPickerWrapper = new SinglePatternPickerWrapper<Context>(navigationContext);
+            PickerWrapper = new SinglePatternPickerWrapper<Context>(navigationContext);
             PropagateUiChange(null, LeftElement);
 
             if (pattern is not null)
             {
-                PatternPickerWrapper.SetValue(pattern);
+                PickerWrapper.SetValue(pattern);
             }
         }
 
-        public SinglePatternPickerWrapper<Context> PatternPickerWrapper { get; }
+        public SinglePatternPickerWrapper<Context> PickerWrapper { get; }
 
-        public override UIElement LeftElement => PatternPickerWrapper.UIElement;
+        public override UIElement LeftElement => PickerWrapper.UIElement;
 
-        public override string Label => PatternPickerWrapper?.TryGetValue(false).Value?.ToString();
+        public override string Label => PickerWrapper?.TryGetValue(false).Value?.ToString();
 
-        public override SaveResult TrySaveChanges() => base.TrySaveChanges() & PatternPickerWrapper.TryGetValue(true);
+        public override SaveResult TrySaveChanges() => base.TrySaveChanges() & PickerWrapper.TryGetValue(true);
     }
 
     internal class ElseRow : IfRow

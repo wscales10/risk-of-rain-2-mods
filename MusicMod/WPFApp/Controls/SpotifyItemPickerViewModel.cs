@@ -1,10 +1,7 @@
 ﻿using Spotify;
 using System;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Media;
 using Utils.Async;
 using WPFApp.ViewModels;
@@ -31,6 +28,8 @@ namespace WPFApp.Controls
             OnConnectionMade += RequestMusicItemInfo;
         }
 
+        public event Predicate<SpotifyItem?> Validate;
+
         private static event Action OnConnectionMade;
 
         public bool HasCreators => Info?.Creators?.Length > 0;
@@ -54,7 +53,7 @@ namespace WPFApp.Controls
         {
             get => item;
 
-            set
+            private set
             {
                 SpotifyItem? oldItem = item;
                 item = value;
@@ -100,6 +99,17 @@ namespace WPFApp.Controls
         {
             get => imageSource;
             private set => SetProperty(ref imageSource, value);
+        }
+
+        public bool TrySetItem(SpotifyItem? item)
+        {
+            if (Validate?.Invoke(item) != false)
+            {
+                Item = item;
+                return true;
+            }
+
+            return false;
         }
 
         public void RequestMusicItemInfo()

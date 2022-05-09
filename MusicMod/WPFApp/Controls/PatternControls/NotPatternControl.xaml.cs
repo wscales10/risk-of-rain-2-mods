@@ -7,30 +7,30 @@ using Utils.Reflection;
 
 namespace WPFApp.Controls.PatternControls
 {
-	/// <summary>
-	/// Interaction logic for NotPatternControl.xaml
-	/// </summary>
-	public partial class NotPatternControl : UserControl
-	{
-		public NotPatternControl(NavigationContext navigationContext, Type valueType)
-		{
-			InitializeComponent();
-			PatternPickerWrapper = (IControlWrapper)typeof(SinglePatternPickerWrapper<>).MakeGenericType(valueType).Construct(navigationContext);
-			patternPickerContainer.Content = PatternPickerWrapper.UIElement;
-			PatternPickerWrapper.ValueSet += NotifyValueChanged;
-			NotifyValueChanged();
-		}
+    /// <summary>
+    /// Interaction logic for NotPatternControl.xaml
+    /// </summary>
+    public partial class NotPatternControl : UserControl
+    {
+        public NotPatternControl(NavigationContext navigationContext, Type valueType)
+        {
+            InitializeComponent();
+            PickerWrapper = (IControlWrapper)typeof(SinglePatternPickerWrapper<>).MakeGenericType(valueType).Construct(navigationContext);
+            patternPickerContainer.Content = PickerWrapper.UIElement;
+            PickerWrapper.ValueSet += NotifyValueChanged;
+            NotifyValueChanged();
+        }
 
-		public event Action ValueChanged;
+        public event Action ValueChanged;
 
-		internal IControlWrapper PatternPickerWrapper { get; }
+        internal IControlWrapper PickerWrapper { get; }
 
-		public SaveResult<IPattern> TryGetPattern(bool trySave)
-		{
-			var result = PatternPickerWrapper.TryGetObject(trySave);
-			return SaveResult.Create<IPattern>(result);
-		}
+        public SaveResult<IPattern> TryGetPattern(bool trySave)
+        {
+            var result = PickerWrapper.TryGetObject(trySave);
+            return SaveResult.Create<IPattern>(result);
+        }
 
-		private void NotifyValueChanged(object _ = null) => ValueChanged?.Invoke();
-	}
+        private void NotifyValueChanged(object _ = null) => ValueChanged?.Invoke();
+    }
 }
