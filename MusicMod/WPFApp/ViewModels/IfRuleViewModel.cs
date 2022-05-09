@@ -39,6 +39,8 @@ namespace WPFApp.ViewModels
             }
         }
 
+        public override string Title => "If:";
+
         public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
         protected override RowManager<IfRow> TypedRowManager { get; } = new();

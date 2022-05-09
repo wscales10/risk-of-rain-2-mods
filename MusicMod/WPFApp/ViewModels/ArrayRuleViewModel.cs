@@ -6,23 +6,25 @@ using WPFApp.Controls.Rows;
 
 namespace WPFApp.ViewModels
 {
-	internal class ArrayRuleViewModel : RuleViewModelBase<ArrayRule>
-	{
-		public ArrayRuleViewModel(ArrayRule arrayRule, NavigationContext navigationContext) : base(arrayRule, navigationContext)
-		{
-			ExtraCommands = new[]
-			{
-				new ButtonContext { Label = "Add Rule", Command = new ButtonCommand(_ => AddRule()) }
-			};
+    internal class ArrayRuleViewModel : RuleViewModelBase<ArrayRule>
+    {
+        public ArrayRuleViewModel(ArrayRule arrayRule, NavigationContext navigationContext) : base(arrayRule, navigationContext)
+        {
+            ExtraCommands = new[]
+            {
+                new ButtonContext { Label = "Add Rule", Command = new ButtonCommand(_ => AddRule()) }
+            };
 
-			TypedRowManager.BeforeItemAdded += AttachRowEventHandlers;
-			TypedRowManager.BindTo(Item.Rules, AddRule, r => r.Output);
-		}
+            TypedRowManager.BeforeItemAdded += AttachRowEventHandlers;
+            TypedRowManager.BindTo(Item.Rules, AddRule, r => r.Output);
+        }
 
-		public override IEnumerable<ButtonContext> ExtraCommands { get; }
+        public override string Title => "First match from:";
 
-		protected override RowManager<ArrayRow> TypedRowManager { get; } = new();
+        public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
-		private ArrayRow AddRule(Rule rule = null) => TypedRowManager.Add(new ArrayRow(rule));
-	}
+        protected override RowManager<ArrayRow> TypedRowManager { get; } = new();
+
+        private ArrayRow AddRule(Rule rule = null) => TypedRowManager.Add(new ArrayRow(rule));
+    }
 }

@@ -8,67 +8,69 @@ using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.ViewModels
 {
-	internal class SwitchRuleViewModel : RuleViewModelBase<StaticSwitchRule>
-	{
-		public SwitchRuleViewModel(StaticSwitchRule switchRule, NavigationContext navigationContext) : base(switchRule, navigationContext)
-		{
-			ExtraCommands = new[]
-			{
-				new ButtonContext
-				{
-					Label = "Add Case",
-					Command = new ButtonCommand(_ => AddCase(), this, nameof(PropertyInfo), propertyInfo => propertyInfo is not null)
-				},
-				new ButtonContext
-				{
-					Label = "Add Default",
-					Command = new ButtonCommand(
-						_ => AddDefault(),
-						new BindingPredicate(TypedRowManager, nameof(TypedRowManager.HasDefault), (hasDefault) => !(bool)hasDefault),
-						new BindingPredicate(this, nameof(PropertyInfo), propertyInfo => propertyInfo is not null))
-				}
-			};
+    internal class SwitchRuleViewModel : RuleViewModelBase<StaticSwitchRule>
+    {
+        public SwitchRuleViewModel(StaticSwitchRule switchRule, NavigationContext navigationContext) : base(switchRule, navigationContext)
+        {
+            ExtraCommands = new[]
+            {
+                new ButtonContext
+                {
+                    Label = "Add Case",
+                    Command = new ButtonCommand(_ => AddCase(), this, nameof(PropertyInfo), propertyInfo => propertyInfo is not null)
+                },
+                new ButtonContext
+                {
+                    Label = "Add Default",
+                    Command = new ButtonCommand(
+                        _ => AddDefault(),
+                        new BindingPredicate(TypedRowManager, nameof(TypedRowManager.HasDefault), (hasDefault) => !(bool)hasDefault),
+                        new BindingPredicate(this, nameof(PropertyInfo), propertyInfo => propertyInfo is not null))
+                }
+            };
 
-			TypedRowManager.BeforeItemAdded += AttachRowEventHandlers;
-			TypedRowManager.BindTo(Item.Cases, AddCase, r => ((CaseRow)r).Case, r => Item.DefaultRule = r?.Output);
+            TypedRowManager.BeforeItemAdded += AttachRowEventHandlers;
+            TypedRowManager.BindTo(Item.Cases, AddCase, r => ((CaseRow)r).Case, r => Item.DefaultRule = r?.Output);
 
-			if (Item.DefaultRule is not null)
-			{
-				AddDefault(Item.DefaultRule);
-			}
-		}
+            if (Item.DefaultRule is not null)
+            {
+                AddDefault(Item.DefaultRule);
+            }
+        }
 
-		public PropertyInfo PropertyInfo
-		{
-			get => Item.PropertyInfo;
+        public override string Title => "Switch on:";
 
-			set
-			{
-				Item.PropertyInfo = value;
-				NotifyPropertyChanged();
-			}
-		}
+        public PropertyInfo PropertyInfo
+        {
+            get => Item.PropertyInfo;
 
-		public override IEnumerable<ButtonContext> ExtraCommands { get; }
+            set
+            {
+                Item.PropertyInfo = value;
+                NotifyPropertyChanged();
+            }
+        }
 
-		protected override RowManager<SwitchRow> TypedRowManager { get; } = new();
+        public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
-		protected override SaveResult ShouldAllowExit()
-		{
-			// TODO: should consider whether patterns implement IPattern<selected property type>
-			return new SaveResult(PropertyInfo is not null) && RowManager.TrySaveChanges();
-		}
+        protected override RowManager<SwitchRow> TypedRowManager { get; } = new();
 
-		private void AddDefault(Rule rule = null) => _ = TypedRowManager.AddDefault(new DefaultRow(rule, Item.PropertyInfo));
+        protected override SaveResult ShouldAllowExit()
+        {
+            // TODO: should consider whether patterns implement IPattern<selected property type>
+            return new SaveResult(PropertyInfo is not null) && RowManager.TrySaveChanges();
+        }
 
-		private CaseRow AddCase(Case<IPattern> c = null)
-		{
-			if (c is null)
-			{
-				c = new Case<IPattern>(null);
-			}
+        private void AddDefault(Rule rule = null) => _ = TypedRowManager.AddDefault(new DefaultRow(rule, Item.PropertyInfo));
 
-			return TypedRowManager.Add(new CaseRow(c, Item.PropertyInfo.Type, NavigationContext));
-		}
-	}
+        private CaseRow AddCase(Case<IPattern> c = null)
+        {
+            if (c is null)
+            {
+                c = new Case<IPattern>(null);
+            }
+
+            return TypedRowManager.Add(new CaseRow(c, Item.PropertyInfo.Type, NavigationContext));
+        }
+    }
 }

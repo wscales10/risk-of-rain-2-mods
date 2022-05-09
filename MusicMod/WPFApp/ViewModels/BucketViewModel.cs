@@ -25,6 +25,8 @@ namespace WPFApp.ViewModels
             SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
         }
 
+        public override string Title => "Execute in order:";
+
         public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
         public override string AsString

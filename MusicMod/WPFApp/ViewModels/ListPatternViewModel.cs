@@ -5,44 +5,66 @@ using WPFApp.Controls.Rows;
 using Patterns;
 using Patterns.Patterns;
 using WPFApp.Controls.Wrappers;
+using Utils;
 
 namespace WPFApp.ViewModels
 {
-	internal class ListPatternViewModel : PatternViewModelBase<IListPattern>
-	{
+    internal class ListPatternViewModel : PatternViewModelBase<IListPattern>
+    {
         private readonly Type valueType;
 
-		public ListPatternViewModel(IListPattern pattern, Type valueType, NavigationContext navigationContext) : base(pattern, navigationContext)
-		{
-			ExtraCommands = new[]
-			{
-				new ButtonContext
-				{
-					Label = "Add Pattern",
-					Command = new ButtonCommand
-					(
-						_ => AddPattern(),
-						TypedRowManager,
-						nameof(TypedRowManager.HasDefault),
-						hasDefault => !(bool)hasDefault
-					)
-				}
-			};
+        public ListPatternViewModel(IListPattern pattern, Type valueType, NavigationContext navigationContext) : base(pattern, navigationContext)
+        {
+            ExtraCommands = new[]
+            {
+                new ButtonContext
+                {
+                    Label = "Add Pattern",
+                    Command = new ButtonCommand
+                    (
+                        _ => AddPattern(),
+                        TypedRowManager,
+                        nameof(TypedRowManager.HasDefault),
+                        hasDefault => !(bool)hasDefault
+                    )
+                }
+            };
 
-			TypedRowManager.BindLooselyTo(Item.Children, AddPattern, valuegetter);
-			this.valueType = valueType;
-		}
+            TypedRowManager.BindLooselyTo(Item.Children, AddPattern, valuegetter);
+            this.valueType = valueType;
+        }
 
-		public override IEnumerable<ButtonContext> ExtraCommands { get; }
+        public override string Title
+        {
+            get
+            {
+                var type = Item.GetType();
 
-		protected override RowManager<PatternRow> TypedRowManager { get; } = new();
+                if (type.IsGenericType(typeof(AndPattern<>)))
+                {
+                    return "Match all of:";
+                }
+                else if (type.IsGenericType(typeof(OrPattern<>)))
+                {
+                    return "Match any of:";
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+        }
 
-		private static SaveResult<IPattern> valuegetter(PatternRow row)
-		{
-			SaveResult result = row.TrySaveChanges();
-			return SaveResult.Create<IPattern>(result);
-		}
+        public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
-		private PatternRow AddPattern(IPattern pattern = null) => TypedRowManager.Add(new(pattern, valueType, NavigationContext));
-	}
+        protected override RowManager<PatternRow> TypedRowManager { get; } = new();
+
+        private static SaveResult<IPattern> valuegetter(PatternRow row)
+        {
+            SaveResult result = row.TrySaveChanges();
+            return SaveResult.Create<IPattern>(result);
+        }
+
+        private PatternRow AddPattern(IPattern pattern = null) => TypedRowManager.Add(new(pattern, valueType, NavigationContext));
+    }
 }
