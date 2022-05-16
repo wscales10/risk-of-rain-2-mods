@@ -33,6 +33,13 @@ namespace WPFApp.ViewModels
         {
             get
             {
+                string output = base.AsString;
+
+                if (output is not null)
+                {
+                    return output;
+                }
+
                 int count = TypedRowManager.Items.Count;
 
                 if (count == 0)
@@ -40,7 +47,7 @@ namespace WPFApp.ViewModels
                     return null;
                 }
 
-                string output = TypedRowManager.Items[0].AsString;
+                output = TypedRowManager.Items[0].AsString;
 
                 if (count > 1)
                 {
@@ -61,12 +68,12 @@ namespace WPFApp.ViewModels
 
                 if (oldValues.Count > 0)
                 {
-                    RemovePropertyDependency(nameof(AsString), oldValues[0].FormatString, nameof(FormatString.AsString));
+                    RemovePropertyDependency(nameof(AsString), oldValues[0], nameof(BucketRow.AsString));
                 }
 
                 if (TypedRowManager.Items.Count > 0)
                 {
-                    SetPropertyDependency(nameof(AsString), TypedRowManager.Items[0].FormatString, nameof(FormatString.AsString));
+                    SetPropertyDependency(nameof(AsString), TypedRowManager.Items[0], nameof(BucketRow.AsString));
                 }
             }
         }
@@ -74,7 +81,7 @@ namespace WPFApp.ViewModels
         private BucketRow AddCommand(Command command = null)
         {
             PropertyString.NavigationContext = NavigationContext;
-            return TypedRowManager.Add(new BucketRow(command));
+            return TypedRowManager.Add(new BucketRow() { Output = command });
         }
     }
 }

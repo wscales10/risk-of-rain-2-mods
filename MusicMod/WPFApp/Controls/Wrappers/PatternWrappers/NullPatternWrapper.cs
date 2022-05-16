@@ -3,10 +3,11 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using WPFApp.Converters;
 using System.Windows;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
-	internal static class NullPatternWrapper
+    internal static class NullPatternWrapper
 	{
 		internal static BooleanToStringConverter Converter { get; } = new(b => b ? "is null" : "is not null");
 	}

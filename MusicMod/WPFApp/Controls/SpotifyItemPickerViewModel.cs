@@ -10,13 +10,13 @@ namespace WPFApp.Controls
 {
     public class SpotifyItemPickerViewModel : ViewModelBase
     {
-        private static readonly CancellationTokenSource cancellationTokenSource = new();
+        private static readonly SeniorTaskMachine taskMachine = new();
 
-        private static readonly TaskMachine taskMachine = new(cancellationTokenSource.Token);
+        private CancellationTokenSource individualCancellationTokenSource = new();
 
         private MusicItemInfo info;
 
-        private SpotifyItem? item;
+        private SpotifyItem item;
 
         private ImageSource imageSource;
 
@@ -28,7 +28,7 @@ namespace WPFApp.Controls
             OnConnectionMade += RequestMusicItemInfo;
         }
 
-        public event Predicate<SpotifyItem?> Validate;
+        public event Predicate<SpotifyItem> Validate;
 
         private static event Action OnConnectionMade;
 
@@ -49,13 +49,13 @@ namespace WPFApp.Controls
             }
         }
 
-        public SpotifyItem? Item
+        public SpotifyItem Item
         {
             get => item;
 
             private set
             {
-                SpotifyItem? oldItem = item;
+                SpotifyItem oldItem = item;
                 item = value;
                 ImageSource = null;
                 RequestMusicItemInfo();
@@ -101,7 +101,7 @@ namespace WPFApp.Controls
             private set => SetProperty(ref imageSource, value);
         }
 
-        public bool TrySetItem(SpotifyItem? item)
+        public bool TrySetItem(SpotifyItem item)
         {
             if (Validate?.Invoke(item) != false)
             {
@@ -114,9 +114,11 @@ namespace WPFApp.Controls
 
         public void RequestMusicItemInfo()
         {
+            individualCancellationTokenSource?.Cancel();
+            individualCancellationTokenSource = new();
             if (Item is SpotifyItem si)
             {
-                if (!taskMachine.TryIngest(_ => SpotifyItemPicker.MusicItemDictionary.GetValueAsync(si, info => Info = info)))
+                if (!taskMachine.TryIngest(token => SpotifyItemPicker.MusicItemDictionary.GetValueAsync(si, info => Info = info, token), individualCancellationTokenSource.Token))
                 {
                     throw new InvalidOperationException();
                 }

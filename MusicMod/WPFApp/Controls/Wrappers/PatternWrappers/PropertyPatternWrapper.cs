@@ -2,47 +2,50 @@
 using Patterns.Patterns;
 using WPFApp.Controls.PatternControls;
 using Utils.Reflection;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
-	internal class PropertyPatternWrapper<TObject> : PatternWrapper<PropertyPattern<TObject>, PropertyPatternControl>
-	{
-		protected PropertyPatternWrapper(PropertyPattern<TObject> pattern, NavigationContext navigationContext)
-		{
-			UIElement.NavigationContext = navigationContext;
-			SetValue(pattern);
-			UIElement.ValueChanged += NotifyValueChanged;
-		}
+    internal class PropertyPatternWrapper<TObject> : PatternWrapper<PropertyPattern<TObject>, PropertyPatternControl>
+    {
+        protected PropertyPatternWrapper(PropertyPattern<TObject> pattern, NavigationContext navigationContext)
+        {
+            UIElement.NavigationContext = navigationContext;
+            SetValue(pattern);
+            UIElement.ValueChanged += NotifyValueChanged;
+        }
 
-		public override PropertyPatternControl UIElement { get; } = new(typeof(TObject));
+        public override PropertyPatternControl UIElement { get; } = new(typeof(TObject));
 
-		protected override void setStatus(bool? status) => Outline(UIElement.propertyComboBox, status != false || UIElement.SelectedProperty is not null);
+        public override bool NeedsLeftMargin => false;
 
-		protected override void setValue(PropertyPattern<TObject> value)
-		{
-			UIElement.WaitingPattern = value?.Pattern;
-			UIElement.SelectedProperty = value?.PropertyInfo;
-		}
+        protected override void setStatus(bool? status) => Outline(UIElement.propertyComboBox, status != false || UIElement.SelectedProperty is not null);
 
-		protected override SaveResult<PropertyPattern<TObject>> tryGetValue(bool trySave)
-		{
-			var propertyInfo = UIElement.SelectedProperty;
+        protected override void setValue(PropertyPattern<TObject> value)
+        {
+            UIElement.WaitingPattern = value?.Pattern;
+            UIElement.SelectedProperty = value?.PropertyInfo;
+        }
 
-			if (propertyInfo is null)
-			{
-				return new(false);
-			}
+        protected override SaveResult<PropertyPattern<TObject>> tryGetValue(bool trySave)
+        {
+            var propertyInfo = UIElement.SelectedProperty;
 
-			var result = UIElement.TryGetPattern(trySave);
+            if (propertyInfo is null)
+            {
+                return new(false);
+            }
 
-			var value = result.IsSuccess
-				? typeof(PropertyPattern<TObject>)
-					.GetMethod("Create", new[] { typeof(string), typeof(IPattern) })
-					.MakeGenericMethod(propertyInfo.Type)
-					.InvokeStatic<PropertyPattern<TObject>>(propertyInfo.Name, result.Value)
-				: null;
+            var result = UIElement.TryGetPattern(trySave);
 
-			return new(result, value);
-		}
-	}
+            var value = result.IsSuccess
+                ? typeof(PropertyPattern<TObject>)
+                    .GetMethod("Create", new[] { typeof(string), typeof(IPattern) })
+                    .MakeGenericMethod(propertyInfo.Type)
+                    .InvokeStatic<PropertyPattern<TObject>>(propertyInfo.Name, result.Value)
+                : null;
+
+            return new(result, value);
+        }
+    }
 }

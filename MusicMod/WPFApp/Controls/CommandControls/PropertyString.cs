@@ -13,6 +13,7 @@ using Utils.Reflection;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using System.Reflection;
+using System.Linq;
 
 namespace WPFApp.Controls.CommandControls
 {
@@ -73,7 +74,7 @@ namespace WPFApp.Controls.CommandControls
         {
             [typeof(TimeSpan)] = () => new TimeSpanWrapper(),
             [typeof(ISpotifyItem)] = () => new SpotifyItemWrapper2(NavigationContext),
-            [typeof(SpotifyItem?)] = () => new SpotifyItemWrapper(),
+            [typeof(SpotifyItem)] = () => new SpotifyItemWrapper(),
             [typeof(bool)] = () => new BoolWrapper()
         });
 
@@ -105,22 +106,14 @@ namespace WPFApp.Controls.CommandControls
 
         private IEnumerable<string> GetStringParts()
         {
-            foreach (object obj in stringParts)
+            return stringParts.Cast<object>().Select(GetStringPart);
+
+            static string GetStringPart(object obj) => obj switch
             {
-                switch (obj)
-                {
-                    case string s:
-                        yield return s;
-                        break;
-
-                    case IControlWrapper wrapper:
-                        yield return wrapper.ValueString;
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
+                string s => s,
+                IControlWrapper wrapper => wrapper.ValueString,
+                _ => throw new ArgumentOutOfRangeException(nameof(obj)),
+            };
         }
 
         private void MakeUi()

@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using WPFApp.Controls.Rows;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.GridManagers
 {
-	public interface IRowManager
+    public interface IRowManager
 	{
 		event Action SelectionChanged;
 

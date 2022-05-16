@@ -1,16 +1,19 @@
 ﻿using Rules.RuleTypes.Mutable;
 using System.ComponentModel;
+using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
-	public interface IRuleRow : IRow
-	{
-		string Label { get; }
+    public interface IRuleRow : IRow
+    {
+        string Label { get; }
 
-		Rule Output { get; }
+        NavigationViewModelBase OutputViewModel { get; }
 
-		ICollectionView Children { get; }
+        Rule Output { get; }
 
-		IRuleRow Parent { get; set; }
-	}
+        ICollectionView Children { get; }
+
+        IRuleRow Parent { get; set; }
+    }
 }

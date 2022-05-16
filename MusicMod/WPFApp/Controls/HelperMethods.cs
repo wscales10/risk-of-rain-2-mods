@@ -5,11 +5,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Media;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls
 {
-	internal static class HelperMethods
+    internal static class HelperMethods
 	{
 		public static void MakeRulesComboBox(ComboBox comboBox, bool selectFirst = false) => MakeComboBox(comboBox, Info.SupportedRuleTypes, nameof(Type.Name), selectFirst);
 

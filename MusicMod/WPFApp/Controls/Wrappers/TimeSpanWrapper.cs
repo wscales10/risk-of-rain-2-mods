@@ -3,10 +3,11 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using Utils;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers
 {
-	internal class TimeSpanWrapper : ControlWrapper<TimeSpan, TextBox>
+    internal class TimeSpanWrapper : ControlWrapper<TimeSpan, TextBox>
 	{
 		private static readonly Regex withHours = new(@"^(?<neg>-)?(?<h>\d+):(?<m>\d\d):(?<s>\d\d)(\.(?<ms>\d{1,3}))?$");
 

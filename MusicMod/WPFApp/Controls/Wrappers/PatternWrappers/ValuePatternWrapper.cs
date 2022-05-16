@@ -1,6 +1,7 @@
 ﻿using Patterns.Patterns.SmallPatterns;
 using System.Windows;
 using System.Windows.Controls;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {
@@ -12,9 +13,10 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
         {
             TextBox.Text = GetTextBoxText();
             TextBox.TextAlignment = TextAlignment.Center;
+            TextBox.VerticalAlignment = VerticalAlignment.Center;
             TextBox.FontSize = 14;
-            TextBox.Margin = new Thickness(4, 2, 4, 2);
-            TextBox.TextChanged += (s, e) => NotifyValueChanged();
+            TextBox.Margin = new Thickness(2);
+            TextBox.LostFocus += (s, e) => NotifyValueChanged();
             Display();
         }
 

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Utils
@@ -10,24 +11,24 @@ namespace Utils
     {
         private readonly AsyncCache<TKey, TValue, Dictionary<TKey, TValue>> cache;
 
-        public AsyncCache(Func<TKey, Task<ConditionalValue<TValue>>> getter)
+        public AsyncCache(Func<TKey, CancellationToken, Task<ConditionalValue<TValue>>> getter)
         {
             cache = new AsyncCache<TKey, TValue, Dictionary<TKey, TValue>>(getter);
         }
 
-        public Task GetValueAsync(TKey key, Action<TValue> delayedSetter)
+        public async Task GetValueAsync(TKey key, Action<TValue> delayedSetter, CancellationToken cancellationToken = default)
         {
-            var task = cache[key];
-            return task.ContinueWith(t => delayedSetter(t.Result), TaskScheduler.Default);
+            TValue value = await cache[(key, cancellationToken)];
+            delayedSetter(value);
         }
     }
 
     public class AsyncCache<TKey, TValue, TDictionary> : IReadOnlyDictionary<TKey, Task<TValue>>
         where TDictionary : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, new()
     {
-        private readonly Func<TKey, Task<ConditionalValue<TValue>>> getter;
+        private readonly Func<TKey, CancellationToken, Task<ConditionalValue<TValue>>> getter;
 
-        public AsyncCache(Func<TKey, Task<ConditionalValue<TValue>>> getter) => this.getter = getter;
+        public AsyncCache(Func<TKey, CancellationToken, Task<ConditionalValue<TValue>>> getter) => this.getter = getter;
 
         public IEnumerable<TKey> Keys => ReadOnlyDictionary.Keys;
 
@@ -41,13 +42,15 @@ namespace Utils
 
         public IEnumerable<Task<TValue>> this[IEnumerable<TKey> index] => index.Select(key => this[key]);
 
-        public virtual Task<TValue> this[TKey key]
+        public virtual Task<TValue> this[TKey key] => this[(key, default)];
+
+        public virtual Task<TValue> this[(TKey key, CancellationToken cancellationToken) args]
         {
             get
             {
-                if (!ReadOnlyDictionary.TryGetValue(key, out TValue value))
+                if (!ReadOnlyDictionary.TryGetValue(args.key, out TValue value))
                 {
-                    return GetValueAsync(key);
+                    return GetValueAsync(args.key, args.cancellationToken);
                 }
 
                 return Task.FromResult(value);
@@ -74,9 +77,9 @@ namespace Utils
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        private async Task<TValue> GetValueAsync(TKey key)
+        private async Task<TValue> GetValueAsync(TKey key, CancellationToken cancellationToken = default)
         {
-            var value = await getter(key);
+            var value = await getter(key, cancellationToken);
 
             if (value.HasValue)
             {

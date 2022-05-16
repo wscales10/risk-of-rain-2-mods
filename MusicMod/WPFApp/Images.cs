@@ -9,7 +9,7 @@ namespace WPFApp
 {
     public static class Images
     {
-        public static event Func<Task> CacheUpdated;
+        public static event Action CacheUpdated;
 
         public static string CacheLocation { get; } = Path.Combine(Paths.AssemblyDirectory, "Images");
 
@@ -45,7 +45,7 @@ namespace WPFApp
                 Directory.Delete(directory);
             }
 
-            _ = CacheUpdated?.Invoke();
+            CacheUpdated?.Invoke();
         }
     }
 }

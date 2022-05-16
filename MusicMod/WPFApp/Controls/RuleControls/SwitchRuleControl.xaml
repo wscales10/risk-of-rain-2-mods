@@ -7,5 +7,5 @@
 			 mc:Ignorable="d"
 			 d:DesignHeight="450" d:DesignWidth="800"
 			 d:DataContext="{d:DesignInstance Type=viewmodels:SwitchRuleViewModel}">
-    <ComboBox Margin="3" ItemsSource="{Binding Source={x:Static app:Info.ContextProperties}}" SelectedItem="{Binding PropertyInfo}" />
+    <ComboBox Margin="3" DataContext="{Binding PropertyInfo}" ItemsSource="{Binding Source={x:Static app:Info.ContextProperties}}" SelectedItem="{Binding Value}" />
 </UserControl>

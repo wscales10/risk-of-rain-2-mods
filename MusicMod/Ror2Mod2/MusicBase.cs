@@ -1,4 +1,6 @@
 ﻿using MyRoR2;
+using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Utils;
 
@@ -28,13 +30,26 @@ namespace Ror2Mod2
 		{
 			var oldContext = context;
 			var newContext = GetContext();
-			await UpdateAsync(oldContext, newContext);
-		}
+            await UpdateAsync(oldContext, newContext);
+        }
 
-		private async Task UpdateAsync(Context oldContext, Context newContext)
-		{
-			await Play(GetMusicIdentifier(oldContext, newContext));
-			context = newContext;
-		}
-	}
+        private async Task<bool> UpdateAsync(Context oldContext, Context newContext)
+        {
+            object musicIdentifier;
+
+            try
+            {
+                musicIdentifier = GetMusicIdentifier(oldContext, newContext);
+            }
+            catch (Exception e)
+            {
+                Debugger.Break();
+                return false;
+            }
+
+            await Play(musicIdentifier);
+            context = newContext;
+            return true;
+        }
+    }
 }

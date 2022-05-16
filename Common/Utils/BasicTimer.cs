@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
+using System.Timers;
 
 namespace Utils
 {
@@ -22,7 +22,8 @@ namespace Utils
             Time = time;
             Inert = inert;
             this.extra = new Queue<Action>(extra);
-            timer = new Timer(Wrap, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            timer = new Timer() { AutoReset = false };
+            timer.Elapsed += Timer_Elapsed;
         }
 
         public DateTime? StartTime { get; private set; }
@@ -52,7 +53,7 @@ namespace Utils
             }
             else
             {
-                ChangeTimer(Timeout.InfiniteTimeSpan);
+                ChangeTimer(TimeSpan.Zero);
                 Wrap();
             }
 
@@ -101,7 +102,7 @@ namespace Utils
             if (IsTicking && remaining > TimeSpan.Zero && ResumeTime is DateTime dateTime)
             {
                 remaining -= DateTime.UtcNow - dateTime;
-                ChangeTimer(Timeout.InfiniteTimeSpan);
+                timer.Stop();
                 IsTicking = false;
                 return this;
             }
@@ -113,9 +114,8 @@ namespace Utils
         {
             if (IsTicking)
             {
-                timer.Change(Timeout.Infinite, Timeout.Infinite);
+                timer.Stop();
                 IsTicking = false;
-                extra.Clear();
                 remaining = TimeSpan.Zero;
                 return this;
             }
@@ -152,6 +152,8 @@ namespace Utils
             return this;
         }
 
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e) => Wrap(e.SignalTime);
+
         private void Wrap(object state = null)
         {
             IsTicking = false;
@@ -166,9 +168,12 @@ namespace Utils
 
         private void ChangeTimer(TimeSpan dueTime)
         {
-            if (!timer.Change(dueTime, Timeout.InfiniteTimeSpan))
+            timer.Interval = dueTime.TotalMilliseconds;
+
+            if (dueTime > TimeSpan.Zero)
             {
-                throw new NotImplementedException();
+                IsTicking = true;
+                timer.Start();
             }
         }
     }

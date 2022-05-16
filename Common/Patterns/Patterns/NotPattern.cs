@@ -4,56 +4,56 @@ using Utils;
 
 namespace Patterns.Patterns
 {
-	public class NotPattern<T> : Pattern<T>, INotSimplifiable<T>
-	{
-		public NotPattern(IPattern<T> p)
-		{
-			Child = p;
-		}
+    public class NotPattern<T> : Pattern<T>, INotSimplifiable<T>, IOnlyChildPattern<T>
+    {
+        public NotPattern(IPattern<T> p)
+        {
+            Child = p;
+        }
 
-		public NotPattern()
-		{
-		}
+        public NotPattern()
+        {
+        }
 
-		public IPattern<T> Child { get; set; }
+        public IPattern<T> Child { get; set; }
 
-		public static IPattern<T> operator !(NotPattern<T> p) => p.Child;
+        public static IPattern<T> operator !(NotPattern<T> p) => p.Child;
 
-		public static NotPattern<T> Parse(XElement element, PatternParser patternParser)
-		{
-			return new NotPattern<T>(patternParser.Parse<T>(element.OnlyChild()));
-		}
+        public static NotPattern<T> Parse(XElement element, PatternParser patternParser)
+        {
+            return new NotPattern<T>(patternParser.Parse<T>(element.OnlyChild()));
+        }
 
-		public override bool IsMatch(T value) => !IsMatch(value);
+        public override bool IsMatch(T value) => !IsMatch(value);
 
-		public override XElement ToXml() => new XElement("Not", Child.ToXml());
+        public override XElement ToXml() => new XElement("Not", Child.ToXml());
 
-		public override string ToString() => $"Not({Child})";
+        public override string ToString() => $"Not({Child})";
 
-		public override IPattern<T> Simplify()
-		{
-			var p = this.Child.Simplify();
+        public override IPattern<T> Simplify()
+        {
+            var p = this.Child.Simplify();
 
-			if (p is INotSimplifiable<T> ns)
-			{
-				return ns.SimplifyNot() ?? p;
-			}
+            if (p is INotSimplifiable<T> ns)
+            {
+                return ns.SimplifyNot() ?? p;
+            }
 
-			return new NotPattern<T>(p);
-		}
+            return new NotPattern<T>(p);
+        }
 
-		public IPattern<T> SimplifyNot() => !this;
+        public IPattern<T> SimplifyNot() => !this;
 
-		public override IPattern Correct()
-		{
-			if (IsNullableEnumPattern)
-			{
-				return new NotPattern<Enum>((IPattern<Enum>)Child.Correct());
-			}
-			else
-			{
-				return this;
-			}
-		}
-	}
+        public override IPattern Correct()
+        {
+            if (IsNullableEnumPattern)
+            {
+                return new NotPattern<Enum>((IPattern<Enum>)Child.Correct());
+            }
+            else
+            {
+                return this;
+            }
+        }
+    }
 }

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Utils;
 
@@ -14,6 +15,12 @@ namespace Spotify
 {
     public class SpotifyPlaybackClient : NiceSpotifyClient
     {
+        private readonly BasicTimer mainPlaylistTimer;
+
+        private readonly BasicTimer secondaryPlaylistTimer;
+
+        private readonly IEnumerable<Playlist> playlists;
+
         private Playlist currentPlaylist;
 
         private int playlistIndex;
@@ -22,7 +29,7 @@ namespace Spotify
 
         private string deviceId;
 
-        public SpotifyPlaybackClient(Logger logger) : base(logger)
+        public SpotifyPlaybackClient(IEnumerable<Playlist> playlists, Logger logger) : base(logger)
         {
             Preferences.PropertyChanged += (s) =>
             {
@@ -31,6 +38,10 @@ namespace Spotify
                     _ = ActivateDeviceAsync();
                 }
             };
+
+            mainPlaylistTimer = new BasicTimer(() => _ = NextPlaylistItem());
+            secondaryPlaylistTimer = new BasicTimer(() => _ = PrepareNextTime());
+            this.playlists = playlists;
         }
 
         private enum PlayerState
@@ -57,7 +68,7 @@ namespace Spotify
             await Do(new StopCommand());
         }
 
-        protected override async Task<bool> Handle(Command command)
+        protected override async Task<bool> HandleAsync(Command command, CancellationToken? cancellationToken)
         {
             switch (command)
             {
@@ -71,10 +82,10 @@ namespace Spotify
                     return await PlayInner(playCommand.Item, playCommand.Milliseconds);
 
                 case PlayOnceCommand playOnceCommand:
-                    return await PlayInner(playOnceCommand.Item, playOnceCommand.Milliseconds) && await Handle(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off });
+                    return await PlayInner(playOnceCommand.Item, playOnceCommand.Milliseconds) && await HandleAsync(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }, cancellationToken);
 
                 case LoopCommand loopCommand:
-                    return await PlayInner(loopCommand.Item, loopCommand.Milliseconds) && await Handle(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Context });
+                    return await PlayInner(loopCommand.Item, loopCommand.Milliseconds) && await HandleAsync(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Context }, cancellationToken);
 
                 case SeekToCommand seekToCommand:
                     {
@@ -89,18 +100,7 @@ namespace Spotify
                         return await Client.Player.SeekTo(request);
                     }
                 case ResumeCommand _:
-                    if (await GetState() == PlayerState.Paused)
-                    {
-                        if (await Client.Player.ResumePlayback())
-                        {
-                            SetState(PlayerState.Playing);
-                            return true;
-                        }
-
-                        return false;
-                    }
-
-                    return true;
+                    return await ResumeInner();
 
                 case TransferCommand transferCommand:
                     var stopwatch = new Stopwatch();
@@ -119,7 +119,7 @@ namespace Spotify
 
                     if (optionsCommand.RepeatMode is RepeatMode repeatMode)
                     {
-                        if (!string.Equals(playback.RepeatState, repeatMode.ToString(), StringComparison.OrdinalIgnoreCase))
+                        if (!string.Equals(playback?.RepeatState, repeatMode.ToString(), StringComparison.OrdinalIgnoreCase))
                         {
                             success = success && await Client.Player.SetRepeat(new PlayerSetRepeatRequest(repeatMode.AsEnum<PlayerSetRepeatRequest.State>()));
                         }
@@ -127,7 +127,7 @@ namespace Spotify
 
                     if (optionsCommand.Shuffle is bool shuffle)
                     {
-                        if (playback.ShuffleState != shuffle)
+                        if (playback?.ShuffleState != shuffle)
                         {
                             success = success && await Client.Player.SetShuffle(new PlayerShuffleRequest(shuffle));
                         }
@@ -135,7 +135,7 @@ namespace Spotify
 
                     if (optionsCommand.VolumePercent is int volumePercent)
                     {
-                        if (playback.Device.VolumePercent != volumePercent)
+                        if (playback?.Device.VolumePercent != volumePercent)
                         {
                             success = success && await Client.Player.SetVolume(new PlayerVolumeRequest(volumePercent));
                         }
@@ -145,154 +145,6 @@ namespace Spotify
             }
 
             return false;
-
-            async Task<bool> PauseInner()
-            {
-                if (await GetState() == PlayerState.Playing)
-                {
-                    if (await Client.Player.PausePlayback())
-                    {
-                        SetState(PlayerState.Paused);
-                        return true;
-                    }
-
-                    return false;
-                }
-
-                return true;
-            }
-
-            async Task<bool> SeekToInner(uint ms)
-            {
-                var request = new PlayerSeekToRequest(ms);
-                return await Client.Player.SeekTo(request);
-            }
-
-            async Task<bool> PlayItem(SpotifyItem? item, int milliseconds)
-            {
-                if (item is null)
-                {
-                    throw new ArgumentNullException(nameof(item));
-                }
-
-                var s = item?.GetUri().ToString();
-                var positionMs = await GetPosition(milliseconds);
-                var request = item?.Type == SpotifyItemType.Track ? new PlayerResumePlaybackRequest { Uris = new string[] { s }, PositionMs = positionMs } : new PlayerResumePlaybackRequest { ContextUri = s, PositionMs = positionMs };
-
-                if (await Client.Player.ResumePlayback(request))
-                {
-                    SetState(PlayerState.Playing);
-                    return true;
-                }
-
-                return false;
-            }
-
-            async Task<bool> PlayPlaylist(Playlist playlist, int milliseconds)
-            {
-                playlistIndex = -1;
-                currentPlaylist = playlist;
-                return await NextPlaylistItem(milliseconds);
-            }
-
-            async Task SetPlaylistIndex()
-            {
-                var playbackState = (await Client.Player.GetCurrentPlayback());
-                var repeatMode = playbackState.RepeatState.AsEnum<RepeatMode>(true);
-
-                if (repeatMode == RepeatMode.Track)
-                {
-                    playlistIndex--;
-                }
-
-                playlistIndex++;
-
-                if (playlistIndex == currentPlaylist.Count)
-                {
-                    switch (repeatMode)
-                    {
-                        case RepeatMode.Off:
-                            playlistIndex = -1;
-                            break;
-
-                        case RepeatMode.Context:
-                            playlistIndex = 0;
-                            break;
-                    }
-                }
-            }
-
-            async Task<bool> NextPlaylistItem(int milliseconds = 0)
-            {
-                await SetPlaylistIndex();
-
-                if (playlistIndex != -1)
-                {
-                    bool result = await PlayItem(currentPlaylist[playlistIndex], milliseconds);
-                    var info = (await GetCurrentlyPlaying()).Item;
-
-                    int durationMs;
-                    switch (info)
-                    {
-                        case FullTrack t:
-                            durationMs = t.DurationMs;
-                            break;
-
-                        case FullEpisode e:
-                            durationMs = e.DurationMs;
-                            break;
-
-                        default:
-                            return false;
-                    }
-
-                    _ = Task.Delay(durationMs).ContinueWith(_ => NextPlaylistItem(), TaskScheduler.Default);
-
-                    return result;
-                }
-                else
-                {
-                    currentPlaylist = null;
-                    return await StopInner();
-                }
-            }
-
-            async Task<bool> StopInner()
-            {
-                if (await GetState() == PlayerState.Playing)
-                {
-                    if (!await PauseInner())
-                    {
-                        return false;
-                    }
-                }
-
-                if (await GetState() != PlayerState.Stopped)
-                {
-                    if (!await SeekToInner(0))
-                    {
-                        return false;
-                    }
-                }
-
-                SetState(PlayerState.Stopped);
-                return true;
-            }
-
-            async Task<bool> PlayInner(ISpotifyItem item, int milliseconds)
-            {
-                switch (item)
-                {
-                    case SpotifyItem spotifyItem:
-                        return await PlayItem(spotifyItem, milliseconds);
-
-                    case Playlist playlist:
-                        return await PlayPlaylist(playlist, milliseconds);
-
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(item));
-                }
-            }
         }
 
         protected override async Task InitialiseAsync()
@@ -301,7 +153,7 @@ namespace Spotify
             await ActivateDeviceAsync();
         }
 
-        protected override async Task<bool> HandleErrorAsync(Exception e, CommandListAsync wrapper, List<Type> exceptionTypes = null)
+        protected override async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken? cancellationToken, List<Type> exceptionTypes = null)
         {
             switch (e)
             {
@@ -310,12 +162,219 @@ namespace Spotify
                     {
                         await ActivateDeviceAsync();
                         exceptionTypes.Add(e.GetType());
-                        return await ExecuteInner(wrapper, exceptionTypes);
+                        return await ExecuteAsync(commands, null, exceptionTypes);
                     }
                     break;
             }
 
-            return await base.HandleErrorAsync(e, wrapper, exceptionTypes);
+            return await base.HandleErrorAsync(e, commands, cancellationToken, exceptionTypes);
+        }
+
+        private void Timers(Action<BasicTimer> action)
+        {
+            action(mainPlaylistTimer);
+            action(secondaryPlaylistTimer);
+        }
+
+        private async Task<bool> ResumeInner()
+        {
+            if (await GetState() == PlayerState.Paused)
+            {
+                if (!await Client.Player.ResumePlayback())
+                {
+                    return false;
+                }
+
+                SetState(PlayerState.Playing);
+            }
+
+            Timers(t => t.Resume());
+            return true;
+        }
+
+        private void ClearCurrentPlaylist()
+        {
+            Timers(t => t.Stop());
+            currentPlaylist = null;
+            playlistIndex = -1;
+        }
+
+        private async Task<bool> PlayInner(ISpotifyItem item, int milliseconds)
+        {
+            ClearCurrentPlaylist();
+            switch (item)
+            {
+                case SpotifyItem spotifyItem:
+                    return await PlayItem(spotifyItem, milliseconds);
+
+                case PlaylistRef pRef:
+                    return await PlayPlaylist(playlists.FirstOrDefault(p => p.Name == pRef.Name), milliseconds);
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(item));
+            }
+        }
+
+        private async Task<bool> StopInner()
+        {
+            Timers(t => t.Stop());
+            if (await GetState() == PlayerState.Playing)
+            {
+                if (!await PauseInner())
+                {
+                    return false;
+                }
+            }
+
+            if (await GetState() != PlayerState.Stopped)
+            {
+                if (!await SeekToInner(0))
+                {
+                    return false;
+                }
+            }
+
+            SetState(PlayerState.Stopped);
+            return true;
+        }
+
+        private async Task<bool> PlayPlaylist(Playlist playlist, int milliseconds)
+        {
+            playlistIndex = -1;
+            currentPlaylist = playlist;
+            return await NextPlaylistItem(milliseconds);
+        }
+
+        private async Task<bool> SeekToInner(uint ms)
+        {
+            // TODO: handle case where this would mean track ending before secondaryPlaylistTimer finishes
+
+            if (mainPlaylistTimer.Remaining > TimeSpan.Zero)
+            {
+                mainPlaylistTimer.SkipTo(mainPlaylistTimer.Time - TimeSpan.FromMilliseconds(ms));
+            }
+
+            var request = new PlayerSeekToRequest(ms);
+            return await Client.Player.SeekTo(request);
+        }
+
+        private async Task<bool> PauseInner()
+        {
+            Timers(t => t.Pause());
+            if (await GetState() == PlayerState.Playing)
+            {
+                if (await Client.Player.PausePlayback())
+                {
+                    SetState(PlayerState.Paused);
+                    return true;
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> PlayItem(SpotifyItem item, int milliseconds)
+        {
+            if (item is null)
+            {
+                throw new ArgumentNullException(nameof(item));
+            }
+
+            var s = item?.GetUri().ToString();
+            var positionMs = await GetPosition(milliseconds);
+            var request = item?.Type == SpotifyItemType.Track ? new PlayerResumePlaybackRequest { Uris = new string[] { s }, PositionMs = positionMs } : new PlayerResumePlaybackRequest { ContextUri = s, PositionMs = positionMs };
+
+            if (await Client.Player.ResumePlayback(request))
+            {
+                SetState(PlayerState.Playing);
+                return true;
+            }
+
+            return false;
+        }
+
+        private async Task<bool> SetPlaylistIndex()
+        {
+            var playbackState = await Client.Player.GetCurrentPlayback();
+
+            if (playbackState is null)
+            {
+                return false;
+            }
+
+            var repeatMode = playbackState.RepeatState.AsEnum<RepeatMode>(true);
+
+            if (repeatMode == RepeatMode.Track)
+            {
+                playlistIndex--;
+            }
+
+            playlistIndex++;
+
+            if (playlistIndex == currentPlaylist.Count)
+            {
+                switch (repeatMode)
+                {
+                    case RepeatMode.Off:
+                        playlistIndex = -1;
+                        break;
+
+                    case RepeatMode.Context:
+                        playlistIndex = 0;
+                        break;
+                }
+            }
+
+            Log(playlistIndex);
+
+            return true;
+        }
+
+        private async Task<bool> NextPlaylistItem(int milliseconds = 0)
+        {
+            if (!await SetPlaylistIndex())
+            {
+                return false;
+            }
+
+            if (playlistIndex != -1)
+            {
+                bool result = await PlayItem(currentPlaylist[playlistIndex], milliseconds);
+                secondaryPlaylistTimer.Start(TimeSpan.FromSeconds(1));
+                return result;
+            }
+            else
+            {
+                Log("playlist end");
+                currentPlaylist = null;
+                return await StopInner();
+            }
+        }
+
+        private async Task<bool> PrepareNextTime()
+        {
+            var info = await GetCurrentlyPlaying();
+
+            int durationMs;
+            switch (info.Item)
+            {
+                case FullTrack t:
+                    durationMs = t.DurationMs - (info.ProgressMs ?? 0);
+                    break;
+
+                case FullEpisode e:
+                    durationMs = e.DurationMs - (info.ProgressMs ?? 0);
+                    break;
+
+                default:
+                    return false;
+            }
+
+            mainPlaylistTimer.Start(TimeSpan.FromMilliseconds(durationMs));
+            Log(durationMs);
+            return true;
         }
 
         private async Task<List<Device>> GetDevicesAsync()

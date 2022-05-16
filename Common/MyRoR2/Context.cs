@@ -1,27 +1,32 @@
 ﻿using RoR2;
+using System.Collections.Generic;
 
 namespace MyRoR2
 {
-	public struct Context
-	{
-		public MyScene SceneName { get; set; }
+    public struct Context
+    {
+        public MyScene SceneName { get; set; }
 
-		public SceneType SceneType { get; set; }
+        public SceneType SceneType { get; set; }
 
-		public int? StageNumber { get; set; }
+        public int? StageNumber { get; set; }
 
-		public int? WaveNumber { get; set; }
+        public int? WaveNumber { get; set; }
 
-		public int? LoopIndex { get; set; }
+        public int? LoopIndex { get; set; }
 
-		public Entity BossBodyName { get; set; }
+        public Entity BossBodyName { get; set; }
 
-		public bool IsBossEncounter { get; set; }
+        public IList<Entity> Bosses { get; set; }
 
-		public TeleporterInteraction.ActivationState? TeleporterState { get; set; }
+        public bool IsBossEncounter { get; set; }
 
-		public int ScenePart { get; set; }
+        public TeleporterInteraction.ActivationState? TeleporterState { get; set; }
 
-		public RunType RunType { get; set; }
-	}
+        public int ScenePart { get; set; }
+
+        public RunType RunType { get; set; }
+
+        public Entity Survivor { get; set; }
+    }
 }

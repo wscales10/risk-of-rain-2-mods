@@ -1,0 +1,35 @@
+﻿<local:Picker x:Class="WPFApp.Controls.Pickers.SinglePicker"
+              xmlns:controls="clr-namespace:WPFApp.Controls"
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:local="clr-namespace:WPFApp.Controls.Pickers"
+              xmlns:converters="clr-namespace:WPFApp.Converters"
+              mc:Ignorable="d"
+              d:DesignHeight="200" d:DesignWidth="200"
+              d:DataContext="{d:DesignInstance Type=local:SinglePickerViewModel}">
+    <Grid>
+        <Grid.Resources>
+            <converters:ValueConverterGroup x:Key="ComboBoxConverter">
+                <converters:IsNullConverter />
+                <converters:BooleanToVisibilityConverter />
+            </converters:ValueConverterGroup>
+            <converters:ValueConverterGroup x:Key="ContainerConverter">
+                <converters:IsNullConverter />
+                <converters:InverseBooleanConverter />
+                <converters:BooleanToVisibilityConverter />
+            </converters:ValueConverterGroup>
+        </Grid.Resources>
+        <controls:Aligner x:Name="aligner"
+                          VerticalAlignment="Center"
+                          Alignment="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:SinglePicker}}"
+                          MaxChildWidth="160"
+                          Visibility="{Binding ValueWrapper, Converter={StaticResource ComboBoxConverter}}">
+            <controls:Aligner.Child>
+                <ComboBox Style="{DynamicResource ComboBoxStyle1}" />
+            </controls:Aligner.Child>
+        </controls:Aligner>
+        <controls:ValueContainer x:Name="valueContainer" DataContext="{Binding ValueWrapper}" Visibility="{Binding Converter={StaticResource ContainerConverter}}" Margin="2" />
+    </Grid>
+</local:Picker>

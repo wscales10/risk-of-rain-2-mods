@@ -3,35 +3,35 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:WPFApp.Controls.PatternControls"
+             xmlns:local="clr-namespace:WPFApp.Controls.PatternControls" xmlns:converters="clr-namespace:WPFApp.Converters"
              mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="200"
 			 HorizontalAlignment="Stretch">
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto" />
-			<RowDefinition Height="Auto" />
-		</Grid.RowDefinitions>
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="Auto" />
-			<ColumnDefinition />
-		</Grid.ColumnDefinitions>
-		<TextBlock x:Name="propertyPickerLabel"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="propertyPickerLabel"
 				   TextAlignment="Right"
 				   Text="Property "
 				   VerticalAlignment="Center" />
 
-		<ComboBox Style="{DynamicResource ComboBoxStyle1}" x:Name="propertyComboBox"
+        <ComboBox Style="{DynamicResource ComboBoxStyle1}" x:Name="propertyComboBox"
 				  Grid.Column="1"
 				  SelectionChanged="propertyComboBox_SelectionChanged"
 				  SelectedValuePath="Name" />
-		<TextBlock x:Name="patternPickerLabel"
+        <TextBlock x:Name="patternPickerLabel"
 				   Grid.Row="1"
 				   TextAlignment="Right"
 				   Text="Matches "
 				   VerticalAlignment="Center" />
-		<Border x:Name="patternPickerContainer"
+        <Border x:Name="patternPickerContainer"
 				Grid.Row="1"
 				Grid.Column="1" />
-	</Grid>
+    </Grid>
 </UserControl>

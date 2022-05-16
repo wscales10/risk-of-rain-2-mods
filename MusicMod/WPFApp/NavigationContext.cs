@@ -1,97 +1,79 @@
-﻿using Patterns;
-using Rules.RuleTypes.Mutable;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
+using WPFApp.Controls.Rows;
 using WPFApp.ViewModels;
 
 namespace WPFApp
 {
-	public interface INavigationContext : INotifyPropertyChanged
-	{
-		bool IsHome { get; }
+    public interface INavigationContext : INotifyPropertyChanged
+    {
+        bool IsHome { get; }
 
-		void GoHome();
+        void GoHome();
 
-		bool GoUp();
+        bool GoUp();
 
-		bool GoUp(int count);
+        bool GoUp(int count);
 
-		NavigationViewModelBase GoInto(IEnumerable<Rule> sequence);
+        NavigationViewModelBase GoInto(object obj);
 
-		NavigationViewModelBase GoInto(Rule rule);
+        NavigationViewModelBase GetViewModel(object obj);
 
-		NavigationViewModelBase GoInto(IPattern pattern);
+        bool NavigateTreeTo(IRuleRow ruleRow);
+    }
 
-		NavigationViewModelBase GetViewModel(Rule rule);
+    public class MutableNavigationContext : NotifyPropertyChangedBase, INavigationContext
+    {
+        private bool isHome;
 
-		NavigationViewModelBase GetViewModel(IPattern pattern);
+        public event Func<object, NavigationViewModelBase> OnGoInto;
 
-		void GoInto(NavigationViewModelBase viewModel);
-	}
+        public event Action OnGoHome;
 
-	public class MutableNavigationContext : NotifyPropertyChangedBase, INavigationContext
-	{
-		private bool isHome;
+        public event Func<int, bool> OnGoUp;
 
-		public event Func<IEnumerable<object>, NavigationViewModelBase> OnGoInto;
+        public event Func<IRuleRow, bool> TreeNavigationRequested;
 
-		public event Action OnGoHome;
+        public event Func<object, NavigationViewModelBase> ViewModelRequested;
 
-		public event Func<int, bool> OnGoUp;
+        public bool IsHome
+        {
+            get => isHome;
 
-		public event Func<object, NavigationViewModelBase> ViewModelRequested;
+            set => SetProperty(ref isHome, value);
+        }
 
-		public bool IsHome
-		{
-			get => isHome;
+        public void GoHome() => OnGoHome?.Invoke();
 
-			set => SetProperty(ref isHome, value);
-		}
+        public NavigationViewModelBase GoInto(object obj) => OnGoInto?.Invoke(obj);
 
-		public void GoHome() => OnGoHome?.Invoke();
+        public bool GoUp(int count) => OnGoUp?.Invoke(count) ?? false;
 
-		public NavigationViewModelBase GoInto(Rule rule) => GoInto(new[] { rule });
+        public bool GoUp() => GoUp(1);
 
-		public NavigationViewModelBase GoInto(IEnumerable<Rule> sequence) => OnGoInto?.Invoke(sequence);
+        public NavigationViewModelBase GetViewModel(object obj) => ViewModelRequested?.Invoke(obj);
 
-		public NavigationViewModelBase GoInto(IPattern pattern) => OnGoInto?.Invoke(new[] { pattern });
+        public bool NavigateTreeTo(IRuleRow ruleRow) => TreeNavigationRequested?.Invoke(ruleRow) ?? false;
+    }
 
-		public bool GoUp(int count) => OnGoUp?.Invoke(count) ?? false;
+    public class NavigationContext : NotifyPropertyChangedBase, INavigationContext
+    {
+        private readonly MutableNavigationContext mutable;
 
-		public bool GoUp() => GoUp(1);
+        public NavigationContext(MutableNavigationContext mutable) => SubscribeTo(this.mutable = mutable);
 
-		public void GoInto(NavigationViewModelBase viewModel) => OnGoInto?.Invoke(new[] { viewModel });
+        public bool IsHome => mutable.IsHome;
 
-		public NavigationViewModelBase GetViewModel(Rule rule) => ViewModelRequested?.Invoke(rule);
+        public NavigationViewModelBase GoInto(object obj) => mutable.GoInto(obj);
 
-		public NavigationViewModelBase GetViewModel(IPattern pattern) => ViewModelRequested?.Invoke(pattern);
-	}
+        public void GoHome() => mutable.GoHome();
 
-	public class NavigationContext : NotifyPropertyChangedBase, INavigationContext
-	{
-		private readonly MutableNavigationContext mutable;
+        public bool GoUp(int count) => mutable.GoUp(count);
 
-		public NavigationContext(MutableNavigationContext mutable) => SubscribeTo(this.mutable = mutable);
+        public bool GoUp() => mutable.GoUp();
 
-		public bool IsHome => mutable.IsHome;
+        public NavigationViewModelBase GetViewModel(object obj) => mutable.GetViewModel(obj);
 
-		public NavigationViewModelBase GoInto(IEnumerable<Rule> sequence) => mutable.GoInto(sequence);
-
-		public void GoInto(NavigationViewModelBase viewModel) => mutable.GoInto(viewModel);
-
-		public NavigationViewModelBase GoInto(IPattern pattern) => mutable.GoInto(pattern);
-
-		public void GoHome() => mutable.GoHome();
-
-		public bool GoUp(int count) => mutable.GoUp(count);
-
-		public bool GoUp() => mutable.GoUp();
-
-		public NavigationViewModelBase GoInto(Rule rule) => mutable.GoInto(rule);
-
-		public NavigationViewModelBase GetViewModel(Rule rule) => mutable.GetViewModel(rule);
-
-		public NavigationViewModelBase GetViewModel(IPattern pattern) => mutable.GetViewModel(pattern);
-	}
+        public bool NavigateTreeTo(IRuleRow ruleRow) => mutable.NavigateTreeTo(ruleRow);
+    }
 }

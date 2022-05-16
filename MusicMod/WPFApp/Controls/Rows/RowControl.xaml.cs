@@ -12,20 +12,6 @@ namespace WPFApp.Controls.Rows
     {
         public RowControl() => InitializeComponent();
 
-        public string Title
-        {
-            get => (string)GetValue(TitleProperty);
-            set => SetValue(TitleProperty, value);
-        }
-
-        public static readonly DependencyProperty TitleProperty = DependencyProperty.Register
-        (
-            nameof(Title),
-            typeof(string),
-            typeof(RowControl),
-            new PropertyMetadata(null)
-        );
-
         public object HelperContent
         {
             get => GetValue(HelperContentProperty);
@@ -36,20 +22,6 @@ namespace WPFApp.Controls.Rows
         (
             nameof(HelperContent),
             typeof(object),
-            typeof(RowControl),
-            new PropertyMetadata(null)
-        );
-
-        public string NameWatermark
-        {
-            get => (string)GetValue(NameWatermarkProperty);
-            set => SetValue(NameWatermarkProperty, value);
-        }
-
-        public static readonly DependencyProperty NameWatermarkProperty = DependencyProperty.Register
-        (
-            nameof(NameWatermark),
-            typeof(string),
             typeof(RowControl),
             new PropertyMetadata(null)
         );

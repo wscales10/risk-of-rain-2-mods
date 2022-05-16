@@ -128,12 +128,5 @@ namespace MusicModUnitTests
             var c = ((ReadOnlySwitchRule)MimicRule).Cases[0].ToString();
             Assert.AreEqual(c, "Environments");
         }
-
-        [TestMethod]
-        public void ThatRuleImportStillWorks()
-        {
-            string uri = ConfigurationManager.AppSettings["ruleLocation"];
-            Rule.FromXml(XElement.Load(uri));
-        }
     }
 }

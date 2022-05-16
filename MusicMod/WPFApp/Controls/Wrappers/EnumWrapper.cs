@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Windows.Controls;
 using Utils.Reflection;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers
 {
-	internal static class EnumWrapper
+    internal static class EnumWrapper
 	{
 		public static IControlWrapper Create(Type type) => (IControlWrapper)typeof(EnumWrapper<>).MakeGenericType(type).Construct();
 	}

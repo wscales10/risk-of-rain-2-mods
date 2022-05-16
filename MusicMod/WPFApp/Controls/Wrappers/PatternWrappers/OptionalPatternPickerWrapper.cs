@@ -1,5 +1,6 @@
 ﻿using Patterns;
-using WPFApp.Controls.PatternControls;
+using WPFApp.Controls.Pickers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
 {

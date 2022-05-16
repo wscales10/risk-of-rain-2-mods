@@ -18,7 +18,7 @@ namespace Spotify.Commands
         {
         }
 
-        public TransferCommand(SpotifyItem? item, Switch<int, string> mapping = null, IPattern<string> fromTrackId = null)
+        public TransferCommand(SpotifyItem item, Switch<int, string> mapping = null, IPattern<string> fromTrackId = null)
         {
             Item = item;
             Mapping = mapping ?? new Switch<int, string>();
@@ -30,11 +30,11 @@ namespace Spotify.Commands
         {
         }
 
-        public TransferCommand(SpotifyItem? item, string mapping, IPattern<string> fromTrackId = null) : this(item, new Switch<int, string>(mapping), fromTrackId)
+        public TransferCommand(SpotifyItem item, string mapping, IPattern<string> fromTrackId = null) : this(item, new Switch<int, string>(mapping), fromTrackId)
         {
         }
 
-        public TransferCommand() : this((SpotifyItem?)null)
+        public TransferCommand() : this((SpotifyItem)null)
         {
         }
 
@@ -52,7 +52,7 @@ namespace Spotify.Commands
 
         public Switch<int, string> Mapping { get; set; }
 
-        public SpotifyItem? Item { get; set; }
+        public SpotifyItem Item { get; set; }
 
         public static int Map(int milliseconds, string symbolicExpression)
         {
@@ -66,7 +66,7 @@ namespace Spotify.Commands
 
         protected override void AddDetail(XElement element)
         {
-            element.Add(new XElement(nameof(Item), Item.Value.ToXml()));
+            element.Add(new XElement(nameof(Item), Item.ToXml()));
             element.Add(new XElement(nameof(FromTrackId), FromTrackId.ToXml()));
             element.Add(new XElement(nameof(Mapping), Mapping.ToXml(se => new XElement("Expr", se))));
         }

@@ -1,6 +1,4 @@
 ﻿using BepInEx.Configuration;
-using System.Collections.Generic;
-using Utils;
 
 namespace Ror2Mod2
 {

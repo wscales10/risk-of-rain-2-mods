@@ -1,13 +1,11 @@
-﻿using Rules.RuleTypes.Mutable;
-
-namespace WPFApp.Controls.Rows
+﻿namespace WPFApp.Controls.Rows
 {
-	internal class ArrayRow : RuleRow<ArrayRow>
-	{
-		internal ArrayRow(Rule rule) : base(rule, true)
-		{
-		}
+    internal class ArrayRow : RuleRow<ArrayRow>
+    {
+        internal ArrayRow(NavigationContext navigationContext) : base(navigationContext, true)
+        {
+        }
 
-		public override string Label => Output.ToString();
-	}
+        public override string Label => Output?.ToString();
+    }
 }

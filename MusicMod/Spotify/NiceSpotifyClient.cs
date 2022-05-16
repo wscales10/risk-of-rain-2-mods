@@ -2,137 +2,131 @@
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Async;
 
 namespace Spotify
 {
-	public abstract class NiceSpotifyClient
-	{
-		protected readonly Logger Log;
+    public abstract class NiceSpotifyClient
+    {
+        protected readonly Logger Log;
 
-		private string accessToken;
+        private readonly TaskMachine taskMachine = new SeniorTaskMachine();
 
-		private string backupAccessToken;
+        private string accessToken;
 
-		private Task<bool> lastQueued;
+        private string backupAccessToken;
 
-		protected NiceSpotifyClient(Logger logger)
-		{
-			Log = logger;
-			Log("initialising");
-			_ = InitialiseAsync().ContinueWith(_ => Log("initialised"), TaskScheduler.Default);
-		}
+        protected NiceSpotifyClient(Logger logger)
+        {
+            Log = logger;
+            Log("initialising");
+            _ = InitialiseAsync().ContinueWith(_ => Log("initialised"), TaskScheduler.Default);
+        }
 
-		public event Action<Exception> OnError;
+        public event Action<Exception> OnError;
 
-		public bool IsAuthorised { get; private set; }
+        public bool IsAuthorised { get; private set; }
 
-		protected SpotifyClient Client { get; private set; }
+        protected SpotifyClient Client { get; private set; }
 
-		public async Task Do(Command input)
-		{
-			await Do(new CommandList(input).ToReadOnly());
-		}
+        public async Task Do(Command input, CancellationToken cancellationToken = default)
+        {
+            await Do(new CommandList(input).ToReadOnly(), cancellationToken);
+        }
 
-		public async Task Do(ICommandList input)
-		{
-			await Execute(t => new CommandListAsync(input, t));
-		}
+        public async Task Do(ICommandList input, CancellationToken cancellationToken = default)
+        {
+            var cancellableTask = new CancellableTask(token => ExecuteAsync(input, token));
+            taskMachine.TryIngest(cancellableTask, cancellationToken);
+            await cancellableTask.Awaitable;
+        }
 
-		public void GiftNewAccessToken(string accessToken)
-		{
-			backupAccessToken = accessToken;
-			if (!IsAuthorised)
-			{
-				Authorise();
-			}
-		}
+        public void GiftNewAccessToken(string accessToken)
+        {
+            backupAccessToken = accessToken;
+            if (!IsAuthorised)
+            {
+                Authorise();
+            }
+        }
 
-		protected void Throw(Exception e)
-		{
-			Log($"{e.GetType().FullName}: {e.Message}");
-			OnError?.Invoke(e);
-		}
+        protected void Throw(Exception e)
+        {
+            Log($"{e.GetType().FullName}: {e.Message}");
+            OnError?.Invoke(e);
+        }
 
-		protected abstract Task<bool> Handle(Command command);
+        // TODO: make more use of cancellation token
+        protected abstract Task<bool> HandleAsync(Command command, CancellationToken? cancellationToken);
 
-		protected virtual async Task<bool> HandleErrorAsync(Exception e, CommandListAsync wrapper, List<Type> exceptionTypes = null)
-		{
-			switch (e)
-			{
-				case APIUnauthorizedException _:
-					if (!exceptionTypes.Contains(e.GetType()))
-					{
-						Authorise();
-						exceptionTypes.Add(e.GetType());
-						return await ExecuteInner(wrapper, exceptionTypes);
-					}
+        protected virtual async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken? cancellationToken, List<Type> exceptionTypes = null)
+        {
+            switch (e)
+            {
+                case APIUnauthorizedException _:
+                    if (!exceptionTypes.Contains(e.GetType()))
+                    {
+                        Authorise();
+                        exceptionTypes.Add(e.GetType());
+                        return await ExecuteAsync(commands, cancellationToken, exceptionTypes);
+                    }
 
-					IsAuthorised = false;
-					break;
-			}
+                    IsAuthorised = false;
+                    break;
+            }
 
-			Throw(e);
-			return false;
-		}
+            Throw(e);
+            return false;
+        }
 
-		protected virtual async Task<bool> ExecuteInner(CommandListAsync wrapper, List<Type> exceptionTypes = null)
-		{
-			if (!(wrapper.Blocker is null))
-			{
-				await wrapper.Blocker;
-			}
+        protected virtual async Task<bool> ExecuteAsync(ICommandList commands, CancellationToken? cancellationToken, List<Type> exceptionTypes = null)
+        {
+            exceptionTypes = exceptionTypes ?? new List<Type>();
+            try
+            {
+                foreach (var command in commands)
+                {
+                    Log("beginning " + command.GetType().Name);
+                    if (!await HandleAsync(command, cancellationToken))
+                    {
+                        Log(command.GetType().Name + " error");
+                        return false;
+                    }
 
-			var commands = wrapper.Commands;
-			exceptionTypes = exceptionTypes ?? new List<Type>();
-			try
-			{
-				foreach (var command in commands)
-				{
-					Log("beginning " + command.GetType().Name);
-					if (!await Handle(command))
-					{
-						Log(command.GetType().Name + " error");
-						return false;
-					}
+                    Log(command.GetType().Name + " completed");
+                }
 
-					Log(command.GetType().Name + " completed");
-				}
+                return true;
+            }
+            catch (Exception e)
+            {
+                return await HandleErrorAsync(e, commands, cancellationToken, exceptionTypes);
+            }
+        }
 
-				return true;
-			}
-			catch (Exception e)
-			{
-				return await HandleErrorAsync(e, wrapper, exceptionTypes);
-			}
-		}
+        protected virtual Task InitialiseAsync()
+        {
+            Authorise();
+            return Task.CompletedTask;
+        }
 
-		protected virtual Task InitialiseAsync()
-		{
-			Authorise();
-			return Task.CompletedTask;
-		}
+        private void Authorise()
+        {
+            if (backupAccessToken is null)
+            {
+                IsAuthorised = !((accessToken = Preferences.AccessToken) is null);
+            }
+            else
+            {
+                accessToken = backupAccessToken;
+                backupAccessToken = null;
+                IsAuthorised = true;
+            }
 
-		private void Authorise()
-		{
-			if (backupAccessToken is null)
-			{
-				IsAuthorised = !((accessToken = Preferences.AccessToken) is null);
-			}
-			else
-			{
-				accessToken = backupAccessToken;
-				backupAccessToken = null;
-				IsAuthorised = true;
-			}
-
-			Client = new SpotifyClient(accessToken);
-		}
-
-		private async Task<bool> Execute(Func<Task, CommandListAsync> f)
-		{
-			return await (lastQueued = ExecuteInner(f(lastQueued)));
-		}
-	}
+            Client = new SpotifyClient(accessToken);
+        }
+    }
 }

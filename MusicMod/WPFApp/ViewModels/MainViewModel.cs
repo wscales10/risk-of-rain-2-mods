@@ -9,153 +9,135 @@ using System.IO;
 
 namespace WPFApp.ViewModels
 {
-	public class MainViewModel : ViewModelBase
-	{
-		private NavigationViewModelBase itemViewModel;
+    public class MainViewModel : ViewModelBase
+    {
+        private NavigationViewModelBase itemViewModel;
 
-		private bool hasContent;
+        private bool hasContent;
 
-		private ICollectionView mainRows;
+        private ICollectionView mainRows;
 
-		private string title;
+        private string title;
 
-		public MainViewModel(NavigationContext navigationContext)
-		{
-			NavigationContext = navigationContext;
-			NavigateTreeCommand = new(action);
-			BackCommand = new(_ => OnGoBack?.Invoke(), false);
-			ForwardCommand = new(_ => OnGoForward?.Invoke(), false);
-			ImportCommand = new(_ =>
-			{
-				OpenFileDialog dialog = new() { Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*" };
+        public MainViewModel(NavigationContext navigationContext)
+        {
+            NavigationContext = navigationContext;
+            NavigateTreeCommand = new(NavigateTree);
+            BackCommand = new(_ => OnGoBack?.Invoke(), false);
+            ForwardCommand = new(_ => OnGoForward?.Invoke(), false);
+            ImportCommand = new(_ =>
+            {
+                OpenFileDialog dialog = new() { Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*" };
 
-				if (dialog.ShowDialog() == true)
-				{
-					OnImportFile?.Invoke(dialog.FileName);
-				}
-			});
-			ExportCommand = new(_ =>
-			{
-				if (TryGetExportLocation(out string fileName))
-				{
-					OnExportFile?.Invoke(fileName);
-				}
-			});
-			NewCommand = new(_ =>
-			{
-				if (MessageBox.Show("Are you sure you want to close this?", "Are you sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
-				{
-					OnReset?.Invoke();
-				}
-			}, this, nameof(HasContent));
-			HomeCommand = new(_ => NavigationContext.GoHome(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
-			UpCommand = new(_ => NavigationContext.GoUp(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
-			ClearCacheCommand = new(_ => ClearCache());
-		}
+                if (dialog.ShowDialog() == true)
+                {
+                    OnImportFile?.Invoke(dialog.FileName);
+                }
+            });
+            ExportCommand = new(_ =>
+            {
+                if (TryGetExportLocation(out string fileName))
+                {
+                    OnExportFile?.Invoke(fileName);
+                }
+            });
+            NewCommand = new(_ =>
+            {
+                if (MessageBox.Show("Are you sure you want to close this?", "Are you sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
+                {
+                    OnReset?.Invoke();
+                }
+            }, this, nameof(HasContent));
+            HomeCommand = new(_ => NavigationContext.GoHome(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
+            UpCommand = new(_ => NavigationContext.GoUp(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
+            ClearCacheCommand = new(_ => ClearCache());
+            GotoPlaylistsCommand = new(_ => NavigationContext.GoInto(Info.Playlists));
+        }
 
-		public event Action OnReset;
+        public event Action OnReset;
 
-		public event Action OnGoBack;
+        public event Action OnGoBack;
 
-		public event Action OnGoForward;
+        public event Action OnGoForward;
 
-		public event Action<string> OnImportFile;
+        public event Action<string> OnImportFile;
 
-		public event Action<string> OnExportFile;
+        public event Action<string> OnExportFile;
 
-		public ButtonCommand NavigateTreeCommand { get; }
+        public ButtonCommand NavigateTreeCommand { get; }
 
-		public ButtonCommand BackCommand { get; }
+        public ButtonCommand BackCommand { get; }
 
-		public ButtonCommand ForwardCommand { get; }
+        public ButtonCommand ForwardCommand { get; }
 
-		public ButtonCommand UpCommand { get; }
+        public ButtonCommand UpCommand { get; }
 
-		public ButtonCommand HomeCommand { get; }
+        public ButtonCommand HomeCommand { get; }
 
-		public ButtonCommand ImportCommand { get; }
+        public ButtonCommand ImportCommand { get; }
 
-		public ButtonCommand ExportCommand { get; }
+        public ButtonCommand ExportCommand { get; }
 
-		public ButtonCommand NewCommand { get; }
+        public ButtonCommand NewCommand { get; }
 
-		public ButtonCommand ClearCacheCommand { get; }
+        public ButtonCommand ClearCacheCommand { get; }
 
-		public NavigationContext NavigationContext { get; }
+        public ButtonCommand GotoPlaylistsCommand { get; }
 
-		public NavigationViewModelBase ItemViewModel
-		{
-			get => itemViewModel;
+        public NavigationContext NavigationContext { get; }
 
-			set
-			{
-				itemViewModel = value;
-				HasContent = value is not null;
-				ExportCommand.CanExecute = value is IXmlViewModel;
-				NotifyPropertyChanged();
-			}
-		}
+        public NavigationViewModelBase ItemViewModel
+        {
+            get => itemViewModel;
 
-		public bool HasContent
-		{
-			get => hasContent;
+            set
+            {
+                itemViewModel = value;
+                HasContent = value is not null;
+                ExportCommand.CanExecute = value is IXmlViewModel;
+                NotifyPropertyChanged();
+            }
+        }
 
-			set => SetProperty(ref hasContent, value);
-		}
+        public bool HasContent
+        {
+            get => hasContent;
 
-		public ICollectionView MainRows
-		{
-			get => mainRows;
+            set => SetProperty(ref hasContent, value);
+        }
 
-			set => SetProperty(ref mainRows, value);
-		}
+        public ICollectionView MainRows
+        {
+            get => mainRows;
 
-		public string Title
-		{
-			get => "Rule Builder" + (title is null ? string.Empty : $" ({title})");
+            set => SetProperty(ref mainRows, value);
+        }
 
-			set => SetProperty(ref title, value);
-		}
+        public string Title
+        {
+            get => "Rule Builder" + (title is null ? string.Empty : $" ({title})");
 
-		private static void ClearCache() => Images.ClearCache();
+            set => SetProperty(ref title, value);
+        }
 
-		private static bool TryGetExportLocation(out string fileName)
-		{
-			SaveFileDialog dialog = new() { Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*" };
+        private static void ClearCache() => Images.ClearCache();
 
-			if (dialog.ShowDialog() == true)
-			{
-				fileName = dialog.FileName;
-				return true;
-			}
-			else
-			{
-				fileName = null;
-				return false;
-			}
-		}
+        private static bool TryGetExportLocation(out string fileName)
+        {
+            SaveFileDialog dialog = new() { Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*" };
 
-		private void action(object rowObject)
-		{
-			while (!NavigationContext.IsHome)
-			{
-				if (!NavigationContext.GoUp())
-				{
-					return;
-				}
-			}
+            if (dialog.ShowDialog() == true)
+            {
+                fileName = dialog.FileName;
+                return true;
+            }
+            else
+            {
+                fileName = null;
+                return false;
+            }
+        }
 
-			var node = (IRuleRow)rowObject;
-			List<IRuleRow> rows = new();
-			do
-			{
-				rows.Add(node);
-				node = node.Parent;
-			} while (node is not null);
-
-			rows.Reverse();
-
-			_ = NavigationContext.GoInto(rows.Select(r => r.Output));
-		}
-	}
+        private void NavigateTree(object rowObject) => NavigationContext.NavigateTreeTo((IRuleRow)rowObject);
+    }
 }

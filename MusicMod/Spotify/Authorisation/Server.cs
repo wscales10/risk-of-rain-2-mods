@@ -9,7 +9,7 @@ using Utils.Async;
 
 namespace Spotify.Authorisation
 {
-    public class Server
+    public class Server : AsyncRunner
     {
         private readonly Dictionary<string, List<(string, AsyncBoolCallback, bool)>> callbacks = new Dictionary<string, List<(string, AsyncBoolCallback, bool)>>();
 
@@ -23,25 +23,20 @@ namespace Spotify.Authorisation
 
         public Server(Uri rootUri, Logger logger)
         {
-            Listen = new SingletonTask(HandleIncomingConnections);
             listener.Prefixes.Add((RootUri = rootUri).ToString());
             Log = logger;
             callbacks["GET"] = new List<(string, AsyncBoolCallback, bool)>();
             callbacks["POST"] = new List<(string, AsyncBoolCallback, bool)>();
         }
 
-        public SingletonTask Listen { get; }
+        public Task ListenTask { get; private set; }
 
         public Uri RootUri { get; }
 
         public async Task ListenAsync()
         {
-            // Create start listening for incoming connections
-            listener.Start();
-            Log($"Listening for connections on {RootUri}");
-
-            // Handle requests
-            await Listen.RunAsync();
+            await TryStartAsync();
+            await ListenTask;
         }
 
         public void On(string method, string relativePath, BoolCallback callback, bool not = false)
@@ -64,18 +59,29 @@ namespace Spotify.Authorisation
             On(method, relativePath, async (req, res) => { await callback(req, res); return true; }, not);
         }
 
-        public async Task PauseAsync()
+        protected override async Task PauseAsync()
         {
             cancellationTokenSource.Cancel();
             runServer = false;
-            await Listen.Task;
+            await AsyncManager.WaitForAnyCompletionAsync(ListenTask, cancellationTokenSource.Token);
             listener.Stop();
         }
 
-        public async Task StopAsync()
+        protected override async Task StopAsync()
         {
-            await PauseAsync();
+            _ = await TryPauseAsync();
             listener.Close();
+        }
+
+        protected override Task StartAsync()
+        {
+            // Create start listening for incoming connections
+            listener.Start();
+            Log($"Listening for connections on {RootUri}");
+
+            // Handle requests
+            ListenTask = HandleIncomingConnections();
+            return Task.CompletedTask;
         }
 
         private async Task HandleIncomingConnections()
@@ -86,10 +92,9 @@ namespace Spotify.Authorisation
             while (runServer)
             {
                 // Wait here until we hear from a connection
-                var task = Async.Manager.MakeCancellable(listener.GetContextAsync(), cancellationTokenSource.Token);
-                HttpListenerContext ctx = await task;
+                HttpListenerContext ctx = await Async.Manager.MakeCancellable(listener.GetContextAsync(), cancellationTokenSource.Token);
 
-                if (task.IsCanceled || !runServer)
+                if (!runServer)
                 {
                     break;
                 }

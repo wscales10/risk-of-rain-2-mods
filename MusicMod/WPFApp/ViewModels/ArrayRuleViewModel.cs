@@ -15,7 +15,6 @@ namespace WPFApp.ViewModels
                 new ButtonContext { Label = "Add Rule", Command = new ButtonCommand(_ => AddRule()) }
             };
 
-            TypedRowManager.BeforeItemAdded += AttachRowEventHandlers;
             TypedRowManager.BindTo(Item.Rules, AddRule, r => r.Output);
         }
 
@@ -25,6 +24,6 @@ namespace WPFApp.ViewModels
 
         protected override RowManager<ArrayRow> TypedRowManager { get; } = new();
 
-        private ArrayRow AddRule(Rule rule = null) => TypedRowManager.Add(new ArrayRow(rule));
+        private ArrayRow AddRule(Rule rule = null) => TypedRowManager.Add(new ArrayRow(NavigationContext) { Output = rule });
     }
 }

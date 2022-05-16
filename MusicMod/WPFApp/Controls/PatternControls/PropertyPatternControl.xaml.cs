@@ -8,6 +8,7 @@ using WPFApp.Controls.Wrappers.PatternWrappers;
 using System.Windows;
 using Utils.Properties;
 using Utils.Reflection;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.PatternControls
 {

@@ -3,15 +3,16 @@ using Patterns;
 using Rules.RuleTypes.Mutable;
 using System;
 using System.Windows;
-using WPFApp.Controls.PatternControls;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls;
+using WPFApp.Controls.Pickers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
     public class CaseViewModel : ViewModelBase
     {
-        private readonly NavigationContext navigationContext;
+        private NavigationContext navigationContext;
 
         private OptionalPickerWrapper<Context> wherePatternWrapper;
 
@@ -24,7 +25,6 @@ namespace WPFApp.ViewModels
             WherePatternWrapper_StatusSet(null);
             WherePatternWrapper.StatusSet += WherePatternWrapper_StatusSet;
             WherePatternWrapper.SetValue(c.WherePattern);
-            this.navigationContext = navigationContext;
             MultiPickerViewModel pickerViewModel = new(new PatternPickerInfo(valueType, navigationContext));
             Picker = new(pickerViewModel);
             Picker.VerticalAlignment = VerticalAlignment.Center;
@@ -63,7 +63,13 @@ namespace WPFApp.ViewModels
 
         internal NavigationContext NavigationContext
         {
-            set => WherePatternWrapper = new OptionalPickerWrapper<Context>(value);
+            get => navigationContext;
+
+            set
+            {
+                navigationContext = value;
+                WherePatternWrapper = new OptionalPickerWrapper<Context>(value);
+            }
         }
 
         internal bool HasWherePattern => WherePatternWrapper.UIElement.ViewModel.ValueWrapper is not null;

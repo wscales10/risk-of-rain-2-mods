@@ -8,6 +8,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using Utils.Async;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 
 namespace WPFApp.ViewModels
@@ -23,11 +24,15 @@ namespace WPFApp.ViewModels
     {
         public override IEnumerable<string> Names { get; } = DefinedEntity.GetAll().Select(s => s.DisplayName);
 
-        protected override string GetImgXPathFromTableXPath(string tableXPath, string displayName) => $"{tableXPath}//img[contains(@data-image-key, 'Model')]";
+        protected override string GetImgXPathFromTableXPath(string tableXPath, string displayName) => $"{tableXPath}//img[contains(@data-image-name, '{displayName}')]";
     }
 
     public abstract class ImagePatternViewModel : ViewModelBase
     {
+        private static readonly TaskMachine taskMachine = new SeniorTaskMachine();
+
+        private CancellationTokenSource individualCancellationTokenSource;
+
         private BitmapImage imageSource;
 
         private string text;
@@ -46,14 +51,28 @@ namespace WPFApp.ViewModels
 
             set
             {
+                // TODO: decide how to handle Void Fiend and Voidling
                 string fixedText = Names.FirstOrDefault(s => string.Equals(value, s, StringComparison.OrdinalIgnoreCase));
                 text = fixedText ?? value;
                 NotifyPropertyChanged();
-                _ = SetImageSourceAsync();
+                SetImageSource();
             }
         }
 
-        public async Task SetImageSourceAsync()
+        protected abstract string GetImgXPathFromTableXPath(string tableXPath, string displayName);
+
+        private static string GetFileName(string displayName) => Info.InvalidFileNameCharsRegex.Replace(displayName, string.Empty) + ".png";
+
+        private static string GetWikiPageUrl(string displayName) => "https://riskofrain2.fandom.com/wiki/" + displayName.Replace(" ", "_");
+
+        private void SetImageSource()
+        {
+            individualCancellationTokenSource?.Cancel();
+            individualCancellationTokenSource = new();
+            taskMachine.TryIngest(token => SetImageSourceAsync(token), individualCancellationTokenSource.Token);
+        }
+
+        private async Task SetImageSourceAsync(CancellationToken cancellationToken)
         {
             string displayName = Text;
             if (!string.IsNullOrEmpty(displayName))
@@ -63,17 +82,17 @@ namespace WPFApp.ViewModels
                 if (File.Exists(filePath))
                 {
                     ImageSource = Images.BuildFromUri(filePath);
-                    Images.CacheUpdated += SetImageSourceAsync;
+                    Images.CacheUpdated += SetImageSource;
                     return;
                 }
                 else
                 {
-                    string sourceString = await GetImageUrlAsync(displayName);
+                    string sourceString = await GetImageUrlAsync(displayName, cancellationToken);
                     if (sourceString is not null)
                     {
                         Uri sourceUri = new(sourceString);
                         ImageSource = Images.BuildFromUri(sourceUri);
-                        Images.CacheUpdated += SetImageSourceAsync;
+                        Images.CacheUpdated += SetImageSource;
                         await HttpHelper.DownloadFileAsync(sourceUri, filePath);
                         return;
                     }
@@ -81,17 +100,11 @@ namespace WPFApp.ViewModels
             }
 
             ImageSource = null;
-            Images.CacheUpdated -= SetImageSourceAsync;
+            Images.CacheUpdated -= SetImageSource;
             return;
         }
 
-        protected abstract string GetImgXPathFromTableXPath(string tableXPath, string displayName);
-
-        private static string GetFileName(string displayName) => Info.InvalidFilePathCharsRegex.Replace(displayName, string.Empty) + ".png";
-
-        private static string GetWikiPageUrl(string displayName) => "https://riskofrain2.fandom.com/wiki/" + displayName.Replace(" ", "_");
-
-        private async Task<string> GetImageUrlAsync(string displayName)
+        private async Task<string> GetImageUrlAsync(string displayName, CancellationToken cancellationToken = default)
         {
             var client = PatternWrapper.RequestHtmlWeb();
 
@@ -104,7 +117,9 @@ namespace WPFApp.ViewModels
             HtmlNode document;
             try
             {
-                document = (await client.LoadFromWebAsync(wikiPageUrl, new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token)).DocumentNode;
+                CancellationTokenSource timeoutTokenSource = new(TimeSpan.FromSeconds(10));
+                CancellationToken combinedToken = CancellationTokenSource.CreateLinkedTokenSource(timeoutTokenSource.Token, cancellationToken).Token;
+                document = (await client.LoadFromWebAsync(wikiPageUrl, combinedToken)).DocumentNode;
             }
             catch (Exception)
             {

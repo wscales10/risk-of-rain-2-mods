@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
@@ -42,20 +43,17 @@ namespace WPFApp
                 var source = pair.Key;
                 var dict = pair.Value;
 
-                foreach (string s in dependentOn)
+                foreach (string s in dependentOn.Where(dict.ContainsKey))
                 {
-                    if (dict.ContainsKey(s))
+                    _ = dict[s].Remove(propertyName);
+
+                    // TODO: remove HashSet and event handler if set is now empty
+
+                    if (source.GetPropertyValue(s) is INotifyCollectionChanged collection)
                     {
-                        _ = dict[s].Remove(propertyName);
+                        _ = cache2[collection].Remove(propertyName);
 
                         // TODO: remove HashSet and event handler if set is now empty
-
-                        if (source.GetPropertyValue(s) is INotifyCollectionChanged collection)
-                        {
-                            _ = cache2[collection].Remove(propertyName);
-
-                            // TODO: remove HashSet and event handler if set is now empty
-                        }
                     }
                 }
             }
@@ -88,6 +86,11 @@ namespace WPFApp
 
         protected void SetPropertyDependency(string propertyName, INotifyPropertyChanged source, params string[] dependentOn)
         {
+            if (propertyName is null)
+            {
+                throw new ArgumentNullException(nameof(propertyName));
+            }
+
             if (source is null)
             {
                 return;

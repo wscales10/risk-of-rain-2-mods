@@ -1,9 +1,9 @@
 ﻿using System;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
-	public interface IItemViewModel
+    public interface IItemViewModel
 	{
 		event Action OnItemChanged;
 

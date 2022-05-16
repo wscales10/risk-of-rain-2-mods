@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,7 +9,6 @@ using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
-using Utils.Async;
 
 namespace Spotify.Authorisation
 {
@@ -22,7 +20,7 @@ namespace Spotify.Authorisation
 
     public delegate void VoidCallback(HttpListenerRequest request, HttpListenerResponse response);
 
-    public partial class Authorisation
+    public partial class Authorisation : AsyncRunner
     {
         private static readonly HttpClient client = new HttpClient();
 
@@ -30,13 +28,11 @@ namespace Spotify.Authorisation
 
         private readonly Func<CodeFlow> getFlow;
 
-        private readonly AsyncManualResetEvent pauseEvent = new AsyncManualResetEvent(true);
-
         private readonly Dictionary<string, bool> scopes = new Dictionary<string, bool>();
 
         private readonly Server server;
 
-        private readonly AsyncManualResetEvent stopEvent = new AsyncManualResetEvent(true);
+        private JoinableTask refreshTask;
 
         private AccessTokenInfo data;
 
@@ -46,11 +42,6 @@ namespace Spotify.Authorisation
 
         public Authorisation(IEnumerable<string> scopes, bool isPkceEnabled = true, Logger logger = null)
         {
-            Lifecycle = new SingletonTaskWithSetup(
-                StartInner,
-                async () => await stopEvent);
-            refresh = new SingletonTask(RefreshLoop);
-            stop = new SingletonTask(StopInner);
             server = new Server(App.Instance.RootUri, logger);
 
             if (isPkceEnabled)
@@ -76,45 +67,45 @@ namespace Spotify.Authorisation
 
         public event Action<Uri> OnClientRequested;
 
-        private bool IsPaused => !pauseEvent.IsSet;
+        public Func<int, TimeSpan> GetWaitTime { get; set; } = expiresIn => TimeSpan.FromSeconds(Math.Max(expiresIn - 300, expiresIn / 2));
 
-        public void InitiateScopeRequest()
+        private DateTime RefreshBy
         {
-            TryStart();
+            get
+            {
+                return refreshBy;
+            }
+
+            set
+            {
+                refreshBy = value;
+                this.LogPropertyValue(value);
+            }
+        }
+
+        public async Task InitiateScopeRequestAsync()
+        {
+            _ = await TryStartAsync();
             OnClientRequested?.Invoke(App.Instance.RootUri);
         }
 
-        public async Task PauseAsync()
+        protected override async Task PauseAsync()
         {
-            if (flow?.State != FlowState.TokenGranted)
+            if (flow?.State < FlowState.TokenGranted)
             {
                 return;
             }
 
-            if (IsPaused)
-            {
-                return;
-            }
-
-            pauseEvent.Reset();
             cancellationTokenSource.Cancel();
-            await server.PauseAsync();
-            await refresh.Task;
-            refresh.Start();
+            await server.TryPauseAsync();
+            await refreshTask;
         }
 
-        public void Resume()
+        protected override async Task StopAsync()
         {
-            if (IsPaused)
-            {
-                _ = server.ListenAsync();
-                pauseEvent.Set();
-            }
-        }
-
-        public async Task StopAsync()
-        {
-            await stop.RunAsync();
+            cancellationTokenSource.Cancel();
+            await server.TryStopAsync();
+            await refreshTask;
         }
 
         private static async Task MakeResponseAsync(HttpListenerResponse res, byte[] byteArray)
@@ -164,25 +155,23 @@ namespace Spotify.Authorisation
 
                 res.Redirect("index.html");
 
-                data = await flow.RequestTokensAsync(async (m) => await client.SendAsync(m));
+                data = await flow.RequestTokensAsync();
 
-                if (data is null)
+                if (data is null || flow.State == FlowState.Error)
                 {
                     flow = null;
                     return;
                 }
 
                 OnAccessTokenReceived?.Invoke(this, data.AccessToken);
-
-                refreshBy = DateTime.UtcNow + TimeSpan.FromSeconds(Math.Max(data.ExpiresIn - 300, data.ExpiresIn / 2));
-
-                refresh.Start();
+                RefreshIn(GetWaitTime(data.ExpiresIn));
+                refreshTask = Async.Manager.RunSafely(RefreshLoop);
             });
 
             server.On("POST", "/shutdown", (req, res) =>
             {
                 Console.WriteLine("Shutdown requested");
-                stop.Start();
+                _ = TryStopAsync();
             });
 
             server.On("GET", "devices.json", async (req, res) =>
@@ -227,19 +216,6 @@ namespace Spotify.Authorisation
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", data.AccessToken);
                 var responseMessage = await client.SendAsync(request);
                 return responseMessage.Content;
-            }
-        }
-
-        private void Start()
-        {
-            Lifecycle.Start();
-        }
-
-        private void TryStart()
-        {
-            if (!Lifecycle.IsRunning)
-            {
-                Start();
             }
         }
     }

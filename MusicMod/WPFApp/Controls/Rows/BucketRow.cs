@@ -7,6 +7,7 @@ using System.Windows.Data;
 using Utils.Reflection;
 using WPFApp.Controls.CommandControls;
 using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.Converters;
 using WPFApp.Properties;
 
@@ -22,17 +23,17 @@ namespace WPFApp.Controls.Rows
             HorizontalAlignment = HorizontalAlignment.Center
         };
 
-        internal BucketRow(Command command) : base(command, true)
+        private FormatString formatString;
+
+        internal BucketRow() : base(true)
         {
             previewButton.Click += (s, e) =>
             {
-                if (TrySaveChanges())
+                if (trySaveChanges())
                 {
                     _ = OnCommandPreviewRequested?.Invoke(Output);
                 }
             };
-
-            UpdateButtonLabel(command);
 
             OnSetOutput += UpdateButtonLabel;
 
@@ -43,11 +44,31 @@ namespace WPFApp.Controls.Rows
             };
 
             _ = previewButton.SetBinding(UIElement.IsEnabledProperty, binding);
+
+            SetPropertyDependency(nameof(AsString), nameof(FormatString));
         }
 
         public static event Func<Command, Task> OnCommandPreviewRequested;
 
-        public FormatString FormatString { get; private set; }
+        public FormatString FormatString
+        {
+            get => formatString;
+
+            private set
+            {
+                if (formatString is not null)
+                {
+                    RemovePropertyDependency(nameof(AsString), formatString, nameof(formatString.AsString));
+                }
+
+                if (value is not null)
+                {
+                    SetPropertyDependency(nameof(AsString), value, nameof(value.AsString));
+                }
+
+                SetProperty(ref formatString, value);
+            }
+        }
 
         public string AsString => $"{CommandString}({FormatString?.AsString ?? "..."})";
 
@@ -55,7 +76,7 @@ namespace WPFApp.Controls.Rows
 
         public string CommandString => Output?.GetType().Name.Replace(nameof(Command), string.Empty);
 
-        public override SaveResult TrySaveChanges() => (FormatString is null || Output is null) ? (new(false)) : FormatString.TryGetProperties(Output, true);
+        protected override SaveResult trySaveChanges() => (FormatString is null || Output is null) ? (new(false)) : FormatString.TryGetProperties(Output, true);
 
         protected override UIElement MakeOutputUi()
         {

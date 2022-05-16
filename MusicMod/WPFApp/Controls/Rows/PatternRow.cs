@@ -4,6 +4,7 @@ using System.Windows;
 using Utils.Reflection;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Rows
 {
@@ -11,14 +12,27 @@ namespace WPFApp.Controls.Rows
     {
         private readonly IControlWrapper singlePickerWrapper;
 
-        public PatternRow(IPattern pattern, Type valueType, NavigationContext navigationContext) : base(pattern, true)
+        public PatternRow(Type valueType, NavigationContext navigationContext) : base(true)
         {
             singlePickerWrapper = (IControlWrapper)typeof(SinglePatternPickerWrapper<>).MakeGenericType(valueType).Construct(navigationContext);
-            singlePickerWrapper.ValueSet += SinglePickerWrapper_ValueSet;
-            singlePickerWrapper.SetValue(pattern);
         }
 
-        public override SaveResult TrySaveChanges() => singlePickerWrapper.TryGetObject(true);
+        public override IPattern Output
+        {
+            get
+            {
+                singlePickerWrapper.ForceGetValue(out object obj);
+                return (IPattern)obj;
+            }
+
+            set
+            {
+                singlePickerWrapper.SetValue(value);
+                NotifyPropertyChanged();
+            }
+        }
+
+        protected override SaveResult trySaveChanges() => singlePickerWrapper.TryGetObject(true);
 
         protected override UIElement MakeOutputUi()
         {
@@ -33,15 +47,5 @@ namespace WPFApp.Controls.Rows
 
             return output;
         }
-
-        private void SinglePickerWrapper_ValueSet(object obj) => Output = (IPattern)obj;
-
-        /*		new SinglePicker(valueType, navigationContext)
-				{
-					Margin = new Thickness(40, 4, 4, 4),
-					VerticalAlignment = VerticalAlignment.Center,
-					MinWidth = 150,
-					HorizontalAlignment = HorizontalAlignment.Left,
-				};*/
     }
 }

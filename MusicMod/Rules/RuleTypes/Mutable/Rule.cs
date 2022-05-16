@@ -11,130 +11,141 @@ using Utils;
 
 namespace Rules.RuleTypes.Mutable
 {
-	public delegate Pattern<T> PatternGenerator<T>(T input);
+    public delegate Pattern<T> PatternGenerator<T>(T input);
 
-	public abstract class Rule : IRule, ITreeItem<Rule>, ITreeItem
-	{
-		public string Name
-		{
-			get;
-			set;
-		}
+    public abstract class Rule : IRule, ITreeItem<Rule>, ITreeItem
+    {
+        public string Name
+        {
+            get;
+            set;
+        }
 
-		public virtual IEnumerable<(string, Rule)> Children => Enumerable.Empty<(string, Rule)>();
+        public virtual IEnumerable<(string, Rule)> Children => Enumerable.Empty<(string, Rule)>();
 
-		IEnumerable<(string, ITreeItem)> ITreeItem.Children => Children.Select(p => (p.Item1, (ITreeItem)p.Item2));
+        IEnumerable<(string, ITreeItem)> ITreeItem.Children => Children.Select(p => (p.Item1, (ITreeItem)p.Item2));
 
-		public static Rule FromXml(XElement element)
-		{
-			if (element is null)
-			{
-				return null;
-			}
+        public static Rule FromXml(XElement element)
+        {
+            if (element is null)
+            {
+                return null;
+            }
 
-			var name = element.Attribute("name")?.Value;
-			return GetUnnamed().Named(name);
+            var name = element.Attribute("name")?.Value;
+            return GetUnnamed().Named(name);
 
-			Rule GetUnnamed()
-			{
-				switch (element.Attribute("type").Value)
-				{
-					case nameof(ArrayRule):
-						return new ArrayRule(element.Elements(nameof(Rule)).Select(FromXml).ToArray());
+            Rule GetUnnamed()
+            {
+                switch (element.Attribute("type").Value)
+                {
+                    case nameof(ArrayRule):
+                        return new ArrayRule(element.Elements(nameof(Rule)).Select(FromXml).ToArray());
 
-					case nameof(IfRule):
-						var ifElement = element.Elements().First();
-						return new IfRule(RoR2PatternParser.Instance.Parse<Context>(ifElement), FromXml(element.Element("Then").OnlyChild()), FromXml(element.Element("Else")?.OnlyChild()));
+                    case nameof(IfRule):
+                        var ifElement = element.Elements().First();
+                        IPattern<Context> pattern;
 
-					case nameof(Bucket):
-						return new Bucket(element.Elements().Select(Command.FromXml).ToList());
+                        try
+                        {
+                            pattern = RoR2PatternParser.Instance.Parse<Context>(ifElement);
+                        }
+                        catch (XmlException)
+                        {
+                            pattern = null;
+                        }
 
-					case nameof(StaticSwitchRule):
-						return StaticSwitchRule.Parse(element);
+                        return new IfRule(pattern, FromXml(element.Element("Then").OnlyChild()), FromXml(element.Element("Else")?.OnlyChild()));
 
-					default:
-						throw new XmlException();
-				}
-			}
-		}
+                    case nameof(Bucket):
+                        return new Bucket(element.Elements().Select(Command.FromXml).ToList());
 
-		public static implicit operator Rule(Command c) => new Bucket(c);
+                    case nameof(StaticSwitchRule):
+                        return StaticSwitchRule.Parse(element);
 
-		public static implicit operator Rule(CommandList commands) => new Bucket(commands);
+                    default:
+                        throw new XmlException();
+                }
+            }
+        }
 
-		public static Rule Create(Type ruleType)
-		{
-			switch (ruleType.Name)
-			{
-				case nameof(IfRule):
-					return new IfRule();
+        public static implicit operator Rule(Command c) => new Bucket(c);
 
-				case nameof(StaticSwitchRule):
-					return new StaticSwitchRule();
+        public static implicit operator Rule(CommandList commands) => new Bucket(commands);
 
-				case nameof(ArrayRule):
-					return new ArrayRule();
+        public static Rule Create(Type ruleType)
+        {
+            switch (ruleType.Name)
+            {
+                case nameof(IfRule):
+                    return new IfRule();
 
-				case nameof(Bucket):
-					return new Bucket();
+                case nameof(StaticSwitchRule):
+                    return new StaticSwitchRule();
 
-				default:
-					return null;
-			}
-		}
+                case nameof(ArrayRule):
+                    return new ArrayRule();
 
-		public abstract Bucket GetBucket(Context c);
+                case nameof(Bucket):
+                    return new Bucket();
 
-		IBucket IRule.GetBucket(Context c) => GetBucket(c);
+                default:
+                    return null;
+            }
+        }
 
-		public CommandList GetCommands(Context oldContext, Context newContext, bool force = false)
-		{
-			var newBucket = GetBucket(newContext);
-			if (!(newBucket?.Commands is null))
-			{
-				foreach (var command in newBucket.Commands)
-				{
-					this.Log($"{command?.GetType()}");
-				}
-			}
+        public abstract Bucket GetBucket(Context c);
 
-#warning implement force on error
-			if (newBucket is null || force || GetBucket(oldContext) != newBucket)
-			{
-				return newBucket?.Commands;
-			}
-			else
-			{
-				return null;
-			}
-		}
+        IBucket IRule.GetBucket(Context c) => GetBucket(c);
 
-		ICommandList IRule.GetCommands(Context oldContext, Context newContext, bool force)
-		{
-			return GetCommands(oldContext, newContext, force);
-		}
+        public CommandList GetCommands(Context oldContext, Context newContext, bool force = false)
+        {
+            var newBucket = GetBucket(newContext);
+            if (!(newBucket?.Commands is null))
+            {
+                foreach (var command in newBucket.Commands)
+                {
+                    this.Log($"{command?.GetType()}");
+                }
+            }
 
-		public abstract IReadOnlyRule ToReadOnly();
+            // TODO: implement force on error
+            if (newBucket is null || force || GetBucket(oldContext) != newBucket)
+            {
+                return newBucket?.Commands;
+            }
+            else
+            {
+                return null;
+            }
+        }
 
-		public override string ToString() => Name ?? GetType().Name;
+        ICommandList IRule.GetCommands(Context oldContext, Context newContext, bool force)
+        {
+            return GetCommands(oldContext, newContext, force);
+        }
 
-		public virtual XElement ToXml()
-		{
-			var element = new XElement(nameof(Rule));
-			element.SetAttributeValue("type", GetType().Name);
+        public abstract IReadOnlyRule ToReadOnly();
 
-			if (!(Name is null))
-			{
-				element.SetAttributeValue("name", Name);
-			}
+        public override string ToString() => Name ?? GetType().Name;
 
-			return element;
-		}
+        public virtual XElement ToXml()
+        {
+            var element = new XElement(nameof(Rule));
+            element.SetAttributeValue("type", GetType().Name);
 
-		internal Rule Named(string name)
-		{
-			Name = name;
-			return this;
-		}
-	}
+            if (!(Name is null))
+            {
+                element.SetAttributeValue("name", Name);
+            }
+
+            return element;
+        }
+
+        internal Rule Named(string name)
+        {
+            Name = name;
+            return this;
+        }
+    }
 }

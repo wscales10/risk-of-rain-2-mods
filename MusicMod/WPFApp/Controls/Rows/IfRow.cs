@@ -3,25 +3,23 @@ using Patterns;
 using Rules.RuleTypes.Mutable;
 using System.Windows.Controls;
 using WPFApp.Controls.Wrappers.PatternWrappers;
-using WPFApp.Controls.PatternControls;
-using WPFApp.Controls.Wrappers;
 using System.Windows;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Rows
 {
     internal abstract class IfRow : RuleRow<IfRow>
     {
-        protected IfRow(Rule output, bool removable = true) : base(output, false, removable)
+        protected IfRow(NavigationContext navigationContext, bool removable = true) : base(navigationContext, false, removable)
         {
         }
     }
 
     internal class ThenRow : IfRow
     {
-        public ThenRow(IPattern<Context> pattern, Rule rule, NavigationContext navigationContext) : base(rule, false)
+        public ThenRow(IPattern<Context> pattern, NavigationContext navigationContext) : base(navigationContext, false)
         {
             PickerWrapper = new SinglePatternPickerWrapper<Context>(navigationContext);
-            PropagateUiChange(null, LeftElement);
 
             if (pattern is not null)
             {
@@ -35,12 +33,12 @@ namespace WPFApp.Controls.Rows
 
         public override string Label => PickerWrapper?.TryGetValue(false).Value?.ToString();
 
-        public override SaveResult TrySaveChanges() => base.TrySaveChanges() & PickerWrapper.TryGetValue(true);
+        protected override SaveResult<IPattern<Context>> trySaveChanges() => PickerWrapper.TryGetValue(true) & base.trySaveChanges();
     }
 
     internal class ElseRow : IfRow
     {
-        public ElseRow(Rule rule) : base(rule) => ((TextBlock)LeftElement).Text = "Else";
+        public ElseRow(NavigationContext navigationContext) : base(navigationContext) => ((TextBlock)LeftElement).Text = "Else";
 
         public override string Label => "Otherwise";
     }

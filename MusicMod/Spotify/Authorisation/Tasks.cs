@@ -1,74 +1,74 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Utils.Async;
 
 namespace Spotify.Authorisation
 {
-	[SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Tasks")]
-	public partial class Authorisation
-	{
-		private readonly SingletonTask refresh;
+    [SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Tasks")]
+    public partial class Authorisation
+    {
+        protected override async Task StartAsync()
+        {
+            flow = getFlow();
+            _ = await server.TryStartAsync();
+        }
 
-		private readonly SingletonTask stop;
+        protected override async Task ResumeAsync()
+        {
+            _ = await server.TryResumeAsync();
 
-		public SingletonTaskWithSetup Lifecycle { get; }
+            if (flow?.State >= FlowState.TokenGranted)
+            {
+                refreshTask = Async.Manager.RunSafely(RefreshLoop);
+            }
+        }
 
-		private async Task RefreshLoop()
-		{
-			while (true)
-			{
-				if (IsPaused)
-				{
-					await pauseEvent;
-				}
+        private async Task RefreshLoop()
+        {
+            while (true)
+            {
+                var delay = RefreshBy - DateTime.UtcNow;
 
-				var delay = refreshBy - DateTime.UtcNow;
+                if (delay > TimeSpan.Zero)
+                {
+                    await Task.Delay(delay, cancellationTokenSource.Token);
+                }
 
-				if (delay > TimeSpan.Zero)
-				{
-					var delayTask = Task.Delay(delay, cancellationTokenSource.Token);
-					await delayTask;
+                data = await flow.TryRefreshTokenAsync();
 
-					if (delayTask.IsCanceled)
-					{
-						break;
-					}
-				}
+                if (!(data?.Scope is null))
+                {
+                    foreach (var scope in data.Scope.Split(' '))
+                    {
+                        scopes[scope] = true;
+                    }
+                }
 
-				data = await flow.TryRefreshTokenAsync(client.SendAsync);
+                switch (flow.State)
+                {
+                    case FlowState.Error:
+                        switch (flow.ErrorState)
+                        {
+                            case ErrorState.Unlucky:
+                                RefreshIn(TimeSpan.FromSeconds(6));
+                                break;
 
-				if (!(data?.Scope is null))
-				{
-					foreach (var scope in data.Scope.Split(' '))
-					{
-						scopes[scope] = true;
-					}
-				}
+                            default:
+                                throw new NotImplementedException();
+                        }
+                        break;
 
-				if (data is null)
-				{
-					flow = null;
-					return;
-				}
+                    case FlowState.TokenRefreshed:
+                        OnAccessTokenReceived?.Invoke(this, data.AccessToken);
+                        RefreshIn(GetWaitTime(data.ExpiresIn));
+                        break;
 
-				OnAccessTokenReceived?.Invoke(this, data.AccessToken);
-			}
-		}
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+        }
 
-		private async Task StopInner()
-		{
-			cancellationTokenSource.Cancel();
-			await server.StopAsync();
-			await refresh.Task;
-			stopEvent.Set();
-		}
-
-		private void StartInner()
-		{
-			stopEvent.Reset();
-			flow = getFlow();
-			_ = server.ListenAsync();
-		}
-	}
+        private void RefreshIn(TimeSpan timeSpan) => RefreshBy = DateTime.UtcNow + timeSpan;
+    }
 }

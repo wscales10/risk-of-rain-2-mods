@@ -2,8 +2,10 @@
 using Rules;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
+using Spotify;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using Utils;
 using static Rules.Examples;
@@ -37,6 +39,7 @@ namespace Ror2Mod2
 
             IRule rule;
 
+            var playlists = Enumerable.Empty<Playlist>();
             if (string.IsNullOrEmpty(uri))
             {
                 rule = MimicRule;
@@ -45,9 +48,18 @@ namespace Ror2Mod2
             {
                 this.Log(uri);
                 rule = Rule.FromXml(XElement.Load(uri));
+                var playlistsFile = new FileInfo(uri).Directory.GetFiles("playlists.xml").FirstOrDefault();
+                if (!(playlistsFile is null))
+                {
+                    var imported = XElement.Load(playlistsFile.FullName).Elements().Select(x => new Playlist(x));
+                    if (!(imported is null))
+                    {
+                        playlists = imported;
+                    }
+                }
             }
 
-            Music = new SpotifyController(new SingleRulePicker(rule), SafeLogger);
+            Music = new SpotifyController(new SingleRulePicker(rule), playlists, SafeLogger);
 
             On.RoR2.UI.PauseScreenController.OnEnable += PauseScreenController_OnEnable;
 

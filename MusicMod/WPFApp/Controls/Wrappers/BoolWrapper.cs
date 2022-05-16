@@ -1,9 +1,10 @@
 ﻿using System.Windows.Controls;
 using System.Windows;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers
 {
-	internal class BoolWrapper : ControlWrapper<bool, CheckBox>
+    internal class BoolWrapper : ControlWrapper<bool, CheckBox>
 	{
 		public BoolWrapper()
 		{

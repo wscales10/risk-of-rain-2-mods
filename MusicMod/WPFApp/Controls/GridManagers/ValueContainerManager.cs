@@ -1,6 +1,4 @@
-﻿using WPFApp.Controls.PatternControls;
-
-namespace WPFApp.Controls.GridManagers
+﻿namespace WPFApp.Controls.GridManagers
 {
     public class ValueContainerManager : GridManager<ValueContainer>
     {

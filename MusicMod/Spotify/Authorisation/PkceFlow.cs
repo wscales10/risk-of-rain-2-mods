@@ -1,40 +1,34 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using SpotifyAPI.Web;
 
 namespace Spotify.Authorisation
 {
-	internal class PkceFlow : CodeFlow
-	{
-		private readonly string codeVerifier;
-		private readonly string codeChallenge;
+    internal class PkceFlow : CodeFlow
+    {
+        private readonly string codeVerifier;
 
-		public PkceFlow(App app) : base(app)
-		{
-			(codeVerifier, codeChallenge) = PKCEUtil.GenerateCodes();
-		}
+        private readonly string codeChallenge;
 
-		protected override Dictionary<string, string> GetAccessTokenRequest()
-		{
-			var output = base.GetAccessTokenRequest();
-			output["client_id"] = app.ClientId;
-			output["code_verifier"] = codeVerifier;
-			return output;
-		}
+        public PkceFlow(App app) : base(app)
+        {
+            (codeVerifier, codeChallenge) = PKCEUtil.GenerateCodes();
+        }
 
-		public override NameValueCollection GetLoginQueryString(IEnumerable<string> scopes)
-		{
-			var output = base.GetLoginQueryString(scopes);
-			output.Add("code_challenge_method", "S256");
-			output.Add("code_challenge", codeChallenge);
-			return output;
-		}
+        protected override AuthenticationHeaderValue AuthorisationHeaderValue => null;
 
-		protected override Dictionary<string, string> GetRefreshTokenRequest()
-		{
-			var output = base.GetRefreshTokenRequest();
-			output["client_id"] = app.ClientId;
-			return output;
-		}
-	}
+        public override NameValueCollection GetLoginQueryString(IEnumerable<string> scopes)
+        {
+            var output = base.GetLoginQueryString(scopes);
+            output.Add("code_challenge_method", "S256");
+            output.Add("code_challenge", codeChallenge);
+            return output;
+        }
+
+        protected override async Task<object> RequestTokensAsync(OAuthClient client) => await client.RequestToken(new PKCETokenRequest(app.ClientId, Code, app.RedirectUri, codeVerifier));
+
+        protected override async Task<object> RefreshTokenAsync(OAuthClient client) => await client.RequestToken(new PKCETokenRefreshRequest(app.ClientId, RefreshToken));
+    }
 }

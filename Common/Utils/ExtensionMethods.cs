@@ -3,153 +3,159 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Utils
 {
-	public static class ExtensionMethods
-	{
-		private static readonly Regex genericTypeNameInfoRegex = new Regex(@"`\d+$");
+    public static class ExtensionMethods
+    {
+        private static readonly Regex genericTypeNameInfoRegex = new Regex(@"`\d+$");
 
-		public static T AsEnum<T>(this string value, bool ignoreCase = false)
-			where T : struct, Enum
-		{
-			return (T)Enum.Parse(typeof(T), value, ignoreCase);
-		}
+        public static T AsEnum<T>(this string value, bool ignoreCase = false)
+            where T : struct, Enum
+        {
+            return (T)Enum.Parse(typeof(T), value, ignoreCase);
+        }
 
-		public static T AsEnum<T>(this Enum value)
-			where T : struct, Enum
-		{
-			return value.ToString().AsEnum<T>();
-		}
+        public static T AsEnum<T>(this Enum value)
+            where T : struct, Enum
+        {
+            return value.ToString().AsEnum<T>();
+        }
 
-		public static ReadOnlyCollection<T> ToReadOnlyCollection<T>(this IList<T> source) => new ReadOnlyCollection<T>(source);
+        public static ReadOnlyCollection<T> ToReadOnlyCollection<T>(this IList<T> source) => new ReadOnlyCollection<T>(source);
 
-		public static ReadOnlyCollection<T> ToReadOnlyCollection<T>(this IEnumerable<T> source) => source.ToList().ToReadOnlyCollection();
+        public static ReadOnlyCollection<T> ToReadOnlyCollection<T>(this IEnumerable<T> source) => source.ToList().ToReadOnlyCollection();
 
-		public static Dictionary<int, T> ToDictionary<T>(this IList<T> list)
-		{
-			var output = new Dictionary<int, T>();
+        public static Dictionary<int, T> ToDictionary<T>(this IList<T> list)
+        {
+            var output = new Dictionary<int, T>();
 
-			for (int i = 0; i < list.Count; i++)
-			{
-				output[i] = list[i];
-			}
+            for (int i = 0; i < list.Count; i++)
+            {
+                output[i] = list[i];
+            }
 
-			return output;
-		}
+            return output;
+        }
 
-		public static ReadOnlyDictionary<TKey, TValue> ToReadOnly<TKey, TValue>(this IDictionary<TKey, TValue> mutable)
-		{
-			return new ReadOnlyDictionary<TKey, TValue>(mutable);
-		}
+        public static ReadOnlyDictionary<TKey, TValue> ToReadOnly<TKey, TValue>(this IDictionary<TKey, TValue> mutable)
+        {
+            return new ReadOnlyDictionary<TKey, TValue>(mutable);
+        }
 
-		public static string ToCompactString(this TimeSpan timeSpan)
-		{
-			string firstPart = timeSpan < TimeSpan.Zero ? "-" : string.Empty;
-			string secondPart = timeSpan.Milliseconds != 0 ? timeSpan.ToString(@"\.FFF") : string.Empty;
+        public static string ToCompactString(this TimeSpan timeSpan)
+        {
+            string firstPart = timeSpan < TimeSpan.Zero ? "-" : string.Empty;
+            string secondPart = timeSpan.Milliseconds != 0 ? timeSpan.ToString(@"\.FFF") : string.Empty;
 
-			if (timeSpan.Hours != 0)
-			{
-				firstPart += timeSpan.ToString(@"h\:mm\:ss");
-			}
-			else if (timeSpan.Minutes != 0)
-			{
-				firstPart += timeSpan.ToString(@"mm\:ss");
-			}
-			else
-			{
-				firstPart += timeSpan.ToString("%s");
-				secondPart += "s";
-			}
+            if (timeSpan.Hours != 0)
+            {
+                firstPart += timeSpan.ToString(@"h\:mm\:ss");
+            }
+            else if (timeSpan.Minutes != 0)
+            {
+                firstPart += timeSpan.ToString(@"mm\:ss");
+            }
+            else
+            {
+                firstPart += timeSpan.ToString("%s");
+                secondPart += "s";
+            }
 
-			return firstPart + secondPart;
-		}
+            return firstPart + secondPart;
+        }
 
-		public static XElement OnlyChild(this XElement element, bool allowNull = false) => allowNull ? element.Elements().SingleOrDefault() : element.Elements().Single();
+        public static XElement OnlyChild(this XElement element, bool allowNull = false) => allowNull ? element.Elements().SingleOrDefault() : element.Elements().Single();
 
-		public static bool IsGenericType(this Type type, Type genericTypeDefinition)
-		{
-			return type.IsGenericType && type.GetGenericTypeDefinition() == genericTypeDefinition;
-		}
+        public static bool IsGenericType(this Type type, Type genericTypeDefinition)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == genericTypeDefinition;
+        }
 
-		public static string GetDisplayName(this Type type, bool withGenericTypeArguments = true)
-		{
-			string output = type.Name;
+        public static void LogPropertyValue(this object obj, object value, [CallerMemberName] string propertyName = null)
+        {
+            obj?.Log($"{obj.GetType().GetDisplayName()} {propertyName} = {value}");
+        }
 
-			if (!type.IsGenericType)
-			{
-				return output;
-			}
+        public static string GetDisplayName(this Type type, bool withGenericTypeArguments = true)
+        {
+            string output = type.Name;
 
-			if (type.IsGenericType(typeof(Nullable<>)) && !(type.GenericTypeArguments.SingleOrDefault() is null))
-			{
-				return $"{type.GenericTypeArguments[0].GetDisplayName(withGenericTypeArguments)}?";
-			}
+            if (!type.IsGenericType)
+            {
+                return output;
+            }
 
-			output = genericTypeNameInfoRegex.Replace(output, string.Empty);
+            if (type.IsGenericType(typeof(Nullable<>)) && !(type.GenericTypeArguments.SingleOrDefault() is null))
+            {
+                return $"{type.GenericTypeArguments[0].GetDisplayName(withGenericTypeArguments)}?";
+            }
 
-			if (!withGenericTypeArguments)
-			{
-				return output;
-			}
+            output = genericTypeNameInfoRegex.Replace(output, string.Empty);
 
-			output += $"<{string.Join(", ", type.GenericTypeArguments.Select(t => t?.GetDisplayName()))}>";
-			return output;
-		}
+            if (!withGenericTypeArguments)
+            {
+                return output;
+            }
 
-		public static IEnumerable<T> With<T>(this IEnumerable<T> source, params T[] items) => source.Concat(items);
+            output += $"<{string.Join(", ", type.GenericTypeArguments.Select(t => t?.GetDisplayName()))}>";
+            return output;
+        }
 
-		internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
+        public static IEnumerable<T> With<T>(this IEnumerable<T> source, params T[] items) => source.Concat(items);
 
-		internal static int InsertRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
-		{
-			int i = startingIndex;
+        internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
 
-			foreach (var item in collection)
-			{
-				source.Insert(i++, item);
-			}
+        internal static int InsertRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
+        {
+            int i = startingIndex;
 
-			return i;
-		}
+            foreach (var item in collection)
+            {
+                source.Insert(i++, item);
+            }
 
-		internal static void RemoveRange(this IList source, int index, int count)
-		{
-			for (int i = 0; i < count; i++)
-			{
-				source.RemoveAt(index);
-			}
-		}
+            return i;
+        }
 
-		internal static int ReplaceRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
-		{
-			int i = startingIndex;
+        internal static void RemoveRange(this IList source, int index, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                source.RemoveAt(index);
+            }
+        }
 
-			foreach (var item in collection)
-			{
-				source[i++] = item;
-			}
+        internal static int ReplaceRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
+        {
+            int i = startingIndex;
 
-			return i;
-		}
+            foreach (var item in collection)
+            {
+                source[i++] = item;
+            }
 
-		internal static int ReplaceRange<T, TList>(this TList source, int startingIndex, IEnumerable<T> newList, int oldCount)
-			where TList : IList<T>, IList
-		{
-			int i = source.ReplaceRange(startingIndex, newList.Take(oldCount));
+            return i;
+        }
 
-			if (i < startingIndex + oldCount)
-			{
-				source.RemoveRange(i, oldCount + startingIndex - i);
-			}
-			else
-			{
-				i = source.InsertRange(i, newList.Skip(oldCount));
-			}
+        internal static int ReplaceRange<T, TList>(this TList source, int startingIndex, IEnumerable<T> newList, int oldCount)
+            where TList : IList<T>, IList
+        {
+            int i = source.ReplaceRange(startingIndex, newList.Take(oldCount));
 
-			return i;
-		}
-	}
+            if (i < startingIndex + oldCount)
+            {
+                source.RemoveRange(i, oldCount + startingIndex - i);
+            }
+            else
+            {
+                i = source.InsertRange(i, newList.Skip(oldCount));
+            }
+
+            return i;
+        }
+    }
 }

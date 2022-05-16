@@ -15,63 +15,64 @@
 		Deactivated="Window_Deactivated"
 		d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
 		Closing="Window_Closing">
-	<Window.Resources>
-		<Style TargetType="Button">
-			<Setter Property="Padding" Value="3" />
-			<Setter Property="Margin" Value="3" />
-			<Setter Property="MinWidth" Value="55" />
-		</Style>
-		<Style TargetType="CheckBox">
-			<Setter Property="Padding" Value="3" />
-			<Setter Property="Margin" Value="3" />
-			<Setter Property="VerticalContentAlignment" Value="Center" />
-		</Style>
-		<converters:BooleanToVisibilityConverter x:Key="ReverseBooleanToVisibilityConverter" True="Collapsed" False="Visible" />
-		<converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-		<properties:Settings x:Key="Settings" />
-	</Window.Resources>
-	<Grid x:Name="masterGrid" Focusable="True">
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto" />
-			<RowDefinition />
-		</Grid.RowDefinitions>
-		<StackPanel Orientation="Horizontal">
-			<Button Command="{Binding BackCommand}">Back</Button>
-			<Button Command="{Binding ForwardCommand}">Forward</Button>
-			<Button Command="{Binding UpCommand}">Up</Button>
-			<Button Command="{Binding HomeCommand}">Home</Button>
-			<Button Command="{Binding ImportCommand}">Import XML</Button>
-			<Button Command="{Binding ExportCommand}">Export XML</Button>
-			<Button Command="{Binding NewCommand}">New...</Button>
-			<Button Command="{Binding ClearCacheCommand}">Clear Cache</Button>
-			<CheckBox x:Name="OfflineModeCheckbox"
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="MinWidth" Value="55" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <converters:BooleanToVisibilityConverter x:Key="ReverseBooleanToVisibilityConverter" True="Collapsed" False="Visible" />
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <properties:Settings x:Key="Settings" />
+    </Window.Resources>
+    <Grid x:Name="masterGrid" Focusable="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal">
+            <Button Command="{Binding BackCommand}">Back</Button>
+            <Button Command="{Binding ForwardCommand}">Forward</Button>
+            <Button Command="{Binding UpCommand}">Up</Button>
+            <Button Command="{Binding HomeCommand}">Home</Button>
+            <Button Command="{Binding ImportCommand}">Import XML</Button>
+            <Button Command="{Binding ExportCommand}">Export XML</Button>
+            <Button Command="{Binding NewCommand}">New...</Button>
+            <Button Command="{Binding ClearCacheCommand}">Clear Cache</Button>
+            <Button Command="{Binding GotoPlaylistsCommand}">Playlists</Button>
+            <CheckBox x:Name="OfflineModeCheckbox"
 					  IsChecked="{Binding Source={StaticResource Settings}, Path=Default.OfflineMode}">Offline Mode</CheckBox>
-			<CheckBox x:Name="OpenLinksInAppCheckbox"
+            <CheckBox x:Name="OpenLinksInAppCheckbox"
 					  IsChecked="{Binding Source={StaticResource Settings}, Path=Default.OpenLinksInApp}">Open links in app</CheckBox>
-			<CheckBox x:Name="AutosaveCheckbox" IsChecked="{Binding Source={StaticResource Settings}, Path=Default.Autosave, Mode=OneWay}" Click="AutosaveCheckbox_Click">Autosave</CheckBox>
-		</StackPanel>
-		<Grid Grid.Row="1">
-			<Grid.Resources>
-				<converters:ViewModelToControlConverter x:Key="Converter" />
-			</Grid.Resources>
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="200" MinWidth="15" MaxWidth="500" />
-				<ColumnDefinition Width="1" />
-				<ColumnDefinition />
-			</Grid.ColumnDefinitions>
-			<TreeView ItemsSource="{Binding MainRows}">
-				<TreeView.ItemTemplate>
-					<HierarchicalDataTemplate DataType="{x:Type rows:IRuleRow}" ItemsSource="{Binding Children}">
-						<Button Content="{Binding Label}" Command="{Binding Path=DataContext.NavigateTreeCommand, RelativeSource={RelativeSource AncestorType=views:MainView}}" CommandParameter="{Binding}" />
-					</HierarchicalDataTemplate>
-				</TreeView.ItemTemplate>
-			</TreeView>
-			<GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
-			<ContentPresenter Grid.Column="2" x:Name="ControlContainer"
+            <CheckBox x:Name="AutosaveCheckbox" IsChecked="{Binding Source={StaticResource Settings}, Path=Default.Autosave, Mode=OneWay}" Click="AutosaveCheckbox_Click">Autosave</CheckBox>
+        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.Resources>
+                <converters:ViewModelToControlConverter x:Key="Converter" />
+            </Grid.Resources>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" MinWidth="15" MaxWidth="500" />
+                <ColumnDefinition Width="1" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <TreeView ItemsSource="{Binding MainRows}">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate DataType="{x:Type rows:IRuleRow}" ItemsSource="{Binding Children}">
+                        <Button Content="{Binding Label}" Command="{Binding Path=DataContext.NavigateTreeCommand, RelativeSource={RelativeSource AncestorType=views:MainView}}" CommandParameter="{Binding}" />
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+            <ContentPresenter Grid.Column="2" x:Name="ControlContainer"
 				Content="{Binding ItemViewModel, Converter={StaticResource Converter}}" />
-			<rulecontrols:NewRuleControl Grid.Column="2" x:Name="newRuleControl"
+            <rulecontrols:NewRuleControl Grid.Column="2" x:Name="newRuleControl"
 									 VerticalAlignment="Center"
 									 Visibility="{Binding HasContent, Converter={StaticResource ReverseBooleanToVisibilityConverter}}" />
-		</Grid>
-	</Grid>
+        </Grid>
+    </Grid>
 </Window>

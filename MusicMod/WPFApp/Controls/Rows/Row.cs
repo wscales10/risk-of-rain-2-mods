@@ -5,102 +5,114 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Rows
 {
-	public delegate int IndexGetter<TRow>(TRow row);
+    public delegate int IndexGetter<in TRow>(TRow row);
 
-	public abstract class Row<TRow> : NotifyPropertyChangedBase, IRow where TRow : Row<TRow>
-	{
-		private bool isSelected;
+    public delegate void RowSavedEventHandler<in TRow>(TRow sender, SaveResult result);
 
-		protected Row(bool movable, bool removable = true)
-		{
-			IsMovable = movable;
-			IsRemovable = removable;
-		}
+    public abstract class Row<TRow> : NotifyPropertyChangedBase, IRow where TRow : Row<TRow>
+    {
+        private bool isSelected;
 
-		public event Action<UIElement, UIElement> OnUiChanged;
+        protected Row(bool movable, bool removable = true)
+        {
+            IsMovable = movable;
+            IsRemovable = removable;
+        }
 
-		public bool IsMovable { get; }
+        public event RowSavedEventHandler<TRow> Saved;
 
-		public bool IsRemovable { get; }
+        public bool IsMovable { get; }
 
-		public virtual UIElement RightElement => null;
+        public bool IsRemovable { get; }
 
-		public virtual UIElement LeftElement { get; } = new TextBlock() { TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontSize = 14, Margin = new Thickness(4) };
+        public virtual UIElement RightElement { get; protected set; }
 
-		public ICollectionView Children => Row.Filter(AllChildren, r => (r as IRuleRow)?.Output is not null);
+        public virtual UIElement LeftElement { get; } = new TextBlock() { TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontSize = 14, Margin = new Thickness(4) };
 
-		public bool IsSelected
-		{
-			get => isSelected;
-			set => SetProperty(ref isSelected, value);
-		}
+        public ICollectionView Children => Row.Filter(AllChildren, r => (r as IRuleRow)?.Output is not null);
 
-		protected virtual ReadOnlyObservableCollection<IRow> AllChildren { get; } = new(new());
+        public bool IsSelected
+        {
+            get => isSelected;
+            set => SetProperty(ref isSelected, value);
+        }
 
-		public virtual SaveResult TrySaveChanges() => new(true);
+        protected virtual ReadOnlyObservableCollection<IRow> AllChildren { get; } = new(new());
 
-		protected void PropagateUiChange(UIElement oldElement, UIElement newElement)
-		{
-			NotifyPropertyChanged(nameof(RightElement));
-			OnUiChanged?.Invoke(oldElement, newElement);
-		}
-	}
+        public SaveResult TrySaveChanges()
+        {
+            var result = trySaveChanges();
+            Saved?.Invoke((TRow)this, result);
+            return result;
+        }
 
-	internal static class Row
-	{
-		internal static ICollectionView Filter<T>(ICollection<T> source, Func<T, bool> predicate)
-		{
-			ICollectionView output = CollectionViewSource.GetDefaultView(source);
+        protected virtual SaveResult trySaveChanges() => new(true);
+    }
 
-			if (output is not null)
-			{
-				output.Filter = x => predicate((T)x);
-			}
+    internal static class Row
+    {
+        internal static ICollectionView Filter<T>(ICollection<T> source, Func<T, bool> predicate)
+        {
+            ICollectionView output = CollectionViewSource.GetDefaultView(source);
 
-			return output;
-		}
-	}
+            if (output is not null)
+            {
+                output.Filter = x => predicate((T)x);
+            }
 
-	internal abstract class Row<TOut, TRow> : Row<TRow>
-			where TOut : class
-		where TRow : Row<TOut, TRow>
-	{
-		private readonly CustomContentPresenter<TOut> outputPresenter = new();
+            return output;
+        }
+    }
 
-		protected Row(TOut output, bool movable, bool removable = true)
-			: base(movable, removable)
-		{
-			outputPresenter.OnContentModified += (o, u) => RefreshOutputUi(u, o);
-			outputPresenter.OnUiRequested += MakeOutputUi;
-			outputPresenter.OnSetContent += (o) => OnSetOutput?.Invoke(o);
-			outputPresenter.OnUiChanged += PropagateUiChange;
-			Output = output;
-		}
+    internal abstract class Row<TOut, TRow> : Row<TRow>
+        where TOut : class
+        where TRow : Row<TOut, TRow>
+    {
+        private TOut output;
 
-		public event Action<TOut> OnSetOutput;
+        private UIElement rightElement;
 
-		public sealed override UIElement RightElement => outputPresenter.UI;
+        protected Row(bool movable, bool removable = true)
+            : base(movable, removable)
+        {
+            PropertyChanged += Row_PropertyChanged;
+        }
 
-		public virtual TOut Output
-		{
-			get => outputPresenter.Content;
+        public event Action<TOut> OnSetOutput;
 
-			protected set
-			{
-				outputPresenter.Content = value;
-				NotifyPropertyChanged();
-			}
-		}
+        public sealed override UIElement RightElement
+        {
+            get => rightElement;
+            protected set => SetProperty(ref rightElement, value);
+        }
 
-		protected abstract UIElement MakeOutputUi();
+        public virtual TOut Output
+        {
+            get => output;
+            set => SetProperty(ref output, value);
+        }
 
-		protected void RefreshOutputUi() => outputPresenter.RefreshUi();
+        protected abstract UIElement MakeOutputUi();
 
-		protected virtual void RefreshOutputUi(UIElement ui, TOut output)
-		{ }
-	}
+        protected void RefreshOutputUi() => RefreshOutputUi(RightElement, Output);
+
+        protected virtual void RefreshOutputUi(UIElement ui, TOut output)
+        { }
+
+        private void Row_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Output):
+                    RightElement = MakeOutputUi();
+                    RefreshOutputUi();
+                    OnSetOutput?.Invoke(Output);
+                    break;
+            }
+        }
+    }
 }

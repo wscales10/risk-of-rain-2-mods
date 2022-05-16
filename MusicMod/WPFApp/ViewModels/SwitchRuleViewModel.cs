@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
@@ -12,12 +13,14 @@ namespace WPFApp.ViewModels
     {
         public SwitchRuleViewModel(StaticSwitchRule switchRule, NavigationContext navigationContext) : base(switchRule, navigationContext)
         {
+            PropertyInfo.OnValidate += PropertyInfo_OnValidate;
+            PropertyInfo.Value = Item.PropertyInfo;
             ExtraCommands = new[]
             {
                 new ButtonContext
                 {
                     Label = "Add Case",
-                    Command = new ButtonCommand(_ => AddCase(), this, nameof(PropertyInfo), propertyInfo => propertyInfo is not null)
+                    Command = new ButtonCommand(_ => AddCase(), PropertyInfo, nameof(PropertyInfo.Value), propertyInfo => propertyInfo is not null)
                 },
                 new ButtonContext
                 {
@@ -29,7 +32,6 @@ namespace WPFApp.ViewModels
                 }
             };
 
-            TypedRowManager.BeforeItemAdded += AttachRowEventHandlers;
             TypedRowManager.BindTo(Item.Cases, AddCase, r => ((CaseRow)r).Case, r => Item.DefaultRule = r?.Output);
 
             if (Item.DefaultRule is not null)
@@ -40,28 +42,29 @@ namespace WPFApp.ViewModels
 
         public override string Title => "Switch on:";
 
-        public PropertyInfo PropertyInfo
-        {
-            get => Item.PropertyInfo;
-
-            set
-            {
-                Item.PropertyInfo = value;
-                NotifyPropertyChanged();
-            }
-        }
+        public StaticMutableSaveResult<PropertyInfo> PropertyInfo { get; } = new();
 
         public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
         protected override RowManager<SwitchRow> TypedRowManager { get; } = new();
 
-        protected override SaveResult ShouldAllowExit()
+        protected override SaveResult<StaticSwitchRule> ShouldAllowExit()
         {
+            PropertyInfo.MaybeOutput(propertyInfo => Item.PropertyInfo = propertyInfo);
+
             // TODO: should consider whether patterns implement IPattern<selected property type>
-            return new SaveResult(PropertyInfo is not null) && RowManager.TrySaveChanges();
+            return base.ShouldAllowExit() & PropertyInfo;
         }
 
-        private void AddDefault(Rule rule = null) => _ = TypedRowManager.AddDefault(new DefaultRow(rule, Item.PropertyInfo));
+        private void PropertyInfo_OnValidate(object sender, MyValidationEventArgs2<PropertyInfo> e)
+        {
+            if (e.Value is null)
+            {
+                e.Invalidate();
+            }
+        }
+
+        private void AddDefault(Rule rule = null) => _ = TypedRowManager.AddDefault(new DefaultRow(NavigationContext, Item.PropertyInfo) { Output = rule });
 
         private CaseRow AddCase(Case<IPattern> c = null)
         {
@@ -70,7 +73,7 @@ namespace WPFApp.ViewModels
                 c = new Case<IPattern>(null);
             }
 
-            return TypedRowManager.Add(new CaseRow(c, Item.PropertyInfo.Type, NavigationContext));
+            return TypedRowManager.Add(new CaseRow(c, PropertyInfo.Value.Type, NavigationContext));
         }
     }
 }

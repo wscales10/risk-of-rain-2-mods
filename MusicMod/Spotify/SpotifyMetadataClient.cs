@@ -1,5 +1,6 @@
 ﻿using Spotify.Commands;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Utils;
 
@@ -11,7 +12,7 @@ namespace Spotify
         {
         }
 
-        protected async override Task<bool> Handle(Command command)
+        protected async override Task<bool> HandleAsync(Command command, CancellationToken? cancellationToken)
         {
             switch (command)
             {

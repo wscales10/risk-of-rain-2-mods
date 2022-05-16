@@ -1,18 +1,13 @@
 ﻿using Rules.RuleTypes.Mutable;
-using System;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
     internal class IfRuleViewModel : RuleViewModelBase<IfRule>
     {
-        private readonly ThenRow thenRow;
-
-        private ElseRow elseRow;
-
         public IfRuleViewModel(IfRule ifRule, NavigationContext navigationContext) : base(ifRule, navigationContext)
         {
             ExtraCommands = new[]
@@ -27,11 +22,10 @@ namespace WPFApp.ViewModels
             TypedRowManager.OnItemRemoved += (_, _) =>
             {
                 ifRule.ElseRule = null;
-                elseRow = null;
             };
-            TypedRowManager.BeforeItemAdded += AttachRowEventHandlers;
-            thenRow = TypedRowManager.Add(new ThenRow(ifRule.Pattern, ifRule.ThenRule, NavigationContext));
+            ThenRow thenRow = TypedRowManager.Add(new ThenRow(ifRule.Pattern, NavigationContext) { Output = ifRule.ThenRule });
             thenRow.OnSetOutput += (rule) => Item.ThenRule = rule;
+            thenRow.Saved += ThenRow_Saved;
 
             if (ifRule.ElseRule is not null)
             {
@@ -45,28 +39,17 @@ namespace WPFApp.ViewModels
 
         protected override RowManager<IfRow> TypedRowManager { get; } = new();
 
-        protected override SaveResult ShouldAllowExit()
+        private void ThenRow_Saved(IfRow sender, SaveResult result)
         {
-            var result1 = thenRow.PickerWrapper.TryGetValue(true);
-
-            if (result1.IsSuccess)
+            if (result.IsSuccess)
             {
-                Item.Pattern = result1.Value;
+                Item.Pattern = ((ThenRow)sender).PickerWrapper.TryGetValue(false).Value;
             }
-
-            SaveResult result2 = result1;
-
-            if (elseRow is not null)
-            {
-                result2 &= elseRow.TrySaveChanges();
-            }
-
-            return result2;
         }
 
         private void AddElse(Rule rule = null)
         {
-            elseRow = new(rule);
+            ElseRow elseRow = new(NavigationContext) { Output = rule };
             _ = TypedRowManager.AddDefault(elseRow);
             elseRow.OnSetOutput += (rule) => Item.ElseRule = rule;
         }

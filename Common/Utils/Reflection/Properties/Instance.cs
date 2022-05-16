@@ -42,5 +42,19 @@
         {
             obj.GetType().GetProperty(propertyName).SetValue(obj, value);
         }
+
+        public static T ConvertToMutable<T>(this object obj)
+            where T : new()
+        {
+            var output = new T();
+            foreach (var property in typeof(T).GetProperties())
+            {
+                if (obj.TryGetPropertyValue(property.Name, out object value))
+                {
+                    output.SetPropertyValue(property.Name, value);
+                }
+            }
+            return output;
+        }
     }
 }

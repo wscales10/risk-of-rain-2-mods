@@ -1,0 +1,27 @@
+﻿<local:Picker x:Class="WPFApp.Controls.Pickers.OptionalPicker"
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:local="clr-namespace:WPFApp.Controls.Pickers"
+              xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls"
+              xmlns:converters="clr-namespace:WPFApp.Converters"
+              xmlns:controls="clr-namespace:WPFApp.Controls"
+              mc:Ignorable="d"
+              d:DesignHeight="450" d:DesignWidth="800"
+              d:DataContext="{d:DesignInstance Type=local:OptionalPickerViewModel}">
+    <Grid>
+        <Grid.Resources>
+            <converters:ValueConverterGroup x:Key="VisibilityConverter1">
+                <converters:IsNullConverter />
+                <converters:BooleanToVisibilityConverter True="Visible" False="Collapsed" />
+            </converters:ValueConverterGroup>
+            <converters:ValueConverterGroup x:Key="VisibilityConverter2">
+                <converters:IsNullConverter />
+                <converters:BooleanToVisibilityConverter True="Collapsed" False="Visible" />
+            </converters:ValueConverterGroup>
+        </Grid.Resources>
+        <commandcontrols:DiscreteComboBox VerticalAlignment="Center" Visibility="{Binding ValueWrapper, Converter={StaticResource VisibilityConverter1}}" MaxWidth="160" Grid.Row="1" x:Name="comboBox" Margin="0 0 0 5" Alignment="Center" />
+        <controls:ValueContainer x:Name="valueContainer" Visibility="{Binding Converter={StaticResource VisibilityConverter2}}" Margin="2" DataContext="{Binding ValueWrapper}" />
+    </Grid>
+</local:Picker>

@@ -18,9 +18,9 @@ namespace Spotify
         User
     }
 
-    public struct SpotifyItem : IEquatable<SpotifyItem>, ISpotifyItem
+    public class SpotifyItem : IEquatable<SpotifyItem>, ISpotifyItem
     {
-        public SpotifyItem(SpotifyItemType type, string id) : this()
+        public SpotifyItem(SpotifyItemType type, string id)
         {
             Type = type;
             Id = id ?? throw new ArgumentNullException(nameof(id));
@@ -34,13 +34,31 @@ namespace Spotify
 
         public SpotifyItemType Type { get; }
 
-        public static bool operator !=(SpotifyItem mi1, SpotifyItem mi2) => !mi1.Equals(mi2);
+        public static bool operator ==(SpotifyItem item1, SpotifyItem item2) => item1 is null ? item2 is null : item1.Equals(item2);
 
-        public static bool operator ==(SpotifyItem mi1, SpotifyItem mi2) => mi1.Equals(mi2);
+        public static bool operator !=(SpotifyItem item1, SpotifyItem item2) => !(item1 == item2);
 
-        public override bool Equals(object o) => o is SpotifyItem mi && Equals(mi);
+        public override bool Equals(object o) => Equals(o as SpotifyItem);
 
-        public bool Equals(SpotifyItem mi) => Type == mi.Type && Id == mi.Id;
+        public bool Equals(SpotifyItem item)
+        {
+            if (item is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, item))
+            {
+                return true;
+            }
+
+            if (GetType() != item.GetType())
+            {
+                return false;
+            }
+
+            return Type == item.Type && Id == item.Id;
+        }
 
         public XElement ToXml()
         {
@@ -70,7 +88,10 @@ namespace Spotify
                     return new SpotifyItem(element);
 
                 case nameof(Playlist):
-                    return new Playlist(element);
+                    return new PlaylistRef(element);
+
+                case "null":
+                    return null;
 
                 default:
                     throw new XmlException();

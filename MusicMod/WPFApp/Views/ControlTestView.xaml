@@ -3,8 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WPFApp.Views" xmlns:controls="clr-namespace:WPFApp.Controls" xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls" xmlns:patterncontrols="clr-namespace:WPFApp.Controls.PatternControls"
-		mc:Ignorable="d"
-        Title="ControlTestView" Height="450" Width="800">
-	<commandcontrols:DiscreteComboBox Alignment="Center" x:Name="box" />
+        xmlns:local="clr-namespace:WPFApp.Views"
+        xmlns:controls="clr-namespace:WPFApp.Controls"
+        xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls"
+        xmlns:patterncontrols="clr-namespace:WPFApp.Controls.PatternControls"
+        xmlns:viewmodels="clr-namespace:WPFApp.ViewModels" xmlns:converters="clr-namespace:WPFApp.Converters"
+        mc:Ignorable="d"
+        Title="ControlTestView" Height="450" Width="800"
+        d:DataContext="{d:DesignInstance Type=viewmodels:TestComboBoxViewModel}">
+    <StackPanel VerticalAlignment="Center" Width="150">
+        <controls:MyComboBox IsEditable="True" ItemsSource="{Binding Items}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedItem}" Text="{Binding Text}" LinkText="False" />
+        <TextBox DataContext="{Binding A}"  Text="{Binding Name}" />
+        <TextBox DataContext="{Binding B}"  Text="{Binding Name}" />
+        <Button Command="{Binding AddCommand}">Add</Button>
+        <Button Command="{Binding RemoveCommand}">Remove</Button>
+        <TextBlock Text="{Binding SelectedItem.Name}" />
+    </StackPanel>
 </Window>

@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using Utils.Reflection.Properties;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.Converters;
 
 namespace WPFApp.Controls.CommandControls
@@ -17,8 +17,6 @@ namespace WPFApp.Controls.CommandControls
         private readonly PropertyString[] propertyStrings;
 
         private readonly ObservableCollection<PropertyString> notDisplayed = new();
-
-        private StackPanel propertiesPanel;
 
         internal FormatString(Type type, params PropertyString[] propertyStrings)
         {
@@ -41,8 +39,7 @@ namespace WPFApp.Controls.CommandControls
         internal StackPanel BuildControl()
         {
             StackPanel output = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(40, 4, 4, 4) };
-
-            propertiesPanel = new() { Orientation = Orientation.Horizontal };
+            StackPanel propertiesPanel = new() { Orientation = Orientation.Horizontal };
 
             foreach (PropertyString propertyString in propertyStrings)
             {

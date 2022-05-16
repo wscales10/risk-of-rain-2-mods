@@ -24,6 +24,8 @@ using System.ComponentModel;
 using System.IO;
 using System.Xml;
 using System.Threading;
+using System.Collections.ObjectModel;
+using Utils.Async;
 
 namespace WPFApp
 {
@@ -40,35 +42,41 @@ namespace WPFApp
 
         private readonly Timer timer;
 
-        private Action display;
+        private readonly bool isTestMode = false;
+
+        private Action Render;
 
         private MainViewModel mainViewModel;
 
         public App()
         {
-            timer = new(_ => PlaybackClient.Stop());
-            exportTaskMachine = new(exportCancellationTokenSource.Token);
+            if (isTestMode)
+            {
+                return;
+            }
 
-            // TODO: (not sure where to put this) Would be nice to have options to define "playlists" in app rather than in spotify:
-            // - Play track
-            // - Wait length of track (+delay?) (abort if bucket switches)
-            // - Play next track, etc.
+            timer = new(_ => PlaybackClient.Stop());
+            exportTaskMachine = new JuniorTaskMachine(exportCancellationTokenSource.Token);
+
             viewModels = new(item => item switch
             {
                 Rule rule => GetRuleViewModel(rule),
                 IPattern pattern => GetPatternControl(pattern),
+                Playlist playlist => new PlaylistViewModel(playlist, NavigationContext),
+                ObservableCollection<Playlist> playlists => new PlaylistsViewModel(playlists, NavigationContext),
                 _ => null,
             });
 
             navigationContext.OnGoHome += GoHome;
             navigationContext.OnGoUp += GoUp;
             navigationContext.OnGoInto += Display;
+            navigationContext.TreeNavigationRequested += NavigationContext_TreeNavigationRequested;
             navigationContext.ViewModelRequested += (obj) => obj is null ? null : viewModels[obj];
             NavigationContext = new(navigationContext);
             history.ActionRequested += TryInner;
             MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x));
             MetadataClient.OnError += SpotifyClient_OnError;
-            PlaybackClient = new SpotifyPlaybackClient(x => PlaybackClient.Log(x));
+            PlaybackClient = new SpotifyPlaybackClient(Info.Playlists, x => PlaybackClient.Log(x));
             PlaybackClient.OnError += SpotifyClient_OnError;
             Authorisation = new Authorisation(Scopes.Metadata.Concat(Scopes.Playback), logger: x => Authorisation.Log(x));
             Settings.Default.PropertyChanged += OnSettingChanged;
@@ -100,36 +108,42 @@ namespace WPFApp
         public void GoBack()
         {
             _ = history.Undo();
-            display();
+            Render();
         }
 
         public void GoForward()
         {
             _ = history.Redo();
-            display();
+            Render();
         }
 
         public void GoHome()
         {
-            _ = Try(new RemoveNavigation(ViewModelList.Skip(1).Reverse()));
-            display();
+            _ = Try(goHome());
+            Render();
         }
 
-        public NavigationViewModelBase Display(IEnumerable list)
+        public NavigationViewModelBase Display(object obj)
         {
             NavigationViewModelBase output = null;
+            IEnumerable list = obj switch
+            {
+                Rule or IPattern or Playlist or IEnumerable<Playlist> or NavigationViewModelBase => new[] { obj },
+                IEnumerable enumerable => enumerable,
+                _ => throw new NotImplementedException(),
+            };
             foreach (object item in list)
             {
                 NavigationViewModelBase viewModel = (item as NavigationViewModelBase) ?? (item is null ? null : viewModels[item]);
 
                 if (Try(new AddNavigation(viewModel)))
                 {
-                    display();
+                    Render();
                     output = CurrentViewModel;
                 }
                 else
                 {
-                    display();
+                    Render();
                     break;
                 }
             }
@@ -140,13 +154,20 @@ namespace WPFApp
         public bool GoUp(int count)
         {
             var result = Try(new RemoveNavigation(ViewModelList.Reverse<NavigationViewModelBase>().Take(count)));
-            display();
+            Render();
             return result;
         }
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            if (isTestMode)
+            {
+                new ControlTestView().Show();
+                return;
+            }
+
             MainView mainView = new(NavigationContext);
             Attach(mainView);
             RegisterRequestHandlers();
@@ -167,10 +188,8 @@ namespace WPFApp
                 ImportXml(Rules.Examples.MimicRule.ToXml());
             }
 
-            display();
+            Render();
             mainView.Show();
-
-            //new ControlTestView().Show();
 
             Authorisation.OnAccessTokenReceived += (_, t) =>
             {
@@ -181,9 +200,29 @@ namespace WPFApp
             Authorisation.OnClientRequested += Web.Goto;
             if (!Settings.Default.OfflineMode)
             {
-                Authorisation.InitiateScopeRequest();
+                Authorisation.InitiateScopeRequestAsync();
             }
         }
+
+        private bool NavigationContext_TreeNavigationRequested(IRuleRow arg)
+        {
+            var node = arg;
+            List<IRuleRow> rows = new();
+            do
+            {
+                rows.Add(node);
+                node = node.Parent;
+            } while (node is not null);
+
+            rows.Reverse();
+
+            var navigation = new CompoundNavigation(new Navigation[] { goHome(), new AddNavigation(rows.Select(r => r.OutputViewModel)) });
+            bool result = Try(navigation);
+            Render();
+            return result;
+        }
+
+        private RemoveNavigation goHome() => new(ViewModelList.Skip(1).Reverse());
 
         private void RegisterRequestHandlers()
         {
@@ -204,7 +243,7 @@ namespace WPFApp
             mainView.OnTryClose += TryClose;
             OnAutosaveLocationRequested += MainView.GetExportLocation;
 
-            display = () =>
+            Render = () =>
             {
                 navigationContext.IsHome = ViewModelList.Count < 2;
                 mainViewModel.BackCommand.CanExecute = history.CurrentIndex > 0;
@@ -260,16 +299,16 @@ namespace WPFApp
                     // TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
                     if (settings.OfflineMode)
                     {
-                        _ = Authorisation.PauseAsync();
+                        _ = Authorisation.TryPauseAsync();
                     }
-                    else if (Authorisation.Lifecycle.IsRunning)
+                    else if (Authorisation.Info.IsOn)
                     {
-                        Authorisation.Resume();
+                        Authorisation.TryResumeAsync();
                         SpotifyItemPickerViewModel.Refresh();
                     }
                     else
                     {
-                        Authorisation.InitiateScopeRequest();
+                        Authorisation.InitiateScopeRequestAsync();
                     }
 
                     break;
@@ -317,7 +356,7 @@ namespace WPFApp
             }
 
             history.Clear();
-            display();
+            Render();
         }
 
         private NavigationViewModelBase GetRuleViewModel(Rule rule) => rule switch
@@ -329,7 +368,7 @@ namespace WPFApp
             _ => null,
         };
 
-        private async Task<ConditionalValue<MusicItemInfo>> HandleMusicItemInfoRequestAsync(SpotifyItem item)
+        private async Task<ConditionalValue<MusicItemInfo>> HandleMusicItemInfoRequestAsync(SpotifyItem item, CancellationToken? cancellationToken)
         {
             if (Settings.Default.OfflineMode || !MetadataClient.IsAuthorised)
             {
@@ -364,7 +403,7 @@ namespace WPFApp
             }
 
             await PlaybackClient.Do(command);
-            timer.Change(TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
+            timer.Change(TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
         }
 
         private void PingSpotify()
@@ -401,7 +440,7 @@ namespace WPFApp
                 return false;
             }
 
-            ExportToFile(xmlViewModel, AutosaveLocation.FullName);
+            ExportToFile(xmlViewModel, AutosaveLocation);
             return true;
         }
 
@@ -409,8 +448,8 @@ namespace WPFApp
         {
             switch (navigation)
             {
-                case AddNavigation:
-                    foreach (NavigationViewModelBase viewModel in navigation.ViewModels)
+                case AddNavigation addNavigation:
+                    foreach (NavigationViewModelBase viewModel in addNavigation.ViewModels)
                     {
                         if (!TrySaveViewModel())
                         {
@@ -426,8 +465,8 @@ namespace WPFApp
                     }
                     break;
 
-                case RemoveNavigation:
-                    foreach (NavigationViewModelBase viewModel in navigation.ViewModels)
+                case RemoveNavigation removeNavigation:
+                    foreach (NavigationViewModelBase viewModel in removeNavigation.ViewModels)
                     {
                         if (!TrySaveViewModel())
                         {
@@ -444,6 +483,9 @@ namespace WPFApp
                         ViewModelList.RemoveAt(ViewModelList.Count - 1);
                     }
                     break;
+
+                case CompoundNavigation compoundNavigation:
+                    return compoundNavigation.Navigations.All(TryInner);
 
                 default:
                     throw new NotSupportedException();

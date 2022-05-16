@@ -6,3 +6,6 @@ dotnet_diagnostic.VSTHRD110.severity=silent
 
 # RCS1211: Remove unnecessary 'else'.
 dotnet_diagnostic.RCS1211.severity = none
+
+# VSTHRD200: Use "Async" suffix for async methods
+dotnet_diagnostic.VSTHRD200.severity = silent

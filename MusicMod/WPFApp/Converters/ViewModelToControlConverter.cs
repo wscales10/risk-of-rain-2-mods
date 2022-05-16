@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Utils;
-using WPFApp.Controls.PatternControls;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.RuleControls;
 using WPFApp.ViewModels;

@@ -2,7 +2,7 @@
 using Utils;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
-using WPFApp.Controls.Wrappers;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
@@ -15,9 +15,11 @@ namespace WPFApp.ViewModels
         public TItem Item { get; }
 
         public override string ItemTypeName => HelperMethods.AddSpacesToPascalCaseString(typeof(TItem).GetDisplayName(false));
+
+        protected override SaveResult<TItem> ShouldAllowExit() => new(base.ShouldAllowExit(), Item);
     }
 
-    public abstract class RowViewModelBase : ItemViewModelBase
+    public abstract class RowViewModelBase : ItemViewModelBase, INameableViewModel
     {
         protected RowViewModelBase(NavigationContext navigationContext) : base(navigationContext)
         {
@@ -25,6 +27,7 @@ namespace WPFApp.ViewModels
             DownCommand = new(_ => RowManager.MoveSelected(true), () => RowManager.CanMoveSelected(true));
             DeleteCommand = new(_ => RowManager.RemoveSelected(), () => RowManager.CanRemoveSelected());
             RowManager.SelectionChanged += UpdateButtons;
+            SetPropertyDependency(nameof(Name), NameResult, nameof(NameResult.Value));
         }
 
         public virtual string Title => string.Empty;
@@ -38,6 +41,24 @@ namespace WPFApp.ViewModels
         public abstract IEnumerable<ButtonContext> ExtraCommands { get; }
 
         public IRowManager RowManager => TypedRowManager;
+
+        public string Name
+        {
+            get => NameResult?.Value;
+
+            set
+            {
+                if (NameResult is not null)
+                {
+                    var name = value?.Trim();
+                    NameResult.Value = name?.Length == 0 ? null : name;
+                }
+            }
+        }
+
+        public MutableSaveResultBase<string> NameResult { get; } = new StaticMutableSaveResult<string>();
+
+        public virtual string NameWatermark => null;
 
         protected abstract IRowManager TypedRowManager { get; }
 

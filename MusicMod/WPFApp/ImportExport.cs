@@ -1,7 +1,9 @@
 ﻿using Rules.RuleTypes.Mutable;
+using Spotify;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -19,11 +21,24 @@ namespace WPFApp
 
         private readonly TaskMachine exportTaskMachine;
 
-        public void ImportFile(string filename)
+        public void ImportFile(string fileName)
         {
-            var xml = XElement.Load(filename);
-            AutosaveLocation = new(filename);
+            FileInfo fileInfo = new(fileName);
+            var xml = XElement.Load(fileName);
+            AutosaveLocation = fileInfo;
             ImportXml(xml, false);
+
+            var playlistsFile = fileInfo.Directory.GetFiles("playlists.xml").SingleOrDefault();
+
+            if (playlistsFile is not null)
+            {
+                Info.Playlists.Clear();
+
+                foreach (var playlist in XElement.Load(playlistsFile.FullName).Elements().Select(x => new Playlist(x)))
+                {
+                    Info.Playlists.Add(playlist);
+                }
+            }
         }
 
         public void ImportXml(XElement xml, bool resetAutosave = true) => Reset(viewModels[Rule.FromXml(xml)], resetAutosave);
@@ -43,19 +58,6 @@ namespace WPFApp
             }
 
             throw new TimeoutException($"Failed to get a write handle to {path} within {timeoutMs}ms.");
-        }
-
-        private void ExportToFile(string fileName)
-        {
-            if (CurrentViewModel.TrySave())
-            {
-                if (Settings.Default.Autosave)
-                {
-                    AutosaveLocation = new(fileName);
-                }
-
-                ExportToFile(GetControlForExport(), fileName);
-            }
         }
 
         private IXmlViewModel GetControlForExport()
@@ -87,7 +89,28 @@ namespace WPFApp
             };
         }
 
-        private void ExportToFile(IXmlViewModel xmlControl, string fileName)
+        private void Export(XElement xml, FileInfo fileName)
+        {
+            using FileStream fs = new(fileName.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            xml?.Save(fs);
+        }
+
+        private void ExportToFile(string fileName)
+        {
+            FileInfo fileInfo = new(fileName);
+
+            if (CurrentViewModel.TrySave())
+            {
+                if (Settings.Default.Autosave)
+                {
+                    AutosaveLocation = fileInfo;
+                }
+
+                ExportToFile(GetControlForExport(), fileInfo);
+            }
+        }
+
+        private void ExportToFile(IXmlViewModel xmlControl, FileInfo fileName)
         {
             // Using synchronous code because async is a bitch to work with taskMachine.Ingest(() =>
             // ExportAsync(xmlControl.GetContentXml(), fileName));
@@ -101,8 +124,21 @@ namespace WPFApp
                 _ = MessageBox.Show("Export error.");
                 return;
             }
-            using FileStream fs = new(fileName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-            xml?.Save(fs);
+
+            Export(xml, fileName);
+            ExportPlaylists(fileName.Directory);
+        }
+
+        private void ExportPlaylists(DirectoryInfo directoryInfo)
+        {
+            XElement element = new("Playlists");
+
+            foreach (var playlist in Info.Playlists)
+            {
+                element.Add(playlist.ToXml());
+            }
+
+            Export(element, new(Path.Combine(directoryInfo.FullName, "playlists.xml")));
         }
 
         private Task ExportAsync(XElement xml, string fileName)

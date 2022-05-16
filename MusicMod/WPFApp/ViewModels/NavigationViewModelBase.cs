@@ -1,8 +1,8 @@
-﻿using WPFApp.Controls.Wrappers;
+﻿using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
-	public abstract class NavigationViewModelBase : ViewModelBase
+    public abstract class NavigationViewModelBase : ViewModelBase
 	{
 		protected NavigationViewModelBase(NavigationContext navigationContext) => NavigationContext = navigationContext;
 

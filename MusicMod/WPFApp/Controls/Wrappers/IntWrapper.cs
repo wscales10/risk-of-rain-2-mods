@@ -1,8 +1,9 @@
-﻿using Xceed.Wpf.Toolkit;
+﻿using WPFApp.Controls.Wrappers.SaveResults;
+using Xceed.Wpf.Toolkit;
 
 namespace WPFApp.Controls.Wrappers
 {
-	internal class IntWrapper : ControlWrapper<int, IntegerUpDown>
+    internal class IntWrapper : ControlWrapper<int, IntegerUpDown>
 	{
 		public IntWrapper(int? min = null, int? max = null)
 		{

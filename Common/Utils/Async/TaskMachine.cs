@@ -5,49 +5,92 @@ using System.Threading.Tasks;
 
 namespace Utils.Async
 {
-	public delegate Task CancellableTask(CancellationToken cancellationToken);
+    public abstract class TaskMachine
+    {
+        private readonly Channel<(CancellableTask, CancellationToken)> tasks;
 
-	public class TaskMachine
-	{
-		private readonly CancellationToken cancellationToken;
+        private Task lifecycle;
 
-		private readonly Channel<CancellableTask> tasks = Channel.CreateUnbounded<CancellableTask>();
+        protected TaskMachine(Channel<(CancellableTask, CancellationToken)> tasks)
+        {
+            this.tasks = tasks;
+        }
 
-		public TaskMachine(CancellationToken cancellationToken)
-		{
-			this.cancellationToken = cancellationToken;
-			Lifecycle = ExecuteAsync();
-		}
+        public Task Lifecycle
+        {
+            get => lifecycle;
 
-		public Task Lifecycle { get; }
+            private set
+            {
+                if (lifecycle is null)
+                {
+                    lifecycle = value;
+                }
+                else
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+        }
 
-		public void Close()
-		{
-			tasks.Writer.Complete();
-		}
+        protected abstract CancellationToken MasterCancellationToken { get; }
 
-		public bool TryIngest(CancellableTask task) => tasks.Writer.TryWrite(task);
+        public void Close()
+        {
+            tasks.Writer.Complete();
+        }
 
-		private async Task ExecuteAsync()
-		{
-			while (await tasks.Reader.WaitToReadAsync(cancellationToken))
-			{
-				CancellableTask cancellableTask = await tasks.Reader.ReadAsync(cancellationToken);
-				MaybeCancel();
-				if (!cancellationToken.IsCancellationRequested)
-				{
-					await cancellableTask(cancellationToken);
-				}
-				MaybeCancel();
-			}
+        public bool TryIngest(Func<CancellationToken, Task> func, CancellationToken cancellationToken = default) => TryIngest(new CancellableTask(func), cancellationToken);
 
-			void MaybeCancel()
-			{
-				if (cancellationToken.IsCancellationRequested)
-				{
-					throw new OperationCanceledException(cancellationToken);
-				}
-			}
-		}
-	}
+        public bool TryIngest(CancellableTask task, CancellationToken cancellationToken = default) => tasks.Writer.TryWrite((task, cancellationToken));
+
+        protected void StartListening() => Lifecycle = ExecuteAsync();
+
+        private async Task ExecuteAsync()
+        {
+            while (await tasks.Reader.WaitToReadAsync(MasterCancellationToken))
+            {
+                var (cancellableTask, cancellationToken) = await tasks.Reader.ReadAsync(MasterCancellationToken);
+                MaybeCancel();
+                var combinedCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(MasterCancellationToken, cancellationToken).Token;
+                if (!combinedCancellationToken.IsCancellationRequested)
+                {
+                    await cancellableTask.RunAsync(combinedCancellationToken);
+                }
+                MaybeCancel();
+            }
+
+            void MaybeCancel()
+            {
+                MasterCancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+    }
+
+    public abstract class UnboundedTaskMachine : TaskMachine
+    {
+        protected UnboundedTaskMachine() : base(Channel.CreateUnbounded<(CancellableTask, CancellationToken)>())
+        {
+        }
+    }
+
+    public class JuniorTaskMachine : UnboundedTaskMachine
+    {
+        public JuniorTaskMachine(CancellationToken cancellationToken)
+        {
+            MasterCancellationToken = cancellationToken;
+            StartListening();
+        }
+
+        protected override CancellationToken MasterCancellationToken { get; }
+    }
+
+    public class SeniorTaskMachine : UnboundedTaskMachine
+    {
+        public SeniorTaskMachine() => StartListening();
+
+        public CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
+
+        protected override CancellationToken MasterCancellationToken => CancellationTokenSource.Token;
+    }
 }

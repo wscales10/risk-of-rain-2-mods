@@ -5,82 +5,95 @@ using System.Threading.Tasks;
 
 namespace Utils.Async
 {
-	public abstract class SingletonTaskBase
-	{
-		private readonly AsyncManualResetEvent resetEvent = new AsyncManualResetEvent();
+    public abstract class SingletonTaskBase
+    {
+        private readonly AsyncManualResetEvent resetEvent = new AsyncManualResetEvent();
 
-		public Task Task { get; protected set; } = Task.CompletedTask;
+        public Task Task { get; protected set; } = Task.CompletedTask;
 
-		public bool IsRunning => !Task.IsCompleted;
+        public bool IsRunning => !Task.IsCompleted;
 
-		public virtual async Task RunAsync()
-		{
-			Start();
-			await Task;
-		}
+        public virtual async Task RunAsync()
+        {
+            Start();
+            await Task;
+        }
 
-		public void Start()
-		{
-			ThrowIfRunning();
-			Task = resetEvent.WaitAsync();
-			_ = GetTaskAsync().ContinueWith(_ => resetEvent.Set(), TaskScheduler.Default);
-		}
+        public void Start()
+        {
+            ThrowIfRunning();
+            Task = resetEvent.WaitAsync();
+            _ = SetupAsync();
+        }
 
-		[SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not async")]
-		protected abstract Task GetTask();
+        [SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not async")]
+        protected abstract Task GetTask();
 
-		protected virtual Task GetTaskAsync() => GetTask();
+        protected virtual Task GetTaskAsync() => GetTask();
 
-		private void ThrowIfRunning()
-		{
-			if (IsRunning)
-			{
-				throw new InvalidOperationException();
-			}
-		}
-	}
+        private async Task SetupAsync()
+        {
+            try
+            {
+                await GetTaskAsync();
+            }
+            catch (OperationCanceledException e)
+            {
+                resetEvent.
+            }
+            resetEvent.Set();
+        }
 
-	public abstract class SingletonTaskWithAsyncSetupBase : SingletonTaskBase
-	{
-		private readonly AsyncManager asyncManager;
+        private void ThrowIfRunning()
+        {
+            if (IsRunning)
+            {
+                throw new InvalidOperationException();
+            }
+        }
+    }
 
-		private JoinableTask startTask;
+    public abstract class SingletonTaskWithAsyncSetupBase : SingletonTaskBase
+    {
+        private readonly AsyncManager asyncManager;
 
-		protected SingletonTaskWithAsyncSetupBase(AsyncManager asyncManager)
-		{
-			this.asyncManager = asyncManager;
-		}
+        private JoinableTask startTask;
 
-		public override sealed async Task RunAsync()
-		{
-			await StartAsync();
-			await Task;
-		}
+        protected SingletonTaskWithAsyncSetupBase(AsyncManager asyncManager)
+        {
+            this.asyncManager = asyncManager;
+        }
 
-		public async Task StartAsync()
-		{
-			Start();
-			await startTask;
-		}
+        public override sealed async Task RunAsync()
+        {
+            await StartAsync();
+            await Task;
+        }
 
-		[SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not async")]
-		protected abstract Task Setup();
+        public async Task StartAsync()
+        {
+            Start();
+            await startTask;
+        }
 
-		protected override sealed Task GetTaskAsync()
-		{
-			startTask = asyncManager.RunSafely(Setup);
-			return startTask.Task.ContinueWith((t) => GetTask(), TaskScheduler.Default);
-		}
-	}
+        [SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Not async")]
+        protected abstract Task Setup();
 
-	public abstract class SingletonTaskWithSetupBase : SingletonTaskBase
-	{
-		protected abstract void Setup();
+        protected override sealed Task GetTaskAsync()
+        {
+            startTask = asyncManager.RunSafely(Setup);
+            return startTask.Task.ContinueWith((t) => GetTask(), TaskScheduler.Default);
+        }
+    }
 
-		protected override sealed Task GetTaskAsync()
-		{
-			Setup();
-			return base.GetTaskAsync();
-		}
-	}
+    public abstract class SingletonTaskWithSetupBase : SingletonTaskBase
+    {
+        protected abstract void Setup();
+
+        protected override sealed Task GetTaskAsync()
+        {
+            Setup();
+            return base.GetTaskAsync();
+        }
+    }
 }

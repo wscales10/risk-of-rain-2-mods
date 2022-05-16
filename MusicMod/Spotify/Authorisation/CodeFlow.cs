@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -11,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Utils;
+using Utils.Reflection.Properties;
 
 namespace Spotify.Authorisation
 {
@@ -52,6 +55,8 @@ namespace Spotify.Authorisation
                 {
                     state = FlowState.Error;
                 }
+
+                this.LogPropertyValue(value);
             }
         }
 
@@ -71,12 +76,16 @@ namespace Spotify.Authorisation
                 {
                     errorState = ErrorState.None;
                 }
+
+                this.LogPropertyValue(value);
             }
         }
 
         public string StateString { get; }
 
         public bool IsFaulted => State == FlowState.Error;
+
+        protected virtual AuthenticationHeaderValue AuthorisationHeaderValue => new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{app.ClientId}:{ app.ClientSecret }")));
 
         public virtual NameValueCollection GetLoginQueryString(IEnumerable<string> scopes)
         {
@@ -90,57 +99,87 @@ namespace Spotify.Authorisation
             return output;
         }
 
-        public async Task<RefreshTokenInfo> RequestTokensAsync(Sender send)
+        public async Task<RefreshTokenInfo> RequestTokensAsync()
         {
             ThrowIfFaulted();
+            var client = new OAuthClient();
+            object response;
 
-            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token"))
+            try
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ app.ClientId }:{ app.ClientSecret }")));
-                Dictionary<string, string> nameValueCollection = GetAccessTokenRequest();
-                request.Content = new FormUrlEncodedContent(nameValueCollection);
-                var responseMessage = await send(request);
-                var deserialised = await DeserializeAsync<RefreshTokenInfo>(responseMessage);
-
-                if (deserialised is null)
-                {
-                    State = FlowState.Error;
-                }
-                else
-                {
-                    State = FlowState.TokenGranted;
-                    RefreshToken = deserialised.RefreshToken;
-                }
-
-                return deserialised;
+                response = await RequestTokensAsync(client);
             }
+            catch (APIException)
+            {
+                ErrorState = ErrorState.ApiDenied;
+                return null;
+            }
+            catch (ArgumentException e)
+            {
+                Debugger.Break();
+                throw;
+            }
+
+            var deserialised = response.ConvertToMutable<RefreshTokenInfo>();
+
+            if (deserialised is null)
+            {
+                State = FlowState.Error;
+            }
+            else
+            {
+                State = FlowState.TokenGranted;
+                RefreshToken = deserialised.RefreshToken;
+            }
+
+            return deserialised;
         }
 
-        public async Task<AccessTokenInfo> TryRefreshTokenAsync(Sender send)
+        public async Task<AccessTokenInfo> TryRefreshTokenAsync()
         {
+            this.Log("Attempting to refresh access token");
             ThrowIfFaulted();
             State = FlowState.Refreshing;
 
-            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token"))
+            var client = new OAuthClient();
+
+            object response;
+
+            try
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{app.ClientId}:{ app.ClientSecret }")));
-                request.Content = new FormUrlEncodedContent(GetRefreshTokenRequest());
-                var responseMessage = await send(request);
-                var deserialised = await DeserializeAsync<AccessTokenInfo>(responseMessage);
-
-                if (deserialised is null)
-                {
-                    // Possibly not connection - check responseMessage please!
-                    Debugger.Break();
-                    ErrorState = ErrorState.Connection;
-                }
-                else
-                {
-                    State = FlowState.TokenRefreshed;
-                }
-
-                return deserialised;
+                response = await RefreshTokenAsync(client);
             }
+            catch (APIException)
+            {
+                ErrorState = ErrorState.ApiDenied;
+                return null;
+            }
+            catch (ArgumentException e)
+            {
+                Debugger.Break();
+                throw;
+            }
+
+            var deserialised = response.ConvertToMutable<RefreshTokenInfo>();
+            var refreshToken = deserialised.RefreshToken;
+
+            if (!(refreshToken is null))
+            {
+                RefreshToken = refreshToken;
+            }
+
+            if (deserialised is null)
+            {
+                // TODO: not working Possibly not connection - check responseMessage please!
+                Debugger.Break();
+                ErrorState = ErrorState.Connection;
+            }
+            else
+            {
+                State = FlowState.TokenRefreshed;
+            }
+
+            return deserialised;
         }
 
         public bool TryTransitionToTokenRequestState(string state, string code, ref string error)
@@ -169,18 +208,9 @@ namespace Spotify.Authorisation
             return true;
         }
 
-        protected virtual Dictionary<string, string> GetAccessTokenRequest() => new Dictionary<string, string>()
-            {
-                {"grant_type", "authorization_code" },
-                { "code", Code },
-                {"redirect_uri", app.RedirectUri.ToString() }
-            };
+        protected virtual async Task<object> RequestTokensAsync(OAuthClient client) => await client.RequestToken(new AuthorizationCodeTokenRequest(app.ClientId, app.ClientSecret, Code, app.RedirectUri));
 
-        protected virtual Dictionary<string, string> GetRefreshTokenRequest() => new Dictionary<string, string>()
-            {
-                {"grant_type", "refresh_token" },
-                { "refresh_token", RefreshToken },
-            };
+        protected virtual async Task<object> RefreshTokenAsync(OAuthClient client) => await client.RequestToken(new AuthorizationCodeRefreshRequest(app.ClientId, app.ClientSecret, RefreshToken));
 
         private void ThrowIfFaulted()
         {

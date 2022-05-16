@@ -2,6 +2,8 @@
 {
 	public interface IValuePattern : ISmallPattern
 	{
-		IValuePattern DefineWith(string stringDefinition);
+        bool Redefinable { get; }
+
+        IValuePattern DefineWith(string stringDefinition);
 	}
 }

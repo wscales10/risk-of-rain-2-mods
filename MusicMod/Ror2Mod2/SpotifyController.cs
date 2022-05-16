@@ -3,6 +3,7 @@ using Spotify;
 using Spotify.Authorisation;
 using Spotify.Commands;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Utils;
 
@@ -14,15 +15,15 @@ namespace Ror2Mod2
 
         private readonly ContextHelper contextHelper;
 
-        public SpotifyController(RulePicker rulePicker, Logger logger) : base(logger)
+        public SpotifyController(RulePicker rulePicker, IEnumerable<Playlist> playlists, Logger logger) : base(logger)
         {
             this.rulePicker = rulePicker;
-            Client = new SpotifyPlaybackClient(logger);
+            Client = new SpotifyPlaybackClient(playlists, logger);
             Client.OnError += e => this.Log(e);
             Authorisation = new Authorisation(Scopes.Playback, logger: logger);
             Authorisation.OnAccessTokenReceived += Authorisation_OnAccessTokenReceived;
             Authorisation.OnClientRequested += Web.Goto;
-            Authorisation.InitiateScopeRequest();
+            _ = Authorisation.InitiateScopeRequestAsync();
             contextHelper = new ContextHelper(Update, logger);
         }
 
@@ -50,11 +51,9 @@ namespace Ror2Mod2
                         await Client.Do(c);
                         break;
 
-
                     case ICommandList commands:
                         await Client.Do(commands);
                         break;
-
 
                     default:
                         throw new ArgumentException($"Expected a {nameof(ICommandList)} but received a {musicIdentifier.GetType().Name} instead", nameof(musicIdentifier));

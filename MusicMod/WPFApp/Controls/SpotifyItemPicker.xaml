@@ -8,9 +8,6 @@
              d:DesignHeight="56" d:DesignWidth="637"
              d:DataContext="{d:DesignInstance Type=local:SpotifyItemPickerViewModel}"
              PreviewMouseLeftButtonUp="SpotifyItemPicker_PreviewMouseLeftButtonUp">
-    <UserControl.Resources>
-        <converters:IsNullConverter x:Key="IsNullConverter" />
-    </UserControl.Resources>
     <UserControl.Style>
         <Style TargetType="UserControl">
             <Style.Triggers>
@@ -36,7 +33,7 @@
                 <RowDefinition Height="30" />
                 <RowDefinition Height="26" />
             </Grid.RowDefinitions>
-            <Image Grid.RowSpan="2" Margin="9 8" Source="{Binding ImageSource}"/>
+            <Image Grid.RowSpan="2" Margin="9 8" Source="{Binding ImageSource}" />
             <Label Grid.Column="1" Foreground="#1ed15e" Content="{Binding Name}" FontSize="15" VerticalContentAlignment="Bottom" Padding="7 0" Margin="0 0 10 0" />
             <Grid Grid.Column="1" Grid.Row="1" x:Name="infoGrid" Margin="8 0 18 0">
                 <Grid.ColumnDefinitions>

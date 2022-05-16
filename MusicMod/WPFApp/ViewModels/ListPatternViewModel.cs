@@ -4,8 +4,8 @@ using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using Patterns;
 using Patterns.Patterns;
-using WPFApp.Controls.Wrappers;
 using Utils;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
@@ -65,6 +65,6 @@ namespace WPFApp.ViewModels
             return SaveResult.Create<IPattern>(result);
         }
 
-        private PatternRow AddPattern(IPattern pattern = null) => TypedRowManager.Add(new(pattern, valueType, NavigationContext));
+        private PatternRow AddPattern(IPattern pattern = null) => TypedRowManager.Add(new(valueType, NavigationContext) { Output = pattern });
     }
 }

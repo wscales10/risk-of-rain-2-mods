@@ -1,9 +1,10 @@
 ﻿using Patterns;
 using System.Windows;
+using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers
 {
-	public delegate bool Parser<T>(string s, out T value);
+    public delegate bool Parser<T>(string s, out T value);
 
 	internal class SwitchWrapper<T, TOut> : ControlWrapper<Switch<T, TOut>, SwitchControl>
 	{

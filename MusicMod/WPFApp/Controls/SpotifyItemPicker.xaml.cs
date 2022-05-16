@@ -1,6 +1,7 @@
 ﻿using Spotify;
 using System;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,7 +11,7 @@ using WPFApp.Properties;
 
 namespace WPFApp.Controls
 {
-    public delegate Task<ConditionalValue<MusicItemInfo>> MusicItemInfoRequestHandler(SpotifyItem item);
+    public delegate Task<ConditionalValue<MusicItemInfo>> MusicItemInfoRequestHandler(SpotifyItem item, CancellationToken? cancellationToken);
 
     /// <summary>
     /// Interaction logic for SpotifyItemPicker.xaml
@@ -27,7 +28,7 @@ namespace WPFApp.Controls
 
         internal static event MusicItemInfoRequestHandler MusicItemInfoRequested;
 
-        public static AsyncCache<SpotifyItem, MusicItemInfo> MusicItemDictionary { get; } = new(si => MusicItemInfoRequested?.Invoke(si));
+        public static AsyncCache<SpotifyItem, MusicItemInfo> MusicItemDictionary { get; } = new((si, token) => MusicItemInfoRequested?.Invoke(si, token));
 
         public SpotifyItemPickerViewModel ViewModel { get; }
 
@@ -46,7 +47,7 @@ namespace WPFApp.Controls
         {
             object dataObject = e?.Data?.GetData(typeof(string));
 
-            if (dataObject is null || dataObject is not string url)
+            if (dataObject is not string url)
             {
                 this.Log("No data");
                 return;

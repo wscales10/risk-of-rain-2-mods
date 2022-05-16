@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Async\SingletonTask.cs" />
+    <Compile Remove="Async\SingletonTaskBase.cs" />
     <Compile Remove="FilteredObservableCollection.cs" />
   </ItemGroup>
 
