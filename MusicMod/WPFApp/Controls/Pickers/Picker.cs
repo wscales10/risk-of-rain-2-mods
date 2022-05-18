@@ -1,29 +1,12 @@
-﻿using System;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 
 namespace WPFApp.Controls.Pickers
 {
     public abstract partial class Picker : UserControl
     {
-        protected Picker(PickerViewModel viewModel) => PostInit = () => ViewModel = viewModel;
-
-        public virtual PickerViewModel ViewModel
-        {
-            get => DataContext as PickerViewModel;
-
-            private set
-            {
-                DataContext = value;
-                ItemsControl.ItemsSource = value.ItemsSource;
-                ItemsControl.DisplayMemberPath = value.Config.DisplayMemberPath;
-                ItemsControl.SelectedValuePath = value.Config.SelectedValuePath;
-                ItemsControl.SelectionChanged += ItemsControl_SelectionChanged;
-            }
-        }
-
-        protected Action PostInit { get; }
+        protected Picker() => DataContextChanged += Picker_DataContextChanged;
 
         protected abstract Selector ItemsControl { get; }
 
@@ -31,14 +14,26 @@ namespace WPFApp.Controls.Pickers
         {
             if (ItemsControl.SelectedItem is not null)
             {
-                ViewModel.HandleSelection(ViewModel.Config.CreateWrapper(ItemsControl.SelectedValue));
+                GetViewModel().HandleSelection(GetViewModel().Config.CreateWrapper(ItemsControl.SelectedValue));
                 ItemsControl.SelectedItem = null;
             }
         }
 
-        private void ItemsControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        protected PickerViewModel GetViewModel() => DataContext as PickerViewModel;
+
+        protected void SetViewModel(PickerViewModel value) => DataContext = value;
+
+        protected virtual void Picker_ViewModelChanged(PickerViewModel oldViewModel, PickerViewModel newViewModel)
         {
-            CommitSelection();
+            ItemsControl.ItemsSource = newViewModel.ItemsSource;
+            ItemsControl.DisplayMemberPath = newViewModel.Config.DisplayMemberPath;
+            ItemsControl.SelectedValuePath = newViewModel.Config.SelectedValuePath;
+            ItemsControl.SelectionChanged -= ItemsControl_SelectionChanged;
+            ItemsControl.SelectionChanged += ItemsControl_SelectionChanged;
         }
+
+        private void Picker_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e) => Picker_ViewModelChanged(e.OldValue as PickerViewModel, (PickerViewModel)e.NewValue);
+
+        private void ItemsControl_SelectionChanged(object sender, SelectionChangedEventArgs e) => CommitSelection();
     }
 }

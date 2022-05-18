@@ -7,7 +7,7 @@
         bool? Status { get; }
     }
 
-    public interface ISaveResult<T> : ISaveResult
+    public interface ISaveResult<out T> : ISaveResult
     {
         T Value { get; }
     }

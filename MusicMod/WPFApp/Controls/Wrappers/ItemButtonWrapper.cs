@@ -1,12 +1,11 @@
 ﻿using System.Windows.Controls;
 using WPFApp.Controls.Wrappers.SaveResults;
-using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Wrappers
 {
-    internal class ItemButtonWrapper : ControlWrapper<IItemViewModel, Button>
+    internal class ItemButtonWrapper<TItem> : ControlWrapper<TItem, Button>
     {
-        private IItemViewModel outputViewModel;
+        private TItem output;
 
         public ItemButtonWrapper(Button button) => UIElement = button;
 
@@ -14,14 +13,14 @@ namespace WPFApp.Controls.Wrappers
 
         public override bool NeedsRightMargin => false;
 
-        protected override void setValue(IItemViewModel value)
+        protected override void setValue(TItem value)
         {
-            outputViewModel = value;
+            output = value;
         }
 
-        protected override SaveResult<IItemViewModel> tryGetValue(bool trySave)
+        protected override SaveResult<TItem> tryGetValue(GetValueRequest request)
         {
-            return new(outputViewModel);
+            return new(output);
         }
     }
 }

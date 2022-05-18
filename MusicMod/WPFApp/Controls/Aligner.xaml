@@ -3,14 +3,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:WPFApp.Controls"
+             xmlns:local="clr-namespace:WPFApp.Controls" xmlns:converters="clr-namespace:WPFApp.Converters"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
+        <Grid.Resources>
+            <converters:AlignmentToGridLengthConverter Left="0" Stretch="0" Right="*" Center="*" x:Key="LeftColumnConverter" />
+            <converters:AlignmentToGridLengthConverter Right="0" Stretch="0" Left="*" Center="*" x:Key="RightColumnConverter" />
+        </Grid.Resources>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="{Binding LeftColumnWidth, RelativeSource={RelativeSource AncestorType=local:Aligner}}" />
-            <ColumnDefinition MaxWidth="{Binding MaxChildWidth, RelativeSource={RelativeSource AncestorType=local:Aligner}}" />
-            <ColumnDefinition Width="{Binding RightColumnWidth, RelativeSource={RelativeSource AncestorType=local:Aligner}}" />
+            <ColumnDefinition Width="{Binding Alignment, Converter={StaticResource LeftColumnConverter}, RelativeSource={RelativeSource AncestorType=local:Aligner}}" />
+            <ColumnDefinition Width="{Binding MaxChildWidth, RelativeSource={RelativeSource AncestorType=local:Aligner}}" />
+            <ColumnDefinition Width="{Binding Alignment, Converter={StaticResource RightColumnConverter}, RelativeSource={RelativeSource AncestorType=local:Aligner}}" />
         </Grid.ColumnDefinitions>
         <ContentPresenter Grid.Column="1" Content="{Binding Child, RelativeSource={RelativeSource AncestorType=local:Aligner}}" />
     </Grid>

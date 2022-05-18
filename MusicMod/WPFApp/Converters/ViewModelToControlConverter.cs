@@ -12,7 +12,7 @@ namespace WPFApp.Converters
     [ValueConversion(typeof(ViewModelBase), typeof(UserControl))]
     public class ViewModelToControlConverter : IValueConverter
     {
-        private static readonly Cache<Type, UserControl> cache = new(GetUserControl);
+        private readonly Cache<Type, UserControl> cache = new(GetUserControl);
 
         public object Convert(object value, Type targetType, object parameter,
             CultureInfo culture)

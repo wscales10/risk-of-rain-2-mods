@@ -26,6 +26,14 @@ namespace WPFApp.Controls.Wrappers.SaveResults
 
         public abstract TValue Value { get; set; }
 
+        public void MaybeOutput(Action<TValue> setter)
+        {
+            if (IsSuccess)
+            {
+                setter(Value);
+            }
+        }
+
         private void MutableSaveResultBase_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(Value))
@@ -33,14 +41,6 @@ namespace WPFApp.Controls.Wrappers.SaveResults
                 MyValidationEventArgs2<TValue> args = new(Value);
                 OnValidate?.Invoke(this, args);
                 Status = args.Status;
-            }
-        }
-
-        public void MaybeOutput(Action<TValue> setter)
-        {
-            if (IsSuccess)
-            {
-                setter(Value);
             }
         }
     }
@@ -53,10 +53,7 @@ namespace WPFApp.Controls.Wrappers.SaveResults
         {
             get => value;
 
-            set
-            {
-                SetProperty(ref this.value, value);
-            }
+            set => SetProperty(ref this.value, value);
         }
     }
 

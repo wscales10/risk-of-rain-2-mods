@@ -11,7 +11,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
         public OptionalPickerWrapper(NavigationContext navigationContext)
         {
             var config = new PatternPickerInfo(typeof(T), navigationContext);
-            UIElement = new(new(config));
+            UIElement = new() { ViewModel = new(config) };
             this.navigationContext = navigationContext;
         }
 
@@ -19,7 +19,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
         protected override void setValue(IPattern<T> value) => UIElement.ViewModel.HandleSelection(value is null ? null : PatternWrapper.Create(value, navigationContext));
 
-        protected override SaveResult<IPattern<T>> tryGetValue(bool trySave)
+        protected override SaveResult<IPattern<T>> tryGetValue(GetValueRequest request)
         {
             var patternWrapper = UIElement.ViewModel.ValueWrapper;
 
@@ -28,7 +28,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
                 return new((bool?)null);
             }
 
-            var result = patternWrapper.TryGetObject(trySave);
+            var result = patternWrapper.TryGetObject(request);
             return new(result, result.IsSuccess ? (IPattern<T>)result.Value : default);
         }
     }

@@ -9,7 +9,7 @@ namespace WPFApp.Controls.Wrappers
         protected SinglePickerWrapper(IPickerInfo config)
         {
             NavigationContext = config.NavigationContext;
-            UIElement = new(new(config));
+            UIElement = new() { ViewModel = new(config) };
             UIElement.ViewModel.ValueChanged += NotifyValueChanged;
             UIElement.ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             SetPropertyDependency(nameof(ValueString), UIElement.ViewModel, nameof(UIElement.ViewModel.ValueWrapper));
@@ -22,16 +22,16 @@ namespace WPFApp.Controls.Wrappers
 
         protected NavigationContext NavigationContext { get; }
 
-        protected sealed override SaveResult<T> tryGetValue(bool trySave)
+        protected sealed override SaveResult<T> tryGetValue(GetValueRequest request)
         {
             var valueWrapper = UIElement.ViewModel.ValueWrapper;
 
             if (valueWrapper is null)
             {
-                return new(false);
+                return new(null);
             }
 
-            return SaveResult.Create<T>(valueWrapper.TryGetObject(trySave));
+            return SaveResult.Create<T>(valueWrapper.TryGetObject(request));
         }
 
         protected sealed override void setStatus(bool? status) => Outline(UIElement.comboBox, status is null ? null : UIElement.ViewModel.ValueWrapper is not null);

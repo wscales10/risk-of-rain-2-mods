@@ -16,22 +16,6 @@ namespace WPFApp.Controls
             new PropertyMetadata(HorizontalAlignment.Center)
         );
 
-        public static readonly DependencyProperty LeftColumnWidthProperty = DependencyProperty.Register
-        (
-            nameof(LeftColumnWidth),
-            typeof(GridLength),
-            typeof(Aligner),
-            new PropertyMetadata(new GridLength())
-        );
-
-        public static readonly DependencyProperty RightColumnWidthProperty = DependencyProperty.Register
-        (
-            nameof(RightColumnWidth),
-            typeof(GridLength),
-            typeof(Aligner),
-            new PropertyMetadata(new GridLength())
-        );
-
         public static readonly DependencyProperty ChildProperty = DependencyProperty.Register
         (
             nameof(Child),
@@ -48,6 +32,22 @@ namespace WPFApp.Controls
             new PropertyMetadata(0d)
         );
 
+        internal static readonly DependencyPropertyKey LeftColumnWidthPropertyKey = DependencyProperty.RegisterReadOnly
+        (
+            nameof(LeftColumnWidth),
+            typeof(GridLength),
+            typeof(Aligner),
+            new PropertyMetadata(new GridLength())
+        );
+
+        internal static readonly DependencyPropertyKey RightColumnWidthPropertyKey = DependencyProperty.RegisterReadOnly
+        (
+            nameof(RightColumnWidth),
+            typeof(GridLength),
+            typeof(Aligner),
+            new PropertyMetadata(new GridLength())
+        );
+
         public Aligner()
         {
             InitializeComponent();
@@ -57,44 +57,19 @@ namespace WPFApp.Controls
         {
             get => (HorizontalAlignment)GetValue(AlignmentProperty);
 
-            set
-            {
-                SetValue(AlignmentProperty, value);
-                switch (value)
-                {
-                    case HorizontalAlignment.Left:
-                        LeftColumnWidth = new GridLength(0);
-                        RightColumnWidth = GridLength.Auto;
-                        break;
-
-                    case HorizontalAlignment.Center:
-                        LeftColumnWidth = GridLength.Auto;
-                        RightColumnWidth = GridLength.Auto;
-                        break;
-
-                    case HorizontalAlignment.Right:
-                        LeftColumnWidth = GridLength.Auto;
-                        RightColumnWidth = new GridLength(0);
-                        break;
-
-                    case HorizontalAlignment.Stretch:
-                        LeftColumnWidth = new GridLength(0);
-                        RightColumnWidth = new GridLength(0);
-                        break;
-                }
-            }
+            set => SetValue(AlignmentProperty, value);
         }
 
         public GridLength LeftColumnWidth
         {
-            get => (GridLength)GetValue(LeftColumnWidthProperty);
-            private set => SetValue(LeftColumnWidthProperty, value);
+            get => (GridLength)GetValue(LeftColumnWidthPropertyKey.DependencyProperty);
+            private set => SetValue(LeftColumnWidthPropertyKey, value);
         }
 
         public GridLength RightColumnWidth
         {
-            get => (GridLength)GetValue(RightColumnWidthProperty);
-            private set => SetValue(RightColumnWidthProperty, value);
+            get => (GridLength)GetValue(RightColumnWidthPropertyKey.DependencyProperty);
+            private set => SetValue(LeftColumnWidthPropertyKey, value);
         }
 
         public object Child

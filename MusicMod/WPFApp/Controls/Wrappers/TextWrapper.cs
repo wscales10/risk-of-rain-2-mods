@@ -11,6 +11,6 @@ namespace WPFApp.Controls.Wrappers
 
         protected override void setValue(string value) => UIElement.Text = value;
 
-        protected override SaveResult<string> tryGetValue(bool trySave) => new(UIElement.Text);
+        protected override SaveResult<string> tryGetValue(GetValueRequest request) => new(UIElement.Text);
     }
 }

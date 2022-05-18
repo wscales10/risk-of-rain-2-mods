@@ -7,7 +7,7 @@ namespace Utils
 {
     public class Cache<TKey, TValue> : Cache<TKey, TValue, Dictionary<TKey, TValue>>
     {
-        public Cache(Func<TKey, TValue> getter) : base(getter)
+        public Cache(Func<TKey, TValue> getValue, Predicate<TValue> isEmpty = null, Action<TKey> dispose = null) : base(getValue, isEmpty, dispose)
         {
         }
     }
@@ -15,9 +15,18 @@ namespace Utils
     public class Cache<TKey, TValue, TDictionary> : IReadOnlyDictionary<TKey, TValue>
         where TDictionary : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, new()
     {
-        private readonly Func<TKey, TValue> getter;
+        private readonly Func<TKey, TValue> getValue;
 
-        public Cache(Func<TKey, TValue> getter) => this.getter = getter;
+        private readonly Predicate<TValue> isEmpty;
+
+        private readonly Action<TKey> dispose;
+
+        public Cache(Func<TKey, TValue> getValue, Predicate<TValue> isEmpty = null, Action<TKey> dispose = null)
+        {
+            this.getValue = getValue;
+            this.isEmpty = isEmpty;
+            this.dispose = dispose;
+        }
 
         public IEnumerable<TKey> Keys => ReadOnlyDictionary.Keys;
 
@@ -37,13 +46,27 @@ namespace Utils
             {
                 if (!ReadOnlyDictionary.TryGetValue(key, out TValue value))
                 {
-                    value = getter(key);
+                    value = getValue(key);
                     ((IDictionary<TKey, TValue>)Dictionary)[key] = value;
                 }
 
                 return value;
             }
         }
+
+        public bool TryRemove(TKey key)
+        {
+            if (TryGetValue(key, out TValue value) && (isEmpty?.Invoke(value) != false))
+            {
+                Dictionary.Remove(key);
+                dispose?.Invoke(key);
+                return true;
+            }
+
+            return false;
+        }
+
+        public IEnumerable<TKey> TryRemove(IEnumerable<TKey> keys) => keys.Where(TryRemove);
 
         public bool ContainsKey(TKey key) => ReadOnlyDictionary.ContainsKey(key);
 

@@ -7,17 +7,17 @@ namespace WPFApp.Controls.Pickers
     /// </summary>
     public partial class MultiPicker : Picker
     {
-        public MultiPicker() : this(null)
-        {
-        }
-
-        public MultiPicker(MultiPickerViewModel viewModel) : base(viewModel)
+        public MultiPicker()
         {
             InitializeComponent();
-            PostInit();
         }
 
-        public override MultiPickerViewModel ViewModel => (MultiPickerViewModel)base.ViewModel;
+        public MultiPickerViewModel ViewModel
+        {
+            get => (MultiPickerViewModel)GetViewModel();
+
+            set => SetViewModel(value);
+        }
 
         protected override Selector ItemsControl => comboBox.ListBox;
     }

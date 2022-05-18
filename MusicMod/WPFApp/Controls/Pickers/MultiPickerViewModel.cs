@@ -1,5 +1,6 @@
 ﻿using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.GridManagers;
+using System.Windows;
 
 namespace WPFApp.Controls.Pickers
 {
@@ -11,7 +12,7 @@ namespace WPFApp.Controls.Pickers
 
         public ValueContainerManager ValueContainerManager { get; } = new();
 
-        internal ValueContainer AddWrapper(IReadableControlWrapper valueWrapper) => ValueContainerManager.Add(new(valueWrapper));
+        internal ValueContainer AddWrapper(IReadableControlWrapper valueWrapper) => ValueContainerManager.Add(new(valueWrapper) { Margin = new Thickness(1) });
 
         protected override void handleSelection(IReadableControlWrapper valueWrapper) => _ = AddWrapper(valueWrapper);
     }

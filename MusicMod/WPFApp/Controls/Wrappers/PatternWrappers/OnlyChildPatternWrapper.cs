@@ -24,9 +24,9 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
         protected abstract string ParentName { get; }
 
-        protected override SaveResult<TPattern> tryGetValue(bool trySave)
+        protected override SaveResult<TPattern> tryGetValue(GetValueRequest request)
         {
-            var result = UIElement.PickerWrapper.TryGetObject(trySave);
+            var result = UIElement.PickerWrapper.TryGetObject(request.TrySave);
 
             if (result.IsSuccess)
             {

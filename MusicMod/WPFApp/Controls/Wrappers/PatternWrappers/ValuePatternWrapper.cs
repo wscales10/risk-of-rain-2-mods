@@ -11,7 +11,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
     {
         protected ValuePatternWrapper(TPattern pattern) : base(pattern)
         {
-            TextBox.Text = GetTextBoxText();
+            Text = GetTextBoxText();
             TextBox.TextAlignment = TextAlignment.Center;
             TextBox.VerticalAlignment = VerticalAlignment.Center;
             TextBox.FontSize = 14;
@@ -24,21 +24,27 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
         protected virtual TextBox TextBox { get; } = new();
 
+        protected virtual string Text
+        {
+            get => TextBox.Text;
+            set => TextBox.Text = value;
+        }
+
         protected override bool Validate(TPattern value) => value.Definition is not null;
 
         protected virtual void DefineWith(string textBoxText) => _ = Pattern.DefineWith(textBoxText);
 
         protected virtual string GetTextBoxText() => Pattern.Definition;
 
-        protected override SaveResult<TPattern> tryGetValue(bool trySave)
+        protected override SaveResult<TPattern> tryGetValue(GetValueRequest request)
         {
             Display();
-            return base.tryGetValue(trySave);
+            return base.tryGetValue(request);
         }
 
         protected virtual void Display()
         {
-            DefineWith(TextBox.Text);
+            DefineWith(Text);
 
             if (Validate(Pattern))
             {

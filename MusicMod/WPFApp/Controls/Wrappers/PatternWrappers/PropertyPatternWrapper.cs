@@ -27,7 +27,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
             UIElement.SelectedProperty = value?.PropertyInfo;
         }
 
-        protected override SaveResult<PropertyPattern<TObject>> tryGetValue(bool trySave)
+        protected override SaveResult<PropertyPattern<TObject>> tryGetValue(GetValueRequest request)
         {
             var propertyInfo = UIElement.SelectedProperty;
 
@@ -36,7 +36,7 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
                 return new(false);
             }
 
-            var result = UIElement.TryGetPattern(trySave);
+            var result = UIElement.TryGetPattern(request);
 
             var value = result.IsSuccess
                 ? typeof(PropertyPattern<TObject>)

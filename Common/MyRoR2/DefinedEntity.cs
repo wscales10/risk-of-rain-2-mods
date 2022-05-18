@@ -5,17 +5,30 @@ using Utils.Reflection.Properties;
 
 namespace MyRoR2
 {
-	public sealed class DefinedEntity : Entity
-	{
-		private DefinedEntity(string displayName, string name) : base(name) => DisplayName = displayName;
+    public sealed class DefinedEntity : Entity
+    {
+        private DefinedEntity(string displayName, string name) : this(displayName, name, displayName)
+        {
+        }
 
-		public string DisplayName { get; }
+        private DefinedEntity(string displayName, string name, string typeableName) : base(name)
+        {
+            DisplayName = displayName;
+            TypeableName = typeableName;
+        }
 
-		public static implicit operator DefinedEntity((string displayName, string name) pair)
-			=> new DefinedEntity(HelperMethods.AddSpacesToPascalCaseString(pair.displayName), pair.name);
+        public string DisplayName { get; }
 
-		public static IEnumerable<DefinedEntity> GetAll(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValues(predicate);
+        public string TypeableName { get; }
 
-		public static DefinedEntity Get(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValue(predicate);
-	}
+        public static implicit operator DefinedEntity((string displayName, string name) tuple)
+            => new DefinedEntity(HelperMethods.AddSpacesToPascalCaseString(tuple.displayName), tuple.name);
+
+        public static implicit operator DefinedEntity((string displayName, string name, string typeableName) tuple)
+            => new DefinedEntity(HelperMethods.AddSpacesToPascalCaseString(tuple.displayName), tuple.name, tuple.typeableName);
+
+        public static IEnumerable<DefinedEntity> GetAll(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValues(predicate);
+
+        public static DefinedEntity Get(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValue(predicate);
+    }
 }

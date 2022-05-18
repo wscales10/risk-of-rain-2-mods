@@ -70,9 +70,9 @@ namespace WPFApp.Controls.PatternControls
             }
         }
 
-        public SaveResult<IPattern> TryGetPattern(bool trySave)
+        public SaveResult<IPattern> TryGetPattern(GetValueRequest request)
         {
-            var result = PickerWrapper.Get().TryGetObject(trySave);
+            var result = PickerWrapper.Get().TryGetObject(request);
             return SaveResult.Create<IPattern>(result);
         }
 

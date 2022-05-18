@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Utils;
+using Utils.Reflection.Properties;
 
 namespace WPFApp.Controls.Wrappers.SaveResults
 {
@@ -38,13 +40,28 @@ namespace WPFApp.Controls.Wrappers.SaveResults
 
         public static SaveResult<T> From<T>(T value) => new(value);
 
-        public static SaveResult<T> Create<T>(SaveResult result) => result switch
+        public static SaveResult<T> Create<T>(SaveResult result)
         {
-            SaveResult<T> srt => srt,
-            ISaveResult<T> isrt => new(result, isrt.Value),
-#warning this is certainly not the right way to do this
-            _ => new(result, ((dynamic)result).Value),
-        };
+            switch (result)
+            {
+                case SaveResult<T> srt:
+                    return srt;
+
+                case ISaveResult<T> isrt:
+                    return new(result, isrt.Value);
+
+                case null:
+                    return null;
+
+                default:
+                    if (result.GetType().GetInterfaces().Any(i => i.IsGenericType(typeof(ISaveResult<>)) && i.GenericTypeArguments[0].IsAssignableFrom(typeof(T))))
+                    {
+                        return new(result, result.GetPropertyValue<T>(nameof(ISaveResult<T>.Value)));
+                    }
+
+                    throw new ArgumentOutOfRangeException(nameof(result));
+            }
+        }
 
         public void Release()
         {

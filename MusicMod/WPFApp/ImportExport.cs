@@ -54,10 +54,48 @@ namespace WPFApp
                 }
                 catch (IOException e) when (e.HResult == -2147024864)
                 {
+                    // file is in use, retry
                 }
             }
 
             throw new TimeoutException($"Failed to get a write handle to {path} within {timeoutMs}ms.");
+        }
+
+        private static void Export(XElement xml, FileInfo fileName)
+        {
+            using FileStream fs = new(fileName.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            xml?.Save(fs);
+        }
+
+        private static void ExportPlaylists(DirectoryInfo directoryInfo)
+        {
+            XElement element = new("Playlists");
+
+            foreach (var playlist in Info.Playlists)
+            {
+                element.Add(playlist.ToXml());
+            }
+
+            Export(element, new(Path.Combine(directoryInfo.FullName, "playlists.xml")));
+        }
+
+        private static void ExportToFile(IXmlViewModel xmlControl, FileInfo fileName)
+        {
+            // Using synchronous code because async is a bitch to work with taskMachine.Ingest(() =>
+            // ExportAsync(xmlControl.GetContentXml(), fileName));
+            XElement xml;
+            try
+            {
+                xml = xmlControl.GetContentXml();
+            }
+            catch (XmlException)
+            {
+                _ = MessageBox.Show("Export error.");
+                return;
+            }
+
+            Export(xml, fileName);
+            ExportPlaylists(fileName.Directory);
         }
 
         private IXmlViewModel GetControlForExport()
@@ -89,12 +127,6 @@ namespace WPFApp
             };
         }
 
-        private void Export(XElement xml, FileInfo fileName)
-        {
-            using FileStream fs = new(fileName.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-            xml?.Save(fs);
-        }
-
         private void ExportToFile(string fileName)
         {
             FileInfo fileInfo = new(fileName);
@@ -108,37 +140,6 @@ namespace WPFApp
 
                 ExportToFile(GetControlForExport(), fileInfo);
             }
-        }
-
-        private void ExportToFile(IXmlViewModel xmlControl, FileInfo fileName)
-        {
-            // Using synchronous code because async is a bitch to work with taskMachine.Ingest(() =>
-            // ExportAsync(xmlControl.GetContentXml(), fileName));
-            XElement xml;
-            try
-            {
-                xml = xmlControl.GetContentXml();
-            }
-            catch (XmlException)
-            {
-                _ = MessageBox.Show("Export error.");
-                return;
-            }
-
-            Export(xml, fileName);
-            ExportPlaylists(fileName.Directory);
-        }
-
-        private void ExportPlaylists(DirectoryInfo directoryInfo)
-        {
-            XElement element = new("Playlists");
-
-            foreach (var playlist in Info.Playlists)
-            {
-                element.Add(playlist.ToXml());
-            }
-
-            Export(element, new(Path.Combine(directoryInfo.FullName, "playlists.xml")));
         }
 
         private Task ExportAsync(XElement xml, string fileName)

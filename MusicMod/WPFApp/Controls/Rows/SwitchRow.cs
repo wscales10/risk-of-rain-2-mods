@@ -3,43 +3,36 @@ using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
 using System;
 using System.Windows.Controls;
-using WPFApp.Controls.RuleControls;
 using WPFApp.ViewModels;
-using System.Windows;
 using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.Controls.Wrappers;
+using System.Windows;
 
 namespace WPFApp.Controls.Rows
 {
     internal class CaseRow : SwitchRow
     {
-        private readonly CaseViewModel caseViewModel;
+        private readonly CaseWrapper caseWrapper;
 
-        private readonly CaseControl caseControl = new();
-
-        private Case<IPattern> @case;
-
-        public CaseRow(Case<IPattern> c, Type valueType, NavigationContext navigationContext) : base(navigationContext, true)
+        public CaseRow(Case<IPattern> c, PropertyWrapper<Type> valueType, NavigationContext navigationContext) : base(navigationContext, true)
         {
-            SetPropertyDependency(nameof(Label), nameof(Case));
-            SetPropertyDependency(nameof(Label), caseViewModel, nameof(CaseViewModel.CaseName));
-            caseControl.DataContext = caseViewModel = new CaseViewModel(c, valueType, navigationContext);
             Case = c;
+
+            SetPropertyDependency(nameof(Label), nameof(Case));
+            caseWrapper = new(new(c, valueType, navigationContext));
+            SetPropertyDependency(nameof(Label), caseWrapper.ViewModel, nameof(CaseViewModel.CaseName));
+
             OnSetOutput += (rule) => Case.Output = rule;
             Output = c.Output;
         }
 
-        public Case<IPattern> Case
-        {
-            get => @case;
+        public Case<IPattern> Case { get; }
 
-            set => SetProperty(ref @case, value);
-        }
-
-        public override UIElement LeftElement => caseControl;
+        public override UIElement LeftElement => caseWrapper.UIElement;
 
         public override string Label => Case?.ToString();
 
-        protected override SaveResult trySaveChanges() => base.trySaveChanges() & caseViewModel.TrySaveChanges();
+        protected override SaveResult trySaveChanges() => base.trySaveChanges() & caseWrapper.TryGetValue(true);
     }
 
     internal class DefaultRow : SwitchRow

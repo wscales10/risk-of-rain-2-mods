@@ -6,7 +6,8 @@
              xmlns:local="clr-namespace:WPFApp.Controls.PatternControls"
 			 xmlns:behaviors="clr-namespace:WPFTextBoxAutoComplete;assembly=WPFTextBoxAutoComplete"
 			 xmlns:viewmodels="clr-namespace:WPFApp.ViewModels" xmlns:converters="clr-namespace:WPFApp.Converters"
-			 mc:Ignorable="d"
+			 xmlns:comment="ignorable"
+             mc:Ignorable="d comment"
 			 d:DesignHeight="450" d:DesignWidth="800"
 			 d:DataContext="{d:DesignInstance Type=viewmodels:ImagePatternViewModel}">
     <UserControl.Resources>
@@ -24,7 +25,9 @@
         <Border Margin="2"
                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource RatioConverter}}"
                 Visibility="{Binding ImageSource, Converter={StaticResource VisibilityConverter}}">
-            <Image VerticalAlignment="Center" Stretch="UniformToFill" Source="{Binding ImageSource}" ClipToBounds="True" />
+            <Image VerticalAlignment="Center" Stretch="UniformToFill"
+                   Source="{Binding ImageSource, IsAsync=True}"
+                   ClipToBounds="True" />
         </Border>
         <TextBox x:Name="textBox"
 				 Text="{Binding Text}"
@@ -32,7 +35,8 @@
 				 TextAlignment="Center"
 				 FontSize="14"
 				 Margin="2"
-				 behaviors:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding Names}"
+                 MinWidth="60"
+				 behaviors:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding TypeableNames}"
 				 behaviors:AutoCompleteBehavior.AutoCompleteStringComparison="InvariantCultureIgnoreCase" />
     </Grid>
 </UserControl>

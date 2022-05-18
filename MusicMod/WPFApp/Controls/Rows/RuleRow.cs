@@ -20,7 +20,7 @@ namespace WPFApp.Controls.Rows
         {
             SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label), nameof(OutputViewModel));
             SetPropertyDependency(nameof(AllChildren), nameof(OutputViewModel));
-            RuleWrapper.ValueSet += _ => NotifyPropertyChanged(nameof(OutputViewModel));
+            RuleWrapper.ValueSet += _ => NotifyPropertyChanged(nameof(Output));
         }
 
         public override string ButtonContent => OutputViewModel?.AsString ?? (string.IsNullOrEmpty(Label) ? Output?.ToString() : Label);
@@ -34,11 +34,14 @@ namespace WPFApp.Controls.Rows
             set => SetProperty(ref parent, value);
         }
 
-        protected override NavigationViewModelBase outputViewModel
+        public override Rule Output
         {
             get => RuleWrapper.GetValueBypassValidation();
 
-            set => RuleWrapper.SetValue(value);
+            set
+            {
+                RuleWrapper.SetValue(value);
+            }
         }
 
         protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
@@ -47,7 +50,7 @@ namespace WPFApp.Controls.Rows
 
         public override string ToString() => Label ?? base.ToString();
 
-        protected override SaveResult trySaveChanges() => new(Output is not null);
+        protected override SaveResult trySaveChanges() => base.trySaveChanges() & RuleWrapper.TryGetValue(true);
 
         protected override UIElement MakeOutputUi() => RuleWrapper.UIElement;
 

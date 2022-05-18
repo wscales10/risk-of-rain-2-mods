@@ -7,68 +7,45 @@ using System.Windows.Data;
 
 namespace WPFApp.Controls.CommandControls
 {
-	/// <summary>
-	/// Interaction logic for DiscreteComboBox.xaml
-	/// </summary>
-	public partial class DiscreteComboBox : UserControl
-	{
-		public DiscreteComboBox()
-		{
-			InitializeComponent();
-			button.Click += Button_Click;
-			LostFocus += DiscreteComboBox_LostFocus;
-			ListBox.SelectionChanged += ListBox_SelectionChanged;
-			popup.PlacementTarget = button;
-			popup.Placement = PlacementMode.Bottom;
-		}
+    /// <summary>
+    /// Interaction logic for DiscreteComboBox.xaml
+    /// </summary>
+    public partial class DiscreteComboBox : UserControl
+    {
+        public static readonly DependencyProperty AlignmentProperty = DependencyProperty.Register(nameof(Alignment), typeof(HorizontalAlignment), typeof(DiscreteComboBox), new(HorizontalAlignment.Left));
 
-		public DiscreteComboBox(HorizontalAlignment alignment, string displayMemberPath) : this()
-		{
-			Alignment = alignment;
-			DisplayMemberPath = displayMemberPath;
-		}
+        public DiscreteComboBox()
+        {
+            InitializeComponent();
+            button.Click += Button_Click;
+            LostFocus += DiscreteComboBox_LostFocus;
+            ListBox.SelectionChanged += ListBox_SelectionChanged;
+            popup.PlacementTarget = button;
+            popup.Placement = PlacementMode.Bottom;
+        }
 
-		internal event Action<object> OnSelectionMade;
+        public DiscreteComboBox(HorizontalAlignment alignment, string displayMemberPath) : this()
+        {
+            Alignment = alignment;
+            SetDisplayMemberPath(displayMemberPath);
+        }
 
-		public HorizontalAlignment Alignment
-		{
-			set
-			{
-				button.HorizontalAlignment = value;
-				button.VerticalAlignment = value == HorizontalAlignment.Center ? VerticalAlignment.Top : VerticalAlignment.Center;
-				BindingOperations.ClearBinding(popup, Popup.HorizontalOffsetProperty);
+        internal event Action<object> OnSelectionMade;
 
-				switch (value)
-				{
-					case HorizontalAlignment.Center:
-						MultiBinding binding = new() { Converter = new Converters.CenterPopupConverter() };
-						binding.Bindings.Add(new Binding(nameof(ActualWidth)) { Source = button });
-						binding.Bindings.Add(new Binding(nameof(ActualWidth)) { Source = ListBox });
-						popup.SetBinding(Popup.HorizontalOffsetProperty, binding);
-						break;
-					case HorizontalAlignment.Left:
-						popup.HorizontalOffset = 0;
-						break;
-					default:
-						throw new NotSupportedException();
-				}
-			}
-		}
+        public HorizontalAlignment Alignment
+        {
+            get => (HorizontalAlignment)GetValue(AlignmentProperty);
+            set => SetValue(AlignmentProperty, value);
+        }
 
-		public IEnumerable ItemsSource
-		{
-			set => ListBox.ItemsSource = value;
-		}
+        public void SetDisplayMemberPath(string value) => ListBox.DisplayMemberPath = value;
 
-		public string DisplayMemberPath
-		{
-			set => ListBox.DisplayMemberPath = value;
-		}
+        public void SetItemsSource(IEnumerable value) => ListBox.ItemsSource = value;
 
-		private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => OnSelectionMade?.Invoke(((ListBox)sender).SelectedItem);
+        private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => OnSelectionMade?.Invoke(((ListBox)sender).SelectedItem);
 
-		private void DiscreteComboBox_LostFocus(object sender, RoutedEventArgs e) => popup.IsOpen = false;
+        private void DiscreteComboBox_LostFocus(object sender, RoutedEventArgs e) => popup.IsOpen = false;
 
-		private void Button_Click(object sender, RoutedEventArgs e) => popup.IsOpen = true;
-	}
+        private void Button_Click(object sender, RoutedEventArgs e) => popup.IsOpen = true;
+    }
 }

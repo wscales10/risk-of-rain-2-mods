@@ -16,6 +16,8 @@ namespace WPFApp.Controls.Pickers
             set => SetProperty(ref valueWrapper, value);
         }
 
+        public void ClearValueWrapper() => ValueWrapper = null;
+
         protected override void handleSelection(IReadableControlWrapper valueWrapper) => ValueWrapper = valueWrapper;
     }
 }

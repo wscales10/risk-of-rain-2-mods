@@ -17,15 +17,12 @@ namespace WPFApp.Controls.Pickers
             new PropertyMetadata(HorizontalAlignment.Center)
         );
 
-        public SinglePicker() : this(null)
-        {
-        }
+        public SinglePicker() => InitializeComponent();
 
-        public SinglePicker(SinglePickerViewModel viewModel) : base(viewModel)
+        public SinglePickerViewModel ViewModel
         {
-            InitializeComponent();
-            PostInit();
-            valueContainer.Deleted += () => ViewModel.SetValueWrapper(null);
+            get => (SinglePickerViewModel)GetViewModel();
+            set => SetViewModel(value);
         }
 
         public HorizontalAlignment Alignment
@@ -34,10 +31,23 @@ namespace WPFApp.Controls.Pickers
             set => SetValue(AlignmentProperty, value);
         }
 
-        public override SinglePickerViewModel ViewModel => (SinglePickerViewModel)base.ViewModel;
-
         public ComboBox comboBox => (ComboBox)aligner.Child;
 
         protected override Selector ItemsControl => comboBox;
+
+        protected override void Picker_ViewModelChanged(PickerViewModel oldViewModel, PickerViewModel newViewModel)
+        {
+            if (oldViewModel is SinglePickerViewModel oldSinglePickerViewModel)
+            {
+                valueContainer.Deleted -= oldSinglePickerViewModel.ClearValueWrapper;
+            }
+
+            base.Picker_ViewModelChanged(oldViewModel, newViewModel);
+
+            if (newViewModel is SinglePickerViewModel newSinglePickerViewModel)
+            {
+                valueContainer.Deleted += newSinglePickerViewModel.ClearValueWrapper;
+            }
+        }
     }
 }

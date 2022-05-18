@@ -107,9 +107,7 @@ namespace Utils
 
         public static IEnumerable<T> With<T>(this IEnumerable<T> source, params T[] items) => source.Concat(items);
 
-        internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
-
-        internal static int InsertRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
+        public static int InsertRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
         {
             int i = startingIndex;
 
@@ -121,7 +119,7 @@ namespace Utils
             return i;
         }
 
-        internal static void RemoveRange(this IList source, int index, int count)
+        public static void RemoveRange(this IList source, int index, int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -129,7 +127,7 @@ namespace Utils
             }
         }
 
-        internal static int ReplaceRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
+        public static int ReplaceRange<T>(this IList<T> source, int startingIndex, IEnumerable<T> collection)
         {
             int i = startingIndex;
 
@@ -141,7 +139,7 @@ namespace Utils
             return i;
         }
 
-        internal static int ReplaceRange<T, TList>(this TList source, int startingIndex, IEnumerable<T> newList, int oldCount)
+        public static int ReplaceRange<T, TList>(this TList source, int startingIndex, IEnumerable<T> newList, int oldCount)
             where TList : IList<T>, IList
         {
             int i = source.ReplaceRange(startingIndex, newList.Take(oldCount));
@@ -157,5 +155,7 @@ namespace Utils
 
             return i;
         }
+
+        internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
     }
 }

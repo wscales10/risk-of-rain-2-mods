@@ -52,7 +52,7 @@ namespace WPFApp.Controls.Wrappers
 
         public void ForceGetValue(out TValue value)
         {
-            var result = tryGetValue2(false);
+            var result = tryGetValue2(new(false, true));
             if (!result.IsSuccess)
             {
                 throw new NotSupportedException();
@@ -61,28 +61,32 @@ namespace WPFApp.Controls.Wrappers
             value = result.Value;
         }
 
-        public SaveResult<TValue> TryGetValue(bool trySave)
+        public SaveResult<TValue> TryGetValue(GetValueRequest request)
         {
-            if (trySave)
+            if (request.TrySave)
             {
                 HighlightStatus = true;
             }
 
-            var result = tryGetValue2(trySave);
-            result &= Validate(result.Value);
+            var result = tryGetValue2(request);
 
-            if (trySave)
+            if (!request.BypassValidation)
+            {
+                result &= Validate(result.Value);
+            }
+
+            if (request.TrySave)
             {
                 result.ReleaseActions.Enqueue(() => StopHighlighting());
-                SetStatus(result.Status);
+                MaybeSetStatus(result.Status);
             }
 
             return result;
         }
 
-        public SaveResult<object> TryGetObject(bool trySave)
+        public SaveResult<object> TryGetObject(GetValueRequest request)
         {
-            var result = TryGetValue(trySave);
+            var result = TryGetValue(request);
             return new(result, result.Value);
         }
 
@@ -105,39 +109,63 @@ namespace WPFApp.Controls.Wrappers
             wantsFocus = true;
         }
 
-        protected static void Outline(Control control, bool status)
+        protected static void Outline(Control control, bool status, Brush trueBrush = null, Brush falseBrush = null)
         {
-            control.BorderBrush = status switch
-            {
-                false => Brushes.Red,
-                _ => Brushes.DarkGray,
-            };
+            control.BorderBrush = GetOutlineColour(status, trueBrush, falseBrush);
         }
 
-        protected static void Outline(Border border, bool status)
+        protected static void Outline(Border border, bool status, Brush trueBrush = null, Brush falseBrush = null)
         {
-            border.BorderBrush = status switch
-            {
-                false => Brushes.Red,
-                _ => Brushes.DarkGray,
-            };
+            border.BorderBrush = GetOutlineColour(status, trueBrush, falseBrush);
         }
 
-        protected static void Outline(Control control, bool? status, bool threeWay = false)
+        protected static void Outline(Control control, bool? status, bool threeWay = false, Brush trueBrush = null, Brush falseBrush = null, Brush nullBrush = null)
         {
-            control.BorderBrush = status switch
+            control.BorderBrush = GetOutlineColour(status, threeWay, trueBrush, falseBrush, nullBrush);
+        }
+
+        protected static void Outline(Border border, bool? status, bool threeWay = false, Brush trueBrush = null, Brush falseBrush = null, Brush nullBrush = null)
+        {
+            border.BorderBrush = GetOutlineColour(status, threeWay, trueBrush, falseBrush, nullBrush);
+        }
+
+        protected static Brush GetOutlineColour(bool status, Brush trueBrush = null, Brush falseBrush = null) => status switch
+        {
+            false => falseBrush ?? Brushes.Red,
+            _ => trueBrush ?? Brushes.DarkGray,
+        };
+
+        protected static Brush GetOutlineColour(bool? status, bool threeWay = false, Brush trueBrush = null, Brush falseBrush = null, Brush nullBrush = null)
+        {
+            if (threeWay)
             {
-                true when threeWay => Brushes.Green,
-                false => Brushes.Red,
-                _ => Brushes.DarkGray,
-            };
+                return status switch
+                {
+                    true => trueBrush ?? Brushes.Green,
+                    false => falseBrush ?? Brushes.Red,
+                    _ => nullBrush ?? Brushes.DarkGray,
+                };
+            }
+            else
+            {
+                if (trueBrush is not null && nullBrush is not null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                return status switch
+                {
+                    false => falseBrush ?? Brushes.Red,
+                    _ => trueBrush ?? nullBrush ?? Brushes.DarkGray,
+                };
+            }
         }
 
         protected virtual void ReadableControlWrapper_ValueSet(TValue value)
         {
             if (Validate(value))
             {
-                SetStatus(true);
+                MaybeSetStatus(true);
             }
 
             ValueSet?.Invoke(value);
@@ -161,7 +189,7 @@ namespace WPFApp.Controls.Wrappers
 
         protected void NotifyValueChanged(TValue value) => valueSet?.Invoke(value);
 
-        protected abstract SaveResult<TValue> tryGetValue(bool trySave);
+        protected abstract SaveResult<TValue> tryGetValue(GetValueRequest request);
 
         protected virtual void setStatus(bool? status) => setStatus(status ?? true);
 
@@ -177,7 +205,7 @@ namespace WPFApp.Controls.Wrappers
 
         protected virtual void ReadableControlWrapper_ValueCleared()
         {
-            SetStatus(null);
+            MaybeSetStatus(null);
             ValueSet?.Invoke(null);
         }
 
@@ -190,21 +218,26 @@ namespace WPFApp.Controls.Wrappers
             }
         }
 
-        private SaveResult<TValue> tryGetValue2(bool trySave)
+        private SaveResult<TValue> tryGetValue2(GetValueRequest request)
         {
-            var output = tryGetValue(trySave);
+            var output = tryGetValue(request);
             var args = new MyValidationEventArgs<TValue>(output);
             OnValidate?.Invoke(this, args);
             return args.SaveResult;
         }
 
-        private void SetStatus(bool? status)
+        private void MaybeSetStatus(bool? status)
         {
             if (HighlightStatus)
             {
-                setStatus(status);
-                StatusSet?.Invoke(status);
+                SetStatus(status);
             }
+        }
+
+        private void SetStatus(bool? status)
+        {
+            setStatus(status);
+            StatusSet?.Invoke(status);
         }
     }
 }

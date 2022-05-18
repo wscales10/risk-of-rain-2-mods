@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Rules.RuleTypes.Mutable;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using WPFApp.Controls.Pickers;
-using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Wrappers
 {
-    internal class RuleWrapper : SinglePickerWrapper<NavigationViewModelBase>
+    internal class RuleWrapper : SinglePickerWrapper<Rule>
     {
         private readonly Func<Button> buttonGetter;
 
@@ -18,16 +18,18 @@ namespace WPFApp.Controls.Wrappers
             UIElement.aligner.Margin = new Thickness(40, 4, 4, 4);
         }
 
-        public NavigationViewModelBase GetValueBypassValidation()
+        public Rule GetValueBypassValidation()
         {
             object obj = null;
             UIElement?.ViewModel?.ValueWrapper?.ForceGetValue(out obj);
-            return (NavigationViewModelBase)obj;
+            return (Rule)obj;
         }
 
-        protected override void setValue(NavigationViewModelBase value)
+        protected override bool Validate(Rule value) => value is not null;
+
+        protected override void setValue(Rule value)
         {
-            ItemButtonWrapper valueWrapper = value is null ? null : new ItemButtonWrapper(buttonGetter());
+            var valueWrapper = value is null ? null : new ItemButtonWrapper<Rule>(buttonGetter());
             valueWrapper?.SetValue(value);
             UIElement.ViewModel.HandleSelection(valueWrapper);
         }

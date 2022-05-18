@@ -21,10 +21,6 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
         protected sealed override TextBox TextBox => UIElement.textBox;
 
-        protected override void Display()
-        {
-            base.Display();
-            ViewModel.Text = TextBox.Text;
-        }
+        protected override string Text { get => ViewModel.Text; set => ViewModel.Text = value; }
     }
 }

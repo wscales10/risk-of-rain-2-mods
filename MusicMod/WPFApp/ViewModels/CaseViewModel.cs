@@ -12,27 +12,34 @@ namespace WPFApp.ViewModels
 {
     public class CaseViewModel : ViewModelBase
     {
+        private readonly PropertyWrapper<Type> valueType;
+
         private NavigationContext navigationContext;
 
         private OptionalPickerWrapper<Context> wherePatternWrapper;
 
         private bool wherePatternError;
 
-        public CaseViewModel(Case<IPattern> c, Type valueType, NavigationContext navigationContext)
+        public CaseViewModel(Case<IPattern> c, PropertyWrapper<Type> valueType, NavigationContext navigationContext)
         {
-            SetPropertyDependency(nameof(WherePatternStatus), nameof(WherePatternError), nameof(WherePatternWrapper));
+            Case = c;
+            this.valueType = valueType;
             NavigationContext = navigationContext;
+
+            PickerViewModel = new(new PatternPickerInfo(valueType, navigationContext));
+            MultiPicker picker = new() { ViewModel = PickerViewModel };
+            picker.VerticalAlignment = VerticalAlignment.Center;
+            PickerViewModel.ValueContainerManager.BindLooselyTo(c.Arr, AddPattern, container => SaveResult.Create<IPattern>(container.ValueWrapper.TryGetObject(true)));
+
+            SetPropertyDependency(nameof(WherePatternStatus), nameof(WherePatternError), nameof(WherePatternWrapper));
             WherePatternWrapper_StatusSet(null);
             WherePatternWrapper.StatusSet += WherePatternWrapper_StatusSet;
             WherePatternWrapper.SetValue(c.WherePattern);
-            MultiPickerViewModel pickerViewModel = new(new PatternPickerInfo(valueType, navigationContext));
-            Picker = new(pickerViewModel);
-            Picker.VerticalAlignment = VerticalAlignment.Center;
-            pickerViewModel.ValueContainerManager.BindLooselyTo(c.Arr, AddPattern, (ValueContainer c) => SaveResult.Create<IPattern>(c.ValueWrapper.TryGetObject(true)));
-            Case = c;
         }
 
-        public MultiPicker Picker { get; }
+        public Type ValueType => valueType;
+
+        public MultiPickerViewModel PickerViewModel { get; }
 
         public Case<IPattern> Case { get; }
 
@@ -74,21 +81,8 @@ namespace WPFApp.ViewModels
 
         internal bool HasWherePattern => WherePatternWrapper.UIElement.ViewModel.ValueWrapper is not null;
 
-        public SaveResult TrySaveChanges()
-        {
-            SaveResult success = Picker.ViewModel.ValueContainerManager.TrySaveChanges();
-            SaveResult<object> result = WherePatternWrapper.TryGetObject(true);
-
-            if (result.IsSuccess)
-            {
-                Case.WherePattern = (IPattern<Context>)result.Value;
-            }
-
-            return success & result;
-        }
-
         private void WherePatternWrapper_StatusSet(bool? status) => WherePatternError = !(status ?? true);
 
-        private ValueContainer AddPattern(IPattern pattern) => Picker.ViewModel.AddWrapper(PatternWrapper.Create(pattern, navigationContext));
+        private ValueContainer AddPattern(IPattern pattern) => PickerViewModel.AddWrapper(PatternWrapper.Create(pattern, navigationContext));
     }
 }

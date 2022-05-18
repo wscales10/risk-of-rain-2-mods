@@ -23,7 +23,7 @@ namespace WPFApp.Controls.Wrappers
 
         string ValueString { get; }
 
-        SaveResult<object> TryGetObject(bool trySave);
+        SaveResult<object> TryGetObject(GetValueRequest request);
 
         void ForceGetValue(out object value);
 
@@ -32,7 +32,7 @@ namespace WPFApp.Controls.Wrappers
 
     internal interface IReadableControlWrapper<TValue> : IReadableControlWrapper
     {
-        SaveResult<TValue> TryGetValue(bool trySave);
+        SaveResult<TValue> TryGetValue(GetValueRequest request);
 
         void ForceGetValue(out TValue value);
     }

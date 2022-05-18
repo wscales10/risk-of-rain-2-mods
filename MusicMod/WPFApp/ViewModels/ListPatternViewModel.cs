@@ -30,8 +30,9 @@ namespace WPFApp.ViewModels
                 }
             };
 
-            TypedRowManager.BindLooselyTo(Item.Children, AddPattern, valuegetter);
             this.valueType = valueType;
+
+            TypedRowManager.BindLooselyTo(Item.Children, AddPattern, valuegetter);
         }
 
         public override string Title

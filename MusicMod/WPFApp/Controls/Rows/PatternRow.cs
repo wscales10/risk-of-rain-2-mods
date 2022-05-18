@@ -41,7 +41,8 @@ namespace WPFApp.Controls.Rows
             if (output is not null)
             {
                 output.Margin = new Thickness(40, 4, 4, 4);
-                output.MinWidth = 150;
+
+                // output.MinWidth = 150;
                 output.HorizontalAlignment = HorizontalAlignment.Left;
             }
 

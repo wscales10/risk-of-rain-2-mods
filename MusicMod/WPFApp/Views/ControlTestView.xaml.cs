@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using System.Windows.Controls;
 
 namespace WPFApp.Views
 {
@@ -10,7 +9,6 @@ namespace WPFApp.Views
     {
         public ControlTestView()
         {
-            DataContext = new ViewModels.TestComboBoxViewModel();
             InitializeComponent();
         }
     }

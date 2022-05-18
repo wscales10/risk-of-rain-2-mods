@@ -3,72 +3,72 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:WPFApp.Controls.RuleControls" xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls" xmlns:patterncontrols="clr-namespace:WPFApp.Controls.PatternControls" xmlns:viewmodels="clr-namespace:WPFApp.ViewModels" xmlns:converters="clr-namespace:WPFApp.Converters" xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-			 mc:Ignorable="d"
+             xmlns:local="clr-namespace:WPFApp.Controls.RuleControls" xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls" xmlns:patterncontrols="clr-namespace:WPFApp.Controls.PatternControls" xmlns:viewmodels="clr-namespace:WPFApp.ViewModels" xmlns:converters="clr-namespace:WPFApp.Converters" xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" xmlns:pickers="clr-namespace:WPFApp.Controls.Pickers"
+             mc:Ignorable="d"
 			 d:DesignHeight="130" d:DesignWidth="800"
 			 d:DataContext="{d:DesignInstance Type=viewmodels:CaseViewModel}">
-	<Grid MinHeight="20" x:Name="grid">
-		<Grid.ColumnDefinitions>
-			<!--Case column-->
-			<ColumnDefinition />
-			<!--Popup column-->
-			<ColumnDefinition Width="Auto" />
-			<!--Button column-->
-			<ColumnDefinition>
-				<ColumnDefinition.Style>
-					<Style TargetType="ColumnDefinition">
-						<Style.Triggers>
-							<DataTrigger Binding="{Binding IsChecked, ElementName=ToggleButton}" Value="True">
-								<Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Mode=OneTime}" />
-							</DataTrigger>
-							<DataTrigger Binding="{Binding IsChecked, ElementName=ToggleButton}" Value="False">
-								<Setter Property="Width" Value="Auto" />
-							</DataTrigger>
-						</Style.Triggers>
-					</Style>
-				</ColumnDefinition.Style>
-			</ColumnDefinition>
-		</Grid.ColumnDefinitions>
-		<Grid HorizontalAlignment="Center" x:Name="subGrid">
-			<Grid.Resources>
-				<converters:ValueConverterGroup x:Key="VisibilityConverter">
-					<converters:IsNullConverter />
-					<converters:BooleanToVisibilityConverter True="Hidden" False="Visible" />
-				</converters:ValueConverterGroup>
-				<converters:ValueConverterGroup x:Key="BorderConverter">
-					<converters:BooleanToBrushConverter True="DarkGray" False="Transparent" />
-				</converters:ValueConverterGroup>
-			</Grid.Resources>
-			<Grid.RowDefinitions>
-				<RowDefinition />
-				<RowDefinition Height="Auto" />
-			</Grid.RowDefinitions>
-			<ContentPresenter Content="{Binding Picker}" />
-			<Border Grid.Row="1" VerticalAlignment="Bottom" Margin="2" HorizontalAlignment="Center" BorderBrush="{Binding IsFocused, ElementName=textBox, Converter={StaticResource BorderConverter}}" BorderThickness="1">
-				<StackPanel Background="White" Orientation="Horizontal">
-					<TextBlock VerticalAlignment="Center" Text="(" Visibility="{Binding CaseName, Converter={StaticResource VisibilityConverter}}" />
-					<xctk:WatermarkTextBox x:Name="textBox" TextAlignment="Center" MinWidth="9" Padding="0" Background="Transparent" Text="{Binding CaseName}" Cursor="IBeam" BorderThickness="0" Margin="1" Watermark="..." />
-					<TextBlock VerticalAlignment="Center" Text=")" Visibility="{Binding CaseName, Converter={StaticResource VisibilityConverter}}" />
-				</StackPanel>
-			</Border>
-		</Grid>
-		<Border Grid.Column="1">
-			<Popup x:Name="popup"
+    <Grid MinHeight="20" x:Name="grid">
+        <Grid.ColumnDefinitions>
+            <!--Case column-->
+            <ColumnDefinition />
+            <!--Popup column-->
+            <ColumnDefinition Width="Auto" />
+            <!--Button column-->
+            <ColumnDefinition>
+                <ColumnDefinition.Style>
+                    <Style TargetType="ColumnDefinition">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=ToggleButton}" Value="True">
+                                <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Mode=OneTime}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=ToggleButton}" Value="False">
+                                <Setter Property="Width" Value="Auto" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ColumnDefinition.Style>
+            </ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid x:Name="subGrid">
+            <Grid.Resources>
+                <converters:ValueConverterGroup x:Key="VisibilityConverter">
+                    <converters:IsNullConverter />
+                    <converters:BooleanToVisibilityConverter True="Hidden" False="Visible" />
+                </converters:ValueConverterGroup>
+                <converters:ValueConverterGroup x:Key="BorderConverter">
+                    <converters:BooleanToBrushConverter True="DarkGray" False="Transparent" />
+                </converters:ValueConverterGroup>
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <pickers:MultiPicker DataContext="{Binding PickerViewModel}" VerticalAlignment="Center" />
+            <Border Grid.Row="1" VerticalAlignment="Bottom" Margin="2" HorizontalAlignment="Center" BorderBrush="{Binding IsFocused, ElementName=textBox, Converter={StaticResource BorderConverter}}" BorderThickness="1">
+                <StackPanel Background="White" Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center" Text="(" Visibility="{Binding CaseName, Converter={StaticResource VisibilityConverter}}" />
+                    <xctk:WatermarkTextBox x:Name="textBox" TextAlignment="Center" MinWidth="9" Padding="0" Background="Transparent" Text="{Binding CaseName}" Cursor="IBeam" BorderThickness="0" Margin="1" Watermark="..." />
+                    <TextBlock VerticalAlignment="Center" Text=")" Visibility="{Binding CaseName, Converter={StaticResource VisibilityConverter}}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <Border Grid.Column="1">
+            <Popup x:Name="popup"
 				   Height="{Binding ElementName=subGrid, Path=ActualHeight}"
 				   PlacementTarget="{Binding ElementName=subGrid}" Placement="Right"
 				   IsOpen="{Binding ElementName=ToggleButton, Path=IsChecked}">
-				<local:WhereControl x:Name="whereControl" DataContext="{Binding}" />
-			</Popup>
-		</Border>
-		<Border x:Name="buttonContainer" Margin="0" Grid.Column="2">
-			<Border.Resources>
-				<converters:NullableBooleanToBrushConverter True="Blue" False="Red" Null="White" x:Key="Converter" />
-			</Border.Resources>
-			<ToggleButton x:Name="ToggleButton" Width="15" Background="{Binding WherePatternStatus, Converter={StaticResource Converter}}" BorderBrush="LightGray" MinWidth="0" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked">
-				<Canvas Width="0" Height="0" RenderTransform="1 0 0 -1 0 0">
-					<Line X1="1" X2="1" Y1="-15" Y2="15" StrokeThickness="1" Stroke="DarkGray" />
-				</Canvas>
-			</ToggleButton>
-		</Border>
-	</Grid>
+                <local:WhereControl x:Name="whereControl" DataContext="{Binding}" />
+            </Popup>
+        </Border>
+        <Border x:Name="buttonContainer" Margin="0" Grid.Column="2">
+            <Border.Resources>
+                <converters:NullableBooleanToBrushConverter True="Blue" False="Red" Null="White" x:Key="Converter" />
+            </Border.Resources>
+            <ToggleButton x:Name="ToggleButton" Width="15" Background="{Binding WherePatternStatus, Converter={StaticResource Converter}}" BorderBrush="LightGray" MinWidth="0" Checked="ToggleButton_Checked" Unchecked="ToggleButton_Unchecked">
+                <Canvas Width="0" Height="0" RenderTransform="1 0 0 -1 0 0">
+                    <Line X1="1" X2="1" Y1="-15" Y2="15" StrokeThickness="1" Stroke="DarkGray" />
+                </Canvas>
+            </ToggleButton>
+        </Border>
+    </Grid>
 </UserControl>

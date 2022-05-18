@@ -11,23 +11,27 @@ namespace WPFApp
 {
     public abstract class NotifyPropertyChangedBase : INotifyPropertyChanged
     {
-        private readonly Cache<INotifyPropertyChanged, AutoInitialiseDictionary<string, HashSet<string>>> cache;
+        private readonly Cache<INotifyPropertyChanged, AutoInitialiseDictionary<string, HashSet<string>>> objectCache;
 
-        private readonly Cache<INotifyCollectionChanged, HashSet<string>> cache2;
+        private readonly Cache<INotifyCollectionChanged, HashSet<string>> collectionCache;
 
         protected NotifyPropertyChangedBase()
         {
-            cache = new(obj =>
+            objectCache = new(obj =>
             {
-                obj.PropertyChanged += Obj_PropertyChanged;
-                return new();
-            });
+                obj.PropertyChanged += Object_PropertyChanged;
+                return new(set => set.Count == 0);
+            },
+            dict => dict.Count == 0,
+            obj => obj.PropertyChanged -= Object_PropertyChanged);
 
-            cache2 = new(coll =>
+            collectionCache = new(coll =>
             {
-                coll.CollectionChanged += Coll_CollectionChanged;
+                coll.CollectionChanged += Collection_CollectionChanged;
                 return new();
-            });
+            },
+            set => set.Count == 0,
+            coll => coll.CollectionChanged -= Collection_CollectionChanged);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -38,7 +42,7 @@ namespace WPFApp
 
         protected void RemovePropertyDependency(string propertyName, params string[] dependentOn)
         {
-            foreach (var pair in cache)
+            foreach (var pair in objectCache)
             {
                 var source = pair.Key;
                 var dict = pair.Value;
@@ -46,14 +50,12 @@ namespace WPFApp
                 foreach (string s in dependentOn.Where(dict.ContainsKey))
                 {
                     _ = dict[s].Remove(propertyName);
-
-                    // TODO: remove HashSet and event handler if set is now empty
+                    _ = dict.TryRemove(s);
 
                     if (source.GetPropertyValue(s) is INotifyCollectionChanged collection)
                     {
-                        _ = cache2[collection].Remove(propertyName);
-
-                        // TODO: remove HashSet and event handler if set is now empty
+                        _ = collectionCache[collection].Remove(propertyName);
+                        _ = collectionCache.TryRemove(collection);
                     }
                 }
             }
@@ -66,20 +68,23 @@ namespace WPFApp
                 return;
             }
 
-            foreach (HashSet<string> set in cache[source][dependentOn])
+            var dict = objectCache[source];
+
+            foreach (HashSet<string> set in dict[dependentOn])
             {
                 _ = set.Remove(propertyName);
-
-                // TODO: remove HashSet and event handler if set is now empty
             }
+
+            dict.TryRemove(dependentOn);
+            _ = objectCache.TryRemove(source);
 
             foreach (string s in dependentOn)
             {
                 if (source.GetPropertyValue(s) is INotifyCollectionChanged collection)
                 {
-                    _ = cache2[collection].Remove(propertyName);
-
-                    // TODO: remove HashSet and event handler if set is now empty
+                    var set = collectionCache[collection];
+                    _ = set.Remove(propertyName);
+                    _ = collectionCache.TryRemove(collection);
                 }
             }
         }
@@ -96,7 +101,7 @@ namespace WPFApp
                 return;
             }
 
-            foreach (HashSet<string> set in cache[source][dependentOn])
+            foreach (HashSet<string> set in objectCache[source][dependentOn])
             {
                 _ = set.Add(propertyName);
             }
@@ -105,7 +110,7 @@ namespace WPFApp
             {
                 if (source.GetPropertyValue(s) is INotifyCollectionChanged collection)
                 {
-                    _ = cache2[collection].Add(propertyName);
+                    _ = collectionCache[collection].Add(propertyName);
                 }
             }
         }
@@ -118,17 +123,17 @@ namespace WPFApp
             NotifyPropertyChanged(propertyName);
         }
 
-        private void Coll_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void Collection_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            foreach (string dependant in cache2[(INotifyCollectionChanged)sender])
+            foreach (string dependant in collectionCache[(INotifyCollectionChanged)sender])
             {
                 NotifyPropertyChanged(dependant);
             }
         }
 
-        private void Obj_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        private void Object_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            AutoInitialiseDictionary<string, HashSet<string>> dictionary = cache[(INotifyPropertyChanged)sender];
+            AutoInitialiseDictionary<string, HashSet<string>> dictionary = objectCache[(INotifyPropertyChanged)sender];
             if (dictionary.ContainsKey(e.PropertyName))
             {
                 foreach (string dependant in dictionary[e.PropertyName])
@@ -140,9 +145,9 @@ namespace WPFApp
                 /*if (sender.TryGetPropertyValue<INotifyCollectionChanged>(e.PropertyName, out var collection))*/
                 {
                     var collection = (INotifyCollectionChanged)sender.GetPropertyValue(e.PropertyName);
-                    foreach (string dependant in cache[(INotifyPropertyChanged)sender][e.PropertyName])
+                    foreach (string dependant in objectCache[(INotifyPropertyChanged)sender][e.PropertyName])
                     {
-                        _ = cache2[collection].Add(dependant);
+                        _ = collectionCache[collection].Add(dependant);
                     }
                 }
             }

@@ -10,29 +10,38 @@ using Patterns.TypeDefs;
 using System.Linq;
 using System.Collections;
 using Patterns.Patterns.CollectionPatterns;
+using System.Collections.ObjectModel;
 
 namespace WPFApp.Controls.Pickers
 {
     public class PatternPickerInfo : IPickerInfo
     {
+        private readonly ObservableCollection<TypeWrapper> patternTypes = new();
+
+        private readonly PropertyWrapper<Type> valueType;
+
+        public PatternPickerInfo(PropertyWrapper<Type> valueType, NavigationContext navigationContext)
+        {
+            this.valueType = valueType;
+            NavigationContext = navigationContext;
+            RefreshPatternTypes();
+            this.valueType.PropertyChanged += (s, e) => RefreshPatternTypes();
+        }
+
         public PatternPickerInfo(Type valueType, NavigationContext navigationContext)
         {
-            ValueType = valueType;
+            this.valueType = new(valueType);
             NavigationContext = navigationContext;
+            RefreshPatternTypes();
         }
 
         public string DisplayMemberPath => nameof(TypeWrapper.DisplayName);
 
         public string SelectedValuePath => nameof(TypeWrapper.Type);
 
-        public Type ValueType { get; }
-
         public NavigationContext NavigationContext { get; }
 
-        public IEnumerable GetItems()
-        {
-            return GetAllowedPatternTypes(ValueType);
-        }
+        public IEnumerable GetItems() => new ReadOnlyObservableCollection<TypeWrapper>(patternTypes);
 
         public IReadableControlWrapper CreateWrapper(object selectedInfo)
         {
@@ -77,6 +86,11 @@ namespace WPFApp.Controls.Pickers
             output.Add(typeof(NotPattern<>).MakeGenericType(type));
 
             return output;
+        }
+
+        private void RefreshPatternTypes()
+        {
+            patternTypes.ReplaceRange(0, GetAllowedPatternTypes(this.valueType), patternTypes.Count);
         }
     }
 }

@@ -33,7 +33,7 @@ namespace WPFApp.Controls.Wrappers
 
         protected override void setStatus(bool status) => UIElement.Border.BorderBrush = status ? Brushes.Transparent : Brushes.Red;
 
-        protected override SaveResult<SpotifyItem> tryGetValue(bool trySave) => new(UIElement.ViewModel.Item);
+        protected override SaveResult<SpotifyItem> tryGetValue(GetValueRequest request) => new(UIElement.ViewModel.Item);
 
         protected override bool Validate(SpotifyItem value) => value is not null;
     }

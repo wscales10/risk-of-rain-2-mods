@@ -21,6 +21,11 @@
                 <converters:BooleanToVisibilityConverter />
             </converters:ValueConverterGroup>
         </Grid.Resources>
+        <!--<Border x:Name="aligner"
+                VerticalAlignment="Center"
+                Visibility="{Binding ValueWrapper, Converter={StaticResource ComboBoxConverter}}">
+            <ComboBox Style="{DynamicResource ComboBoxStyle1}" MaxWidth="160" />
+        </Border>-->
         <controls:Aligner x:Name="aligner"
                           VerticalAlignment="Center"
                           Alignment="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:SinglePicker}}"

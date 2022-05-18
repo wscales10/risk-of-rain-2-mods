@@ -97,7 +97,7 @@ namespace WPFApp.Controls.CommandControls
             _ = output.Children.Add(propertiesPanel);
 
             DiscreteComboBox add = new(HorizontalAlignment.Left, nameof(PropertyString.PropertyName));
-            add.ItemsSource = notDisplayed;
+            add.SetItemsSource(notDisplayed);
             add.OnSelectionMade += ps => Display((PropertyString)ps);
 
             Binding myBinding = new(nameof(notDisplayed.Count))

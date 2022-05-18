@@ -8,50 +8,65 @@ using WPFApp.Controls.Wrappers.SaveResults;
 namespace WPFApp.Controls.Wrappers
 {
     internal class TimeSpanWrapper : ControlWrapper<TimeSpan, TextBox>
-	{
-		private static readonly Regex withHours = new(@"^(?<neg>-)?(?<h>\d+):(?<m>\d\d):(?<s>\d\d)(\.(?<ms>\d{1,3}))?$");
+    {
+        private static readonly Regex withHours = new(@"^(?<neg>-)?(?<h>\d+):(?<m>\d\d):(?<s>\d\d)(\.(?<ms>\d{1,3}))?$");
 
-		private static readonly Regex withMinutes = new(@"^(?<neg>-)?(?<m>\d?\d):(?<s>\d\d)(\.(?<ms>\d{1,3}))?$");
+        private static readonly Regex withMinutes = new(@"^(?<neg>-)?(?<m>\d?\d):(?<s>\d\d)(\.(?<ms>\d{1,3}))?$");
 
-		private static readonly Regex withSeconds = new(@"^(?<neg>-)?(?<s>\d?\d)(\.(?<ms>\d{1,3}))?s$");
-
-		public override string ValueString => UIElement.Text;
+        private static readonly Regex withSeconds = new(@"^(?<neg>-)?(?<s>\d?\d)(\.(?<ms>\d{1,3}))?s$");
 
         public TimeSpanWrapper() => UIElement.TextChanged += (s, e) => NotifyValueChanged();
 
-		public override TextBox UIElement { get; } = new TextBox() { VerticalAlignment = VerticalAlignment.Center, MinWidth = 30 };
+        public override string ValueString => UIElement.Text;
 
-		protected override void setValue(TimeSpan value) => UIElement.Text = value.ToCompactString();
+        public override TextBox UIElement { get; } = new TextBox() { VerticalAlignment = VerticalAlignment.Center, MinWidth = 30 };
 
-		protected override SaveResult<TimeSpan> tryGetValue(bool trySave)
-		{
-			static int ParseInt(string s)
-			{
-				return s.Length == 0 ? 0 : int.Parse(s, System.Globalization.NumberStyles.Integer);
-			}
+        protected override void setValue(TimeSpan value) => UIElement.Text = value.ToCompactString();
 
-			string text = UIElement.Text;
-			int hours, minutes, seconds, milliseconds, sign;
+        protected override SaveResult<TimeSpan> tryGetValue(GetValueRequest request)
+        {
+            static int ParseInt(string s)
+            {
+                return s.Length == 0 ? 0 : int.Parse(s, System.Globalization.NumberStyles.Integer);
+            }
 
-			Match match;
+            string text = UIElement.Text;
+            int hours, minutes, seconds, milliseconds, sign;
 
-			bool SetVariables()
-			{
-				return (match = withHours.Match(text)).Success || (match = withMinutes.Match(text)).Success || (match = withSeconds.Match(text)).Success;
-			}
+            Match match;
 
-			if (!SetVariables())
-			{
-				return new(false);
-			}
+            bool SetVariables()
+            {
+                match = withHours.Match(text);
 
-			hours = ParseInt(match.Groups["h"].Value);
-			minutes = ParseInt(match.Groups["m"].Value);
-			seconds = ParseInt(match.Groups["s"].Value);
-			milliseconds = ParseInt(match.Groups["ms"].Value.PadRight(3, '0'));
+                if (match.Success)
+                {
+                    return true;
+                }
 
-			sign = match.Groups["neg"].Success ? -1 : 1;
-			return new(sign * new TimeSpan(0, hours, minutes, seconds, milliseconds));
-		}
-	}
+                match = withMinutes.Match(text);
+
+                if (match.Success)
+                {
+                    return true;
+                }
+
+                match = withSeconds.Match(text);
+                return match.Success;
+            }
+
+            if (!SetVariables())
+            {
+                return new(false);
+            }
+
+            hours = ParseInt(match.Groups["h"].Value);
+            minutes = ParseInt(match.Groups["m"].Value);
+            seconds = ParseInt(match.Groups["s"].Value);
+            milliseconds = ParseInt(match.Groups["ms"].Value.PadRight(3, '0'));
+
+            sign = match.Groups["neg"].Success ? -1 : 1;
+            return new(sign * new TimeSpan(0, hours, minutes, seconds, milliseconds));
+        }
+    }
 }

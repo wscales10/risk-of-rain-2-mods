@@ -9,10 +9,11 @@
              xmlns:wrappers="clr-namespace:WPFApp.Controls.Wrappers"
              mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="200"
-             d:DataContext="{d:DesignInstance Type={x:Type wrappers:IWrapper}}">
+             d:DataContext="{d:DesignInstance Type={x:Type wrappers:IWrapper}}"
+             BorderThickness="1">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter False="Hidden" x:Key="BooleanToVisibilityConverter" />
-        <converters:FlagsToMarginsConverter Maximum="33 3" Minimum="3"  x:Key="FlagsToMarginsConverter" />
+        <converters:FlagsToMarginsConverter Maximum="29 3" Minimum="3"  x:Key="FlagsToMarginsConverter" />
     </UserControl.Resources>
     <Grid Background="Transparent" Margin="2">
         <Grid>
@@ -23,11 +24,11 @@
                 </MultiBinding>
             </Grid.Margin>
             <ContentPresenter x:Name="border" Content="{Binding UIElement}" />
-            <Rectangle Stroke="#FF000000" StrokeThickness="1" StrokeDashArray="4 4" SnapsToDevicePixels="True"
+            <Rectangle Stroke="#F99C" StrokeThickness="1" StrokeDashArray="4 4" SnapsToDevicePixels="True"
                        Visibility="{Binding IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}" />
         </Grid>
         <commandcontrols:DeleteButton HorizontalAlignment="Right"
-                                      Margin="7"
+                                      Margin="5"
 									  x:Name="deleteButton"
 									  Click="deleteButton_Click"
 									  Visibility="{Binding IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}">

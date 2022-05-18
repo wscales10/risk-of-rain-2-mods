@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls.Primitives;
+﻿using System.Windows;
+using System.Windows.Controls.Primitives;
 
 namespace WPFApp.Controls.Pickers
 {
@@ -7,19 +8,29 @@ namespace WPFApp.Controls.Pickers
     /// </summary>
     public partial class OptionalPicker : Picker
     {
-        public OptionalPicker() : this(null)
-        {
-        }
+        public OptionalPicker() => InitializeComponent();
 
-        public OptionalPicker(OptionalPickerViewModel viewModel) : base(viewModel)
+        public OptionalPickerViewModel ViewModel
         {
-            InitializeComponent();
-            PostInit();
-            valueContainer.Deleted += () => ViewModel.ValueWrapper = null;
+            get => (OptionalPickerViewModel)GetViewModel();
+            set => SetViewModel(value);
         }
-
-        public override OptionalPickerViewModel ViewModel => (OptionalPickerViewModel)base.ViewModel;
 
         protected override Selector ItemsControl => comboBox.ListBox;
+
+        protected override void Picker_ViewModelChanged(PickerViewModel oldViewModel, PickerViewModel newViewModel)
+        {
+            if (oldViewModel is OptionalPickerViewModel oldOptionalPickerViewModel)
+            {
+                valueContainer.Deleted -= oldOptionalPickerViewModel.ClearValueWrapper;
+            }
+
+            base.Picker_ViewModelChanged(oldViewModel, newViewModel);
+
+            if (newViewModel is OptionalPickerViewModel newOptionalPickerViewModel)
+            {
+                valueContainer.Deleted += newOptionalPickerViewModel.ClearValueWrapper;
+            }
+        }
     }
 }

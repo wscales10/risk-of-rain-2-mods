@@ -25,8 +25,8 @@ namespace WPFApp.Controls.Pickers
 
         public IControlWrapper CreateWrapper(object selectedInfo)
         {
-            var output = new ItemButtonWrapper(buttonGetter());
-            output.SetValue(NavigationContext.GetViewModel(Rule.Create((Type)selectedInfo)));
+            var output = new ItemButtonWrapper<Rule>(buttonGetter());
+            output.SetValue(Rule.Create((Type)selectedInfo));
             return output;
         }
 

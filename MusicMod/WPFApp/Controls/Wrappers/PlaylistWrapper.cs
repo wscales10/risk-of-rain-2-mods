@@ -25,7 +25,7 @@ namespace WPFApp.Controls.Wrappers
 
         protected override void setValue(PlaylistRef value) => UIElement.Text = value.Name;
 
-        protected override SaveResult<PlaylistRef> tryGetValue(bool trySave)
+        protected override SaveResult<PlaylistRef> tryGetValue(GetValueRequest request)
         {
             var playlist = (Playlist)UIElement.SelectedItem;
 

@@ -1,7 +1,9 @@
 ﻿using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
@@ -11,10 +13,14 @@ namespace WPFApp.ViewModels
 {
     internal class SwitchRuleViewModel : RuleViewModelBase<StaticSwitchRule>
     {
+        private readonly PropertyWrapper<Type> valueType = new();
+
         public SwitchRuleViewModel(StaticSwitchRule switchRule, NavigationContext navigationContext) : base(switchRule, navigationContext)
         {
             PropertyInfo.OnValidate += PropertyInfo_OnValidate;
+            PropertyInfo.PropertyChanged += PropertyInfo_PropertyChanged;
             PropertyInfo.Value = Item.PropertyInfo;
+
             ExtraCommands = new[]
             {
                 new ButtonContext
@@ -51,9 +57,15 @@ namespace WPFApp.ViewModels
         protected override SaveResult<StaticSwitchRule> ShouldAllowExit()
         {
             PropertyInfo.MaybeOutput(propertyInfo => Item.PropertyInfo = propertyInfo);
-
-            // TODO: should consider whether patterns implement IPattern<selected property type>
             return base.ShouldAllowExit() & PropertyInfo;
+        }
+
+        private void PropertyInfo_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PropertyInfo.Value))
+            {
+                valueType.Value = PropertyInfo.Value?.Type;
+            }
         }
 
         private void PropertyInfo_OnValidate(object sender, MyValidationEventArgs2<PropertyInfo> e)
@@ -73,7 +85,7 @@ namespace WPFApp.ViewModels
                 c = new Case<IPattern>(null);
             }
 
-            return TypedRowManager.Add(new CaseRow(c, PropertyInfo.Value.Type, NavigationContext));
+            return TypedRowManager.Add(new CaseRow(c, valueType, NavigationContext));
         }
     }
 }

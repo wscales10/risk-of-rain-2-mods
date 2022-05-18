@@ -61,7 +61,7 @@ namespace WPFApp
             viewModels = new(item => item switch
             {
                 Rule rule => GetRuleViewModel(rule),
-                IPattern pattern => GetPatternControl(pattern),
+                IPattern pattern => GetPatternViewModel(pattern),
                 Playlist playlist => new PlaylistViewModel(playlist, NavigationContext),
                 ObservableCollection<Playlist> playlists => new PlaylistsViewModel(playlists, NavigationContext),
                 _ => null,
@@ -104,6 +104,8 @@ namespace WPFApp
         public List<NavigationViewModelBase> ViewModelList { get; set; } = new();
 
         public NavigationViewModelBase CurrentViewModel => ViewModelList.LastOrDefault();
+
+        internal static AsyncManager AsyncManager { get; } = new();
 
         public void GoBack()
         {
@@ -326,7 +328,7 @@ namespace WPFApp
             MessageBoxButton.OK,
             MessageBoxImage.Error);
 
-        private NavigationViewModelBase GetPatternControl(IPattern pattern)
+        private NavigationViewModelBase GetPatternViewModel(IPattern pattern)
         {
             if (pattern is IListPattern lp)
             {
@@ -404,13 +406,6 @@ namespace WPFApp
 
             await PlaybackClient.Do(command);
             timer.Change(TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
-        }
-
-        private void PingSpotify()
-        {
-            Ping ping = new();
-            var pingReply = ping.Send("accounts.spotify.com");
-            Settings.Default.OfflineMode = pingReply.Status != IPStatus.Success;
         }
 
         private bool Try(Navigation navigation) => history.Try(navigation, CurrentViewModel is not null);

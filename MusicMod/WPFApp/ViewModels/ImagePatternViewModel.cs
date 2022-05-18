@@ -13,31 +13,46 @@ using WPFApp.Controls.Wrappers.PatternWrappers;
 
 namespace WPFApp.ViewModels
 {
-    public class ScenePatternViewModel : ImagePatternViewModel
+    public class ScenePatternViewModel : ImagePatternViewModel<DefinedScene>
     {
-        public override IEnumerable<string> Names { get; } = DefinedScene.GetAll().Select(s => s.DisplayName);
+        public override IEnumerable<DefinedScene> AllowedValues { get; } = DefinedScene.GetAll();
 
-        protected override string GetImgXPathFromTableXPath(string tableXPath, string displayName) => $"{tableXPath}//img[@data-image-key='{WebUtility.UrlEncode(displayName.Replace(' ', '_'))}.png']";
+        public override string GetDisplayName(DefinedScene value) => value?.DisplayName;
+
+        protected override string GetImgXPathFromTableXPath(string tableXPath, string typeableName) => $"{tableXPath}//img[@data-image-key='{WebUtility.UrlEncode(typeableName.Replace(' ', '_'))}.png']";
     }
 
-    public class EntityPatternViewModel : ImagePatternViewModel
+    public class EntityPatternViewModel : ImagePatternViewModel<DefinedEntity>
     {
-        public override IEnumerable<string> Names { get; } = DefinedEntity.GetAll().Select(s => s.DisplayName);
+        public override IEnumerable<DefinedEntity> AllowedValues { get; } = DefinedEntity.GetAll();
 
-        protected override string GetImgXPathFromTableXPath(string tableXPath, string displayName) => $"{tableXPath}//img[contains(@data-image-name, '{displayName}')]";
+        public override string GetDisplayName(DefinedEntity value) => value?.DisplayName;
+
+        public override string GetTypeableName(DefinedEntity value) => value?.TypeableName;
+
+        protected override string GetImgXPathFromTableXPath(string tableXPath, string typeableName) => $"{tableXPath}//img[contains(@data-image-name, '{typeableName}')]";
     }
 
     public abstract class ImagePatternViewModel : ViewModelBase
     {
         private static readonly TaskMachine taskMachine = new SeniorTaskMachine();
 
+        private string text;
+
         private CancellationTokenSource individualCancellationTokenSource;
 
         private BitmapImage imageSource;
 
-        private string text;
+        public virtual string Text
+        {
+            get => text;
 
-        public abstract IEnumerable<string> Names { get; }
+            set
+            {
+                SetProperty(ref text, value);
+                SetImageSource();
+            }
+        }
 
         public BitmapImage ImageSource
         {
@@ -45,66 +60,17 @@ namespace WPFApp.ViewModels
             set => SetProperty(ref imageSource, value);
         }
 
-        public string Text
-        {
-            get => text;
+        public abstract IEnumerable<string> TypeableNames { get; }
 
-            set
-            {
-                // TODO: decide how to handle Void Fiend and Voidling
-                string fixedText = Names.FirstOrDefault(s => string.Equals(value, s, StringComparison.OrdinalIgnoreCase));
-                text = fixedText ?? value;
-                NotifyPropertyChanged();
-                SetImageSource();
-            }
-        }
+        protected abstract string GetImgXPathFromTableXPath(string tableXPath, string typeableName);
 
-        protected abstract string GetImgXPathFromTableXPath(string tableXPath, string displayName);
+        protected virtual string GetTypeableNameFromDisplayName(string displayName) => displayName;
 
-        private static string GetFileName(string displayName) => Info.InvalidFileNameCharsRegex.Replace(displayName, string.Empty) + ".png";
+        private static string GetFileName(string typeableName) => Info.InvalidFileNameCharsRegex.Replace(typeableName, string.Empty) + ".png";
 
-        private static string GetWikiPageUrl(string displayName) => "https://riskofrain2.fandom.com/wiki/" + displayName.Replace(" ", "_");
+        private static string GetWikiPageUrl(string typeableName) => "https://riskofrain2.fandom.com/wiki/" + typeableName.Replace(" ", "_");
 
-        private void SetImageSource()
-        {
-            individualCancellationTokenSource?.Cancel();
-            individualCancellationTokenSource = new();
-            taskMachine.TryIngest(token => SetImageSourceAsync(token), individualCancellationTokenSource.Token);
-        }
-
-        private async Task SetImageSourceAsync(CancellationToken cancellationToken)
-        {
-            string displayName = Text;
-            if (!string.IsNullOrEmpty(displayName))
-            {
-                string filePath = Path.Combine(Images.CacheLocation, GetFileName(displayName));
-
-                if (File.Exists(filePath))
-                {
-                    ImageSource = Images.BuildFromUri(filePath);
-                    Images.CacheUpdated += SetImageSource;
-                    return;
-                }
-                else
-                {
-                    string sourceString = await GetImageUrlAsync(displayName, cancellationToken);
-                    if (sourceString is not null)
-                    {
-                        Uri sourceUri = new(sourceString);
-                        ImageSource = Images.BuildFromUri(sourceUri);
-                        Images.CacheUpdated += SetImageSource;
-                        await HttpHelper.DownloadFileAsync(sourceUri, filePath);
-                        return;
-                    }
-                }
-            }
-
-            ImageSource = null;
-            Images.CacheUpdated -= SetImageSource;
-            return;
-        }
-
-        private async Task<string> GetImageUrlAsync(string displayName, CancellationToken cancellationToken = default)
+        private async Task<string> GetImageUrlAsync(string typeableName, CancellationToken cancellationToken = default)
         {
             var client = PatternWrapper.RequestHtmlWeb();
 
@@ -113,7 +79,7 @@ namespace WPFApp.ViewModels
                 return null;
             }
 
-            string wikiPageUrl = GetWikiPageUrl(displayName);
+            string wikiPageUrl = GetWikiPageUrl(typeableName);
             HtmlNode document;
             try
             {
@@ -133,7 +99,7 @@ namespace WPFApp.ViewModels
                 return null;
             }
 
-            HtmlNode img = document.SelectSingleNode(GetImgXPathFromTableXPath(table.XPath, displayName));
+            HtmlNode img = document.SelectSingleNode(GetImgXPathFromTableXPath(table.XPath, typeableName));
 
             if (img is null)
             {
@@ -142,5 +108,74 @@ namespace WPFApp.ViewModels
 
             return img.GetAttributeValue("data-src", null) ?? img.GetAttributeValue("src", null);
         }
+
+        private void SetImageSource()
+        {
+            individualCancellationTokenSource?.Cancel();
+            individualCancellationTokenSource = new();
+            taskMachine.TryIngest(token => SetImageSourceAsync(token), individualCancellationTokenSource.Token);
+        }
+
+        private async Task SetImageSourceAsync(CancellationToken cancellationToken)
+        {
+            string typeableName = GetTypeableNameFromDisplayName(Text);
+            if (!string.IsNullOrEmpty(typeableName))
+            {
+                string filePath = Path.Combine(Images.CacheLocation, GetFileName(typeableName));
+
+                if (File.Exists(filePath))
+                {
+                    ImageSource = Images.BuildFromUri(filePath);
+                    Images.CacheUpdated += SetImageSource;
+                    return;
+                }
+                else
+                {
+                    string sourceString = await GetImageUrlAsync(typeableName, cancellationToken);
+                    if (sourceString is not null)
+                    {
+                        Uri sourceUri = new(sourceString);
+                        ImageSource = Images.BuildFromUri(sourceUri);
+                        Images.CacheUpdated += SetImageSource;
+                        await HttpHelper.DownloadFileAsync(sourceUri, filePath);
+                        return;
+                    }
+                }
+            }
+
+            ImageSource = null;
+            Images.CacheUpdated -= SetImageSource;
+            return;
+        }
+    }
+
+    public abstract class ImagePatternViewModel<T> : ImagePatternViewModel
+    {
+        private string text;
+
+        public override IEnumerable<string> TypeableNames => AllowedValues.Select(GetTypeableName);
+
+        public abstract IEnumerable<T> AllowedValues { get; }
+
+        public override string Text
+        {
+            get => base.Text;
+
+            set
+            {
+                if (text != value)
+                {
+                    text = value;
+                    T foundValue = AllowedValues.FirstOrDefault(x => string.Equals(value, GetTypeableName(x), StringComparison.OrdinalIgnoreCase));
+                    base.Text = GetDisplayName(foundValue) ?? value;
+                }
+            }
+        }
+
+        public virtual string GetTypeableName(T value) => GetDisplayName(value);
+
+        public abstract string GetDisplayName(T value);
+
+        protected override string GetTypeableNameFromDisplayName(string displayName) => GetTypeableName(AllowedValues.FirstOrDefault(x => GetDisplayName(x) == displayName));
     }
 }

@@ -13,19 +13,26 @@ namespace WPFApp
 
         public static string CacheLocation { get; } = Path.Combine(Paths.AssemblyDirectory, "Images");
 
-        public static BitmapImage BuildFromUri(string imageUri) => imageUri is null ? null : BuildFromUri(new Uri(imageUri));
+        public static BitmapImage BuildFromUri(string imageUri)
+        {
+            if (imageUri is null)
+            {
+                return null;
+            }
+            else
+            {
+                return BuildFromUri(new Uri(imageUri));
+            }
+        }
 
         public static BitmapImage BuildFromUri(Uri imageUri)
         {
-            return Application.Current.Dispatcher.Invoke(() =>
-            {
-                BitmapImage bmp = new();
-                bmp.BeginInit();
-                bmp.UriSource = imageUri;
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.EndInit();
-                return bmp;
-            });
+            BitmapImage bmp = new();
+            bmp.BeginInit();
+            bmp.UriSource = imageUri;
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            return bmp;
         }
 
         internal static void ClearCache()
