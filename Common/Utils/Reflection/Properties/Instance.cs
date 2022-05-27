@@ -1,4 +1,7 @@
-﻿namespace Utils.Reflection.Properties
+﻿using System;
+using System.Reflection;
+
+namespace Utils.Reflection.Properties
 {
     public static class Instance
     {
@@ -55,6 +58,29 @@
                 }
             }
             return output;
+        }
+
+        public static object GetDeepPropertyValue(this object instance, string path)
+        {
+            var propertyNames = path.Split('.');
+            Type objectType = instance.GetType();
+
+            foreach (var propertyName in propertyNames)
+            {
+                PropertyInfo propInfo = objectType.GetProperty(propertyName);
+
+                if (propInfo != null)
+                {
+                    instance = propInfo.GetValue(instance, null);
+                    objectType = instance.GetType();
+                }
+                else
+                {
+                    throw new ArgumentException("Properties path is not correct");
+                }
+            }
+
+            return instance;
         }
     }
 }

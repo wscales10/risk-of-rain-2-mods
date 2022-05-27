@@ -40,9 +40,19 @@ namespace Utils.Async
             tasks.Writer.Complete();
         }
 
-        public bool TryIngest(Func<CancellationToken, Task> func, CancellationToken cancellationToken = default) => TryIngest(new CancellableTask(func), cancellationToken);
+        public ConditionalValue<CancellableTask> TryIngest(Func<CancellationToken, Task> func, CancellationToken cancellationToken = default) => TryIngest(new CancellableTask(func), cancellationToken);
 
-        public bool TryIngest(CancellableTask task, CancellationToken cancellationToken = default) => tasks.Writer.TryWrite((task, cancellationToken));
+        public ConditionalValue<CancellableTask> TryIngest(CancellableTask task, CancellationToken cancellationToken = default)
+        {
+            if (tasks.Writer.TryWrite((task, cancellationToken)))
+            {
+                return new ConditionalValue<CancellableTask>(task);
+            }
+            else
+            {
+                return new ConditionalValue<CancellableTask>();
+            }
+        }
 
         protected void StartListening() => Lifecycle = ExecuteAsync();
 

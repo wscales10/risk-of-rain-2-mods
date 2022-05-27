@@ -16,6 +16,11 @@ namespace Utils
             cache = new AsyncCache<TKey, TValue, Dictionary<TKey, TValue>>(getter);
         }
 
+        public async Task<TValue> GetValueAsync(TKey key, CancellationToken cancellationToken = default)
+        {
+            return await cache[(key, cancellationToken)];
+        }
+
         public async Task GetValueAsync(TKey key, Action<TValue> delayedSetter, CancellationToken cancellationToken = default)
         {
             TValue value = await cache[(key, cancellationToken)];

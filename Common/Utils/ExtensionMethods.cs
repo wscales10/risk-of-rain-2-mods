@@ -46,28 +46,6 @@ namespace Utils
             return new ReadOnlyDictionary<TKey, TValue>(mutable);
         }
 
-        public static string ToCompactString(this TimeSpan timeSpan)
-        {
-            string firstPart = timeSpan < TimeSpan.Zero ? "-" : string.Empty;
-            string secondPart = timeSpan.Milliseconds != 0 ? timeSpan.ToString(@"\.FFF") : string.Empty;
-
-            if (timeSpan.Hours != 0)
-            {
-                firstPart += timeSpan.ToString(@"h\:mm\:ss");
-            }
-            else if (timeSpan.Minutes != 0)
-            {
-                firstPart += timeSpan.ToString(@"mm\:ss");
-            }
-            else
-            {
-                firstPart += timeSpan.ToString("%s");
-                secondPart += "s";
-            }
-
-            return firstPart + secondPart;
-        }
-
         public static XElement OnlyChild(this XElement element, bool allowNull = false) => allowNull ? element.Elements().SingleOrDefault() : element.Elements().Single();
 
         public static bool IsGenericType(this Type type, Type genericTypeDefinition)
