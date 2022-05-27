@@ -4,16 +4,24 @@
               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
               xmlns:local="clr-namespace:WPFApp.Controls.Pickers"
-              xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls"
+              xmlns:commandcontrols="clr-namespace:WPFApp.Controls.Commands"
+              xmlns:controls="clr-namespace:WPFApp.Controls"
+              xmlns:pickers="clr-namespace:WPFApp.ViewModels.Pickers"
               mc:Ignorable="d"
               d:DesignHeight="200" d:DesignWidth="200"
-              d:DataContext="{d:DesignInstance Type=local:MultiPickerViewModel}">
+              d:DataContext="{d:DesignInstance Type=pickers:MultiPickerViewModel}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <ItemsControl ItemsSource="{Binding ValueContainerManager.Items}" />
-        <commandcontrols:DiscreteComboBox Grid.Row="1" x:Name="comboBox" Alignment="Center" />
+        <ItemsControl x:Name="ItemsControl" ItemsSource="{Binding ValueWrapperManager.Items}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <controls:ValueContainer Margin="1" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Menu Style="{StaticResource DiscreteMenu}" Grid.Row="1" x:Name="menu" HorizontalAlignment="Center" DataContext="" />
     </Grid>
 </local:Picker>

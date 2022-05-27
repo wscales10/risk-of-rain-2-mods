@@ -7,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Utils;
 
-using WPFApp.Controls.Wrappers;
 using System.Windows;
 using System.Windows.Media;
 

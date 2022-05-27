@@ -6,21 +6,11 @@
               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
               xmlns:local="clr-namespace:WPFApp.Controls.Pickers"
               xmlns:converters="clr-namespace:WPFApp.Converters"
+              xmlns:pickers="clr-namespace:WPFApp.ViewModels.Pickers"
               mc:Ignorable="d"
               d:DesignHeight="200" d:DesignWidth="200"
-              d:DataContext="{d:DesignInstance Type=local:SinglePickerViewModel}">
+              d:DataContext="{d:DesignInstance Type=pickers:SinglePickerViewModel}">
     <Grid>
-        <Grid.Resources>
-            <converters:ValueConverterGroup x:Key="ComboBoxConverter">
-                <converters:IsNullConverter />
-                <converters:BooleanToVisibilityConverter />
-            </converters:ValueConverterGroup>
-            <converters:ValueConverterGroup x:Key="ContainerConverter">
-                <converters:IsNullConverter />
-                <converters:InverseBooleanConverter />
-                <converters:BooleanToVisibilityConverter />
-            </converters:ValueConverterGroup>
-        </Grid.Resources>
         <!--<Border x:Name="aligner"
                 VerticalAlignment="Center"
                 Visibility="{Binding ValueWrapper, Converter={StaticResource ComboBoxConverter}}">
@@ -30,11 +20,15 @@
                           VerticalAlignment="Center"
                           Alignment="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:SinglePicker}}"
                           MaxChildWidth="160"
-                          Visibility="{Binding ValueWrapper, Converter={StaticResource ComboBoxConverter}}">
+                          Visibility="{Binding ValueWrapper, Converter={StaticResource ShowIfNullConverter}}">
             <controls:Aligner.Child>
-                <ComboBox Style="{DynamicResource ComboBoxStyle1}" />
+                <Menu x:Name="menu">
+                    <MenuItem Header="Select...">
+                        <MenuItem Header
+                    </MenuItem>
+                </Menu>
             </controls:Aligner.Child>
         </controls:Aligner>
-        <controls:ValueContainer x:Name="valueContainer" DataContext="{Binding ValueWrapper}" Visibility="{Binding Converter={StaticResource ContainerConverter}}" Margin="2" />
+        <controls:ValueContainer x:Name="valueContainer" DataContext="{Binding SelectedItem}" Visibility="{Binding Converter={StaticResource CollapseIfNullConverter}}" Margin="2" />
     </Grid>
 </local:Picker>

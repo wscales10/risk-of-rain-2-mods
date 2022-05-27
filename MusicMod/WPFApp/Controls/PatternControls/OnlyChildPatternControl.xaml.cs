@@ -1,10 +1,10 @@
 ﻿using Patterns;
 using System;
 using System.Windows.Controls;
-using WPFApp.Controls.Wrappers;
-using WPFApp.Controls.Wrappers.PatternWrappers;
+
+using WPFApp.Wrappers.PatternWrappers;
 using Utils.Reflection;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.SaveResults;
 using System.Windows;
 
 namespace WPFApp.Controls.PatternControls

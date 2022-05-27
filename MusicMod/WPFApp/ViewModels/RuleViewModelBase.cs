@@ -1,6 +1,6 @@
 ﻿using Rules.RuleTypes.Mutable;
 using System.Xml.Linq;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.SaveResults;
 
 namespace WPFApp.ViewModels
 {

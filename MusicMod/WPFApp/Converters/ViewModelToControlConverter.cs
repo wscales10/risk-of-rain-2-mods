@@ -3,19 +3,22 @@ using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Utils;
-using WPFApp.Controls.Rows;
 using WPFApp.Controls.RuleControls;
 using WPFApp.ViewModels;
+using WPFApp.Controls;
 
 namespace WPFApp.Converters
 {
     [ValueConversion(typeof(ViewModelBase), typeof(UserControl))]
-    public class ViewModelToControlConverter : IValueConverter
+    public class ViewModelToControlConverter : SimpleValueConverter<ViewModelBase, UserControl>
     {
         private readonly Cache<Type, UserControl> cache = new(GetUserControl);
 
-        public object Convert(object value, Type targetType, object parameter,
-            CultureInfo culture)
+        public object ConvertBack(object value, object parameter,
+            CultureInfo culture) => (value as UserControl)?.DataContext as ViewModelBase;
+
+        protected override UserControl Convert(ViewModelBase value, object parameter,
+                    CultureInfo culture)
         {
             if (!targetType.IsAssignableFrom(typeof(UserControl)))
             {
@@ -32,12 +35,9 @@ namespace WPFApp.Converters
             return output;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter,
-            CultureInfo culture) => (value as UserControl)?.DataContext as ViewModelBase;
-
         private static UserControl GetUserControl(Type viewModelType)
         {
-            var output = new RowControl();
+            var output = new MyListView();
 
             switch (viewModelType.Name)
             {

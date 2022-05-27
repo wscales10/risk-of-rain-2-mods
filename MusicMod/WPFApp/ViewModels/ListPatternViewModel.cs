@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
-using WPFApp.Controls.Rows;
+using WPFApp.Rows;
 using Patterns;
 using Patterns.Patterns;
 using Utils;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.SaveResults;
 
 namespace WPFApp.ViewModels
 {

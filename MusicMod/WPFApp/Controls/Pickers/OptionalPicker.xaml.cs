@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls.Primitives;
+using WPFApp.ViewModels.Pickers;
 
 namespace WPFApp.Controls.Pickers
 {
@@ -16,7 +17,7 @@ namespace WPFApp.Controls.Pickers
             set => SetViewModel(value);
         }
 
-        protected override Selector ItemsControl => comboBox.ListBox;
+        protected override Selector Selector => comboBox.ListBox;
 
         protected override void Picker_ViewModelChanged(PickerViewModel oldViewModel, PickerViewModel newViewModel)
         {

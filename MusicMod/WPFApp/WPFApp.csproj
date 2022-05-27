@@ -12,17 +12,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Wrappers\**" />
+    <EmbeddedResource Remove="Wrappers\**" />
+    <None Remove="Wrappers\**" />
+    <Page Remove="Wrappers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controls\Commands\DiscreteComboBox.cs" />
+    <Compile Remove="Controls\DiscreteMenu.xaml.cs" />
     <Compile Remove="Controls\PatternControls\NewPatternPicker.xaml.cs" />
-    <Compile Remove="Controls\Rows\ButtonsControl.xaml.cs" />
-    <Compile Remove="Controls\Rows\RowButtonsControl.xaml.cs" />
+    <Compile Remove="Rows\ButtonsControl.xaml.cs" />
+    <Compile Remove="Rows\RowButtonsControl.xaml.cs" />
     <Compile Remove="Settings.cs" />
     <Compile Remove="ViewModels\XmlViewModelBase.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <Page Remove="Controls\Commands\DiscreteComboBox.xaml" />
+    <Page Remove="Controls\DiscreteMenu.xaml" />
     <Page Remove="Controls\PatternControls\NewPatternPicker.xaml" />
-    <Page Remove="Controls\Rows\ButtonsControl.xaml" />
-    <Page Remove="Controls\Rows\RowButtonsControl.xaml" />
+    <Page Remove="Rows\ButtonsControl.xaml" />
+    <Page Remove="Rows\RowButtonsControl.xaml" />
   </ItemGroup>
 
   <ItemGroup>

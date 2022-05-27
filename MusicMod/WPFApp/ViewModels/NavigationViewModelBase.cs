@@ -1,27 +1,27 @@
-﻿using WPFApp.Controls.Wrappers.SaveResults;
+﻿using WPFApp.SaveResults;
 
 namespace WPFApp.ViewModels
 {
     public abstract class NavigationViewModelBase : ViewModelBase
-	{
-		protected NavigationViewModelBase(NavigationContext navigationContext) => NavigationContext = navigationContext;
+    {
+        protected NavigationViewModelBase(NavigationContext navigationContext) => NavigationContext = navigationContext;
 
-		public NavigationContext NavigationContext { get; }
+        public NavigationContext NavigationContext { get; }
 
-		public virtual SaveResult TrySave()
-		{
-			SaveResult result = ShouldAllowExit();
+        public virtual string AsString => null;
 
-			if (result.IsSuccess)
-			{
-				result.Release();
-			}
+        public virtual SaveResult TrySave()
+        {
+            SaveResult result = ShouldAllowExit();
 
-			return result;
-		}
+            if (result.IsSuccess)
+            {
+                result.Release();
+            }
 
-		protected virtual SaveResult ShouldAllowExit() => new(true);
+            return result;
+        }
 
-		public virtual string AsString => null;
-	}
+        protected virtual SaveResult ShouldAllowExit() => new(true);
+    }
 }

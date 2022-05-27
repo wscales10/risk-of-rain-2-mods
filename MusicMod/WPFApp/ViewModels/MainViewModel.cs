@@ -3,7 +3,7 @@ using System.Linq;
 using System;
 using Microsoft.Win32;
 using System.Windows;
-using WPFApp.Controls.Rows;
+using WPFApp.Rows;
 using System.ComponentModel;
 using System.IO;
 

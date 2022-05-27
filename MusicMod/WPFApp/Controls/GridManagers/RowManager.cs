@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WPFApp.Controls.Rows;
+using WPFApp.Rows;
 using System.Collections.Specialized;
 using Utils;
 using System.Collections.ObjectModel;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.SaveResults;
 
 namespace WPFApp.Controls.GridManagers
 {

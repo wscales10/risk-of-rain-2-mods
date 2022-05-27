@@ -49,10 +49,9 @@
                         <Setter Property="Padding" Value="0" />
                         <Setter Property="Margin" Value="0" />
                     </Style>
-                    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
                 </Grid.Resources>
                 <TextBlock Text="{Binding Type}" />
-                <TextBlock Grid.Column="1" Text=" - " Visibility="{Binding HasCreators, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <TextBlock Grid.Column="1" Text=" - " Visibility="{Binding HasCreators, Converter={StaticResource ShouldBeVisibleConverter}}" />
                 <ItemsControl Grid.Column="2" ItemsSource="{Binding Info.Creators}">
                     <ItemsControl.Resources>
                         <converters:BooleanToTextDecorationConverter x:Key="UnderlineConverter" True="Underline" False="None" />

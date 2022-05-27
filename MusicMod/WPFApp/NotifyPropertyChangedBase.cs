@@ -38,7 +38,7 @@ namespace WPFApp
 
         public void SubscribeTo(INotifyPropertyChanged obj) => obj.PropertyChanged += (s, e) => NotifyPropertyChanged(e);
 
-        protected void NotifyPropertyChanged([CallerMemberName] string propertyName = null) => NotifyPropertyChanged(new PropertyChangedEventArgs(propertyName));
+        protected virtual void NotifyPropertyChanged([CallerMemberName] string propertyName = null) => NotifyPropertyChanged(new PropertyChangedEventArgs(propertyName));
 
         protected void RemovePropertyDependency(string propertyName, params string[] dependentOn)
         {

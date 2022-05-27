@@ -1,0 +1,27 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:CustomControls.Converters">
+    <converters:CoalesceConverter x:Key="CoalesceConverter" />
+    <converters:NullableBooleanToBrushConverter True="DarkGray" x:Key="StatusToBrushConverter" />
+    <converters:IsNullConverter x:Key="IsNullConverter" />
+    <converters:ValueConverterGroup x:Key="IsNotNullConverter">
+        <converters:IsNullConverter />
+        <converters:InverseBooleanConverter />
+    </converters:ValueConverterGroup>
+    <converters:BooleanToVisibilityConverter x:Key="ShouldBeVisibleConverter" />
+    <converters:BooleanToVisibilityConverter x:Key="ShouldBeHiddenConverter" True="Hidden" False="Visible" />
+    <converters:BooleanToVisibilityConverter x:Key="ShouldNotBeHiddenConverter" True="Visible" False="Hidden" />
+    <converters:BooleanToVisibilityConverter x:Key="ShouldBeCollapsedConverter" True="Collapsed" False="Visible" />
+    <converters:ValueConverterGroup x:Key="CollapseIfNullConverter">
+        <converters:IsNullConverter />
+        <converters:BooleanToVisibilityConverter True="Collapsed" False="Visible" />
+    </converters:ValueConverterGroup>
+    <converters:ValueConverterGroup x:Key="ShowIfNullConverter">
+        <converters:IsNullConverter />
+        <converters:BooleanToVisibilityConverter True="Visible" False="Collapsed" />
+    </converters:ValueConverterGroup>
+    <converters:ValueConverterGroup x:Key="HideIfNullConverter">
+        <converters:IsNullConverter />
+        <converters:BooleanToVisibilityConverter True="Hidden" False="Visible" />
+    </converters:ValueConverterGroup>
+</ResourceDictionary>

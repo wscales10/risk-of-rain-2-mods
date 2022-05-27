@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Utils;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.SaveResults;
 
 namespace WPFApp.Controls.GridManagers
 {
-    public abstract class GridManager<TItem> : NotifyPropertyChangedBase
+    public class GridManager<TItem> : NotifyPropertyChangedBase
         where TItem : class
     {
         private bool hasDefault;
@@ -17,7 +17,7 @@ namespace WPFApp.Controls.GridManagers
 
         private Func<SaveResult> tryGetValues;
 
-        protected GridManager()
+        public GridManager()
         {
         }
 

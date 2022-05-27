@@ -4,15 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:WPFApp.Controls"
-			 xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls"
+			 xmlns:commandcontrols="clr-namespace:WPFApp.Controls.Commands"
              xmlns:converters="clr-namespace:WPFApp.Converters"
-             xmlns:wrappers="clr-namespace:WPFApp.Controls.Wrappers"
+             xmlns:wrappers="clr-namespace:WPFApp.Wrappers"
              mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="200"
              d:DataContext="{d:DesignInstance Type={x:Type wrappers:IWrapper}}"
              BorderThickness="1">
     <UserControl.Resources>
-        <converters:BooleanToVisibilityConverter False="Hidden" x:Key="BooleanToVisibilityConverter" />
         <converters:FlagsToMarginsConverter Maximum="29 3" Minimum="3"  x:Key="FlagsToMarginsConverter" />
     </UserControl.Resources>
     <Grid Background="Transparent" Margin="2">
@@ -25,15 +24,15 @@
             </Grid.Margin>
             <ContentPresenter x:Name="border" Content="{Binding UIElement}" />
             <Rectangle Stroke="#F99C" StrokeThickness="1" StrokeDashArray="4 4" SnapsToDevicePixels="True"
-                       Visibility="{Binding IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}" />
+                       Visibility="{Binding IsMouseOver, Converter={StaticResource ShouldNotBeHiddenConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}" />
         </Grid>
-        <commandcontrols:DeleteButton HorizontalAlignment="Right"
+        <commandcontrols:WPFApp.ViewModels.Commands.DeleteButton HorizontalAlignment="Right"
                                       Margin="5"
 									  x:Name="deleteButton"
 									  Click="deleteButton_Click"
-									  Visibility="{Binding IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}">
-            <commandcontrols:DeleteButton.Style>
-                <Style TargetType="commandcontrols:DeleteButton">
+									  Visibility="{Binding IsMouseOver, Converter={StaticResource ShouldNotBeHiddenConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}">
+            <commandcontrols:WPFApp.ViewModels.Commands.DeleteButton.Style>
+                <Style TargetType="commandcontrols:WPFApp.ViewModels.Commands.DeleteButton">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding NeedsLeftMargin}" Value="True">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -43,7 +42,7 @@
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </commandcontrols:DeleteButton.Style>
-        </commandcontrols:DeleteButton>
+            </commandcontrols:WPFApp.ViewModels.Commands.DeleteButton.Style>
+        </commandcontrols:WPFApp.ViewModels.Commands.DeleteButton>
     </Grid>
 </UserControl>

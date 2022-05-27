@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:rulecontrols="clr-namespace:WPFApp.Controls.RuleControls"
 		xmlns:views="clr-namespace:WPFApp.Views"
-		xmlns:rows="clr-namespace:WPFApp.Controls.Rows"
+		xmlns:rows="clr-namespace:WPFApp.Rows"
 		xmlns:viewmodels="clr-namespace:WPFApp.ViewModels"
 		xmlns:converters="clr-namespace:WPFApp.Converters" xmlns:properties="clr-namespace:WPFApp.Properties"
 		mc:Ignorable="d"
@@ -26,7 +26,6 @@
             <Setter Property="Margin" Value="3" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
-        <converters:BooleanToVisibilityConverter x:Key="ReverseBooleanToVisibilityConverter" True="Collapsed" False="Visible" />
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <properties:Settings x:Key="Settings" />
     </Window.Resources>
@@ -72,7 +71,7 @@
 				Content="{Binding ItemViewModel, Converter={StaticResource Converter}}" />
             <rulecontrols:NewRuleControl Grid.Column="2" x:Name="newRuleControl"
 									 VerticalAlignment="Center"
-									 Visibility="{Binding HasContent, Converter={StaticResource ReverseBooleanToVisibilityConverter}}" />
+									 Visibility="{Binding HasContent, Converter={StaticResource ShouldBeCollapsedConverter}}" />
         </Grid>
     </Grid>
 </Window>

@@ -1,36 +1,16 @@
-﻿using System;
-using System.Globalization;
-using System.Windows.Data;
+﻿using System.Windows.Data;
 
 namespace WPFApp.Converters
 {
-	[ValueConversion(typeof(double), typeof(double))]
-	public class RatioConverter : IValueConverter
-	{
-		public float Antecedent { get; set; } = 1;
+    [ValueConversion(typeof(double), typeof(double))]
+    public class RatioConverter : SimpleValueConverter<double, double>
+    {
+        public float Antecedent { get; set; } = 1;
 
-		public float Consequent { get; set; } = 1;
+        public float Consequent { get; set; } = 1;
 
-		public object Convert(object value, Type targetType, object parameter,
-			CultureInfo culture)
-		{
-			if (targetType != typeof(double))
-			{
-				throw new InvalidOperationException("The target must be a double");
-			}
+        protected override double Convert(double value) => value * Consequent / Antecedent;
 
-			return (double)value * Consequent / Antecedent;
-		}
-
-		public object ConvertBack(object value, Type targetType, object parameter,
-			CultureInfo culture)
-		{
-			if (targetType != typeof(double))
-			{
-				throw new InvalidOperationException("The target must be a double");
-			}
-
-			return (double)value * Antecedent / Consequent;
-		}
-	}
+        protected override double ConvertBack(double value) => value * Antecedent / Consequent;
+    }
 }

@@ -2,8 +2,8 @@
 
 namespace WPFApp.ViewModels
 {
-	public class ViewModelBase : NotifyPropertyChangedBase
-	{
-		internal static Settings Settings => Settings.Default;
-	}
+    public class ViewModelBase : NotifyDataErrorInfoBase
+    {
+        internal static Settings Settings => Settings.Default;
+    }
 }

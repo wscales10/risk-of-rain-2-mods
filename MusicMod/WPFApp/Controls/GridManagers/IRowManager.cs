@@ -1,33 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using WPFApp.Controls.Rows;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.Rows;
+using WPFApp.SaveResults;
 
 namespace WPFApp.Controls.GridManagers
 {
     public interface IRowManager
-	{
-		event Action SelectionChanged;
+    {
+        event Action SelectionChanged;
 
-		IRow Parent { get; set; }
+        IRow Parent { get; set; }
 
-		ReadOnlyObservableCollection<IRow> Rows { get; }
+        ReadOnlyObservableCollection<IRow> Rows { get; }
 
-		IReadOnlyCollection<IRow> SelectedRows { get; }
+        IReadOnlyCollection<IRow> SelectedRows { get; }
 
-		SaveResult TrySaveChanges();
+        SaveResult TrySaveChanges();
 
-		void MoveSelected(bool down);
+        void MoveSelected(bool down);
 
-		bool CanMoveSelected(bool down);
+        bool CanMoveSelected(bool down);
 
-		bool CanRemoveSelected();
+        bool CanRemoveSelected();
 
-		void RemoveSelected();
+        void RemoveSelected();
 
-		bool ToggleSelected(IRow row);
+        bool ToggleSelected(IRow row);
 
-		void SetSelection(params IRow[] rows);
-	}
+        void SetSelection(params IRow[] rows);
+    }
 }

@@ -1,23 +1,23 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using WPFApp.Controls.Rows;
+using WPFApp.Rows;
 
 namespace WPFApp.Controls.RuleControls
 {
     public class RuleControlBase : UserControl
     {
-        public static readonly DependencyProperty RowControlProperty = DependencyProperty.Register
+        public static readonly DependencyProperty MyListViewProperty = DependencyProperty.Register
         (
-            nameof(RowControl),
-            typeof(RowControl),
+            nameof(MyListView),
+            typeof(MyListView),
             typeof(RuleControlBase),
             new PropertyMetadata(null)
         );
 
-        public RowControl RowControl
+        public MyListView MyListView
         {
-            get => (RowControl)GetValue(RowControlProperty);
-            set => SetValue(RowControlProperty, value);
+            get => (MyListView)GetValue(MyListViewProperty);
+            set => SetValue(MyListViewProperty, value);
         }
     }
 }

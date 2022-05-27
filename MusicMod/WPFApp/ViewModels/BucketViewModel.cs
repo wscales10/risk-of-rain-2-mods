@@ -2,11 +2,11 @@
 using Spotify.Commands;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using WPFApp.Controls.CommandControls;
 using WPFApp.Controls.GridManagers;
-using WPFApp.Controls.Rows;
+using WPFApp.Rows;
 using Utils;
 using System.Linq;
+using WPFApp.ViewModels.Commands;
 
 namespace WPFApp.ViewModels
 {

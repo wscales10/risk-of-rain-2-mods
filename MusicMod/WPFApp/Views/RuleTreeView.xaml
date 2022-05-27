@@ -5,25 +5,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:WPFApp.Views"
 			 xmlns:viewmodels="clr-namespace:WPFApp.ViewModels"
-			 xmlns:rows="clr-namespace:WPFApp.Controls.Rows" xmlns:converters="clr-namespace:WPFApp.Converters"
+			 xmlns:rows="clr-namespace:WPFApp.Rows"
+             xmlns:converters="clr-namespace:WPFApp.Converters"
 			 mc:Ignorable="d"
 			 d:DesignHeight="450" d:DesignWidth="800"
 			 d:DataContext="{d:DesignInstance Type=viewmodels:RuleTreeViewModel}">
-	<UserControl.Resources>
-		<converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-		<converters:ValueConverterGroup x:Key="InverseBooleanToVisibilityConverter">
-			<converters:InverseBooleanConverter />
-			<converters:BooleanToVisibilityConverter />
-		</converters:ValueConverterGroup>
-	</UserControl.Resources>
-	<Grid>
-		<TreeView ItemsSource="{Binding ItemsSource}" Visibility="{Binding IsCollapsed, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-			<TreeView.ItemTemplate>
-				<HierarchicalDataTemplate DataType="{x:Type rows:IRuleRow}" ItemsSource="{Binding Children}">
-					<Button Content="{Binding Label}" Command="{Binding NavigateTreeCommand, RelativeSource={RelativeSource AncestorType=local:RuleTreeView}}" CommandParameter="{Binding}" />
-				</HierarchicalDataTemplate>
-			</TreeView.ItemTemplate>
-		</TreeView>
-		<Button Visibility="{Binding IsCollapsed, Converter={StaticResource BooleanToVisibilityConverter}}" />
-	</Grid>
+    <Grid>
+        <TreeView ItemsSource="{Binding ItemsSource}" Visibility="{Binding IsCollapsed, Converter={StaticResource ShouldBeCollapsedConverter}}">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type rows:IRuleRow}" ItemsSource="{Binding Children}">
+                    <Button Content="{Binding Label}" Command="{Binding NavigateTreeCommand, RelativeSource={RelativeSource AncestorType=local:RuleTreeView}}" CommandParameter="{Binding}" />
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <Button Visibility="{Binding IsCollapsed, Converter={StaticResource ShouldBeVisibleConverter}}" />
+    </Grid>
 </UserControl>

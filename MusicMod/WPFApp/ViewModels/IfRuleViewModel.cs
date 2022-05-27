@@ -1,8 +1,8 @@
 ﻿using Rules.RuleTypes.Mutable;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
-using WPFApp.Controls.Rows;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.Rows;
+using WPFApp.SaveResults;
 
 namespace WPFApp.ViewModels
 {

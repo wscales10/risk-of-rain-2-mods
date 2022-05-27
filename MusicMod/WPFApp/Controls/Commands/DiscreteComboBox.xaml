@@ -1,0 +1,54 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:WPFApp.Controls.CommandControls" xmlns:converters="clr-namespace:WPFApp.Converters">
+    <!--<ControlTemplate x:Key="DiscreteComboBox" TargetType="ComboBox">
+        <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="0" />
+            </Grid.RowDefinitions>
+            <local:AddButton x:Name="button" HorizontalAlignment="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:DiscreteComboBox}}">
+                <local:AddButton.Style>
+                    <Style TargetType="local:AddButton">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:DiscreteComboBox}}" Value="Center">
+                                <Setter Property="VerticalAlignment" Value="Top" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:DiscreteComboBox}}" Value="Left">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </local:AddButton.Style>
+            </local:AddButton>
+            <Popup AllowsTransparency="True" Grid.Row="1" x:Name="popup">
+                <Popup.Resources>
+                    <converters:CenterPopupConverter x:Key="CenterPopupConverter" />
+                </Popup.Resources>
+                <Popup.Style>
+                    <Style TargetType="Popup">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:DiscreteComboBox}}" Value="Left">
+                                <Setter Property="HorizontalOffset" Value="0" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Alignment, RelativeSource={RelativeSource AncestorType=local:DiscreteComboBox}}" Value="Center">
+                                <Setter Property="HorizontalOffset">
+                                    <Setter.Value>
+                                        <MultiBinding Converter="{StaticResource CenterPopupConverter}">
+                                            <Binding Path="ActualWidth" ElementName="button" />
+                                            <Binding Path="ActualWidth" ElementName="ListBox" />
+                                        </MultiBinding>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Popup.Style>
+                <Border Background="White" BorderThickness="1" BorderBrush="DarkGray" CornerRadius="1">
+                    <ItemsPresenter />
+                    <ListBox Background="Transparent" x:Name="ListBox" BorderThickness="0" />
+                </Border>
+            </Popup>
+        </Grid>
+    </ControlTemplate>-->
+</ResourceDictionary>

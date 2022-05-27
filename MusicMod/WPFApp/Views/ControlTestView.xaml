@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPFApp.Views"
         xmlns:controls="clr-namespace:WPFApp.Controls"
-        xmlns:commandcontrols="clr-namespace:WPFApp.Controls.CommandControls"
+        xmlns:commandcontrols="clr-namespace:WPFApp.Controls.Commands"
         xmlns:patterncontrols="clr-namespace:WPFApp.Controls.PatternControls"
         xmlns:viewmodels="clr-namespace:WPFApp.ViewModels" xmlns:converters="clr-namespace:WPFApp.Converters"
         mc:Ignorable="d"

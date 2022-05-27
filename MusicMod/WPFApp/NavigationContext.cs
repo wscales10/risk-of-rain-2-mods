@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
-using WPFApp.Controls.Rows;
+using WPFApp.Rows;
 using WPFApp.ViewModels;
 
 namespace WPFApp
@@ -60,7 +60,11 @@ namespace WPFApp
     {
         private readonly MutableNavigationContext mutable;
 
-        public NavigationContext(MutableNavigationContext mutable) => SubscribeTo(this.mutable = mutable);
+        public NavigationContext(MutableNavigationContext mutable)
+        {
+            this.mutable = mutable;
+            SubscribeTo(mutable);
+        }
 
         public bool IsHome => mutable.IsHome;
 

@@ -1,4 +1,4 @@
-﻿using WPFApp.Controls.Wrappers.SaveResults;
+﻿using WPFApp.SaveResults;
 
 namespace WPFApp.ViewModels
 {

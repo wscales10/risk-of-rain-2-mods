@@ -2,11 +2,9 @@
 using Patterns;
 using Rules.RuleTypes.Mutable;
 using System;
-using System.Windows;
-using WPFApp.Controls;
-using WPFApp.Controls.Pickers;
-using WPFApp.Controls.Wrappers.PatternWrappers;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.Wrappers.PatternWrappers;
+using WPFApp.SaveResults;
+using WPFApp.ViewModels.Pickers;
 
 namespace WPFApp.ViewModels
 {
@@ -22,14 +20,28 @@ namespace WPFApp.ViewModels
 
         public CaseViewModel(Case<IPattern> c, PropertyWrapper<Type> valueType, NavigationContext navigationContext)
         {
+            DefinePropertyValidation(nameof())
+
+                SaveResult success = ViewModel.PickerViewModel.ValueWrapperManager.TrySaveChanges();
+            SaveResult<object> result = ViewModel.WherePatternWrapper.TryGetObject(true);
+
+            if (result.IsSuccess)
+            {
+                ViewModel.Case.WherePattern = (IPattern<Context>)result.Value;
+            }
+
+            // check that type matches
+            bool status = ViewModel.Case.Arr.All(constructedInterface.IsInstanceOfType);
+            success &= new SaveResult(status, () => StopHighlighting());
+
+            return new(success & result, Case);
+
             Case = c;
             this.valueType = valueType;
             NavigationContext = navigationContext;
 
             PickerViewModel = new(new PatternPickerInfo(valueType, navigationContext));
-            MultiPicker picker = new() { ViewModel = PickerViewModel };
-            picker.VerticalAlignment = VerticalAlignment.Center;
-            PickerViewModel.ValueContainerManager.BindLooselyTo(c.Arr, AddPattern, container => SaveResult.Create<IPattern>(container.ValueWrapper.TryGetObject(true)));
+            PickerViewModel.ValueWrapperManager.BindLooselyTo(c.Arr, AddPattern, wrapper => SaveResult.Create<IPattern>(wrapper.TryGetObject(true)));
 
             SetPropertyDependency(nameof(WherePatternStatus), nameof(WherePatternError), nameof(WherePatternWrapper));
             WherePatternWrapper_StatusSet(null);
@@ -83,6 +95,6 @@ namespace WPFApp.ViewModels
 
         private void WherePatternWrapper_StatusSet(bool? status) => WherePatternError = !(status ?? true);
 
-        private ValueContainer AddPattern(IPattern pattern) => PickerViewModel.AddWrapper(PatternWrapper.Create(pattern, navigationContext));
+        private IReadableControlWrapper AddPattern(IPattern pattern) => PickerViewModel.AddWrapper(PatternWrapper.Create(pattern, navigationContext));
     }
 }

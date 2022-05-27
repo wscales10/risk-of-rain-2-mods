@@ -12,10 +12,6 @@
 			 d:DataContext="{d:DesignInstance Type=viewmodels:ImagePatternViewModel}">
     <UserControl.Resources>
         <converters:RatioConverter x:Key="RatioConverter" Antecedent="5" Consequent="3" />
-        <converters:ValueConverterGroup x:Key="VisibilityConverter">
-            <converters:IsNullConverter />
-            <converters:BooleanToVisibilityConverter True="Collapsed" False="Visible" />
-        </converters:ValueConverterGroup>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -24,7 +20,7 @@
         </Grid.RowDefinitions>
         <Border Margin="2"
                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource RatioConverter}}"
-                Visibility="{Binding ImageSource, Converter={StaticResource VisibilityConverter}}">
+                Visibility="{Binding ImageSource, Converter={StaticResource CollapseIfNullConverter}}">
             <Image VerticalAlignment="Center" Stretch="UniformToFill"
                    Source="{Binding ImageSource, IsAsync=True}"
                    ClipToBounds="True" />

@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using WPFApp.ViewModels.Pickers;
 
 namespace WPFApp.Controls.Pickers
 {
@@ -33,7 +34,7 @@ namespace WPFApp.Controls.Pickers
 
         public ComboBox comboBox => (ComboBox)aligner.Child;
 
-        protected override Selector ItemsControl => comboBox;
+        protected override Menu Selector => comboBox;
 
         protected override void Picker_ViewModelChanged(PickerViewModel oldViewModel, PickerViewModel newViewModel)
         {

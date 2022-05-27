@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using WPFApp.Controls.GridManagers;
-using WPFApp.Controls.Rows;
-using WPFApp.Controls.Wrappers;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.Rows;
+
+using WPFApp.SaveResults;
 
 namespace WPFApp.ViewModels
 {

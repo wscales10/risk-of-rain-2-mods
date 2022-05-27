@@ -1,4 +1,6 @@
-﻿using System.Windows.Controls.Primitives;
+﻿using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using WPFApp.ViewModels.Pickers;
 
 namespace WPFApp.Controls.Pickers
 {
@@ -19,6 +21,6 @@ namespace WPFApp.Controls.Pickers
             set => SetViewModel(value);
         }
 
-        protected override Selector ItemsControl => comboBox.ListBox;
+        protected override Menu Selector => menu;
     }
 }

@@ -1,6 +1,4 @@
-﻿using WPFApp.Controls.Wrappers;
-
-namespace WPFApp.ViewModels
+﻿namespace WPFApp.ViewModels
 {
     public abstract class NamedViewModelBase<T> : RowViewModelBase<T>
     {

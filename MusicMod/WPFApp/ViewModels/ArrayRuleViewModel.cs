@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
-using WPFApp.Controls.Rows;
+using WPFApp.Rows;
 
 namespace WPFApp.ViewModels
 {

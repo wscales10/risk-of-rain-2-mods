@@ -1,42 +1,137 @@
 ﻿using Spotify;
 using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using Utils;
 using WPFApp.Properties;
 
 namespace WPFApp.Controls
 {
-    public delegate Task<ConditionalValue<MusicItemInfo>> MusicItemInfoRequestHandler(SpotifyItem item, CancellationToken? cancellationToken);
-
     /// <summary>
     /// Interaction logic for SpotifyItemPicker.xaml
     /// </summary>
     public partial class SpotifyItemPicker : UserControl
     {
+        public static readonly DependencyPropertyKey InfoPropertyKey = DependencyProperty.RegisterReadOnly(nameof(Info), typeof(MusicItemInfo), typeof(SpotifyItemPicker), new(null));
+
+        public static readonly DependencyPropertyKey ImageSourcePropertyKey = DependencyProperty.RegisterReadOnly(nameof(ImageSource), typeof(ImageSource), typeof(SpotifyItemPicker), new(null));
+
         private static readonly Regex regex = new(@"https?:\/\/open.spotify.com\/(?<itemType>.*?)\/(?<id>\w*)");
+
+        private CancellationTokenSource individualCancellationTokenSource = new();
 
         public SpotifyItemPicker()
         {
-            DataContext = ViewModel = new();
+            DataContextChanged += SpotifyItemPicker_DataContextChanged;
+            OnConnectionMade += RequestMusicItemInfo;
+
+            SetPropertyDependency(nameof(ItemName), nameof(Item), nameof(Info));
+            SetPropertyDependency(nameof(Type), nameof(Item), nameof(Info));
+            SetPropertyDependency(nameof(HasCreators), nameof(Info));
+
             InitializeComponent();
         }
 
-        internal static event MusicItemInfoRequestHandler MusicItemInfoRequested;
-
-        public static AsyncCache<SpotifyItem, MusicItemInfo> MusicItemDictionary { get; } = new((si, token) => MusicItemInfoRequested?.Invoke(si, token));
+        private static event Action OnConnectionMade;
 
         public SpotifyItemPickerViewModel ViewModel { get; }
 
+        public bool HasCreators => Info?.Creators?.Length > 0;
+
+        public string Type
+        {
+            get
+            {
+                if (Info is null)
+                {
+                    return Item?.Type.ToString();
+                }
+                else
+                {
+                    return Info.MusicItem.Type.ToString();
+                }
+            }
+        }
+
+        public MusicItemInfo Info
+        {
+            get => (MusicItemInfo)GetValue(InfoPropertyKey.DependencyProperty);
+
+            private set
+            {
+                SetValue(InfoPropertyKey.DependencyProperty, value);
+                SetImageSource();
+            }
+        }
+
+        public string ItemName
+        {
+            get
+            {
+                if (Item is null)
+                {
+                    return "Drop Spotify item here";
+                }
+
+                if (Info is null)
+                {
+                    return Item?.Id;
+                }
+
+                return Info.Name;
+            }
+        }
+
+        public ImageSource ImageSource
+        {
+            get => (ImageSource)GetValue(ImageSourcePropertyKey.DependencyProperty);
+            private set => SetValue(ImageSourcePropertyKey.DependencyProperty, value);
+        }
+
+        private SpotifyItem Item => DataContext as SpotifyItem;
+
+        public static void Goto(SpotifyItem item)
+        {
+            Web.Goto(GetUri(item));
+        }
+
+        public void RequestMusicItemInfo()
+        {
+            individualCancellationTokenSource?.Cancel();
+            individualCancellationTokenSource = new();
+            _ = RequestMusicItemInfoAsync();
+        }
+
+        internal static void Refresh() => OnConnectionMade?.Invoke();
+
         private static Uri GetUri(SpotifyItem item) => Settings.Default.OpenLinksInApp ? item.GetUri() : item.GetUrl();
+
+        private void SpotifyItemPicker_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            ImageSource = null;
+            RequestMusicItemInfo();
+        }
+
+        private async Task RequestMusicItemInfoAsync()
+        {
+            Info = await ResourceManagers.SpotifyInfo.RequestResource(Item, individualCancellationTokenSource.Token);
+        }
+
+        private void SetImageSource()
+        {
+            string imageUrl = Info?.Images.OrderBy(i => i.Width * i.Height).FirstOrDefault()?.Url;
+            ImageSource = Images.BuildFromUri(imageUrl);
+        }
 
         private void SpotifyItemPicker_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            MusicItemInfo info = ((SpotifyItemPickerViewModel)DataContext).Info;
+            MusicItemInfo info = Info;
             if (info is not null)
             {
                 Web.Goto(GetUri(info.PreviewItem));
@@ -64,7 +159,7 @@ namespace WPFApp.Controls
             string itemType = match.Groups["itemType"]?.Value;
             string id = match.Groups["id"]?.Value;
 
-            ViewModel.TrySetItem(new(itemType.AsEnum<SpotifyItemType>(true), id));
+            DataContext = new SpotifyItem(itemType.AsEnum<SpotifyItemType>(true), id);
         }
 
         private void TextBlock_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -78,7 +173,7 @@ namespace WPFApp.Controls
         private void Border_MouseMove(object sender, MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            if (e.LeftButton == MouseButtonState.Pressed && ViewModel.Item is SpotifyItem item)
+            if (e.LeftButton == MouseButtonState.Pressed && Item is SpotifyItem item)
             {
                 // Package the data.
                 DataObject data = new();

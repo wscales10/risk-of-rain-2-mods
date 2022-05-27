@@ -3,12 +3,12 @@ using Patterns.Patterns;
 using System;
 using System.Collections.Generic;
 using System.Windows.Controls;
-using WPFApp.Controls.Wrappers;
-using WPFApp.Controls.Wrappers.PatternWrappers;
+
+using WPFApp.Wrappers.PatternWrappers;
 using System.Windows;
 using Utils.Properties;
 using Utils.Reflection;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.SaveResults;
 
 namespace WPFApp.Controls.PatternControls
 {

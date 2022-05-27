@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
+using WPFApp.ViewModels.Pickers;
 
 namespace WPFApp.Controls.Pickers
 {
@@ -8,14 +8,13 @@ namespace WPFApp.Controls.Pickers
     {
         protected Picker() => DataContextChanged += Picker_DataContextChanged;
 
-        protected abstract Selector ItemsControl { get; }
+        protected abstract Menu Selector { get; }
 
-        public void CommitSelection()
+        public void CommitSelection(object value)
         {
-            if (ItemsControl.SelectedItem is not null)
+            if (value is not null)
             {
-                GetViewModel().HandleSelection(GetViewModel().Config.CreateWrapper(ItemsControl.SelectedValue));
-                ItemsControl.SelectedItem = null;
+                GetViewModel().HandleSelection(GetViewModel().Config.CreateWrapper(value));
             }
         }
 
@@ -25,15 +24,13 @@ namespace WPFApp.Controls.Pickers
 
         protected virtual void Picker_ViewModelChanged(PickerViewModel oldViewModel, PickerViewModel newViewModel)
         {
-            ItemsControl.ItemsSource = newViewModel.ItemsSource;
-            ItemsControl.DisplayMemberPath = newViewModel.Config.DisplayMemberPath;
-            ItemsControl.SelectedValuePath = newViewModel.Config.SelectedValuePath;
-            ItemsControl.SelectionChanged -= ItemsControl_SelectionChanged;
-            ItemsControl.SelectionChanged += ItemsControl_SelectionChanged;
+            Selector.DataContext = newViewModel.SelectorViewModel;
+            Selector.DisplayMemberPath = newViewModel.Config.DisplayMemberPath;
+            Selector.SelectedValuePath = newViewModel.Config.SelectedValuePath;
+            newViewModel.SelectorViewModel.OnObjectSelected -= CommitSelection;
+            newViewModel.SelectorViewModel.OnObjectSelected += CommitSelection;
         }
 
         private void Picker_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e) => Picker_ViewModelChanged(e.OldValue as PickerViewModel, (PickerViewModel)e.NewValue);
-
-        private void ItemsControl_SelectionChanged(object sender, SelectionChangedEventArgs e) => CommitSelection();
     }
 }

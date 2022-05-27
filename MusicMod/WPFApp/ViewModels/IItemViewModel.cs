@@ -1,16 +1,16 @@
 ﻿using System;
-using WPFApp.Controls.Wrappers.SaveResults;
+using WPFApp.SaveResults;
 
 namespace WPFApp.ViewModels
 {
     public interface IItemViewModel
-	{
-		event Action OnItemChanged;
+    {
+        event Action OnItemChanged;
 
-		string ItemTypeName { get; }
+        string ItemTypeName { get; }
 
-		object ItemObject { get; }
+        object ItemObject { get; }
 
-		SaveResult TrySave();
-	}
+        SaveResult TrySave();
+    }
 }

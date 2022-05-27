@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Windows.Data;
+﻿using System.Collections.Generic;
 
 namespace WPFApp.Converters
 {
-    public class BooleanConverter<T> : IValueConverter
+    public class BooleanConverter<T> : SimpleValueConverter<bool, T>
     {
         public BooleanConverter(T trueValue, T falseValue)
         {
@@ -17,8 +14,8 @@ namespace WPFApp.Converters
 
         public T False { get; set; }
 
-        public virtual object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value is bool b && b ? True : False;
+        protected override T Convert(bool value) => value ? True : False;
 
-        public virtual object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value is T x && EqualityComparer<T>.Default.Equals(x, True);
+        protected override bool ConvertBack(T value) => EqualityComparer<T>.Default.Equals(value, True);
     }
 }

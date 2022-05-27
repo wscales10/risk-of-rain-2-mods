@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using Utils.Async;
-using WPFApp.Controls.Wrappers.PatternWrappers;
+using WPFApp.Wrappers.PatternWrappers;
 
 namespace WPFApp.ViewModels
 {

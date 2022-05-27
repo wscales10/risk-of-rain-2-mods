@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:WPFApp"
 			 xmlns:properties="clr-namespace:WPFApp.Properties"
 	         xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2"
-             xmlns:converters="clr-namespace:WPFApp.Converters">
+             xmlns:converters="clr-namespace:WPFApp.Converters" xmlns:commandcontrols="clr-namespace:WPFApp.Controls.Commands">
     <Application.Resources>
         <converters:CoalesceConverter x:Key="CoalesceConverter" />
         <converters:NullableBooleanToBrushConverter True="DarkGray" x:Key="StatusToBrushConverter" />
@@ -13,6 +13,46 @@
             <converters:IsNullConverter />
             <converters:InverseBooleanConverter />
         </converters:ValueConverterGroup>
+        <converters:BooleanToVisibilityConverter x:Key="ShouldBeVisibleConverter" />
+        <converters:BooleanToVisibilityConverter x:Key="ShouldBeHiddenConverter" True="Hidden" False="Visible" />
+        <converters:BooleanToVisibilityConverter x:Key="ShouldNotBeHiddenConverter" True="Visible" False="Hidden" />
+        <converters:BooleanToVisibilityConverter x:Key="ShouldBeCollapsedConverter" True="Collapsed" False="Visible" />
+        <converters:ValueConverterGroup x:Key="CollapseIfNullConverter">
+            <converters:IsNullConverter />
+            <converters:BooleanToVisibilityConverter True="Collapsed" False="Visible" />
+        </converters:ValueConverterGroup>
+        <converters:ValueConverterGroup x:Key="ShowIfNullConverter">
+            <converters:IsNullConverter />
+            <converters:BooleanToVisibilityConverter True="Visible" False="Collapsed" />
+        </converters:ValueConverterGroup>
+        <converters:ValueConverterGroup x:Key="HideIfNullConverter">
+            <converters:IsNullConverter />
+            <converters:BooleanToVisibilityConverter True="Hidden" False="Visible" />
+        </converters:ValueConverterGroup>
+
+        <Style TargetType="Menu" x:Key="DiscreteMenu">
+            <Style.Resources>
+                <converters:DisplayMemberTemplateSelector DisplayMemberPath="{Binding DisplayMemberPath}" x:Key="ItemTemplateSelector" />
+            </Style.Resources>
+            <Setter Property="ItemsSource">
+                <Setter.Value>
+                    <x:Array Type="MenuItem">
+                        <MenuItem ItemsSource="{Binding ItemsSource}"
+                                  ItemTemplateSelector="{StaticResource ItemTemplateSelector}">
+                            <MenuItem.ItemContainerStyle>
+                                <Style TargetType="MenuItem">
+                                    <Setter Property="Command" Value="{Binding Command}" />
+                                </Style>
+                            </MenuItem.ItemContainerStyle>
+                            <MenuItem.Header>
+                                <commandcontrols:WPFApp.ViewModels.Commands.AddButton />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </x:Array>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="FocusVisual">
             <Setter Property="Control.Template">
                 <Setter.Value>
