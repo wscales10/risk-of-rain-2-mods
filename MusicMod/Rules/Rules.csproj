@@ -5,14 +5,13 @@
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<Authors>Woody Scales</Authors>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Spotify\Spotify.csproj" />
+		<PackageReference Include="Spotify" Version="1.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

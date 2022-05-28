@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Woody Scales</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<Version>0.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

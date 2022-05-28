@@ -4,21 +4,6 @@ using System.Threading.Tasks;
 
 namespace Utils
 {
-    public interface IRunStateHolder
-    {
-        RunState State { get; }
-
-        bool IsOn { get; }
-
-        bool IsRunning { get; }
-
-        bool IsPaused { get; }
-
-        Task WaitUntilNotRunningAsync();
-
-        Task WaitUntilOffAsync();
-    }
-
     public class RunStateHolder : IRunStateHolder
     {
         private readonly AsyncManualResetEvent runningEvent = new AsyncManualResetEvent(true);
@@ -113,24 +98,5 @@ namespace Utils
         public async Task WaitUntilNotRunningAsync() => await runningEvent.WaitAsync();
 
         public async Task WaitUntilOffAsync() => await onEvent.WaitAsync();
-    }
-
-    public class ReadOnlyRunStateHolder : IRunStateHolder
-    {
-        private readonly RunStateHolder mutable;
-
-        public ReadOnlyRunStateHolder(RunStateHolder mutable) => this.mutable = mutable;
-
-        public RunState State => mutable.State;
-
-        public bool IsOn => mutable.IsOn;
-
-        public bool IsRunning => mutable.IsRunning;
-
-        public bool IsPaused => mutable.IsPaused;
-
-        public Task WaitUntilNotRunningAsync() => mutable.WaitUntilNotRunningAsync();
-
-        public Task WaitUntilOffAsync() => mutable.WaitUntilOffAsync();
     }
 }

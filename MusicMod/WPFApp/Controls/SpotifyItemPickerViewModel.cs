@@ -118,7 +118,7 @@ namespace WPFApp.Controls
             individualCancellationTokenSource = new();
             if (Item is SpotifyItem si)
             {
-                if (!taskMachine.TryIngest(token => SpotifyItemPicker.MusicItemDictionary.GetValueAsync(si, info => Info = info, token), individualCancellationTokenSource.Token))
+                if (!taskMachine.TryIngest(token => SpotifyItemPicker.MusicItemDictionary.GetValueAsync(si, info => Info = info, token), individualCancellationTokenSource.Token).HasValue)
                 {
                     throw new InvalidOperationException();
                 }

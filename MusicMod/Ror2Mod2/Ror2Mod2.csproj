@@ -24,11 +24,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Mono.Unofficial.pdb2mdb" Version="4.2.3.4" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Rules\Rules.csproj" />
-		<ProjectReference Include="..\Spotify\Spotify.csproj" />
+		<PackageReference Include="Rules" Version="1.0.0" />
+		<PackageReference Include="Spotify" Version="1.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
