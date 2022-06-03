@@ -21,10 +21,10 @@
     <PackageReference Include="System.Threading.Channels" Version="7.0.0-preview.3.22175.4" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+  <!--<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="PowerShell -ExecutionPolicy Unrestricted -File ..\..\nuget.ps1 -ProjectDirectory . -TopLevelDirectory ..\.. -PreBuild" />
   </Target>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="PowerShell -ExecutionPolicy Unrestricted -File ..\..\nuget.ps1 -ProjectDirectory . -TopLevelDirectory ..\.. -PostBuild" />
-  </Target>
+  </Target>-->
 </Project>

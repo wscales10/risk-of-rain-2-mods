@@ -1,29 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Authors>Woody Scales</Authors>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
-		<PackageReference Include="Spotify" Version="1.0.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Reference Include="MyRoR2">
-			<HintPath>..\..\Common\MyRoR2\bin\Debug\netstandard2.0\MyRoR2.dll</HintPath>
-		</Reference>
-		<Reference Include="Patterns">
-			<HintPath>..\..\Common\Patterns\bin\Debug\netstandard2.0\Patterns.dll</HintPath>
-		</Reference>
-		<Reference Include="Utils">
-			<HintPath>..\..\Common\Utils\bin\Debug\netstandard2.0\Utils.dll</HintPath>
-		</Reference>
-	</ItemGroup>
-
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Woody Scales</Authors>
+    <Version>0.0.1</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MyRoR2" Version="0.0.1" />
+    <PackageReference Include="Patterns" Version="0.0.1" />
+    <PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
+    <PackageReference Include="Spotify" Version="0.0.1" />
+    <PackageReference Include="Utils" Version="0.0.1" />
+  </ItemGroup>
 </Project>
