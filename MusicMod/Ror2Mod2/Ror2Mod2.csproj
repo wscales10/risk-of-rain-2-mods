@@ -4,7 +4,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
@@ -22,8 +22,8 @@
     <PackageReference Include="Mono.Unofficial.pdb2mdb" Version="4.2.3.4" />
     <PackageReference Include="MyRoR2" Version="0.0.1" />
     <PackageReference Include="Patterns" Version="0.0.1" />
-    <PackageReference Include="Rules" Version="0.0.1" />
-    <PackageReference Include="Spotify" Version="0.0.1" />
+    <PackageReference Include="Rules" Version="0.0.2" />
+    <PackageReference Include="Spotify" Version="0.0.2" />
     <PackageReference Include="Utils" Version="0.0.1" />
   </ItemGroup>
   <ItemGroup>

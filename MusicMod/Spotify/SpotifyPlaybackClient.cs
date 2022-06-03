@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -379,8 +380,15 @@ namespace Spotify
 
         private async Task<List<Device>> GetDevicesAsync()
         {
-            var response = await Client.Player.GetAvailableDevices();
-            return response?.Devices;
+            try
+            {
+                var response = await Client.Player.GetAvailableDevices();
+                return response?.Devices;
+            }
+            catch (HttpRequestException)
+            {
+                return new List<Device>();
+            }
         }
 
         private async Task<CurrentlyPlaying> GetCurrentlyPlaying()
