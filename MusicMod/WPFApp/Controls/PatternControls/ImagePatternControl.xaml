@@ -24,7 +24,8 @@
         </Grid.RowDefinitions>
         <Border Margin="2"
                 Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource RatioConverter}}"
-                Visibility="{Binding ImageSource, Converter={StaticResource VisibilityConverter}}">
+                Visibility="{Binding ImageSource, Converter={StaticResource VisibilityConverter}}"
+                UseLayoutRounding="True">
             <Image VerticalAlignment="Center" Stretch="UniformToFill"
                    Source="{Binding ImageSource, IsAsync=True}"
                    ClipToBounds="True" />
