@@ -46,7 +46,7 @@ namespace Ror2Mod2
             }
             else
             {
-                this.Log(uri);
+                this.Log($"Rule Location: {uri ?? "null"}");
                 rule = Rule.FromXml(XElement.Load(uri));
                 var playlistsFile = new FileInfo(uri).Directory.GetFiles("playlists.xml").FirstOrDefault();
                 if (!(playlistsFile is null))

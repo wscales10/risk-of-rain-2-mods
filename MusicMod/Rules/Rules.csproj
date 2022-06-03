@@ -6,13 +6,16 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Woody Scales</Authors>
-    <Version>0.0.2</Version>
+    <Version>0.0.6</Version>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MyRoR2" Version="0.0.1" />
-    <PackageReference Include="Patterns" Version="0.0.1" />
+    <PackageReference Include="MyRoR2" Version="0.0.3" />
+    <PackageReference Include="Patterns" Version="0.0.4" />
     <PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
-    <PackageReference Include="Spotify" Version="0.0.2" />
-    <PackageReference Include="Utils" Version="0.0.1" />
+    <PackageReference Include="Spotify" Version="0.0.5" />
+    <PackageReference Include="Utils" Version="0.0.3" />
   </ItemGroup>
+  <PropertyGroup>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
 </Project>

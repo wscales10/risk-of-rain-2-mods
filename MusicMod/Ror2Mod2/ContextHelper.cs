@@ -36,7 +36,11 @@ namespace Ror2Mod2
         {
             On.RoR2.CreditsController.OnEnable += CreditsController_OnEnable;
 
-            SceneManager.sceneUnloaded += (_) => currentScene = null;
+            SceneManager.sceneUnloaded += (_) =>
+            {
+                oldScene = SceneName;
+                currentScene = null;
+            };
             SceneManager.activeSceneChanged += OnSceneChanged;
             UpdateMusic = () => update();
             Log = logger;
@@ -79,7 +83,7 @@ namespace Ror2Mod2
 
             return new Context()
             {
-                SceneName = oldScene = SceneName,
+                SceneName = SceneName,
                 SceneType = SceneCatalog.mostRecentSceneDef?.sceneType ?? SceneType.Invalid,
                 StageNumber = Run.instance?.stageClearCount + 1,
                 WaveNumber = (Run.instance as InfiniteTowerRun)?.waveIndex,
@@ -169,8 +173,8 @@ namespace Ror2Mod2
                 F(RunType.Normal, () => ScenePattern.Equals(Scenes.MainMenu).IsMatch(oldScene), Scenes.CharacterSelect),
                 F(RunType.None, Scenes.MainMenu)
                 );
-            Log(oldScene);
-            Log(runType);
+            Log($"{nameof(oldScene)}: {oldScene?.Name}");
+            Log($"{nameof(runType)}: {runType}");
         }
     }
 }

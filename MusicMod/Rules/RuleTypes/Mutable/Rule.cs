@@ -105,7 +105,7 @@ namespace Rules.RuleTypes.Mutable
             {
                 foreach (var command in newBucket.Commands)
                 {
-                    this.Log($"{command?.GetType()}");
+                    this.Log($"Command Type: {command?.GetType().GetDisplayName() ?? "null"}");
                 }
             }
 
