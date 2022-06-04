@@ -6,9 +6,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Reflection;
 
 namespace Spotify.Authorisation
 {
@@ -191,7 +193,7 @@ namespace Spotify.Authorisation
             server.On("GET", "index.html", async (req, res) =>
             {
                 res.ContentType = "text/html";
-                await MakeResponseAsync(res, File.ReadAllBytes(Paths.AssemblyDirectory + "/Authorisation/Client/index.html"));
+                await MakeResponseAsync(res, Assembly.GetExecutingAssembly().GetByteArray("Spotify.Authorisation.Client.index.html"));
             });
 
             server.On("POST", "defaultDevice.json", async (req, res) =>

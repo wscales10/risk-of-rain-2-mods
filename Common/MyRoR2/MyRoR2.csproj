@@ -1,22 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Woody Scales</Authors>
-    <Version>0.0.3</Version>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Patterns" Version="0.0.4" />
     <PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
-    <PackageReference Include="Utils" Version="0.0.3" />
   </ItemGroup>
-  <!--<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="PowerShell -ExecutionPolicy Unrestricted -File ..\..\nuget.ps1 -ProjectDirectory . -TopLevelDirectory ..\.. -PreBuild" />
-  </Target>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="PowerShell -ExecutionPolicy Unrestricted -File ..\..\nuget.ps1 -ProjectDirectory . -TopLevelDirectory ..\.. -PostBuild" />
-  </Target>-->
-  <PropertyGroup>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Patterns\Patterns.csproj" />
+    <ProjectReference Include="..\Utils\Utils.csproj" />
+  </ItemGroup>
 </Project>

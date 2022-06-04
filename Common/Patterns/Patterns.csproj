@@ -1,24 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Woody Scales</Authors>
-    <Version>0.0.4</Version>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Patterns\SmallPatterns\ValuePatterns\AdvancedIntPattern.cs" />
     <Compile Remove="StructPattern.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Utils" Version="0.0.3" />
+    <ProjectReference Include="..\Utils\Utils.csproj" />
   </ItemGroup>
-  <!--<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="PowerShell -ExecutionPolicy Unrestricted -File ..\..\nuget.ps1 -ProjectDirectory . -TopLevelDirectory ..\.. -PreBuild" />
-  </Target>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="PowerShell -ExecutionPolicy Unrestricted -File ..\..\nuget.ps1 -ProjectDirectory . -TopLevelDirectory ..\.. -PostBuild" />
-  </Target>-->
-  <PropertyGroup>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-  </PropertyGroup>
 </Project>
