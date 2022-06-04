@@ -91,9 +91,11 @@ namespace Spotify.Authorisation
             // Keep on handling requests until server is stopped
             while (runServer)
             {
+                Log("Listening for a request");
+
                 // Wait here until we hear from a connection
                 HttpListenerContext ctx = await Async.Manager.MakeCancellable(listener.GetContextAsync(), cancellationTokenSource.Token);
-
+                Log("Request received");
                 if (!runServer)
                 {
                     break;
