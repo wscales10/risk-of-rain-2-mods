@@ -11,6 +11,8 @@ namespace Utils.Async
 
         private Task lifecycle;
 
+        private (CancellableTask, CancellationToken) lastRead;
+
         protected TaskMachine(Channel<(CancellableTask, CancellationToken)> tasks)
         {
             this.tasks = tasks;
@@ -44,6 +46,11 @@ namespace Utils.Async
 
         public ConditionalValue<CancellableTask> TryIngest(CancellableTask task, CancellationToken cancellationToken = default)
         {
+            if (task is null)
+            {
+                throw new ArgumentNullException(nameof(task));
+            }
+
             if (tasks.Writer.TryWrite((task, cancellationToken)))
             {
                 return new ConditionalValue<CancellableTask>(task);
@@ -58,9 +65,11 @@ namespace Utils.Async
 
         private async Task ExecuteAsync()
         {
+            this.Log("TaskMachine lifecycle start");
             while (await tasks.Reader.WaitToReadAsync(MasterCancellationToken))
             {
-                var (cancellableTask, cancellationToken) = await tasks.Reader.ReadAsync(MasterCancellationToken);
+                this.Log("TaskMachine task read");
+                var (cancellableTask, cancellationToken) = lastRead = await tasks.Reader.ReadAsync(MasterCancellationToken);
                 MaybeCancel();
                 var combinedCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(MasterCancellationToken, cancellationToken).Token;
                 if (!combinedCancellationToken.IsCancellationRequested)
@@ -68,7 +77,9 @@ namespace Utils.Async
                     await cancellableTask.RunAsync(combinedCancellationToken);
                 }
                 MaybeCancel();
+                this.Log("TaskMachine task finished");
             }
+            this.Log("TaskMachine lifecycle end");
 
             void MaybeCancel()
             {
