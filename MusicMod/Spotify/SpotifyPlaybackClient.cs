@@ -22,6 +22,8 @@ namespace Spotify
 
         private readonly IEnumerable<Playlist> playlists;
 
+        private readonly int transferFix;
+
         private Playlist currentPlaylist;
 
         private int playlistIndex;
@@ -30,7 +32,7 @@ namespace Spotify
 
         private string deviceId;
 
-        public SpotifyPlaybackClient(IEnumerable<Playlist> playlists, Logger logger) : base(logger)
+        public SpotifyPlaybackClient(IEnumerable<Playlist> playlists, Logger logger, int transferFix = 0) : base(logger)
         {
             Preferences.PropertyChanged += (s) =>
             {
@@ -43,6 +45,7 @@ namespace Spotify
             mainPlaylistTimer = new BasicTimer(() => _ = NextPlaylistItem());
             secondaryPlaylistTimer = new BasicTimer(() => _ = PrepareNextTime());
             this.playlists = playlists;
+            this.transferFix = transferFix;
         }
 
         private enum PlayerState
@@ -104,15 +107,26 @@ namespace Spotify
                     return await ResumeInner();
 
                 case TransferCommand transferCommand:
-                    var stopwatch = new Stopwatch();
-                    stopwatch.Start();
+
+                    // var stopwatch = new Stopwatch(); stopwatch.Start();
                     var info = await GetCurrentlyPlaying();
-                    stopwatch.Stop();
+
+                    // stopwatch.Stop();
                     var track = info?.Item as FullTrack;
 #warning not sure whether this would be helpful or not, difficult to figure out transfercommand - test with transferring to same track
 
                     //int predictedtime = info?.ProgressMs is int time2 ? time2 + ((int)stopwatch.ElapsedMilliseconds / 2) : 0;
-                    return await PlayItem(transferCommand.Item, transferCommand.FromTrackId.IsMatch(track?.Id) ? transferCommand.Map(info.ProgressMs ?? 0) : 0);
+
+                    if (transferCommand.FromTrackId.IsMatch(track?.Id))
+                    {
+                        int progressMs = info.ProgressMs ?? 0;
+                        int mapped = Math.Max(0, transferCommand.Map(progressMs) + transferFix);
+                        return await PlayItem(transferCommand.Item, mapped);
+                    }
+                    else
+                    {
+                        return await PlayItem(transferCommand.Item, 0);
+                    }
 
                 case SetPlaybackOptionsCommand optionsCommand:
                     bool success = true;
@@ -262,18 +276,14 @@ namespace Spotify
         private async Task<bool> PauseInner()
         {
             Timers(t => t.Pause());
-            if (await GetState() == PlayerState.Playing)
-            {
-                if (await Client.Player.PausePlayback())
-                {
-                    SetState(PlayerState.Paused);
-                    return true;
-                }
 
-                return false;
+            if (await Client.Player.PausePlayback())
+            {
+                SetState(PlayerState.Paused);
+                return true;
             }
 
-            return true;
+            return await GetState() == PlayerState.Paused;
         }
 
         private async Task<bool> PlayItem(SpotifyItem item, int milliseconds)

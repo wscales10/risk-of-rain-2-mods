@@ -105,9 +105,6 @@
     <Reference Include="Rules, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Rules.0.0.1\lib\netstandard2.0\Rules.dll</HintPath>
     </Reference>
-    <Reference Include="Spotify, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Spotify.0.0.1\lib\netstandard2.0\Spotify.dll</HintPath>
-    </Reference>
     <Reference Include="SpotifyAPI.Web, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\SpotifyAPI.Web.6.2.2\lib\netstandard2.0\SpotifyAPI.Web.dll</HintPath>
     </Reference>
@@ -156,6 +153,7 @@
     <Compile Include="ThatAuthorisation.cs" />
     <Compile Include="ThatIRule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ThatSpotifyPlaybackClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.editorconfig">
@@ -170,6 +168,12 @@
     <Analyzer Include="..\packages\Microsoft.VisualStudio.Threading.Analyzers.17.2.32\analyzers\vb\Microsoft.VisualStudio.Threading.Analyzers.CodeFixes.dll" />
     <Analyzer Include="..\packages\Microsoft.VisualStudio.Threading.Analyzers.17.2.32\analyzers\vb\Microsoft.VisualStudio.Threading.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.VisualStudio.Threading.Analyzers.17.2.32\analyzers\vb\Microsoft.VisualStudio.Threading.Analyzers.VisualBasic.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Spotify\Spotify.csproj">
+      <Project>{1034461A-C9C0-490E-8475-8B1815292F6E}</Project>
+      <Name>Spotify</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
