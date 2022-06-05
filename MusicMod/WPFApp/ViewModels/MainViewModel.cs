@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System;
+﻿using System;
 using Microsoft.Win32;
 using System.Windows;
 using WPFApp.Controls.Rows;
 using System.ComponentModel;
-using System.IO;
 
 namespace WPFApp.ViewModels
 {
@@ -48,11 +45,18 @@ namespace WPFApp.ViewModels
                     OnReset?.Invoke();
                 }
             }, this, nameof(HasContent));
+            LoadExampleCommand = new(_ =>
+            {
+                LoadExampleCommand.CanExecute = false;
+                OnExampleRequested?.Invoke();
+            }, this, nameof(HasContent), o => !(bool)o);
             HomeCommand = new(_ => NavigationContext.GoHome(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
             UpCommand = new(_ => NavigationContext.GoUp(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
             ClearCacheCommand = new(_ => ClearCache());
             GotoPlaylistsCommand = new(_ => NavigationContext.GoInto(Info.Playlists));
         }
+
+        public event Action OnExampleRequested;
 
         public event Action OnReset;
 
@@ -79,6 +83,8 @@ namespace WPFApp.ViewModels
         public ButtonCommand ExportCommand { get; }
 
         public ButtonCommand NewCommand { get; }
+
+        public ButtonCommand LoadExampleCommand { get; }
 
         public ButtonCommand ClearCacheCommand { get; }
 

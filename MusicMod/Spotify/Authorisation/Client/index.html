@@ -4,6 +4,18 @@
 <head>
 	<meta charset="utf-8" />
 	<title>Spotify Authorisation</title>
+	<script>
+		var time;
+		window.onload = resetTimer;
+		// DOM Events
+		document.onmousemove = resetTimer;
+		document.onkeydown = resetTimer;
+
+		function resetTimer() {
+			clearTimeout(time);
+			time = setTimeout(close, 60000)
+		}
+	</script>
 </head>
 <body>
 	<main></main>

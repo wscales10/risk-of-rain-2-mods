@@ -30,14 +30,9 @@
     <PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
     <PackageReference Include="MahApps.Metro" Version="2.4.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0-preview.3.22175.1" />
-    <PackageReference Include="MyRoR2" Version="0.0.3" />
-    <PackageReference Include="Patterns" Version="0.0.4" />
-    <PackageReference Include="Rules" Version="0.0.6" />
-    <PackageReference Include="Spotify" Version="0.0.5" />
     <PackageReference Include="SpotifyAPI.Web" Version="6.2.2" />
     <PackageReference Include="System.Threading.Channels" Version="7.0.0-preview.3.22175.4" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
-    <PackageReference Include="Utils" Version="0.0.3" />
     <PackageReference Include="WPFTextBoxAutoComplete" Version="1.0.5" />
   </ItemGroup>
 
@@ -45,14 +40,29 @@
     <Reference Include="HGCSharpUtils">
       <HintPath>D:\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\HGCSharpUtils.dll</HintPath>
     </Reference>
+    <Reference Include="MyRoR2">
+      <HintPath>..\..\Common\MyRoR2\bin\Debug\netstandard2.0\MyRoR2.dll</HintPath>
+    </Reference>
+    <Reference Include="Patterns">
+      <HintPath>..\..\Common\Patterns\bin\Debug\netstandard2.0\Patterns.dll</HintPath>
+    </Reference>
     <Reference Include="RoR2">
       <HintPath>D:\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\RoR2.dll</HintPath>
+    </Reference>
+    <Reference Include="Rules">
+      <HintPath>..\Rules\bin\Debug\netstandard2.0\Rules.dll</HintPath>
+    </Reference>
+    <Reference Include="Spotify">
+      <HintPath>..\Spotify\bin\Debug\netstandard2.0\Spotify.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.SharedInternalsModule">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.SharedInternalsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Utils">
+      <HintPath>..\..\Common\Utils\bin\Debug\netstandard2.0\Utils.dll</HintPath>
     </Reference>
   </ItemGroup>
 

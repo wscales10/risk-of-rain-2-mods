@@ -241,6 +241,7 @@ namespace WPFApp
             mainViewModel.OnImportFile += ImportFile;
             mainViewModel.OnExportFile += ExportToFile;
             mainViewModel.OnReset += () => Reset();
+            mainViewModel.OnExampleRequested += () => ImportXml(Rules.Examples.MimicRule.ToXml());
             mainView.OnTryEnableAutosave += TryEnableAutosave;
             mainView.OnTryClose += TryClose;
             OnAutosaveLocationRequested += MainView.GetExportLocation;
