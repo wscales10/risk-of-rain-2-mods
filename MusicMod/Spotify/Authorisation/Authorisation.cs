@@ -28,7 +28,7 @@ namespace Spotify.Authorisation
 
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-        private readonly Func<CodeFlow> getFlow;
+        private readonly Func<CodeFlowBase> getFlow;
 
         private readonly Dictionary<string, bool> scopes = new Dictionary<string, bool>();
 
@@ -38,15 +38,15 @@ namespace Spotify.Authorisation
 
         private AccessTokenInfo data;
 
-        private CodeFlow flow;
+        private CodeFlowBase flow;
 
         private DateTime refreshBy;
 
-        public Authorisation(IEnumerable<string> scopes, bool isPkceEnabled = true, Logger logger = null)
+        public Authorisation(IEnumerable<string> scopes, bool usePkce = true, Logger logger = null)
         {
             server = new Server(App.Instance.RootUri, logger);
 
-            if (isPkceEnabled)
+            if (usePkce)
             {
                 getFlow = () => new PkceFlow(App.Instance);
             }

@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using SpotifyAPI.Web;
 
 namespace Spotify.Authorisation
 {
-    internal class PkceFlow : CodeFlow
+    internal class PkceFlow : CodeFlowBase
     {
         private readonly string codeVerifier;
 
@@ -17,8 +16,6 @@ namespace Spotify.Authorisation
             (codeVerifier, codeChallenge) = PKCEUtil.GenerateCodes();
         }
 
-        protected override AuthenticationHeaderValue AuthorisationHeaderValue => null;
-
         public override NameValueCollection GetLoginQueryString(IEnumerable<string> scopes)
         {
             var output = base.GetLoginQueryString(scopes);
@@ -27,8 +24,32 @@ namespace Spotify.Authorisation
             return output;
         }
 
-        protected override async Task<object> RequestTokensAsync(OAuthClient client) => await client.RequestToken(new PKCETokenRequest(app.ClientId, Code, app.RedirectUri, codeVerifier));
+        protected override object GetClient() => new OAuthClient();
 
-        protected override async Task<object> RefreshTokenAsync(OAuthClient client) => await client.RequestToken(new PKCETokenRefreshRequest(app.ClientId, RefreshToken));
+        protected override async Task<object> requestTokensAsync(object client)
+        {
+            try
+            {
+                return await ((OAuthClient)client).RequestToken(new PKCETokenRequest(app.ClientId, Code, app.RedirectUri, codeVerifier));
+            }
+            catch (APIException)
+            {
+                ErrorState = ErrorState.ApiDenied;
+                return null;
+            }
+        }
+
+        protected override async Task<object> refreshTokenAsync(object client)
+        {
+            try
+            {
+                return await ((OAuthClient)client).RequestToken(new PKCETokenRefreshRequest(app.ClientId, RefreshToken));
+            }
+            catch (APIException)
+            {
+                ErrorState = ErrorState.ApiDenied;
+                return null;
+            }
+        }
     }
 }
