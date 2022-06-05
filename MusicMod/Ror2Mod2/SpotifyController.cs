@@ -41,6 +41,11 @@ namespace Ror2Mod2
             _ = Client.Resume();
         }
 
+        public override void OpenConfigurationPage()
+        {
+            Authorisation.OpenConfigurationPage();
+        }
+
         protected override async Task Play(object musicIdentifier)
         {
             if (!(musicIdentifier is null))

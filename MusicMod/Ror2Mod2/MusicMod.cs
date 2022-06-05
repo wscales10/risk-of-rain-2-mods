@@ -1,20 +1,20 @@
 ﻿using BepInEx;
-using Rules;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
 using Spotify;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Utils;
 using static Rules.Examples;
+using RiskOfOptions;
 
 namespace Ror2Mod2
 {
     [BepInDependency("com.bepis.r2api")]
     [BepInPlugin("com.woodyscales.musicmod", "Music Mod", "1.0.0")]
     [BepInDependency(R2API.R2API.PluginGUID)]
+    [BepInDependency("com.rune580.riskofoptions")]
     public class MusicMod : BaseUnityPlugin
     {
         public SpotifyController Music;
@@ -60,6 +60,7 @@ namespace Ror2Mod2
             }
 
             Music = new SpotifyController(new SingleRulePicker(rule), playlists, SafeLogger);
+            configuration.ConfigurationPageRequested += Music.OpenConfigurationPage;
 
             On.RoR2.UI.PauseScreenController.OnEnable += PauseScreenController_OnEnable;
 

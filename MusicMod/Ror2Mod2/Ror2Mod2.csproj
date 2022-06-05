@@ -46,6 +46,9 @@
     <Reference Include="R2API">
       <HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\tristanmcpherson-R2API\R2API\R2API.dll</HintPath>
     </Reference>
+    <Reference Include="RiskOfOptions">
+      <HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\Rune580-Risk_Of_Options\RiskOfOptions.dll</HintPath>
+    </Reference>
     <Reference Include="RoR2">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\RoR2.dll</HintPath>
     </Reference>

@@ -85,6 +85,8 @@ namespace Spotify.Authorisation
             }
         }
 
+        public void OpenConfigurationPage() => OnClientRequested?.Invoke(App.Instance.RootUri);
+
         public async Task InitiateScopeRequestAsync()
         {
             _ = await TryStartAsync();
@@ -201,6 +203,14 @@ namespace Spotify.Authorisation
                 var arr = await GetRequestBodyAsync(req);
                 Preferences.DefaultDevice = arr?.Length == 0 ? null : arr;
             });
+
+            server.On("GET", "index.html", (req, res) =>
+            {
+                if (flow.State >= FlowState.TokenGranted)
+                {
+                    res.Redirect("index.html");
+                }
+            }, true);
         }
 
         private async Task<byte[]> GetRequestBodyAsync(HttpListenerRequest req)

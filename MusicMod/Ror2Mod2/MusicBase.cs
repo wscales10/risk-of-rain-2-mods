@@ -20,6 +20,8 @@ namespace Ror2Mod2
             Log = logger;
         }
 
+        public abstract void OpenConfigurationPage();
+
         public abstract void Pause();
 
         public abstract void Resume();
