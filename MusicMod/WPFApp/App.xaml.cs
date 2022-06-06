@@ -56,7 +56,6 @@ namespace WPFApp
             }
 
             timer = new(_ => PlaybackClient.Stop());
-            exportTaskMachine = new JuniorTaskMachine(exportCancellationTokenSource.Token);
 
             viewModels = new(item => item switch
             {
@@ -255,25 +254,9 @@ namespace WPFApp
             };
         }
 
-        [SuppressMessage("Usage", "VSTHRD001:Avoid legacy thread switching APIs", Justification = "It works, the new one doesn't")]
         private bool TryClose()
         {
             MaybeSave();
-
-            exportTaskMachine.Close();
-
-            /*if (!exportTaskMachine.Lifecycle.IsCompleted)
-            {
-                ExportWindow exportWindow = new();
-                _ = exportTaskMachine.Lifecycle.ContinueWith(_ => Dispatcher.Invoke(() =>
-                {
-                    exportWindow.Close();
-                    Shutdown();
-                }), TaskScheduler.Default);
-                exportWindow.Show();
-                return false;
-            }*/
-
             return true;
         }
 

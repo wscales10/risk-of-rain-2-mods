@@ -13,7 +13,7 @@ namespace Spotify
     {
         protected readonly Logger Log;
 
-        private readonly TaskMachine taskMachine = new SeniorTaskMachine();
+        private readonly AsyncJobQueue asyncJobQueue = new AsyncJobQueue();
 
         private string accessToken;
 
@@ -40,8 +40,7 @@ namespace Spotify
         public async Task Do(ICommandList input, CancellationToken cancellationToken = default)
         {
             var cancellableTask = new CancellableTask(token => ExecuteAsync(input, token));
-            taskMachine.TryIngest(cancellableTask, cancellationToken);
-            await cancellableTask.Awaitable;
+            await asyncJobQueue.WaitForMyJobAsync(cancellableTask, cancellationToken);
         }
 
         public void GiftNewAccessToken(string accessToken)
@@ -67,6 +66,7 @@ namespace Spotify
             switch (e)
             {
                 case APIUnauthorizedException _:
+                case APIException _:
                     if (!exceptionTypes.Contains(e.GetType()))
                     {
                         Authorise();

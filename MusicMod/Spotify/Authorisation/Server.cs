@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -91,34 +92,41 @@ namespace Spotify.Authorisation
             // Keep on handling requests until server is stopped
             while (runServer)
             {
-                Log("Listening for a request");
-
-                // Wait here until we hear from a connection
-                HttpListenerContext ctx = await Async.Manager.MakeCancellable(listener.GetContextAsync(), cancellationTokenSource.Token);
-                Log("Request received");
-                if (!runServer)
+                try
                 {
-                    break;
-                }
+                    Log("Listening for a request");
 
-                HttpListenerRequest request = ctx.Request;
-                HttpListenerResponse response = ctx.Response;
-
-                if (callbacks.TryGetValue(request.HttpMethod, out var dict))
-                {
-                    foreach (var (pattern, callback, not) in dict)
+                    // Wait here until we hear from a connection
+                    HttpListenerContext ctx = await Async.Manager.MakeCancellable(listener.GetContextAsync(), cancellationTokenSource.Token);
+                    Log("Request received");
+                    if (!runServer)
                     {
-                        if (Regex.IsMatch(request.Url.AbsolutePath, pattern) != not)
+                        break;
+                    }
+
+                    HttpListenerRequest request = ctx.Request;
+                    HttpListenerResponse response = ctx.Response;
+
+                    if (callbacks.TryGetValue(request.HttpMethod, out var dict))
+                    {
+                        foreach (var (pattern, callback, not) in dict)
                         {
-                            if (!await callback(request, response))
+                            if (Regex.IsMatch(request.Url.AbsolutePath, pattern) != not)
                             {
-                                break;
+                                if (!await callback(request, response))
+                                {
+                                    break;
+                                }
                             }
                         }
                     }
-                }
 
-                response.Close();
+                    response.Close();
+                }
+                catch (Exception e) when (!(e is OperationCanceledException))
+                {
+                    Debugger.Break();
+                }
             }
         }
     }

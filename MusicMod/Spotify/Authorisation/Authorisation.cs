@@ -204,13 +204,13 @@ namespace Spotify.Authorisation
                 Preferences.DefaultDevice = arr?.Length == 0 ? null : arr;
             });
 
-            server.On("GET", "index.html", (req, res) =>
+            server.On("GET", "^/$", (req, res) =>
             {
                 if (flow.State >= FlowState.TokenGranted)
                 {
                     res.Redirect("index.html");
                 }
-            }, true);
+            });
         }
 
         private async Task<byte[]> GetRequestBodyAsync(HttpListenerRequest req)

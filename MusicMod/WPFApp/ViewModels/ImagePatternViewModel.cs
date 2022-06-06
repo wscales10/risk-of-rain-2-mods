@@ -35,7 +35,7 @@ namespace WPFApp.ViewModels
 
     public abstract class ImagePatternViewModel : ViewModelBase
     {
-        private static readonly TaskMachine taskMachine = new SeniorTaskMachine();
+        private static readonly AsyncJobQueue asyncJobQueue = new();
 
         private string text;
 
@@ -113,7 +113,7 @@ namespace WPFApp.ViewModels
         {
             individualCancellationTokenSource?.Cancel();
             individualCancellationTokenSource = new();
-            taskMachine.TryIngest(token => SetImageSourceAsync(token), individualCancellationTokenSource.Token);
+            asyncJobQueue.WaitForMyJobAsync(new CancellableTask(token => SetImageSourceAsync(token)), individualCancellationTokenSource.Token);
         }
 
         private async Task SetImageSourceAsync(CancellationToken cancellationToken)

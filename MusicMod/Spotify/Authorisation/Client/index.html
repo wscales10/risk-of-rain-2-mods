@@ -38,8 +38,7 @@
 				method: "POST",
 				body: getDevice(defaultDeviceSelector.value),
 				mode: "same-origin"
-			});
-			close();
+			}).then(close);
 		})
 
 		addOption();

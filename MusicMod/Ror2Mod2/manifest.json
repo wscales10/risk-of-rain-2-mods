@@ -1,0 +1,10 @@
+{
+	"name": "Spotify_Integration",
+	"description": "Spotify integration for Risk of Rain 2"
+	"version_number": "0.0.1",
+	"website_url": "https://github.com/wscales10/risk-of-rain-2-mods/tree/main/MusicMod",
+	"dependencies": [
+		"tristanmcpherson-R2API-4.3.21",
+		"Rune580-Risk_Of_Options-2.5.2"
+	]
+}

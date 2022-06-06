@@ -7,12 +7,11 @@ using System.Linq;
 using System.Xml.Linq;
 using Utils;
 using static Rules.Examples;
-using RiskOfOptions;
 
 namespace Ror2Mod2
 {
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.woodyscales.musicmod", "Music Mod", "1.0.0")]
+    [BepInPlugin("com.woodyscales.spotifyintegration", "Spotify Integration", "1.0.0")]
     [BepInDependency(R2API.R2API.PluginGUID)]
     [BepInDependency("com.rune580.riskofoptions")]
     public class MusicMod : BaseUnityPlugin

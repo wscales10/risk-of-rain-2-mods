@@ -17,10 +17,6 @@ namespace WPFApp
 {
     public partial class App
     {
-        private readonly CancellationTokenSource exportCancellationTokenSource = new();
-
-        private readonly TaskMachine exportTaskMachine;
-
         public void ImportFile(string fileName)
         {
             FileInfo fileInfo = new(fileName);
@@ -43,24 +39,6 @@ namespace WPFApp
 
         public void ImportXml(XElement xml, bool resetAutosave = true) => Reset(viewModels[Rule.FromXml(xml)], resetAutosave);
 
-        private static FileStream GetWriteStream(string path, int timeoutMs)
-        {
-            var time = Stopwatch.StartNew();
-            while (time.ElapsedMilliseconds < timeoutMs)
-            {
-                try
-                {
-                    return new FileStream(path, FileMode.Create, FileAccess.Write);
-                }
-                catch (IOException e) when (e.HResult == -2147024864)
-                {
-                    // file is in use, retry
-                }
-            }
-
-            throw new TimeoutException($"Failed to get a write handle to {path} within {timeoutMs}ms.");
-        }
-
         private static void Export(XElement xml, FileInfo fileName)
         {
             using FileStream fs = new(fileName.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
@@ -81,8 +59,6 @@ namespace WPFApp
 
         private static void ExportToFile(IXmlViewModel xmlControl, FileInfo fileName)
         {
-            // Using synchronous code because async is a bitch to work with taskMachine.Ingest(() =>
-            // ExportAsync(xmlControl.GetContentXml(), fileName));
             XElement xml;
             try
             {
@@ -140,12 +116,6 @@ namespace WPFApp
 
                 ExportToFile(GetControlForExport(), fileInfo);
             }
-        }
-
-        private Task ExportAsync(XElement xml, string fileName)
-        {
-            var stream = GetWriteStream(fileName, 60000);
-            return xml.SaveAsync(stream, SaveOptions.None, exportCancellationTokenSource.Token);
         }
     }
 }

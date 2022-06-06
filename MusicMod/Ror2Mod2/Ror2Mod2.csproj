@@ -9,6 +9,9 @@
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
   <ItemGroup>
     <None Remove="spotifyAccessToken.txt" />
   </ItemGroup>
@@ -32,16 +35,16 @@
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\com.unity.multiplayer-hlapi.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Maths">
-      <HintPath>..\..\Common\Maths\bin\Debug\netstandard2.0\Maths.dll</HintPath>
+      <HintPath>..\..\Common\Maths\bin\$(Configuration)\netstandard2.0\Maths.dll</HintPath>
     </Reference>
     <Reference Include="MMHOOK_RoR2">
       <HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\MMHOOK\MMHOOK_RoR2.dll</HintPath>
     </Reference>
     <Reference Include="MyRoR2">
-      <HintPath>..\..\Common\MyRoR2\bin\Debug\netstandard2.0\MyRoR2.dll</HintPath>
+      <HintPath>..\..\Common\MyRoR2\bin\$(Configuration)\netstandard2.0\MyRoR2.dll</HintPath>
     </Reference>
     <Reference Include="Patterns">
-      <HintPath>..\..\Common\Patterns\bin\Debug\netstandard2.0\Patterns.dll</HintPath>
+      <HintPath>..\..\Common\Patterns\bin\$(Configuration)\netstandard2.0\Patterns.dll</HintPath>
     </Reference>
     <Reference Include="R2API">
       <HintPath>C:\Users\wscal\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\MyMods\BepInEx\plugins\tristanmcpherson-R2API\R2API\R2API.dll</HintPath>
@@ -59,11 +62,17 @@
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="Utils">
-      <HintPath>..\..\Common\Utils\bin\Debug\netstandard2.0\Utils.dll</HintPath>
+      <HintPath>..\..\Common\Utils\bin\$(Configuration)\netstandard2.0\Utils.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <None Update="App.config">
+    <None Update="icon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="manifest.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -10,12 +10,11 @@
   <ItemGroup>
     <Compile Remove="Async\SingletonTask.cs" />
     <Compile Remove="Async\SingletonTaskBase.cs" />
+    <Compile Remove="Async\TaskMachine.cs" />
     <Compile Remove="FilteredObservableCollection.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.2.20-alpha" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.2.32" />
     <PackageReference Include="Mono.Unofficial.pdb2mdb" Version="4.2.3.4" />
-    <PackageReference Include="System.Threading.Channels" Version="7.0.0-preview.3.22175.4" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
 </Project>

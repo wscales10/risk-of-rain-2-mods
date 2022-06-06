@@ -173,7 +173,7 @@ namespace Spotify
             switch (e)
             {
                 case APIException _:
-                    if (!exceptionTypes.Contains(e.GetType()))
+                    if (!exceptionTypes.Contains(e.GetType()) && e.Message.Contains("active device"))
                     {
                         await ActivateDeviceAsync();
                         exceptionTypes.Add(e.GetType());
