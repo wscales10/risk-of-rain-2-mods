@@ -10,7 +10,7 @@ namespace WPFApp.Controls
 {
     public class SpotifyItemPickerViewModel : ViewModelBase
     {
-        private static readonly SeniorTaskMachine taskMachine = new();
+        private static readonly AsyncJobQueue asyncJobQueue = new();
 
         private CancellationTokenSource individualCancellationTokenSource = new();
 
@@ -118,10 +118,7 @@ namespace WPFApp.Controls
             individualCancellationTokenSource = new();
             if (Item is SpotifyItem si)
             {
-                if (!taskMachine.TryIngest(token => SpotifyItemPicker.MusicItemDictionary.GetValueAsync(si, info => Info = info, token), individualCancellationTokenSource.Token).HasValue)
-                {
-                    throw new InvalidOperationException();
-                }
+                _ = asyncJobQueue.WaitForMyJobAsync(new CancellableTask(token => SpotifyItemPicker.MusicItemDictionary.GetValueAsync(si, info => Info = info, token)), individualCancellationTokenSource.Token);
             }
             else
             {
