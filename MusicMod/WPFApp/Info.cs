@@ -9,8 +9,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using Utils.Reflection.Properties;
+using PropertyInfo = Patterns.Patterns.PropertyInfo;
 
 namespace WPFApp
 {
@@ -30,6 +33,6 @@ namespace WPFApp
 
         public static IEnumerable<PropertyInfo> GetProperties<T>() => GetProperties(typeof(T));
 
-        public static IEnumerable<PropertyInfo> GetProperties(Type type) => type.GetProperties().Select(p => new PropertyInfo(p.Name, p.PropertyType));
+        public static IEnumerable<PropertyInfo> GetProperties(Type type) => type.GetPublicProperties().Where(pi => pi.GetMethod is not null).Select(p => new PropertyInfo(p.Name, p.PropertyType));
     }
 }
