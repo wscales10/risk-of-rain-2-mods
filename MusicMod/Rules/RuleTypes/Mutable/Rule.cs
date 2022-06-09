@@ -96,12 +96,12 @@ namespace Rules.RuleTypes.Mutable
 
         public abstract TrackedResponse GetBucket(Context c);
 
-        TrackedResponse IRule.GetBucket(Context c) => GetBucket(c);
-
         public ICommandList GetCommands(Context oldContext, Context newContext, bool force = false)
         {
             var newBucketResponse = GetBucket(newContext);
             var newBucket = newBucketResponse.Bucket;
+            newBucketResponse.LogRules();
+
             if (!(newBucket?.Commands is null))
             {
                 foreach (var command in newBucket.Commands)
@@ -110,20 +110,28 @@ namespace Rules.RuleTypes.Mutable
                 }
             }
 
-            // TODO: implement force on error
-            if (newBucket is null || force || GetBucket(oldContext) != newBucket)
+            if (newBucket is null)
             {
-                return newBucket?.Commands;
+                this.Log($"{nameof(newBucket)} is null");
+            }
+            else
+
+            // TODO: implement force on error
+            if (force)
+            {
+                this.Log("forcing retry");
+            }
+            else if (GetBucket(oldContext).Bucket != newBucket)
+            {
+                this.Log($"{nameof(newBucket)} is different");
             }
             else
             {
+                this.Log($"{nameof(newBucket)} is no different from before");
                 return null;
             }
-        }
 
-        ICommandList IRule.GetCommands(Context oldContext, Context newContext, bool force)
-        {
-            return GetCommands(oldContext, newContext, force);
+            return newBucket?.Commands;
         }
 
         public abstract IReadOnlyRule ToReadOnly();

@@ -1,6 +1,7 @@
 ﻿using Rules.RuleTypes.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
+using Utils;
 
 namespace Rules
 {
@@ -24,6 +25,17 @@ namespace Rules
         {
             Rules.Push(rule);
             return this;
+        }
+
+        public void LogRules()
+        {
+            int i = 0;
+
+            foreach (var rule in Rules)
+            {
+                this.Log(new string(' ', i) + '-' + rule);
+                i++;
+            }
         }
 
         public TrackedResponse ToReadOnly() => new TrackedResponse((IBucket)Bucket.ToReadOnly(), Rules.Select(r => r.ToReadOnly()));

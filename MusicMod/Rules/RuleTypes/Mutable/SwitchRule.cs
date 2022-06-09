@@ -85,6 +85,8 @@ namespace Rules.RuleTypes.Mutable
             }
 
             yield return DefaultRule;
+
+            this.Log($"{nameof(seenValue)}: {seenValue}");
         }
 
         public override XElement ToXml()
@@ -186,6 +188,8 @@ namespace Rules.RuleTypes.Mutable
             }
 
             yield return DefaultRule;
+
+            this.Log($"{nameof(seenValue)}: {seenValue}");
         }
 
         public override XElement ToXml()
