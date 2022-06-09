@@ -9,20 +9,21 @@ using Utils;
 
 namespace Rules.RuleTypes.Readonly
 {
-	public class ReadOnlySwitchRule : ReadOnlyRule<StaticSwitchRule>, ISwitchRule
-	{
-		public ReadOnlySwitchRule(StaticSwitchRule staticSwitchRule) : base(staticSwitchRule) {
-			PropertyInfo = staticSwitchRule.PropertyInfo;
-			DefaultRule = staticSwitchRule.DefaultRule?.ToReadOnly();
-			Cases = staticSwitchRule.Cases.Select(c => c.ToReadOnly()).ToReadOnlyCollection();
-		}
+    public class ReadOnlySwitchRule : ReadOnlyRule<StaticSwitchRule>, ISwitchRule
+    {
+        public ReadOnlySwitchRule(StaticSwitchRule staticSwitchRule) : base(staticSwitchRule)
+        {
+            PropertyInfo = staticSwitchRule.PropertyInfo;
+            DefaultRule = staticSwitchRule.DefaultRule?.ToReadOnly();
+            Cases = staticSwitchRule.Cases.Select(c => c.ToReadOnly()).ToReadOnlyCollection();
+        }
 
-		public PropertyInfo PropertyInfo { get; }
+        public PropertyInfo PropertyInfo { get; }
 
-		public ReadOnlyCollection<ReadOnlyCase<IPattern>> Cases { get; }
+        public ReadOnlyCollection<ReadOnlyCase<IPattern>> Cases { get; }
 
-		public IRule DefaultRule { get; }
+        public IRule DefaultRule { get; }
 
-		IEnumerable<ICase<IPattern>> ISwitchRule.Cases => Cases;
-	}
+        IEnumerable<ICase<IPattern>> ISwitchRule.Cases => Cases;
+    }
 }

@@ -28,7 +28,10 @@ namespace Rules.RuleTypes.Mutable
 
         public override IEnumerable<(string, Rule)> Children => new[] { (Pattern.ToString(), ThenRule), ("Otherwise", ElseRule) };
 
-        public override Rule GetRule(Context c) => Pattern.IsMatch(c) ? ThenRule : ElseRule;
+        public override IEnumerable<Rule> GetRules(Context c)
+        {
+            yield return Pattern.IsMatch(c) ? ThenRule : ElseRule;
+        }
 
         public override XElement ToXml()
         {
