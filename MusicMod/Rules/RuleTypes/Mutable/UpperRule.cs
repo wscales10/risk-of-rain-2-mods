@@ -19,7 +19,7 @@ namespace Rules.RuleTypes.Mutable
                 }
             }
 
-            return null;
+            return new TrackedResponse(null);
         }
     }
 }
