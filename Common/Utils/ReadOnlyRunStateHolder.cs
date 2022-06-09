@@ -19,5 +19,9 @@ namespace Utils
         public Task WaitUntilNotRunningAsync() => mutable.WaitUntilNotRunningAsync();
 
         public Task WaitUntilOffAsync() => mutable.WaitUntilOffAsync();
+
+        public Task WaitUntilOnAsync() => mutable.WaitUntilOnAsync();
+
+        public Task WaitUntilRunningAsync() => mutable.WaitUntilRunningAsync();
     }
 }

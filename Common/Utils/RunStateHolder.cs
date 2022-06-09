@@ -6,9 +6,13 @@ namespace Utils
 {
     public class RunStateHolder : IRunStateHolder
     {
-        private readonly AsyncManualResetEvent runningEvent = new AsyncManualResetEvent(true);
+        private readonly AsyncManualResetEvent notRunningEvent = new AsyncManualResetEvent(true);
 
-        private readonly AsyncManualResetEvent onEvent = new AsyncManualResetEvent(true);
+        private readonly AsyncManualResetEvent runningEvent = new AsyncManualResetEvent(false);
+
+        private readonly AsyncManualResetEvent offEvent = new AsyncManualResetEvent(true);
+
+        private readonly AsyncManualResetEvent onEvent = new AsyncManualResetEvent(false);
 
         private RunState state;
 
@@ -57,11 +61,19 @@ namespace Utils
                 {
                     if (value)
                     {
-                        onEvent.Reset();
+                        // I'm on now!
+                        onEvent.Set();
+
+                        // Allow "off" notification
+                        offEvent.Reset();
                     }
                     else
                     {
-                        onEvent.Set();
+                        // I'm off now!
+                        offEvent.Set();
+
+                        // Allow "on" notification
+                        onEvent.Reset();
                     }
                 }
 
@@ -79,11 +91,19 @@ namespace Utils
                 {
                     if (value)
                     {
-                        runningEvent.Reset();
+                        // I'm running now!
+                        runningEvent.Set();
+
+                        // Allow "not running" notifications
+                        notRunningEvent.Reset();
                     }
                     else
                     {
-                        runningEvent.Set();
+                        // I'm not running now!
+                        notRunningEvent.Set();
+
+                        // Allow "running" notifications
+                        runningEvent.Reset();
                     }
                 }
 
@@ -95,8 +115,12 @@ namespace Utils
 
         public ReadOnlyRunStateHolder ToReadOnly() => new ReadOnlyRunStateHolder(this);
 
-        public async Task WaitUntilNotRunningAsync() => await runningEvent.WaitAsync();
+        public async Task WaitUntilNotRunningAsync() => await notRunningEvent.WaitAsync();
 
-        public async Task WaitUntilOffAsync() => await onEvent.WaitAsync();
+        public async Task WaitUntilOffAsync() => await offEvent.WaitAsync();
+
+        public async Task WaitUntilRunningAsync() => await runningEvent.WaitAsync();
+
+        public async Task WaitUntilOnAsync() => await onEvent.WaitAsync();
     }
 }

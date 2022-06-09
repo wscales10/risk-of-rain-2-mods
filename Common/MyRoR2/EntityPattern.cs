@@ -31,7 +31,7 @@ namespace MyRoR2
 
         protected override bool isMatch(Entity value)
         {
-            return !(value is null) && Regex.IsMatch(value.Name, $"^{Regex.Escape(entity.Name)}2?$");
+            return !(value?.Name is null) && Regex.IsMatch(value.Name, $"^{Regex.Escape(entity.Name)}2?$");
         }
 
         protected override bool defineWith(string stringDefinition)

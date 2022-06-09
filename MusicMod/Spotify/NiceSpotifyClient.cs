@@ -13,11 +13,13 @@ namespace Spotify
     {
         protected readonly Logger Log;
 
-        private readonly AsyncJobQueue asyncJobQueue = new AsyncJobQueue();
+        private readonly AsyncJobQueue asyncJobQueue = new AsyncJobQueue(RunState.Off);
 
         private string accessToken;
 
         private string backupAccessToken;
+
+        private bool isAuthorised;
 
         protected NiceSpotifyClient(Logger logger)
         {
@@ -28,7 +30,22 @@ namespace Spotify
 
         public event Action<Exception> OnError;
 
-        public bool IsAuthorised { get; private set; }
+        public bool IsAuthorised
+        {
+            get => isAuthorised;
+
+            private set
+            {
+                if (isAuthorised = value)
+                {
+                    asyncJobQueue.TryStart();
+                }
+                else
+                {
+                    asyncJobQueue.TryStop();
+                }
+            }
+        }
 
         protected SpotifyClient Client { get; private set; }
 
@@ -39,7 +56,8 @@ namespace Spotify
 
         public async Task Do(ICommandList input, CancellationToken cancellationToken = default)
         {
-            var cancellableTask = new CancellableTask(token => ExecuteAsync(input, token));
+            async Task func(CancellationToken token) => await ExecuteAsync(input, token);
+            var cancellableTask = new CancellableTask(func);
             await asyncJobQueue.WaitForMyJobAsync(cancellableTask, cancellationToken);
         }
 
@@ -59,9 +77,9 @@ namespace Spotify
         }
 
         // TODO: make more use of cancellation token
-        protected abstract Task<bool> HandleAsync(Command command, CancellationToken? cancellationToken);
+        protected abstract Task<bool> HandleAsync(Command command, CancellationToken cancellationToken);
 
-        protected virtual async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken? cancellationToken, List<Type> exceptionTypes = null)
+        protected virtual async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken cancellationToken, List<Type> exceptionTypes = null)
         {
             switch (e)
             {
@@ -82,11 +100,12 @@ namespace Spotify
             return false;
         }
 
-        protected virtual async Task<bool> ExecuteAsync(ICommandList commands, CancellationToken? cancellationToken, List<Type> exceptionTypes = null)
+        protected virtual async Task<bool> ExecuteAsync(ICommandList commands, CancellationToken cancellationToken, List<Type> exceptionTypes = null)
         {
             exceptionTypes = exceptionTypes ?? new List<Type>();
             try
             {
+                // TODO: move try-catch inside loop?
                 foreach (var command in commands)
                 {
                     Log("beginning " + command.GetType().Name);

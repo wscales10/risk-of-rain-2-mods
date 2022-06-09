@@ -3,7 +3,6 @@ using Spotify.Commands;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -72,7 +71,7 @@ namespace Spotify
             await Do(new StopCommand());
         }
 
-        protected override async Task<bool> HandleAsync(Command command, CancellationToken? cancellationToken)
+        protected override async Task<bool> HandleAsync(Command command, CancellationToken cancellationToken)
         {
             switch (command)
             {
@@ -168,7 +167,7 @@ namespace Spotify
             await ActivateDeviceAsync();
         }
 
-        protected override async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken? cancellationToken, List<Type> exceptionTypes = null)
+        protected override async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken cancellationToken, List<Type> exceptionTypes = null)
         {
             switch (e)
             {
@@ -177,7 +176,7 @@ namespace Spotify
                     {
                         await ActivateDeviceAsync();
                         exceptionTypes.Add(e.GetType());
-                        return await ExecuteAsync(commands, null, exceptionTypes);
+                        return await ExecuteAsync(commands, cancellationToken, exceptionTypes);
                     }
                     break;
             }

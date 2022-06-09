@@ -21,6 +21,7 @@ namespace Utils.Async
         {
             try
             {
+                // TODO: Use TaskCompletionSource
                 await task;
             }
             catch (OperationCanceledException e) when (e.CancellationToken == cancellationToken)

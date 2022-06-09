@@ -5,11 +5,15 @@ namespace Utils
 {
     public abstract class AsyncRunner
     {
-        private readonly RunStateHolder runStateHolder = new RunStateHolder();
+        private readonly RunStateHolder runStateHolder;
 
         private readonly AsyncSemaphore asyncSemaphore = new AsyncSemaphore(1);
 
-        protected AsyncRunner() => Info = runStateHolder.ToReadOnly();
+        protected AsyncRunner(RunState initialState = RunState.Off)
+        {
+            runStateHolder = new RunStateHolder(initialState);
+            Info = runStateHolder.ToReadOnly();
+        }
 
         public ReadOnlyRunStateHolder Info { get; }
 
@@ -81,12 +85,12 @@ namespace Utils
             }
         }
 
-        protected abstract Task StopAsync();
+        protected virtual Task StopAsync() => Task.CompletedTask;
 
-        protected abstract Task StartAsync();
+        protected virtual Task StartAsync() => Task.CompletedTask;
 
         protected virtual Task ResumeAsync() => StartAsync();
 
-        protected abstract Task PauseAsync();
+        protected virtual Task PauseAsync() => Task.CompletedTask;
     }
 }

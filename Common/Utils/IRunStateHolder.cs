@@ -15,5 +15,9 @@ namespace Utils
         Task WaitUntilNotRunningAsync();
 
         Task WaitUntilOffAsync();
+
+        Task WaitUntilRunningAsync();
+
+        Task WaitUntilOnAsync();
     }
 }

@@ -12,7 +12,7 @@ namespace Spotify
         {
         }
 
-        protected async override Task<bool> HandleAsync(Command command, CancellationToken? cancellationToken)
+        protected async override Task<bool> HandleAsync(Command command, CancellationToken cancellationToken)
         {
             switch (command)
             {
