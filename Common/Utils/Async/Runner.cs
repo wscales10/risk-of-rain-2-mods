@@ -1,29 +1,43 @@
-﻿using Microsoft.VisualStudio.Threading;
-using System.Threading.Tasks;
-
-namespace Utils
+﻿namespace Utils
 {
-    public abstract class AsyncRunner
+    public abstract class Runner
     {
         private readonly RunStateHolder runStateHolder;
 
-        private readonly AsyncSemaphore asyncSemaphore = new AsyncSemaphore(1);
+        private readonly object lockObject = new object();
 
-        protected AsyncRunner(RunState initialState = RunState.Off)
+        protected Runner(RunState initialState = RunState.Off, bool initialiseWithCorrespondingMethod = false)
         {
             runStateHolder = new RunStateHolder(initialState);
             Info = runStateHolder.ToReadOnly();
+            if (initialiseWithCorrespondingMethod)
+            {
+                switch (initialState)
+                {
+                    case RunState.Off:
+                        Stop();
+                        break;
+
+                    case RunState.Running:
+                        Start();
+                        break;
+
+                    case RunState.Paused:
+                        Pause();
+                        break;
+                }
+            }
         }
 
         public ReadOnlyRunStateHolder Info { get; }
 
-        public async Task<bool> TryStopAsync()
+        public bool TryStop()
         {
-            using (await asyncSemaphore.EnterAsync())
+            lock (lockObject)
             {
                 if (runStateHolder.IsOn)
                 {
-                    await StopAsync();
+                    Stop();
                     runStateHolder.State = RunState.Off;
                     return true;
                 }
@@ -34,13 +48,13 @@ namespace Utils
             }
         }
 
-        public async Task<bool> TryStartAsync()
+        public bool TryStart()
         {
-            using (await asyncSemaphore.EnterAsync())
+            lock (lockObject)
             {
                 if (!runStateHolder.IsOn)
                 {
-                    await StartAsync();
+                    Start();
                     runStateHolder.State = RunState.Running;
                     return true;
                 }
@@ -51,13 +65,13 @@ namespace Utils
             }
         }
 
-        public async Task<bool> TryResumeAsync()
+        public bool TryResume()
         {
-            using (await asyncSemaphore.EnterAsync())
+            lock (lockObject)
             {
                 if (runStateHolder.IsPaused)
                 {
-                    await ResumeAsync();
+                    Resume();
                     runStateHolder.State = RunState.Running;
                     return true;
                 }
@@ -68,13 +82,13 @@ namespace Utils
             }
         }
 
-        public async Task<bool> TryPauseAsync()
+        public bool TryPause()
         {
-            using (await asyncSemaphore.EnterAsync())
+            lock (lockObject)
             {
                 if (runStateHolder.IsRunning)
                 {
-                    await PauseAsync();
+                    Pause();
                     runStateHolder.State = RunState.Paused;
                     return true;
                 }
@@ -85,12 +99,18 @@ namespace Utils
             }
         }
 
-        protected virtual Task StopAsync() => Task.CompletedTask;
+        protected virtual void Stop()
+        {
+        }
 
-        protected virtual Task StartAsync() => Task.CompletedTask;
+        protected virtual void Start()
+        {
+        }
 
-        protected virtual Task ResumeAsync() => StartAsync();
+        protected virtual void Resume() => Start();
 
-        protected virtual Task PauseAsync() => Task.CompletedTask;
+        protected virtual void Pause()
+        {
+        }
     }
 }
