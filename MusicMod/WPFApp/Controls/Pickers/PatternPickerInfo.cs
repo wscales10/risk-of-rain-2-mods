@@ -57,13 +57,14 @@ namespace WPFApp.Controls.Pickers
                 output.AddRange(GetAllowedPatternTypes(type.GenericTypeArguments[0]).Where(w => typeof(IPattern<>).MakeGenericType(type).IsAssignableFrom(w.Type)));
                 output.Add(typeof(NullableNullPattern<>).MakeGenericType(type.GenericTypeArguments));
             }
-            else if (type.IsGenericType(typeof(IList<>)))
-            {
-                output.Add(typeof(AnyPattern<>).MakeGenericType(type.GenericTypeArguments));
-                output.Add(typeof(AllPattern<>).MakeGenericType(type.GenericTypeArguments));
-            }
             else
             {
+                if (type.IsGenericType(typeof(IList<>)))
+                {
+                    output.Add(typeof(AnyPattern<>).MakeGenericType(type.GenericTypeArguments));
+                    output.Add(typeof(AllPattern<>).MakeGenericType(type.GenericTypeArguments));
+                }
+
                 if (Info.PatternParser.TryGetTypeDef(new TypeRef(type), out TypeDef typeDef))
                 {
                     Type patternType = typeDef.PatternTypeGetter(type);

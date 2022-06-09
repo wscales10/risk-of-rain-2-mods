@@ -44,7 +44,7 @@ namespace Rules.RuleTypes.Mutable
 
         public static implicit operator Bucket(CommandList cl) => new Bucket(cl);
 
-        public override Bucket GetBucket(Context c) => this;
+        public override TrackedResponse GetBucket(Context c) => new TrackedResponse(this);
 
         public override XElement ToXml()
         {

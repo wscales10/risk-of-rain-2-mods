@@ -94,13 +94,14 @@ namespace Rules.RuleTypes.Mutable
             }
         }
 
-        public abstract Bucket GetBucket(Context c);
+        public abstract TrackedResponse GetBucket(Context c);
 
-        IBucket IRule.GetBucket(Context c) => GetBucket(c);
+        TrackedResponse IRule.GetBucket(Context c) => GetBucket(c);
 
-        public CommandList GetCommands(Context oldContext, Context newContext, bool force = false)
+        public ICommandList GetCommands(Context oldContext, Context newContext, bool force = false)
         {
-            var newBucket = GetBucket(newContext);
+            var newBucketResponse = GetBucket(newContext);
+            var newBucket = newBucketResponse.Bucket;
             if (!(newBucket?.Commands is null))
             {
                 foreach (var command in newBucket.Commands)
