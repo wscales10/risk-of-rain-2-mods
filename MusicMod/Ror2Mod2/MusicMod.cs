@@ -20,6 +20,8 @@ namespace Ror2Mod2
 
         private readonly Configuration configuration;
 
+        private bool musicMuted;
+
         protected MusicMod()
         {
             configuration = new Configuration(Config);
@@ -66,10 +68,29 @@ namespace Ror2Mod2
             On.RoR2.UI.PauseScreenController.OnDisable += PauseScreenController_OnDisable;
         }
 
+        public void Update()
+        {
+            if (!musicMuted && RoR2.Console.instance != null)
+            {
+                var convar = RoR2.Console.instance.FindConVar("volume_music");
+
+                // set in game music volume to 0 so we hear the new music only.
+                if (convar != null)
+                {
+                    convar.SetString("0");
+                    musicMuted = true;
+                }
+            }
+        }
+
         private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)
         {
             orig(self);
-            Music.Resume();
+
+            if (RoR2.PlatformSystems.networkManager.isNetworkActive)
+            {
+                Music.Resume();
+            }
         }
 
         private void PauseScreenController_OnEnable(On.RoR2.UI.PauseScreenController.orig_OnEnable orig, RoR2.UI.PauseScreenController self)
