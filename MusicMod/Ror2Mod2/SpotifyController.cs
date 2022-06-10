@@ -1,7 +1,8 @@
 ﻿using MyRoR2;
 using Spotify;
 using Spotify.Authorisation;
-using Spotify.Commands;
+using Spotify.Commands.Interfaces;
+using Spotify.Commands.Mutable;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

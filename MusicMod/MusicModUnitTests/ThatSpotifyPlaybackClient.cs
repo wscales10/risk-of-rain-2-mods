@@ -2,7 +2,7 @@
 using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using Spotify;
 using Spotify.Authorisation;
-using Spotify.Commands;
+using Spotify.Commands.Mutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Utils;

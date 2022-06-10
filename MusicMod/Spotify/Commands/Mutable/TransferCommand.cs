@@ -2,16 +2,15 @@
 using MyRoR2;
 using Patterns;
 using Patterns.Patterns;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using Spotify.Commands.Interfaces;
 using System.Xml.Linq;
 using Utils;
 
-namespace Spotify.Commands
+namespace Spotify.Commands.Mutable
 {
     //public delegate SymbolicExpression MathFunc(SymbolicExpression ms);
 
-    public class TransferCommand : Command
+    public class TransferCommand : Command, ITransferCommand
     {
         public TransferCommand(SpotifyItemType type, string id, Switch<int, string> mapping, IPattern<string> fromTrackId = null)
             : this(new SpotifyItem(type, id), mapping, fromTrackId)

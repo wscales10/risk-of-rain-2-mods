@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Spotify;
 using Spotify.Authorisation;
-using Spotify.Commands;
+using Spotify.Commands.Mutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;

@@ -1,6 +1,7 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Interfaces;
-using Spotify.Commands;
+using Spotify.Commands.Interfaces;
+using Spotify.Commands.Mutable;
 using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Readonly

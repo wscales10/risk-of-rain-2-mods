@@ -102,9 +102,6 @@
     <Reference Include="Ror2Mod2, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Ror2Mod2.0.0.1\lib\netstandard2.0\Ror2Mod2.dll</HintPath>
     </Reference>
-    <Reference Include="Rules, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Rules.0.0.1\lib\netstandard2.0\Rules.dll</HintPath>
-    </Reference>
     <Reference Include="SpotifyAPI.Web, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\SpotifyAPI.Web.6.2.2\lib\netstandard2.0\SpotifyAPI.Web.dll</HintPath>
     </Reference>
@@ -170,8 +167,12 @@
     <Analyzer Include="..\packages\Microsoft.VisualStudio.Threading.Analyzers.17.2.32\analyzers\vb\Microsoft.VisualStudio.Threading.Analyzers.VisualBasic.dll" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Rules\Rules.csproj">
+      <Project>{ee464758-e3a3-430d-8f3f-86bc239038be}</Project>
+      <Name>Rules</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Spotify\Spotify.csproj">
-      <Project>{1034461A-C9C0-490E-8475-8B1815292F6E}</Project>
+      <Project>{1034461a-c9c0-490e-8475-8b1815292f6e}</Project>
       <Name>Spotify</Name>
     </ProjectReference>
   </ItemGroup>

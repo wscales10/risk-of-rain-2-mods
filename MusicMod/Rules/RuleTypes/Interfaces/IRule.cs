@@ -1,5 +1,5 @@
 ﻿using MyRoR2;
-using Spotify.Commands;
+using Spotify.Commands.Interfaces;
 using Utils;
 
 namespace Rules.RuleTypes.Interfaces

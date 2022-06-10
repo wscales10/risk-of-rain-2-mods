@@ -3,7 +3,8 @@ using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Readonly;
 using Spotify;
-using Spotify.Commands;
+using Spotify.Commands.Interfaces;
+using Spotify.Commands.Mutable;
 using System.Collections.Generic;
 using System.Xml.Linq;
 

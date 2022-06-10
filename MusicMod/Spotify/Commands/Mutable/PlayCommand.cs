@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Xml.Linq;
-using Utils;
 
-namespace Spotify.Commands
+namespace Spotify.Commands.Mutable
 {
     public class PlayCommand : PlayCommandBase<PlayCommand>
     {

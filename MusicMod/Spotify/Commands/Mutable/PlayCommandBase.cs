@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Spotify.Commands.Interfaces;
+using System;
+using System.Collections.Generic;
 using System.Xml.Linq;
 using Utils;
 
-namespace Spotify.Commands
+namespace Spotify.Commands.Mutable
 {
-    public abstract class PlayCommandBase<TCommand> : Command
-        where TCommand : PlayCommandBase<TCommand>
+    public abstract class PlayCommandBase<TCommand> : Command, IPlayCommand where TCommand : PlayCommandBase<TCommand>
     {
         protected PlayCommandBase(SpotifyItemType type, string id)
             : this(new SpotifyItem(type, id))
@@ -52,6 +53,10 @@ namespace Spotify.Commands
             return base.ToString() + $"({Item}{timePart})";
         }
 
+        IPlayCommand IPlayCommand.AtMilliseconds(int ms) => AtMilliseconds(ms);
+
+        IPlayCommand IPlayCommand.AtSeconds(int s) => AtSeconds(s);
+
         protected override void AddDetail(XElement element)
         {
             if (!(At is null))
@@ -61,32 +66,5 @@ namespace Spotify.Commands
 
             element.Add(new XElement(nameof(Item), Item.ToXml()));
         }
-    }
-
-    public class LoopCommand : PlayCommandBase<LoopCommand>
-    {
-        public LoopCommand(SpotifyItemType type, string id) : base(type, id)
-        {
-        }
-
-        public LoopCommand(ISpotifyItem item) : base(item)
-        {
-        }
-
-        public LoopCommand()
-        {
-        }
-
-        internal LoopCommand(XElement element) : base(element)
-        {
-        }
-
-        private LoopCommand(ISpotifyItem item, TimeSpan? at) : base(item, at)
-        {
-        }
-
-        public override LoopCommand AtMilliseconds(int ms) => new LoopCommand(Item, TimeSpan.FromMilliseconds(ms));
-
-        public override LoopCommand AtSeconds(int s) => new LoopCommand(Item, TimeSpan.FromSeconds(s));
     }
 }

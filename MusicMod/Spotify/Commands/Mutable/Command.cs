@@ -1,13 +1,15 @@
-﻿using System;
+﻿using Spotify.Commands.Interfaces;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Utils.Reflection;
 
-namespace Spotify.Commands
+namespace Spotify.Commands.Mutable
 {
 #warning Command property set accessors are public to allow building, but no readonly versions defined
 
-    public abstract class Command
+    public abstract class Command : ICommand<Command>
     {
         private static readonly Type[] types = new Type[] { typeof(PauseCommand), typeof(PlayCommand), typeof(ResumeCommand), typeof(SeekToCommand), typeof(SetPlaybackOptionsCommand), typeof(StopCommand), typeof(TransferCommand), typeof(PlayOnceCommand), typeof(LoopCommand) };
 
@@ -23,10 +25,7 @@ namespace Spotify.Commands
             return (Command)constructor.Invoke(args);
         }
 
-        public CommandList Then(params Command[] commands)
-        {
-            return new CommandList(new[] { this }.Concat(commands));
-        }
+        public CommandList Then(params Command[] commands) => new CommandList(new[] { this }.Concat(commands));
 
         public XElement ToXml()
         {
@@ -37,6 +36,10 @@ namespace Spotify.Commands
         }
 
         public override string ToString() => GetType().Name.Replace(nameof(Command), string.Empty);
+
+        IEnumerable<Command> ICommand<Command>.Then(params Command[] commands) => Then(commands);
+
+        public abstract IReadOnlyCommand ToReadOnly();
 
         protected virtual void AddDetail(XElement element)
         { }

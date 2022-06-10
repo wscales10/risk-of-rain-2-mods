@@ -3,7 +3,7 @@ using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using RoR2;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
+using Spotify.Commands.Mutable;
 using static Patterns.Case;
 using static RoR2.TeleporterInteraction;
 using static Rules.RuleTypes.Mutable.Case;

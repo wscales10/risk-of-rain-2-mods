@@ -4,7 +4,7 @@ using Patterns.Patterns;
 using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using Rules.RuleTypes.Mutable;
 using Rules.RuleTypes.Readonly;
-using Spotify.Commands;
+using Spotify.Commands.Mutable;
 using System;
 using System.Configuration;
 using System.Diagnostics;

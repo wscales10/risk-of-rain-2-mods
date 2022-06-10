@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
-using Spotify.Commands;
+using Spotify.Commands.Interfaces;
+using Spotify.Commands.Mutable;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
