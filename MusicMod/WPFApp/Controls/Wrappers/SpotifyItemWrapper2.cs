@@ -9,6 +9,8 @@ namespace WPFApp.Controls.Wrappers
         {
         }
 
+        protected override bool Validate(ISpotifyItem value) => base.Validate(value) && value is not null;
+
         protected override void setValue(ISpotifyItem value)
         {
             IControlWrapper valueWrapper = value switch
