@@ -11,15 +11,15 @@ namespace Ror2Mod2
 {
     public class SpotifyController : MusicBase
     {
-        private readonly RulePicker rulePicker;
+        private readonly IRulePicker rulePicker;
 
         private readonly ContextHelper contextHelper;
 
-        public SpotifyController(RulePicker rulePicker, IEnumerable<Playlist> playlists, Logger logger) : base(logger)
+        public SpotifyController(IRulePicker rulePicker, IEnumerable<Playlist> playlists, Logger logger) : base(logger)
         {
             this.rulePicker = rulePicker;
             Client = new SpotifyPlaybackClient(playlists, logger);
-            Client.OnError += e => this.Log(e);
+            Client.OnError += e => Log(e);
             Authorisation = new Authorisation(Scopes.Playback, logger: logger);
             Authorisation.OnAccessTokenReceived += Authorisation_OnAccessTokenReceived;
             Authorisation.OnClientRequested += Web.Goto;
@@ -68,7 +68,7 @@ namespace Ror2Mod2
 
         protected override object GetMusicIdentifier(Context oldContext, Context newContext)
         {
-            var commands = rulePicker.GetRule().GetCommands(oldContext, newContext);
+            var commands = rulePicker.Rule.GetCommands(oldContext, newContext);
             return commands;
         }
 

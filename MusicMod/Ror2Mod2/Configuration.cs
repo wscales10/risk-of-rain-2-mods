@@ -1,6 +1,5 @@
 ﻿using BepInEx.Configuration;
 using RiskOfOptions;
-using RiskOfOptions.OptionConfigs;
 using RiskOfOptions.Options;
 using System;
 using UnityEngine.Events;
@@ -22,10 +21,13 @@ namespace Ror2Mod2
             config = configFile;
 
             ruleLocation = config.Bind(PATHS, "Rule Location", string.Empty, "Path to rule xml file");
-            ModSettingsManager.AddOption(new StringInputFieldOption(ruleLocation, true));
+            ModSettingsManager.AddOption(new StringInputFieldOption(ruleLocation, false));
+            ruleLocation.SettingChanged += (s, e) => RuleLocationChanged?.Invoke();
 
             ModSettingsManager.AddOption(new GenericButtonOption("Configuration", MUSIC, "Configure music connection", "Configuration", new UnityAction(() => ConfigurationPageRequested?.Invoke())));
         }
+
+        public event Action RuleLocationChanged;
 
         public event Action ConfigurationPageRequested;
 
