@@ -1,12 +1,11 @@
-﻿using Patterns;
-using Patterns.Patterns;
-using Rules.RuleTypes.Mutable;
+﻿using Patterns.Patterns;
 using System;
 using System.Windows.Controls;
 using WPFApp.ViewModels;
 using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.Controls.Wrappers;
 using System.Windows;
+using Case = Rules.RuleTypes.Mutable.Case;
 
 namespace WPFApp.Controls.Rows
 {
@@ -14,10 +13,12 @@ namespace WPFApp.Controls.Rows
     {
         private readonly CaseWrapper caseWrapper;
 
-        public CaseRow(Case<IPattern> c, PropertyWrapper<Type> valueType, NavigationContext navigationContext) : base(navigationContext, true)
+        private readonly PropertyWrapper<Type> valueType;
+
+        public CaseRow(Case c, PropertyWrapper<Type> valueType, NavigationContext navigationContext) : base(navigationContext, true)
         {
             Case = c;
-
+            this.valueType = valueType;
             SetPropertyDependency(nameof(Label), nameof(Case));
             caseWrapper = new(new(c, valueType, navigationContext));
             SetPropertyDependency(nameof(Label), caseWrapper.ViewModel, nameof(CaseViewModel.CaseName));
@@ -26,11 +27,13 @@ namespace WPFApp.Controls.Rows
             Output = c.Output;
         }
 
-        public Case<IPattern> Case { get; }
+        public Case Case { get; }
 
         public override UIElement LeftElement => caseWrapper.UIElement;
 
         public override string Label => Case?.ToString();
+
+        protected override CaseRow deepClone() => new(Case.DeepClone(Info.PatternParser), valueType, NavigationContext);
 
         protected override SaveResult trySaveChanges() => base.trySaveChanges() & caseWrapper.TryGetValue(true);
     }
@@ -46,6 +49,8 @@ namespace WPFApp.Controls.Rows
         }
 
         public override string Label => $"Other {propertyInfo}";
+
+        protected override DefaultRow deepClone() => new(NavigationContext, propertyInfo);
     }
 
     internal abstract class SwitchRow : RuleRow<SwitchRow>

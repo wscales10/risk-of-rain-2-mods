@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Spotify.Authorisation
@@ -10,7 +12,14 @@ namespace Spotify.Authorisation
         protected override async Task StartAsync()
         {
             flow = getFlow();
-            _ = await server.TryStartAsync();
+            try
+            {
+                _ = await server.TryStartAsync();
+            }
+            catch (HttpListenerException e)
+            {
+                Debugger.Break();
+            }
         }
 
         protected override async Task ResumeAsync()

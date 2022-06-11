@@ -8,6 +8,7 @@ using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.SaveResults;
+using Case = Rules.RuleTypes.Mutable.Case;
 
 namespace WPFApp.ViewModels
 {
@@ -78,11 +79,11 @@ namespace WPFApp.ViewModels
 
         private void AddDefault(Rule rule = null) => _ = TypedRowManager.AddDefault(new DefaultRow(NavigationContext, Item.PropertyInfo) { Output = rule });
 
-        private CaseRow AddCase(Case<IPattern> c = null)
+        private CaseRow AddCase(Case c = null)
         {
             if (c is null)
             {
-                c = new Case<IPattern>(null);
+                c = new Case(null);
             }
 
             return TypedRowManager.Add(new CaseRow(c, valueType, NavigationContext));

@@ -50,6 +50,8 @@ namespace WPFApp.Controls.Rows
 
         public override string ToString() => Label ?? base.ToString();
 
+        protected sealed override Rule CloneOutput() => Rule.FromXml(Output.ToXml());
+
         protected override SaveResult trySaveChanges() => base.trySaveChanges() & RuleWrapper.TryGetValue(true);
 
         protected override UIElement MakeOutputUi() => RuleWrapper.UIElement;

@@ -7,6 +7,7 @@ using WPFApp.Controls;
 using WPFApp.Controls.Pickers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Controls.Wrappers.SaveResults;
+using Case = Rules.RuleTypes.Mutable.Case;
 
 namespace WPFApp.ViewModels
 {
@@ -20,7 +21,7 @@ namespace WPFApp.ViewModels
 
         private bool wherePatternError;
 
-        public CaseViewModel(Case<IPattern> c, PropertyWrapper<Type> valueType, NavigationContext navigationContext)
+        public CaseViewModel(Case c, PropertyWrapper<Type> valueType, NavigationContext navigationContext)
         {
             Case = c;
             this.valueType = valueType;
@@ -41,7 +42,7 @@ namespace WPFApp.ViewModels
 
         public MultiPickerViewModel PickerViewModel { get; }
 
-        public Case<IPattern> Case { get; }
+        public Case Case { get; }
 
         public string CaseName
         {

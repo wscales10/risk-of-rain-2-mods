@@ -1,4 +1,5 @@
-﻿using Utils;
+﻿using System;
+using Utils;
 
 namespace Patterns
 {
@@ -19,6 +20,8 @@ namespace Patterns
 
     public interface IPattern : IXmlExportable
     {
+        Type ValueType { get; }
+
         IPattern Correct();
 
         bool IsMatch(object obj);

@@ -43,6 +43,8 @@ namespace WPFApp.Controls.Rows
 
         protected virtual ReadOnlyObservableCollection<IRow> AllChildren { get; } = new(new());
 
+        public abstract TRow DeepClone();
+
         public SaveResult TrySaveChanges()
         {
             var result = trySaveChanges();
@@ -95,6 +97,17 @@ namespace WPFApp.Controls.Rows
             get => output;
             set => SetProperty(ref output, value);
         }
+
+        public sealed override TRow DeepClone()
+        {
+            var clone = deepClone();
+            clone.Output = CloneOutput();
+            return clone;
+        }
+
+        protected abstract TOut CloneOutput();
+
+        protected abstract TRow deepClone();
 
         protected abstract UIElement MakeOutputUi();
 

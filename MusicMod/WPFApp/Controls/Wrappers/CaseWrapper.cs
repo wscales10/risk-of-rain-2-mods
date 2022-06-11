@@ -7,10 +7,11 @@ using WPFApp.ViewModels;
 using System.Linq;
 using System;
 using System.Windows.Media;
+using Case = Rules.RuleTypes.Mutable.Case;
 
 namespace WPFApp.Controls.Wrappers
 {
-    internal class CaseWrapper : ReadableControlWrapper<Case<IPattern>, CaseControl>
+    internal class CaseWrapper : ReadableControlWrapper<Case, CaseControl>
     {
         public CaseWrapper(CaseViewModel viewModel)
         {
@@ -26,7 +27,7 @@ namespace WPFApp.Controls.Wrappers
 
         private Type constructedInterface => typeof(IPattern<>).MakeGenericType(ViewModel.ValueType);
 
-        protected override SaveResult<Case<IPattern>> tryGetValue(GetValueRequest request)
+        protected override SaveResult<Case> tryGetValue(GetValueRequest request)
         {
             SaveResult success = ViewModel.PickerViewModel.ValueContainerManager.TrySaveChanges();
             SaveResult<object> result = ViewModel.WherePatternWrapper.TryGetObject(true);

@@ -76,6 +76,10 @@ namespace WPFApp.Controls.Rows
 
         public string CommandString => Output?.GetType().Name.Replace(nameof(Command), string.Empty);
 
+        protected override Command CloneOutput() => Command.FromXml(Output.ToXml());
+
+        protected override BucketRow deepClone() => new();
+
         protected override SaveResult trySaveChanges() => (FormatString is null || Output is null) ? (new(false)) : FormatString.TryGetProperties(Output, true);
 
         protected override UIElement MakeOutputUi()

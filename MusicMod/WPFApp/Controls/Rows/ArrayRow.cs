@@ -1,4 +1,6 @@
-﻿namespace WPFApp.Controls.Rows
+﻿using Rules.RuleTypes.Mutable;
+
+namespace WPFApp.Controls.Rows
 {
     internal class ArrayRow : RuleRow<ArrayRow>
     {
@@ -7,5 +9,7 @@
         }
 
         public override string Label => Output?.ToString();
+
+        protected override ArrayRow deepClone() => new(NavigationContext);
     }
 }

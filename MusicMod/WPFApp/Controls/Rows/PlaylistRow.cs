@@ -11,5 +11,9 @@ namespace WPFApp.Controls.Rows
         }
 
         public override string ButtonContent => Output?.Name ?? "Untitled playlist";
+
+        protected override Playlist CloneOutput() => Output.DeepClone();
+
+        protected override PlaylistRow deepClone() => new(NavigationContext);
     }
 }

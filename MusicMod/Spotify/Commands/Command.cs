@@ -23,6 +23,8 @@ namespace Spotify.Commands
             return (Command)constructor.Invoke(args);
         }
 
+        public Command DeepClone() => FromXml(ToXml());
+
         public CommandList Then(params Command[] commands)
         {
             return new CommandList(new[] { this }.Concat(commands));

@@ -26,17 +26,20 @@ namespace WPFApp.ViewModels
             UpCommand = new(_ => RowManager.MoveSelected(false), () => RowManager.CanMoveSelected(false));
             DownCommand = new(_ => RowManager.MoveSelected(true), () => RowManager.CanMoveSelected(true));
             DeleteCommand = new(_ => RowManager.RemoveSelected(), () => RowManager.CanRemoveSelected());
+            DuplicateCommand = new(_ => RowManager.DuplicateSelected(), () => RowManager.CanDuplicateSelected());
             RowManager.SelectionChanged += UpdateButtons;
             SetPropertyDependency(nameof(Name), NameResult, nameof(NameResult.Value));
         }
 
         public virtual string Title => string.Empty;
 
-        public ButtonCommand2 UpCommand { get; set; }
+        public ButtonCommand2 UpCommand { get; }
 
-        public ButtonCommand2 DownCommand { get; set; }
+        public ButtonCommand2 DownCommand { get; }
 
-        public ButtonCommand2 DeleteCommand { get; set; }
+        public ButtonCommand2 DeleteCommand { get; }
+
+        public ButtonCommand2 DuplicateCommand { get; }
 
         public abstract IEnumerable<ButtonContext> ExtraCommands { get; }
 
@@ -71,6 +74,7 @@ namespace WPFApp.ViewModels
             UpCommand.UpdateCanExecute();
             DownCommand.UpdateCanExecute();
             DeleteCommand.UpdateCanExecute();
+            DuplicateCommand.UpdateCanExecute();
         }
 
         protected override SaveResult ShouldAllowExit() => base.ShouldAllowExit() & RowManager.TrySaveChanges();

@@ -1,5 +1,4 @@
 ﻿using Patterns.Patterns;
-using Patterns.TypeDefs;
 using System;
 
 namespace Patterns
@@ -14,7 +13,7 @@ namespace Patterns
 
     public abstract class Pattern<T> : PatternBase, IPattern<T>
     {
-        public Type ValueType => typeof(T);
+        public override Type ValueType => typeof(T);
 
         protected bool IsNullableEnumPattern => IsNullableEnumType(ValueType);
 

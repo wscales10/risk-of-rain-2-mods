@@ -12,9 +12,15 @@ namespace WPFApp.Controls.Rows
     {
         private readonly IControlWrapper singlePickerWrapper;
 
+        private readonly Type valueType;
+
+        private readonly NavigationContext navigationContext;
+
         public PatternRow(Type valueType, NavigationContext navigationContext) : base(true)
         {
             singlePickerWrapper = (IControlWrapper)typeof(SinglePatternPickerWrapper<>).MakeGenericType(valueType).Construct(navigationContext);
+            this.valueType = valueType;
+            this.navigationContext = navigationContext;
         }
 
         public override IPattern Output
@@ -48,5 +54,9 @@ namespace WPFApp.Controls.Rows
 
             return output;
         }
+
+        protected override IPattern CloneOutput() => Info.PatternParser.DeepClone(Output);
+
+        protected override PatternRow deepClone() => new(valueType, navigationContext);
     }
 }

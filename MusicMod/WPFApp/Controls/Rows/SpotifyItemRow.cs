@@ -1,5 +1,4 @@
 ﻿using Spotify;
-using System;
 using System.Windows;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.SaveResults;
@@ -56,6 +55,10 @@ namespace WPFApp.Controls.Rows
             output.HorizontalAlignment = HorizontalAlignment.Left;
             return output;
         }
+
+        protected override SpotifyItem CloneOutput() => new(Output.Type, Output.Id);
+
+        protected override SpotifyItemRow deepClone() => new();
 
         private void SpotifyItemWrapper_ValueSet(object obj) => base.Output = (SpotifyItem)obj;
     }

@@ -104,6 +104,7 @@
                         <Button x:Name="DownButton" Content="Down" Command="{Binding DownCommand}" />
                     </StackPanel>
                     <Button x:Name="DeleteButton" Content="Delete" Command="{Binding DeleteCommand}" />
+                    <Button x:Name="DuplicateButton" Content="Duplicate" Command="{Binding DuplicateCommand}" />
                 </StackPanel>
                 <ItemsControl Grid.Row="1" ItemsSource="{Binding ExtraCommands}">
                     <ItemsControl.ItemTemplate>

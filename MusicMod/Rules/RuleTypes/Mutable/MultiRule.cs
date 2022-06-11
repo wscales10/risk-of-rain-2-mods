@@ -36,7 +36,7 @@ namespace Rules.RuleTypes.Mutable
 
         public static explicit operator StaticSwitchRule(MultiRule<T> mr)
         {
-            return (StaticSwitchRule)new StaticSwitchRule(new PropertyInfo(mr.PropertyName, typeof(T)), null, mr.Pairs.Select(p => new Case<IPattern>(p.rule, mr.patternGenerator(p.expectedValue))).ToArray()).Named(mr.Name);
+            return (StaticSwitchRule)new StaticSwitchRule(new PropertyInfo(mr.PropertyName, typeof(T)), null, mr.Pairs.Select(p => new Case(p.rule, mr.patternGenerator(p.expectedValue))).ToArray()).Named(mr.Name);
         }
 
         public override IEnumerable<Rule> GetRules(Context c)

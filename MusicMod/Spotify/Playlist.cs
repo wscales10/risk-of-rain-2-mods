@@ -53,6 +53,8 @@ namespace Spotify
 
         public string Name { get; set; }
 
+        public Playlist DeepClone() => new Playlist(ToXml());
+
         public XElement ToXml()
         {
             var output = PlaylistRef.ToXml(Name);

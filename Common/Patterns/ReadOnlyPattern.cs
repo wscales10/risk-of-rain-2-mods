@@ -1,4 +1,5 @@
-﻿using System.Xml.Linq;
+﻿using System;
+using System.Xml.Linq;
 
 namespace Patterns
 {
@@ -7,6 +8,8 @@ namespace Patterns
         private readonly IPattern pattern;
 
         public ReadOnlyPattern(IPattern pattern) => this.pattern = pattern;
+
+        public Type ValueType => pattern.ValueType;
 
         public IPattern Correct() => new ReadOnlyPattern(pattern.Correct());
 
@@ -20,6 +23,8 @@ namespace Patterns
         private readonly IPattern<T> pattern;
 
         public ReadOnlyPattern(IPattern<T> pattern) => this.pattern = pattern;
+
+        public Type ValueType => pattern.ValueType;
 
         public IPattern Correct() => new ReadOnlyPattern(pattern.Correct());
 

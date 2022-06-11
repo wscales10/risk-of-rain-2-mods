@@ -66,7 +66,7 @@ namespace Rules.RuleTypes.Mutable
             return (StaticSwitchRule)new StaticSwitchRule(
                 new PropertyInfo(sr.PropertyName, typeof(T)),
                 sr.DefaultRule,
-                sr.Cases.Select(c => new Case<IPattern>(c.Output, c.WherePattern, c.Arr.Select(sr.GeneratePattern).ToArray()).Named(c.Name)).ToArray()).Named(sr.Name);
+                sr.Cases.Select(c => (Case)new Case(c.Output, c.WherePattern, c.Arr.Select(sr.GeneratePattern).ToArray()).Named(c.Name)).ToArray()).Named(sr.Name);
         }
 
         public override IEnumerable<Rule> GetRules(Context c)
@@ -105,7 +105,7 @@ namespace Rules.RuleTypes.Mutable
 
     public class StaticSwitchRule : UpperRule, ISwitchRule
     {
-        public StaticSwitchRule(PropertyInfo propertyInfo = null, Rule defaultRule = null, params Case<IPattern>[] cases)
+        public StaticSwitchRule(PropertyInfo propertyInfo = null, Rule defaultRule = null, params Case[] cases)
         {
             PropertyInfo = propertyInfo;
             DefaultRule = defaultRule;
@@ -114,11 +114,11 @@ namespace Rules.RuleTypes.Mutable
 
         public PropertyInfo PropertyInfo { get; set; }
 
-        public List<Case<IPattern>> Cases { get; }
+        public List<Case> Cases { get; }
 
         public Rule DefaultRule { get; set; }
 
-        IEnumerable<ICase<IPattern>> ISwitchRule.Cases => Cases;
+        IEnumerable<ICase<IPattern>> ISwitchRule.Cases => Cases.Cast<Case<IPattern>>();
 
         IRule ISwitchRule.DefaultRule => DefaultRule;
 
@@ -128,7 +128,7 @@ namespace Rules.RuleTypes.Mutable
         {
             PropertyInfo propertyInfo = null;
             Rule defaultRule = null;
-            var cases = new List<Case<IPattern>>();
+            var cases = new List<Case>();
             var list = new List<IPattern>();
             string name = null;
             IPattern<Context> where = null;
@@ -154,7 +154,7 @@ namespace Rules.RuleTypes.Mutable
                         break;
 
                     case "Return":
-                        cases.Add(new Case<IPattern>(FromXml(child.OnlyChild()), where, list.ToArray()).Named(name));
+                        cases.Add((Case)new Case(FromXml(child.OnlyChild()), where, list.ToArray()).Named(name));
                         where = null;
                         name = null;
                         list.Clear();

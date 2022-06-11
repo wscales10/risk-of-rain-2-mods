@@ -7,6 +7,8 @@ namespace Patterns
 {
     public abstract class PatternBase : IPattern
     {
+        public abstract Type ValueType { get; }
+
         public static bool Inherits(Type derivedType, Type baseType)
         {
             if (derivedType.IsGenericType(typeof(Nullable<>)))

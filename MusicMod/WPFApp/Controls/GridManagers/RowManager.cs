@@ -160,6 +160,28 @@ namespace WPFApp.Controls.GridManagers
             }
         }
 
+        public void DuplicateSelected()
+        {
+            foreach (var i in selectedIndices)
+            {
+                TRow clone;
+
+                try
+                {
+                    clone = List[i].DeepClone();
+                }
+                catch (Exception e)
+                {
+                    this.Log(e);
+                    continue;
+                }
+
+                Add(clone, false, i + 1);
+            }
+        }
+
+        public bool CanDuplicateSelected() => selectedIndices.Count > 0 && selectedIndices.All(i => IsMovable(List[i]));
+
         protected override bool IsRemovable(TRow row) => row.IsRemovable;
 
         protected override bool IsMovable(TRow row) => row.IsMovable;

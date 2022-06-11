@@ -37,6 +37,10 @@ namespace Patterns
 
         public static PatternParser Instance { get; } = new PatternParser();
 
+        public IPattern<T> DeepClone<T>(IPattern<T> pattern) => Parse<T>(pattern.ToXml());
+
+        public IPattern DeepClone(IPattern pattern) => Parse(pattern.ValueType, pattern.ToXml());
+
         public IPattern Parse(Type type, XElement element)
         {
             if (!TryGetTypeDef(new TypeRef(type), out var typeDef))

@@ -94,6 +94,8 @@ namespace Rules.RuleTypes.Mutable
             }
         }
 
+        public Rule DeepClone() => FromXml(ToXml());
+
         public abstract TrackedResponse GetBucket(Context c);
 
         public ICommandList GetCommands(Context oldContext, Context newContext, bool force = false)

@@ -1,10 +1,10 @@
 ﻿using MyRoR2;
 using Patterns;
-using Rules.RuleTypes.Mutable;
 using System.Windows.Controls;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using System.Windows;
 using WPFApp.Controls.Wrappers.SaveResults;
+using Rules.RuleTypes.Mutable;
 
 namespace WPFApp.Controls.Rows
 {
@@ -33,6 +33,12 @@ namespace WPFApp.Controls.Rows
 
         public override string Label => PickerWrapper?.TryGetValue(false).Value?.ToString();
 
+        protected override ThenRow deepClone()
+        {
+            PickerWrapper.ForceGetValue(out IPattern<Context> pattern);
+            return new ThenRow(Info.PatternParser.Parse<Context>(pattern.ToXml()), NavigationContext);
+        }
+
         protected override SaveResult<IPattern<Context>> trySaveChanges() => PickerWrapper.TryGetValue(true) & base.trySaveChanges();
     }
 
@@ -41,5 +47,7 @@ namespace WPFApp.Controls.Rows
         public ElseRow(NavigationContext navigationContext) : base(navigationContext) => ((TextBlock)LeftElement).Text = "Else";
 
         public override string Label => "Otherwise";
+
+        protected override ElseRow deepClone() => new(NavigationContext);
     }
 }
