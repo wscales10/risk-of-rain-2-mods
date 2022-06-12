@@ -28,5 +28,7 @@ namespace MyRoR2
         public RunType RunType { get; set; }
 
         public Entity Survivor { get; set; }
+
+        public RunOutcome? Outcome { get; set; }
     }
 }

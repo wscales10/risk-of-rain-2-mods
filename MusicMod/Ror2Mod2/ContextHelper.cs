@@ -2,7 +2,6 @@
 using RoR2;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,6 +21,16 @@ namespace Ror2Mod2
 
         private readonly Logger Log;
 
+        private readonly Dictionary<GameEndingDef, RunOutcome> outcomes = new Dictionary<GameEndingDef, RunOutcome>
+        {
+            [RoR2Content.GameEndings.LimboEnding] = RunOutcome.FateUnknown,
+            [RoR2Content.GameEndings.MainEnding] = RunOutcome.Victory,
+            [RoR2Content.GameEndings.ObliterationEnding] = RunOutcome.FateUnknown,
+            [RoR2Content.GameEndings.PrismaticTrialEnding] = RunOutcome.Victory,
+            [RoR2Content.GameEndings.StandardLoss] = RunOutcome.Defeat,
+            [DLC1Content.GameEndings.VoidEnding] = RunOutcome.FateUnknown
+        };
+
         private int scenePart;
 
         private bool isBossEncounter;
@@ -31,6 +40,8 @@ namespace Ror2Mod2
         private MyScene oldScene;
 
         private Scene? currentScene;
+
+        private RunOutcome? runOutcome;
 
         public ContextHelper(Func<Task> update, Logger logger)
         {
@@ -53,7 +64,7 @@ namespace Ror2Mod2
 
             On.RoR2.TeleporterInteraction.ChargedState.OnEnter += ChargedState_OnEnter;
 
-            UnityEngine.Application.quitting += UpdateMusic;
+            Application.quitting += UpdateMusic;
 
             On.EntityStates.Missions.BrotherEncounter.Phase1.OnEnter += Phase1_OnEnter;
             On.EntityStates.Missions.BrotherEncounter.BrotherEncounterPhaseBaseState.OnExit += BrotherEncounterPhaseBaseState_OnExit;
@@ -69,6 +80,10 @@ namespace Ror2Mod2
             On.EntityStates.VoidRaidCrab.DeathState.OnExit += DeathState_OnExit;
 
             On.RoR2.CombatSquad.AddMember += CombatSquad_AddMember;
+
+            Run.onRunStartGlobal += Run_onRunStartGlobal;
+            On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
+            Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
         }
 
         public Action UpdateMusic { get; }
@@ -94,7 +109,8 @@ namespace Ror2Mod2
                 IsBossEncounter = isBossEncounter || !(bossGroup is null),
                 ScenePart = scenePart,
                 RunType = GetRunType(Run.instance) ?? runType,
-                Survivor = GetEntity(playerBodyPrefab)
+                Survivor = GetEntity(playerBodyPrefab),
+                Outcome = runOutcome
             };
         }
 
@@ -117,6 +133,25 @@ namespace Ror2Mod2
                 default:
                     return RunType.Normal;
             }
+        }
+
+        private void Run_onRunDestroyGlobal(Run obj)
+        {
+            runOutcome = null;
+            UpdateMusic();
+        }
+
+        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
+        {
+            orig(self, gameEndingDef);
+            runOutcome = outcomes[gameEndingDef];
+            UpdateMusic();
+        }
+
+        private void Run_onRunStartGlobal(Run obj)
+        {
+            runOutcome = RunOutcome.Undecided;
+            UpdateMusic();
         }
 
         private void CombatSquad_AddMember(On.RoR2.CombatSquad.orig_AddMember orig, CombatSquad self, CharacterMaster memberMaster)
