@@ -15,7 +15,7 @@ namespace Rules
     public static partial class Examples
     {
         private static readonly Rule IdleRule = new SwitchRule<MyScene>(nameof(Context.SceneName), ScenePattern.Equals,
-                    C<MyScene>(Play("0YPqWkd7ad07IJfaGDgBLE"), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Simulacrum)), Scenes.AbandonedAqueduct),
+                    C<MyScene>(Play("0YPqWkd7ad07IJfaGDgBLE"), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Simulacrum)), Scenes.AbandonedAqueduct),
                     M("7qOPvD6VE4EsC6LU3VBCOR", Scenes.DistantRoost),
                     M("0ViueDwpuVR94Ny75ItU1P", Scenes.AbandonedAqueduct, Scenes.AbyssalDepths),
                     M("3NlFc4z24XefS6Orsz7zVG", Scenes.TitanicPlains, Scenes.ScorchedAcres),
@@ -74,10 +74,10 @@ namespace Rules
             C<MyScene>(Main(), Scenes.MainMenu),
             C<MyScene>(new IfRule(Query.Create(nameof(Context.ScenePart), IntPattern.x == 0), Play("3tEnANZ8EeFj3FDBEYXQxG"), Play("5cCjhYmgJwQwm5eEgttDxC", 42000)), Scenes.Outro),
             C<MyScene>(Dehydrated(), Scenes.Logbook),
-            C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Normal)), Scenes.CharacterSelect),
-            C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Eclipse)), Scenes.EclipseMenu, Scenes.CharacterSelect),
-            C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.PrismaticTrial)), Scenes.PrismaticTrialsMenu, Scenes.CharacterSelect),
-            C<MyScene>(Play("6umrQw3KWPFS6CQHN7J5BW"), Query.Create<RunType>(nameof(Context.RunType), EnumPattern.Equals(RunType.Simulacrum)), Scenes.SimulacrumMenu, Scenes.CharacterSelect));
+            C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Normal)), Scenes.CharacterSelect),
+            C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Eclipse)), Scenes.EclipseMenu, Scenes.CharacterSelect),
+            C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.PrismaticTrial)), Scenes.PrismaticTrialsMenu, Scenes.CharacterSelect),
+            C<MyScene>(Play("6umrQw3KWPFS6CQHN7J5BW"), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Simulacrum)), Scenes.SimulacrumMenu, Scenes.CharacterSelect));
 
         public static IReadOnlyRule MimicRule { get; } = new SwitchRule<SceneType>(
             nameof(Context.SceneType),
