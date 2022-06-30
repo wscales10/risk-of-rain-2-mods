@@ -38,7 +38,7 @@ namespace Spotify
 
         public static bool operator !=(SpotifyItem item1, SpotifyItem item2) => !(item1 == item2);
 
-        public override bool Equals(object o) => Equals(o as SpotifyItem);
+        public override bool Equals(object obj) => Equals(obj as SpotifyItem);
 
         public bool Equals(SpotifyItem item)
         {

@@ -17,8 +17,6 @@ namespace Ror2Mod2
     [BepInDependency("com.rune580.riskofoptions")]
     public class MusicMod : BaseUnityPlugin
     {
-        public SpotifyController Music;
-
         private readonly Configuration configuration;
 
         private bool musicMuted;
@@ -27,6 +25,8 @@ namespace Ror2Mod2
         {
             configuration = new Configuration(Config);
         }
+
+        public SpotifyController Music { get; private set; }
 
         private Logger SafeLogger => x => Logger.LogDebug(x ?? "null");
 
@@ -77,7 +77,7 @@ namespace Ror2Mod2
             }
             else
             {
-                this.Log($"Rule Location: {uri ?? "null"}");
+                this.Log($"Rule Location: {uri}");
                 rule = Rule.FromXml(XElement.Load(uri));
                 var playlistsFile = new FileInfo(uri).Directory.GetFiles("playlists.xml").FirstOrDefault();
                 if (!(playlistsFile is null))

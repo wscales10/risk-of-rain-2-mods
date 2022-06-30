@@ -131,28 +131,22 @@ namespace Spotify
                     bool success = true;
                     var playback = await Client.Player.GetCurrentPlayback();
 
-                    if (optionsCommand.RepeatMode is RepeatMode repeatMode)
+                    if (optionsCommand.RepeatMode is RepeatMode repeatMode
+                        && !string.Equals(playback?.RepeatState, repeatMode.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
-                        if (!string.Equals(playback?.RepeatState, repeatMode.ToString(), StringComparison.OrdinalIgnoreCase))
-                        {
-                            success = success && await Client.Player.SetRepeat(new PlayerSetRepeatRequest(repeatMode.AsEnum<PlayerSetRepeatRequest.State>()));
-                        }
+                        success = success && await Client.Player.SetRepeat(new PlayerSetRepeatRequest(repeatMode.AsEnum<PlayerSetRepeatRequest.State>()));
                     }
 
-                    if (optionsCommand.Shuffle is bool shuffle)
+                    if (optionsCommand.Shuffle is bool shuffle
+                        && playback?.ShuffleState != shuffle)
                     {
-                        if (playback?.ShuffleState != shuffle)
-                        {
-                            success = success && await Client.Player.SetShuffle(new PlayerShuffleRequest(shuffle));
-                        }
+                        success = success && await Client.Player.SetShuffle(new PlayerShuffleRequest(shuffle));
                     }
 
-                    if (optionsCommand.VolumePercent is int volumePercent)
+                    if (optionsCommand.VolumePercent is int volumePercent
+                        && playback?.Device.VolumePercent != volumePercent)
                     {
-                        if (playback?.Device.VolumePercent != volumePercent)
-                        {
-                            success = success && await Client.Player.SetVolume(new PlayerVolumeRequest(volumePercent));
-                        }
+                        success = success && await Client.Player.SetVolume(new PlayerVolumeRequest(volumePercent));
                     }
 
                     return success;
@@ -232,20 +226,14 @@ namespace Spotify
         private async Task<bool> StopInner()
         {
             Timers(t => t.Stop());
-            if (await GetState() == PlayerState.Playing)
+            if (await GetState() == PlayerState.Playing && !await PauseInner())
             {
-                if (!await PauseInner())
-                {
-                    return false;
-                }
+                return false;
             }
 
-            if (await GetState() != PlayerState.Stopped)
+            if (await GetState() != PlayerState.Stopped && !await SeekToInner(0))
             {
-                if (!await SeekToInner(0))
-                {
-                    return false;
-                }
+                return false;
             }
 
             SetState(PlayerState.Stopped);
