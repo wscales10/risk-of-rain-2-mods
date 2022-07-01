@@ -7,15 +7,15 @@ using Utils;
 
 namespace Rules.RuleTypes.Readonly
 {
-	public class ReadOnlyArrayRule : ReadOnlyRule<ArrayRule>, IArrayRule
-	{
-		public ReadOnlyArrayRule(ArrayRule arrayRule) : base(arrayRule)
-		{
-			Rules = arrayRule.Rules.Select(r => r.ToReadOnly()).ToReadOnlyCollection();
-		}
+    public class ReadOnlyArrayRule<TContext> : ReadOnlyRule<ArrayRule<TContext>, TContext>, IArrayRule<TContext>
+    {
+        public ReadOnlyArrayRule(ArrayRule<TContext> arrayRule) : base(arrayRule)
+        {
+            Rules = arrayRule.Rules.Select(r => r.ToReadOnly()).ToReadOnlyCollection();
+        }
 
-		public ReadOnlyCollection<IReadOnlyRule> Rules { get; }
+        public ReadOnlyCollection<IReadOnlyRule<TContext>> Rules { get; }
 
-		IEnumerable<IRule> IArrayRule.Rules => Rules;
-	}
+        IEnumerable<IRule<TContext>> IArrayRule<TContext>.Rules => Rules;
+    }
 }

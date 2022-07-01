@@ -1,5 +1,4 @@
-﻿using MyRoR2;
-using Patterns;
+﻿using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Readonly;
 using Spotify;
@@ -9,9 +8,10 @@ using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Mutable
 {
-    using static TransferCommand;
+    public static class Bucket
+    { }
 
-    public class Bucket : Rule, IBucket
+    public class Bucket<TContext> : Rule<TContext>, IBucket<TContext>
     {
         public Bucket(params Command[] commands)
         {
@@ -25,26 +25,26 @@ namespace Rules.RuleTypes.Mutable
 
         public CommandList Commands { get; set; }
 
-        ICommandList IBucket.Commands => Commands;
+        ICommandList IBucket<TContext>.Commands => Commands;
 
-        public static Bucket Play(string trackId, int milliseconds = 0)
+        public static Bucket<TContext> Play(string trackId, int milliseconds = 0)
         {
-            return new Bucket(new LoopCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds));
+            return new Bucket<TContext>(new LoopCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds));
         }
 
-        public static Bucket Transfer(string trackId, string mapping, IPattern<string> fromTrackId = null)
-        {
-            return new TransferCommand(SpotifyItemType.Track, trackId, mapping, fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
-        }
-
-        public static Bucket Transfer(string trackId, Switch<int, string> mapping, IPattern<string> fromTrackId = null)
+        public static Bucket<TContext> Transfer(string trackId, string mapping, IPattern<string> fromTrackId = null)
         {
             return new TransferCommand(SpotifyItemType.Track, trackId, mapping, fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
         }
 
-        public static implicit operator Bucket(CommandList cl) => new Bucket(cl);
+        public static Bucket<TContext> Transfer(string trackId, Switch<int, string> mapping, IPattern<string> fromTrackId = null)
+        {
+            return new TransferCommand(SpotifyItemType.Track, trackId, mapping, fromTrackId).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Track });
+        }
 
-        public override TrackedResponse GetBucket(Context c) => new TrackedResponse(this);
+        public static implicit operator Bucket<TContext>(CommandList cl) => new Bucket<TContext>(cl);
+
+        public override TrackedResponse<TContext> GetBucket(TContext c) => TrackedResponse.Create(this);
 
         public override XElement ToXml()
         {
@@ -60,6 +60,6 @@ namespace Rules.RuleTypes.Mutable
 
         public override string ToString() => Name ?? base.ToString() + $"({string.Join(", ", Commands)})";
 
-        public override IReadOnlyRule ToReadOnly() => new ReadOnlyBucket(this);
+        public override IReadOnlyRule<TContext> ToReadOnly() => new ReadOnlyBucket<TContext>(this);
     }
 }

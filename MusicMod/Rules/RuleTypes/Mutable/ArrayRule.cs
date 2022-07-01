@@ -1,5 +1,4 @@
-﻿using MyRoR2;
-using Rules.RuleTypes.Interfaces;
+﻿using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Readonly;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,23 +6,26 @@ using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Mutable
 {
-    public class ArrayRule : UpperRule, IArrayRule
+    public static class ArrayRule
+    { }
+
+    public class ArrayRule<TContext> : UpperRule<TContext>, IArrayRule<TContext>
     {
-        public ArrayRule(params Rule[] rules) : this((IEnumerable<Rule>)rules)
+        public ArrayRule(params Rule<TContext>[] rules) : this((IEnumerable<Rule<TContext>>)rules)
         {
         }
 
-        public ArrayRule(IEnumerable<Rule> rules) => Rules = rules.ToList();
+        public ArrayRule(IEnumerable<Rule<TContext>> rules) => Rules = rules.ToList();
 
-        public List<Rule> Rules { get; }
+        public List<Rule<TContext>> Rules { get; }
 
-        public override IEnumerable<(string, Rule)> Children => Rules.SelectMany(r => r.Children);
+        public override IEnumerable<(string, Rule<TContext>)> Children => Rules.SelectMany(r => r.Children);
 
-        IEnumerable<IRule> IArrayRule.Rules => Rules;
+        IEnumerable<IRule<TContext>> IArrayRule<TContext>.Rules => Rules;
 
-        public override IEnumerable<Rule> GetRules(Context c) => Rules;
+        public override IEnumerable<Rule<TContext>> GetRules(TContext c) => Rules;
 
-        public override IReadOnlyRule ToReadOnly() => new ReadOnlyArrayRule(this);
+        public override IReadOnlyRule<TContext> ToReadOnly() => new ReadOnlyArrayRule<TContext>(this);
 
         public override XElement ToXml()
         {

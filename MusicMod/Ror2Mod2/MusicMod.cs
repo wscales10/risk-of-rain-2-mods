@@ -1,4 +1,6 @@
 ﻿using BepInEx;
+using MyRoR2;
+using Rules;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
 using Spotify;
@@ -17,6 +19,8 @@ namespace Ror2Mod2
     [BepInDependency("com.rune580.riskofoptions")]
     public class MusicMod : BaseUnityPlugin
     {
+        private readonly RuleParser<Context> ruleParser = new RuleParser<Context>(RoR2PatternParser.Instance);
+
         private readonly Configuration configuration;
 
         private bool musicMuted;
@@ -26,16 +30,16 @@ namespace Ror2Mod2
             configuration = new Configuration(Config);
         }
 
-        public SpotifyController Music { get; private set; }
+        public SpotifyController<Context> Music { get; private set; }
 
         private Logger SafeLogger => x => Logger.LogDebug(x ?? "null");
 
         public void Awake()
         {
-            var rulePicker = new MutableRulePicker();
+            var rulePicker = new MutableRulePicker<Context>();
             var playlists = new List<Playlist>();
             SetRule(rulePicker, playlists);
-            Music = new SpotifyController(rulePicker, playlists, SafeLogger);
+            Music = new SpotifyController<Context>(rulePicker, playlists, new ContextHelper(SafeLogger), SafeLogger);
             configuration.ConfigurationPageRequested += Music.OpenConfigurationPage;
             configuration.RuleLocationChanged += () => SetRule(rulePicker, playlists);
 
@@ -59,7 +63,7 @@ namespace Ror2Mod2
             }
         }
 
-        private void SetRule(MutableRulePicker rulePicker, List<Playlist> playlists)
+        private void SetRule(MutableRulePicker<Context> rulePicker, List<Playlist> playlists)
         {
             string uri = configuration.RuleLocation;
 
@@ -68,7 +72,7 @@ namespace Ror2Mod2
                 throw new FileNotFoundException();
             }
 
-            IRule rule;
+            IRule<Context> rule;
 
             playlists.Clear();
             if (string.IsNullOrEmpty(uri))
@@ -78,7 +82,7 @@ namespace Ror2Mod2
             else
             {
                 this.Log($"Rule Location: {uri}");
-                rule = Rule.FromXml(XElement.Load(uri));
+                rule = ruleParser.Parse(XElement.Load(uri));
                 var playlistsFile = new FileInfo(uri).Directory.GetFiles("playlists.xml").FirstOrDefault();
                 if (!(playlistsFile is null))
                 {

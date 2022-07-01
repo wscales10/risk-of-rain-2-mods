@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Rules.RuleTypes.Interfaces
+﻿namespace Rules.RuleTypes.Interfaces
 {
-	public interface IReadOnlyRule : IRule
-	{
-	}
+    public interface IReadOnlyRule<TContext> : IRule<TContext>
+    {
+    }
 }

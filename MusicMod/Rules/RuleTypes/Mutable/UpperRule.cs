@@ -1,13 +1,12 @@
-﻿using MyRoR2;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Rules.RuleTypes.Mutable
 {
-    public abstract class UpperRule : Rule
+    public abstract class UpperRule<TContext> : Rule<TContext>
     {
-        public abstract IEnumerable<Rule> GetRules(Context c);
+        public abstract IEnumerable<Rule<TContext>> GetRules(TContext c);
 
-        public sealed override TrackedResponse GetBucket(Context c)
+        public sealed override TrackedResponse<TContext> GetBucket(TContext c)
         {
             foreach (var rule in GetRules(c))
             {
@@ -19,7 +18,7 @@ namespace Rules.RuleTypes.Mutable
                 }
             }
 
-            return new TrackedResponse(null);
+            return new TrackedResponse<TContext>(null);
         }
     }
 }

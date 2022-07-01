@@ -1,14 +1,13 @@
-﻿using MyRoR2;
-using Patterns;
+﻿using Patterns;
 
 namespace Rules.RuleTypes.Interfaces
 {
-	public interface IIfRule : IRule
-	{
-		IPattern<Context> Pattern { get; }
+    public interface IIfRule<TContext> : IRule<TContext>
+    {
+        IPattern<TContext> Pattern { get; }
 
-		IRule ThenRule { get; }
+        IRule<TContext> ThenRule { get; }
 
-		IRule ElseRule { get; }
-	}
+        IRule<TContext> ElseRule { get; }
+    }
 }

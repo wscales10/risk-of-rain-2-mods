@@ -1,5 +1,4 @@
-﻿using MyRoR2;
-using Patterns;
+﻿using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Readonly;
 using System.Collections.Generic;
@@ -7,28 +6,32 @@ using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Mutable
 {
-    public class IfRule : UpperRule, IIfRule
+    public static class IfRule
     {
-        public IfRule(IPattern<Context> pattern = null, Rule thenRule = null, Rule elseRule = null)
+    }
+
+    public class IfRule<TContext> : UpperRule<TContext>, IIfRule<TContext>
+    {
+        public IfRule(IPattern<TContext> pattern = null, Rule<TContext> thenRule = null, Rule<TContext> elseRule = null)
         {
             Pattern = pattern;
             ThenRule = thenRule;
             ElseRule = elseRule;
         }
 
-        public IPattern<Context> Pattern { get; set; }
+        public IPattern<TContext> Pattern { get; set; }
 
-        public Rule ThenRule { get; set; }
+        public Rule<TContext> ThenRule { get; set; }
 
-        public Rule ElseRule { get; set; }
+        public Rule<TContext> ElseRule { get; set; }
 
-        IRule IIfRule.ThenRule => ThenRule;
+        IRule<TContext> IIfRule<TContext>.ThenRule => ThenRule;
 
-        IRule IIfRule.ElseRule => ElseRule;
+        IRule<TContext> IIfRule<TContext>.ElseRule => ElseRule;
 
-        public override IEnumerable<(string, Rule)> Children => new[] { (Pattern.ToString(), ThenRule), ("Otherwise", ElseRule) };
+        public override IEnumerable<(string, Rule<TContext>)> Children => new[] { (Pattern.ToString(), ThenRule), ("Otherwise", ElseRule) };
 
-        public override IEnumerable<Rule> GetRules(Context c)
+        public override IEnumerable<Rule<TContext>> GetRules(TContext c)
         {
             yield return Pattern.IsMatch(c) ? ThenRule : ElseRule;
         }
@@ -58,6 +61,6 @@ namespace Rules.RuleTypes.Mutable
             return element;
         }
 
-        public override IReadOnlyRule ToReadOnly() => new ReadOnlyIfRule(this);
+        public override IReadOnlyRule<TContext> ToReadOnly() => new ReadOnlyIfRule<TContext>(this);
     }
 }

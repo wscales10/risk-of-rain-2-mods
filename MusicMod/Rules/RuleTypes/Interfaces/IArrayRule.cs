@@ -2,8 +2,8 @@
 
 namespace Rules.RuleTypes.Interfaces
 {
-	public interface IArrayRule : IRule
-	{
-		IEnumerable<IRule> Rules { get; }
-	}
+    public interface IArrayRule<TContext> : IRule<TContext>
+    {
+        IEnumerable<IRule<TContext>> Rules { get; }
+    }
 }

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Ror2Mod2
 {
-    internal class NullMusicController : MusicBase
+    internal class NullMusicController<TContext> : MusicBase<TContext>
     {
         public override void Pause()
         {
@@ -19,8 +19,6 @@ namespace Ror2Mod2
 
         protected override Task Play(object musicIdentifier) => Task.CompletedTask;
 
-        protected override object GetMusicIdentifier(Context oldContext, Context newContext) => null;
-
-        protected override Context GetContext() => default;
+        protected override object GetMusicIdentifier(TContext oldContext, TContext newContext) => null;
     }
 }

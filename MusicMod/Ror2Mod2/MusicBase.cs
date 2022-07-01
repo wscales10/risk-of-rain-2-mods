@@ -7,13 +7,13 @@ using Utils;
 
 namespace Ror2Mod2
 {
-    public abstract class MusicBase
+    public abstract class MusicBase<TContext>
     {
         protected readonly Logger Log;
 
         private readonly AsyncSemaphore asyncSemaphore = new AsyncSemaphore(1);
 
-        private Context context;
+        private TContext context;
 
         protected MusicBase(Logger logger = null)
         {
@@ -26,23 +26,20 @@ namespace Ror2Mod2
 
         public abstract void Resume();
 
-        public async Task Update()
+        public async Task Update(TContext newContext)
         {
             using (await asyncSemaphore.EnterAsync())
             {
                 var oldContext = context;
-                var newContext = GetContext();
                 await UpdateAsync(oldContext, newContext);
             }
         }
 
-        protected abstract object GetMusicIdentifier(Context oldContext, Context newContext);
+        protected abstract object GetMusicIdentifier(TContext oldContext, TContext newContext);
 
         protected abstract Task Play(object musicIdentifier);
 
-        protected abstract Context GetContext();
-
-        private async Task<bool> UpdateAsync(Context oldContext, Context newContext)
+        private async Task<bool> UpdateAsync(TContext oldContext, TContext newContext)
         {
             object musicIdentifier;
 

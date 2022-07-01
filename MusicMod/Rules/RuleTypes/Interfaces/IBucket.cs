@@ -2,8 +2,8 @@
 
 namespace Rules.RuleTypes.Interfaces
 {
-	public interface IBucket : IRule
-	{
-		ICommandList Commands { get; }
-	}
+    public interface IBucket<TContext> : IRule<TContext>
+    {
+        ICommandList Commands { get; }
+    }
 }

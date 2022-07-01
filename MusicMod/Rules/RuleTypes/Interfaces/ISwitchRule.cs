@@ -4,12 +4,12 @@ using System.Collections.Generic;
 
 namespace Rules.RuleTypes.Interfaces
 {
-    public interface ISwitchRule : IRule
+    public interface ISwitchRule<TContext> : IRule<TContext>
     {
         PropertyInfo PropertyInfo { get; }
 
-        IEnumerable<ICase<IPattern>> Cases { get; }
+        IEnumerable<ICase<IPattern, TContext>> Cases { get; }
 
-        IRule DefaultRule { get; }
+        IRule<TContext> DefaultRule { get; }
     }
 }

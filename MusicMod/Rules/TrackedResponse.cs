@@ -5,23 +5,28 @@ using Utils;
 
 namespace Rules
 {
-    public class TrackedResponse
+    public static class TrackedResponse
     {
-        public TrackedResponse(IBucket bucket) : this(bucket, Enumerable.Empty<IRule>())
+        public static TrackedResponse<TContext> Create<TContext>(IBucket<TContext> bucket) => new TrackedResponse<TContext>(bucket);
+    }
+
+    public class TrackedResponse<TContext>
+    {
+        public TrackedResponse(IBucket<TContext> bucket) : this(bucket, Enumerable.Empty<IRule<TContext>>())
         {
         }
 
-        private TrackedResponse(IBucket bucket, IEnumerable<IRule> rules)
+        private TrackedResponse(IBucket<TContext> bucket, IEnumerable<IRule<TContext>> rules)
         {
-            Rules = new Stack<IRule>(rules);
+            Rules = new Stack<IRule<TContext>>(rules);
             Rules.Push(Bucket = bucket);
         }
 
-        public IBucket Bucket { get; }
+        public IBucket<TContext> Bucket { get; }
 
-        public Stack<IRule> Rules { get; }
+        public Stack<IRule<TContext>> Rules { get; }
 
-        public TrackedResponse With(IRule rule)
+        public TrackedResponse<TContext> With(IRule<TContext> rule)
         {
             Rules.Push(rule);
             return this;
@@ -38,6 +43,6 @@ namespace Rules
             }
         }
 
-        public TrackedResponse ToReadOnly() => new TrackedResponse((IBucket)Bucket.ToReadOnly(), Rules.Select(r => r.ToReadOnly()));
+        public TrackedResponse<TContext> ToReadOnly() => new TrackedResponse<TContext>((IBucket<TContext>)Bucket.ToReadOnly(), Rules.Select(r => r.ToReadOnly()));
     }
 }

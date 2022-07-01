@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Utils;
@@ -13,10 +12,8 @@ using Logger = Utils.Logger;
 
 namespace Ror2Mod2
 {
-    internal partial class ContextHelper
+    internal partial class ContextHelper : IContextHelper<Context>
     {
-        private const bool WaitForBosses = false;
-
         private static readonly Regex bodyPrefabRegex = new Regex("BODY$");
 
         private readonly Logger Log;
@@ -43,7 +40,7 @@ namespace Ror2Mod2
 
         private RunOutcome? runOutcome;
 
-        public ContextHelper(Func<Task> update, Logger logger)
+        public ContextHelper(Logger logger)
         {
             On.RoR2.CreditsController.OnEnable += CreditsController_OnEnable;
 
@@ -53,7 +50,7 @@ namespace Ror2Mod2
                 currentScene = null;
             };
             SceneManager.activeSceneChanged += OnSceneChanged;
-            UpdateMusic = () => update();
+
             Log = logger;
 
             SceneCatalog.onMostRecentSceneDefChanged += SceneCatalog_onMostRecentSceneDefChanged;
@@ -86,9 +83,11 @@ namespace Ror2Mod2
             Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
         }
 
-        public Action UpdateMusic { get; }
+        public event Action<Context> NewContext;
 
         private MyScene SceneName => new MyScene(currentScene?.name?.ToUpper());
+
+        public void UpdateMusic() => NewContext?.Invoke(GetContext());
 
         public Context GetContext()
         {

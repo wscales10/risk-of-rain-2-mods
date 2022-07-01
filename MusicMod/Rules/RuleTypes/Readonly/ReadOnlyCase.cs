@@ -1,5 +1,4 @@
-﻿using MyRoR2;
-using Patterns;
+﻿using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
 using System.Collections.Generic;
@@ -8,31 +7,31 @@ using Utils;
 
 namespace Rules.RuleTypes.Readonly
 {
-	public class ReadOnlyCase<TValue> : ICase<TValue>
-	{
-		private readonly string toString;
+    public class ReadOnlyCase<TValue, TContext> : ICase<TValue, TContext>
+    {
+        private readonly string toString;
 
-		public ReadOnlyCase(Case<TValue> mutable)
-		{
-			toString = mutable.ToString();
-			Name = mutable.Name;
-			WherePattern = new ReadOnlyPattern<Context>(mutable.WherePattern);
-			Arr = mutable.Arr.ToReadOnlyCollection();
-			Output = mutable.Output.ToReadOnly();
-		}
+        public ReadOnlyCase(RuleCase<TValue, TContext> mutable)
+        {
+            toString = mutable.ToString();
+            Name = mutable.Name;
+            WherePattern = new ReadOnlyPattern<TContext>(mutable.WherePattern);
+            Arr = mutable.Arr.ToReadOnlyCollection();
+            Output = mutable.Output.ToReadOnly();
+        }
 
-		public ReadOnlyPattern<Context> WherePattern { get; }
+        public ReadOnlyPattern<TContext> WherePattern { get; }
 
-		public ReadOnlyCollection<TValue> Arr { get; }
+        public ReadOnlyCollection<TValue> Arr { get; }
 
-		public IRule Output { get; }
+        public IRule<TContext> Output { get; }
 
-		public string Name { get; }
+        public string Name { get; }
 
-		IPattern<Context> ICase<TValue>.WherePattern => WherePattern;
+        IPattern<TContext> ICase<TValue, TContext>.WherePattern => WherePattern;
 
-		IEnumerable<TValue> ICase<TValue>.Arr => Arr;
+        IEnumerable<TValue> ICase<TValue, TContext>.Arr => Arr;
 
-		public override string ToString() => toString;
-	}
+        public override string ToString() => toString;
+    }
 }

@@ -1,19 +1,18 @@
-﻿using MyRoR2;
-using Patterns;
+﻿using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Spotify.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml;
 using System.Xml.Linq;
 using Utils;
+using Utils.Reflection;
 
 namespace Rules.RuleTypes.Mutable
 {
     public delegate Pattern<T> PatternGenerator<T>(T input);
 
-    public abstract class Rule : IRule, ITreeItem<Rule>, ITreeItem
+    public abstract class Rule
     {
         public string Name
         {
@@ -21,84 +20,24 @@ namespace Rules.RuleTypes.Mutable
             set;
         }
 
-        public virtual IEnumerable<(string, Rule)> Children => Enumerable.Empty<(string, Rule)>();
+        public override string ToString() => Name ?? GetType().Name;
+    }
+
+    public abstract class Rule<TContext> : Rule, IRule<TContext>, ITreeItem<Rule<TContext>>, ITreeItem
+    {
+        public virtual IEnumerable<(string, Rule<TContext>)> Children => Enumerable.Empty<(string, Rule<TContext>)>();
 
         IEnumerable<(string, ITreeItem)> ITreeItem.Children => Children.Select(p => (p.Item1, (ITreeItem)p.Item2));
 
-        public static Rule FromXml(XElement element)
-        {
-            if (element is null)
-            {
-                return null;
-            }
+        public static implicit operator Rule<TContext>(Command c) => new Bucket<TContext>(c);
 
-            var name = element.Attribute("name")?.Value;
-            return GetUnnamed().Named(name);
+        public static implicit operator Rule<TContext>(CommandList commands) => new Bucket<TContext>(commands);
 
-            Rule GetUnnamed()
-            {
-                switch (element.Attribute("type").Value)
-                {
-                    case nameof(ArrayRule):
-                        return new ArrayRule(element.Elements(nameof(Rule)).Select(FromXml).ToArray());
+        public static Rule<TContext> Create(Type ruleType) => (Rule<TContext>)ruleType.ConstructDefault();
 
-                    case nameof(IfRule):
-                        var ifElement = element.Elements().First();
-                        IPattern<Context> pattern;
+        public abstract TrackedResponse<TContext> GetBucket(TContext c);
 
-                        try
-                        {
-                            pattern = RoR2PatternParser.Instance.Parse<Context>(ifElement);
-                        }
-                        catch (XmlException)
-                        {
-                            pattern = null;
-                        }
-
-                        return new IfRule(pattern, FromXml(element.Element("Then").OnlyChild()), FromXml(element.Element("Else")?.OnlyChild()));
-
-                    case nameof(Bucket):
-                        return new Bucket(element.Elements().Select(Command.FromXml).ToList());
-
-                    case nameof(StaticSwitchRule):
-                        return StaticSwitchRule.Parse(element);
-
-                    default:
-                        throw new XmlException();
-                }
-            }
-        }
-
-        public static implicit operator Rule(Command c) => new Bucket(c);
-
-        public static implicit operator Rule(CommandList commands) => new Bucket(commands);
-
-        public static Rule Create(Type ruleType)
-        {
-            switch (ruleType.Name)
-            {
-                case nameof(IfRule):
-                    return new IfRule();
-
-                case nameof(StaticSwitchRule):
-                    return new StaticSwitchRule();
-
-                case nameof(ArrayRule):
-                    return new ArrayRule();
-
-                case nameof(Bucket):
-                    return new Bucket();
-
-                default:
-                    return null;
-            }
-        }
-
-        public Rule DeepClone() => FromXml(ToXml());
-
-        public abstract TrackedResponse GetBucket(Context c);
-
-        public ICommandList GetCommands(Context oldContext, Context newContext, bool force = false)
+        public ICommandList GetCommands(TContext oldContext, TContext newContext, bool force = false)
         {
             var newBucketResponse = GetBucket(newContext);
             var newBucket = newBucketResponse.Bucket;
@@ -136,14 +75,12 @@ namespace Rules.RuleTypes.Mutable
             return newBucket?.Commands;
         }
 
-        public abstract IReadOnlyRule ToReadOnly();
-
-        public override string ToString() => Name ?? GetType().Name;
+        public abstract IReadOnlyRule<TContext> ToReadOnly();
 
         public virtual XElement ToXml()
         {
             var element = new XElement(nameof(Rule));
-            element.SetAttributeValue("type", GetType().Name);
+            element.SetAttributeValue("type", GetType().GetDisplayName(false));
 
             if (!(Name is null))
             {
@@ -153,7 +90,7 @@ namespace Rules.RuleTypes.Mutable
             return element;
         }
 
-        internal Rule Named(string name)
+        internal Rule<TContext> Named(string name)
         {
             Name = name;
             return this;

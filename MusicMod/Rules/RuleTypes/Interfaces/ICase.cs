@@ -1,22 +1,22 @@
-﻿using MyRoR2;
-using Patterns;
+﻿using Patterns;
 using Rules.RuleTypes.Mutable;
 using System.Collections.Generic;
 
 namespace Rules.RuleTypes.Interfaces
 {
-	public interface ICase<T>
-	{
-		IPattern<Context> WherePattern { get; }
+    public interface ICase<T, TContext>
+    {
+        IPattern<TContext> WherePattern { get; }
 
-		IEnumerable<T> Arr { get; }
+        IEnumerable<T> Arr { get; }
 
-		IRule Output { get; }
-		string Name { get; }
-	}
+        IRule<TContext> Output { get; }
 
-	public interface ICaseGetter<T>
-	{
-		IEnumerable<Case<T>> GetCases();
-	}
+        string Name { get; }
+    }
+
+    public interface ICaseGetter<T, TContext>
+    {
+        IEnumerable<RuleCase<T, TContext>> GetCases();
+    }
 }

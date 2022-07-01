@@ -1,11 +1,10 @@
-﻿using MyRoR2;
-using Rules.RuleTypes.Interfaces;
+﻿using Rules.RuleTypes.Interfaces;
 using Spotify.Commands;
 using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Readonly
 {
-    public abstract class ReadOnlyRule<T> : IReadOnlyRule where T : Mutable.Rule
+    public abstract class ReadOnlyRule<T, TContext> : IReadOnlyRule<TContext> where T : Mutable.Rule<TContext>
     {
         private readonly T mutable;
 
@@ -13,9 +12,9 @@ namespace Rules.RuleTypes.Readonly
 
         public string Name => mutable.Name;
 
-        public TrackedResponse GetBucket(Context c) => mutable.GetBucket(c).ToReadOnly();
+        public TrackedResponse<TContext> GetBucket(TContext c) => mutable.GetBucket(c).ToReadOnly();
 
-        public ICommandList GetCommands(Context oldContext, Context newContext, bool force = false)
+        public ICommandList GetCommands(TContext oldContext, TContext newContext, bool force = false)
         {
             var output = mutable.GetCommands(oldContext, newContext, force);
 
@@ -29,7 +28,7 @@ namespace Rules.RuleTypes.Readonly
             }
         }
 
-        public IReadOnlyRule ToReadOnly() => this;
+        public IReadOnlyRule<TContext> ToReadOnly() => this;
 
         public sealed override string ToString() => Name ?? GetType().Name;
 

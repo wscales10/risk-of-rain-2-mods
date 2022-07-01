@@ -9,13 +9,13 @@ using Utils;
 
 namespace Ror2Mod2
 {
-    public class SpotifyController : MusicBase
+    public class SpotifyController<TContext> : MusicBase<TContext>
     {
-        private readonly IRulePicker rulePicker;
+        private readonly IRulePicker<TContext> rulePicker;
 
-        private readonly ContextHelper contextHelper;
+        private readonly IContextHelper<TContext> contextHelper;
 
-        public SpotifyController(IRulePicker rulePicker, IEnumerable<Playlist> playlists, Logger logger) : base(logger)
+        public SpotifyController(IRulePicker<TContext> rulePicker, IEnumerable<Playlist> playlists, IContextHelper<TContext> contextHelper, Logger logger) : base(logger)
         {
             this.rulePicker = rulePicker;
             Client = new SpotifyPlaybackClient(playlists, logger);
@@ -24,7 +24,8 @@ namespace Ror2Mod2
             Authorisation.OnAccessTokenReceived += Authorisation_OnAccessTokenReceived;
             Authorisation.OnClientRequested += Web.Goto;
             _ = Authorisation.InitiateScopeRequestAsync();
-            contextHelper = new ContextHelper(Update, logger);
+            this.contextHelper = contextHelper;
+            contextHelper.NewContext += c => _ = Update(c);
         }
 
         public Authorisation Authorisation { get; }
@@ -66,13 +67,11 @@ namespace Ror2Mod2
             }
         }
 
-        protected override object GetMusicIdentifier(Context oldContext, Context newContext)
+        protected override object GetMusicIdentifier(TContext oldContext, TContext newContext)
         {
             var commands = rulePicker.Rule.GetCommands(oldContext, newContext);
             return commands;
         }
-
-        protected override Context GetContext() => contextHelper.GetContext();
 
         private void Authorisation_OnAccessTokenReceived(Authorisation sender, string accessToken)
         {

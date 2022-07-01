@@ -1,17 +1,16 @@
-﻿using MyRoR2;
-using Spotify.Commands;
+﻿using Spotify.Commands;
 using Utils;
 
 namespace Rules.RuleTypes.Interfaces
 {
-    public interface IRule : IXmlExportable
+    public interface IRule<TContext> : IXmlExportable
     {
         string Name { get; }
 
-        TrackedResponse GetBucket(Context c);
+        TrackedResponse<TContext> GetBucket(TContext c);
 
-        ICommandList GetCommands(Context oldContext, Context newContext, bool force = false);
+        ICommandList GetCommands(TContext oldContext, TContext newContext, bool force = false);
 
-        IReadOnlyRule ToReadOnly();
+        IReadOnlyRule<TContext> ToReadOnly();
     }
 }
