@@ -8,6 +8,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Utils;
 using static MyRoR2.SceneNameHelpers;
+using static RoR2.RoR2Content.GameEndings;
+using static RoR2.DLC1Content.GameEndings;
 using Logger = Utils.Logger;
 
 namespace Ror2Mod2
@@ -17,16 +19,6 @@ namespace Ror2Mod2
         private static readonly Regex bodyPrefabRegex = new Regex("BODY$");
 
         private readonly Logger Log;
-
-        private readonly Dictionary<GameEndingDef, RunOutcome> outcomes = new Dictionary<GameEndingDef, RunOutcome>
-        {
-            [RoR2Content.GameEndings.LimboEnding] = RunOutcome.FateUnknown,
-            [RoR2Content.GameEndings.MainEnding] = RunOutcome.Victory,
-            [RoR2Content.GameEndings.ObliterationEnding] = RunOutcome.FateUnknown,
-            [RoR2Content.GameEndings.PrismaticTrialEnding] = RunOutcome.Victory,
-            [RoR2Content.GameEndings.StandardLoss] = RunOutcome.Defeat,
-            [DLC1Content.GameEndings.VoidEnding] = RunOutcome.FateUnknown
-        };
 
         private int scenePart;
 
@@ -143,8 +135,28 @@ namespace Ror2Mod2
         private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
         {
             orig(self, gameEndingDef);
-            runOutcome = outcomes[gameEndingDef];
+            runOutcome = ConvertEndingToOutcome(gameEndingDef);
             UpdateMusic();
+        }
+
+        private RunOutcome ConvertEndingToOutcome(GameEndingDef ending)
+        {
+            if (ending.IsOneOf(LimboEnding, ObliterationEnding, VoidEnding))
+            {
+                return RunOutcome.FateUnknown;
+            }
+            else if (ending.IsOneOf(MainEnding, PrismaticTrialEnding))
+            {
+                return RunOutcome.Victory;
+            }
+            else if (ending.IsOneOf(StandardLoss))
+            {
+                return RunOutcome.Defeat;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private void Run_onRunStartGlobal(Run obj)

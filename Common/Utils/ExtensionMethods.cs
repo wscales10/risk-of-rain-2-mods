@@ -134,6 +134,8 @@ namespace Utils
             return i;
         }
 
+        public static bool IsOneOf<T>(this T value, params T[] array) => array.Contains(value);
+
         internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
     }
 }
