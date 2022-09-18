@@ -81,6 +81,9 @@ namespace Spotify
                 case StopCommand _:
                     return await StopInner();
 
+                case SkipCommand _:
+                    return await Client.Player.SkipNext();
+
                 case PlayCommand playCommand:
                     return await PlayInner(playCommand.Item, playCommand.Milliseconds);
 
