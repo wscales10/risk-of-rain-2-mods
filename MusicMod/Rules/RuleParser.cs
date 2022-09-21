@@ -5,6 +5,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Utils;
+using System;
 
 namespace Rules
 {
@@ -12,7 +13,7 @@ namespace Rules
     {
         public RuleParser(PatternParser patternParser)
         {
-            PatternParser = patternParser;
+            PatternParser = patternParser ?? throw new ArgumentNullException(nameof(patternParser));
         }
 
         public PatternParser PatternParser { get; }
