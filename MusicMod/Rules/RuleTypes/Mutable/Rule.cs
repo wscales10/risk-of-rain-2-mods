@@ -12,7 +12,7 @@ namespace Rules.RuleTypes.Mutable
 {
     public delegate Pattern<T> PatternGenerator<T>(T input);
 
-    public abstract class Rule
+    public abstract class Rule : IXmlExportable
     {
         public string Name
         {
@@ -21,6 +21,19 @@ namespace Rules.RuleTypes.Mutable
         }
 
         public override string ToString() => Name ?? GetType().Name;
+
+        public virtual XElement ToXml()
+        {
+            var element = new XElement(nameof(Rule));
+            element.SetAttributeValue("type", GetType().GetDisplayName(false));
+
+            if (!(Name is null))
+            {
+                element.SetAttributeValue("name", Name);
+            }
+
+            return element;
+        }
     }
 
     public abstract class Rule<TContext> : Rule, IRule<TContext>, ITreeItem<Rule<TContext>>, ITreeItem
@@ -76,19 +89,6 @@ namespace Rules.RuleTypes.Mutable
         }
 
         public abstract IReadOnlyRule<TContext> ToReadOnly();
-
-        public virtual XElement ToXml()
-        {
-            var element = new XElement(nameof(Rule));
-            element.SetAttributeValue("type", GetType().GetDisplayName(false));
-
-            if (!(Name is null))
-            {
-                element.SetAttributeValue("name", Name);
-            }
-
-            return element;
-        }
 
         internal Rule<TContext> Named(string name)
         {
