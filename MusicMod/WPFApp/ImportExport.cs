@@ -37,7 +37,7 @@ namespace WPFApp
             }
         }
 
-        public void ImportXml(XElement xml, bool resetAutosave = true) => Reset(viewModels[Rule.FromXml(xml)], resetAutosave);
+        public void ImportXml(XElement xml, bool resetAutosave = true) => Reset(viewModels[Info.RuleParser.Parse(xml)], resetAutosave);
 
         private static void Export(XElement xml, FileInfo fileName)
         {

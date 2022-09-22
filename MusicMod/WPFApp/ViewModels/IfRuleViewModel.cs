@@ -1,4 +1,5 @@
-﻿using Rules.RuleTypes.Mutable;
+﻿using MyRoR2;
+using Rules.RuleTypes.Mutable;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
@@ -6,9 +7,9 @@ using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
-    internal class IfRuleViewModel : RuleViewModelBase<IfRule>
+    internal class IfRuleViewModel : RuleViewModelBase<IfRule<Context>>
     {
-        public IfRuleViewModel(IfRule ifRule, NavigationContext navigationContext) : base(ifRule, navigationContext)
+        public IfRuleViewModel(IfRule<Context> ifRule, NavigationContext navigationContext) : base(ifRule, navigationContext)
         {
             ExtraCommands = new[]
             {
@@ -47,7 +48,7 @@ namespace WPFApp.ViewModels
             }
         }
 
-        private void AddElse(Rule rule = null)
+        private void AddElse(Rule<Context> rule = null)
         {
             ElseRow elseRow = new(NavigationContext) { Output = rule };
             _ = TypedRowManager.AddDefault(elseRow);

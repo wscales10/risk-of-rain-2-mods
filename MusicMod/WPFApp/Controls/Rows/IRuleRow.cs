@@ -1,4 +1,5 @@
-﻿using Rules.RuleTypes.Mutable;
+﻿using MyRoR2;
+using Rules.RuleTypes.Mutable;
 using System.ComponentModel;
 using WPFApp.ViewModels;
 
@@ -10,7 +11,7 @@ namespace WPFApp.Controls.Rows
 
         NavigationViewModelBase OutputViewModel { get; }
 
-        Rule Output { get; }
+        Rule<Context> Output { get; }
 
         ICollectionView Children { get; }
 

@@ -1,4 +1,5 @@
-﻿using Rules.RuleTypes.Mutable;
+﻿using MyRoR2;
+using Rules.RuleTypes.Mutable;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,7 +9,7 @@ using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
-    internal abstract class RuleRow<TRow> : ButtonRow<Rule, TRow>, IRuleRow
+    internal abstract class RuleRow<TRow> : ButtonRow<Rule<Context>, TRow>, IRuleRow
         where TRow : RuleRow<TRow>
     {
         private RuleWrapper ruleWrapper;
@@ -34,14 +35,11 @@ namespace WPFApp.Controls.Rows
             set => SetProperty(ref parent, value);
         }
 
-        public override Rule Output
+        public override Rule<Context> Output
         {
             get => RuleWrapper.GetValueBypassValidation();
 
-            set
-            {
-                RuleWrapper.SetValue(value);
-            }
+            set => RuleWrapper.SetValue(value);
         }
 
         protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
@@ -50,13 +48,13 @@ namespace WPFApp.Controls.Rows
 
         public override string ToString() => Label ?? base.ToString();
 
-        protected sealed override Rule CloneOutput() => Rule.FromXml(Output.ToXml());
+        protected sealed override Rule<Context> CloneOutput() => Info.RuleParser.Parse(Output.ToXml());
 
         protected override SaveResult trySaveChanges() => base.trySaveChanges() & RuleWrapper.TryGetValue(true);
 
         protected override UIElement MakeOutputUi() => RuleWrapper.UIElement;
 
-        protected override void RefreshOutputUi(UIElement ui, Rule output)
+        protected override void RefreshOutputUi(UIElement ui, Rule<Context> output)
         {
             if (output is not null)
             {

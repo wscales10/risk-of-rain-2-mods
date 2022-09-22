@@ -1,6 +1,6 @@
 ﻿using MyRoR2;
 using Patterns;
-using Patterns.Patterns;
+using Rules;
 using Rules.RuleTypes.Mutable;
 using Spotify;
 using Spotify.Commands;
@@ -9,8 +9,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 using Utils.Reflection.Properties;
 using PropertyInfo = Patterns.Patterns.PropertyInfo;
@@ -30,6 +28,8 @@ namespace WPFApp
         public static Regex InvalidFileNameCharsRegex { get; } = new($"[{Regex.Escape(string.Concat(Path.GetInvalidFileNameChars()))}]+");
 
         public static PatternParser PatternParser { get; } = RoR2PatternParser.Instance;
+
+        public static RuleParser<Context> RuleParser { get; } = new RuleParser<Context>(PatternParser);
 
         public static IEnumerable<PropertyInfo> GetProperties<T>() => GetProperties(typeof(T));
 

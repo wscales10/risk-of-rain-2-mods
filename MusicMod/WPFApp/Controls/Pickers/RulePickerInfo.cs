@@ -1,4 +1,5 @@
-﻿using Rules.RuleTypes.Mutable;
+﻿using MyRoR2;
+using Rules.RuleTypes.Mutable;
 using System;
 using System.Collections;
 using System.Linq;
@@ -25,8 +26,8 @@ namespace WPFApp.Controls.Pickers
 
         public IControlWrapper CreateWrapper(object selectedInfo)
         {
-            var output = new ItemButtonWrapper<Rule>(buttonGetter());
-            output.SetValue(Rule.Create((Type)selectedInfo));
+            var output = new ItemButtonWrapper<Rule<Context>>(buttonGetter());
+            output.SetValue(Rule<Context>.Create((Type)selectedInfo));
             return output;
         }
 

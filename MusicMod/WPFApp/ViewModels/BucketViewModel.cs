@@ -7,12 +7,13 @@ using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using Utils;
 using System.Linq;
+using MyRoR2;
 
 namespace WPFApp.ViewModels
 {
-    internal class BucketViewModel : RuleViewModelBase<Bucket>
+    internal class BucketViewModel : RuleViewModelBase<Bucket<Context>>
     {
-        public BucketViewModel(Bucket item, NavigationContext navigationContext) : base(item, navigationContext)
+        public BucketViewModel(Bucket<Context> item, NavigationContext navigationContext) : base(item, navigationContext)
         {
             ((INotifyCollectionChanged)TypedRowManager.Items).CollectionChanged += BucketViewModel_CollectionChanged;
             TypedRowManager.BindTo(Item.Commands, AddCommand, r => r.Output);

@@ -1,13 +1,12 @@
 ﻿using MyRoR2;
 using Patterns;
-using Rules.RuleTypes.Mutable;
 using System;
 using System.Windows;
 using WPFApp.Controls;
 using WPFApp.Controls.Pickers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Controls.Wrappers.SaveResults;
-using Case = Rules.RuleTypes.Mutable.Case;
+using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context>;
 
 namespace WPFApp.ViewModels
 {

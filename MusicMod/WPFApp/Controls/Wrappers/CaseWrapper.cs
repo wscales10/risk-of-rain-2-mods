@@ -1,13 +1,12 @@
 ﻿using MyRoR2;
 using Patterns;
-using Rules.RuleTypes.Mutable;
 using WPFApp.Controls.RuleControls;
 using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.ViewModels;
 using System.Linq;
 using System;
 using System.Windows.Media;
-using Case = Rules.RuleTypes.Mutable.Case;
+using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context>;
 
 namespace WPFApp.Controls.Wrappers
 {

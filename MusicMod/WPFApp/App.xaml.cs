@@ -26,6 +26,7 @@ using System.Xml;
 using System.Threading;
 using System.Collections.ObjectModel;
 using Utils.Async;
+using MyRoR2;
 
 namespace WPFApp
 {
@@ -347,10 +348,10 @@ namespace WPFApp
 
         private NavigationViewModelBase GetRuleViewModel(Rule rule) => rule switch
         {
-            StaticSwitchRule sr => new SwitchRuleViewModel(sr, NavigationContext),
-            ArrayRule ar => new ArrayRuleViewModel(ar, NavigationContext),
-            IfRule ir => new IfRuleViewModel(ir, NavigationContext),
-            Bucket b => new BucketViewModel(b, NavigationContext),
+            StaticSwitchRule<Context> sr => new SwitchRuleViewModel(sr, NavigationContext),
+            ArrayRule<Context> ar => new ArrayRuleViewModel(ar, NavigationContext),
+            IfRule<Context> ir => new IfRuleViewModel(ir, NavigationContext),
+            Bucket<Context> b => new BucketViewModel(b, NavigationContext),
             _ => null,
         };
 

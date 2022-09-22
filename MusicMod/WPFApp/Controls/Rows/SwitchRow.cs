@@ -5,7 +5,7 @@ using WPFApp.ViewModels;
 using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.Controls.Wrappers;
 using System.Windows;
-using Case = Rules.RuleTypes.Mutable.Case;
+using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context>;
 
 namespace WPFApp.Controls.Rows
 {
@@ -33,7 +33,7 @@ namespace WPFApp.Controls.Rows
 
         public override string Label => Case?.ToString();
 
-        protected override CaseRow deepClone() => new(Case.DeepClone(Info.PatternParser), valueType, NavigationContext);
+        protected override CaseRow deepClone() => new(Case.DeepClone(Info.RuleParser), valueType, NavigationContext);
 
         protected override SaveResult trySaveChanges() => base.trySaveChanges() & caseWrapper.TryGetValue(true);
     }

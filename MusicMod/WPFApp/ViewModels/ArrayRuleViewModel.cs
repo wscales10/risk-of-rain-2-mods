@@ -1,14 +1,14 @@
-﻿using Rules.RuleTypes.Mutable;
-using System;
+﻿using MyRoR2;
+using Rules.RuleTypes.Mutable;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 
 namespace WPFApp.ViewModels
 {
-    internal class ArrayRuleViewModel : RuleViewModelBase<ArrayRule>
+    internal class ArrayRuleViewModel : RuleViewModelBase<ArrayRule<Context>>
     {
-        public ArrayRuleViewModel(ArrayRule arrayRule, NavigationContext navigationContext) : base(arrayRule, navigationContext)
+        public ArrayRuleViewModel(ArrayRule<Context> arrayRule, NavigationContext navigationContext) : base(arrayRule, navigationContext)
         {
             ExtraCommands = new[]
             {
@@ -24,6 +24,6 @@ namespace WPFApp.ViewModels
 
         protected override RowManager<ArrayRow> TypedRowManager { get; } = new();
 
-        private ArrayRow AddRule(Rule rule = null) => TypedRowManager.Add(new ArrayRow(NavigationContext) { Output = rule });
+        private ArrayRow AddRule(Rule<Context> rule = null) => TypedRowManager.Add(new ArrayRow(NavigationContext) { Output = rule });
     }
 }

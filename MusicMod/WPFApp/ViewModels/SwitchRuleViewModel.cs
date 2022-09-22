@@ -1,4 +1,5 @@
-﻿using Patterns;
+﻿using MyRoR2;
+using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
 using System;
@@ -8,15 +9,15 @@ using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.SaveResults;
-using Case = Rules.RuleTypes.Mutable.Case;
+using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context>;
 
 namespace WPFApp.ViewModels
 {
-    internal class SwitchRuleViewModel : RuleViewModelBase<StaticSwitchRule>
+    internal class SwitchRuleViewModel : RuleViewModelBase<StaticSwitchRule<Context>>
     {
         private readonly PropertyWrapper<Type> valueType = new();
 
-        public SwitchRuleViewModel(StaticSwitchRule switchRule, NavigationContext navigationContext) : base(switchRule, navigationContext)
+        public SwitchRuleViewModel(StaticSwitchRule<Context> switchRule, NavigationContext navigationContext) : base(switchRule, navigationContext)
         {
             PropertyInfo.OnValidate += PropertyInfo_OnValidate;
             PropertyInfo.PropertyChanged += PropertyInfo_PropertyChanged;
@@ -55,7 +56,7 @@ namespace WPFApp.ViewModels
 
         protected override RowManager<SwitchRow> TypedRowManager { get; } = new();
 
-        protected override SaveResult<StaticSwitchRule> ShouldAllowExit()
+        protected override SaveResult<StaticSwitchRule<Context>> ShouldAllowExit()
         {
             PropertyInfo.MaybeOutput(propertyInfo => Item.PropertyInfo = propertyInfo);
             return base.ShouldAllowExit() & PropertyInfo;
@@ -77,7 +78,7 @@ namespace WPFApp.ViewModels
             }
         }
 
-        private void AddDefault(Rule rule = null) => _ = TypedRowManager.AddDefault(new DefaultRow(NavigationContext, Item.PropertyInfo) { Output = rule });
+        private void AddDefault(Rule<Context> rule = null) => _ = TypedRowManager.AddDefault(new DefaultRow(NavigationContext, Item.PropertyInfo) { Output = rule });
 
         private CaseRow AddCase(Case c = null)
         {
