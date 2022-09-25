@@ -1,9 +1,7 @@
-﻿using Spotify.Commands;
-
-namespace Rules.RuleTypes.Interfaces
+﻿namespace Rules.RuleTypes.Interfaces
 {
-    public interface IBucket<TContext> : IRule<TContext>
+    public interface IBucket<TContext, TOut> : IRule<TContext, TOut>
     {
-        ICommandList Commands { get; }
+        TOut Output { get; }
     }
 }

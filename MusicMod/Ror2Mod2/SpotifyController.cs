@@ -11,11 +11,11 @@ namespace Ror2Mod2
 {
     public class SpotifyController<TContext> : MusicBase<TContext>
     {
-        private readonly IRulePicker<TContext> rulePicker;
+        private readonly IRulePicker<TContext, ICommandList> rulePicker;
 
         private readonly IContextHelper<TContext> contextHelper;
 
-        public SpotifyController(IRulePicker<TContext> rulePicker, IEnumerable<Playlist> playlists, IContextHelper<TContext> contextHelper, Logger logger) : base(logger)
+        public SpotifyController(IRulePicker<TContext, ICommandList> rulePicker, IEnumerable<Playlist> playlists, IContextHelper<TContext> contextHelper, Logger logger) : base(logger)
         {
             this.rulePicker = rulePicker;
             Client = new SpotifyPlaybackClient(playlists, logger);

@@ -1,16 +1,15 @@
-﻿using Spotify.Commands;
-using Utils;
+﻿using Utils;
 
 namespace Rules.RuleTypes.Interfaces
 {
-    public interface IRule<TContext> : IXmlExportable
+    public interface IRule<TContext, TOut> : IXmlExportable
     {
         string Name { get; }
 
-        TrackedResponse<TContext> GetBucket(TContext c);
+        TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
-        ICommandList GetCommands(TContext oldContext, TContext newContext, bool force = false);
+        TOut GetCommands(TContext oldContext, TContext newContext, bool force = false);
 
-        IReadOnlyRule<TContext> ToReadOnly();
+        IReadOnlyRule<TContext, TOut> ToReadOnly();
     }
 }

@@ -4,7 +4,7 @@ namespace Spotify.Authorisation
 {
     internal class App
     {
-        internal static App Instance = new App("60f87e5bc07f48999e37f1581d9779c8", "http://localhost:5006/");
+        internal static readonly App Instance = new App("60f87e5bc07f48999e37f1581d9779c8", "http://localhost:5006/");
 
         private readonly string redirectUri;
 

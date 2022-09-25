@@ -9,23 +9,23 @@ namespace Rules.RuleTypes.Mutable
     public static class ArrayRule
     { }
 
-    public class ArrayRule<TContext> : UpperRule<TContext>, IArrayRule<TContext>
+    public class ArrayRule<TContext, TOut> : UpperRule<TContext, TOut>, IArrayRule<TContext, TOut>
     {
-        public ArrayRule(params Rule<TContext>[] rules) : this((IEnumerable<Rule<TContext>>)rules)
+        public ArrayRule(params Rule<TContext, TOut>[] rules) : this((IEnumerable<Rule<TContext, TOut>>)rules)
         {
         }
 
-        public ArrayRule(IEnumerable<Rule<TContext>> rules) => Rules = rules.ToList();
+        public ArrayRule(IEnumerable<Rule<TContext, TOut>> rules) => Rules = rules.ToList();
 
-        public List<Rule<TContext>> Rules { get; }
+        public List<Rule<TContext, TOut>> Rules { get; }
 
-        public override IEnumerable<(string, Rule<TContext>)> Children => Rules.SelectMany(r => r.Children);
+        public override IEnumerable<(string, Rule<TContext, TOut>)> Children => Rules.SelectMany(r => r.Children);
 
-        IEnumerable<IRule<TContext>> IArrayRule<TContext>.Rules => Rules;
+        IEnumerable<IRule<TContext, TOut>> IArrayRule<TContext, TOut>.Rules => Rules;
 
-        public override IEnumerable<Rule<TContext>> GetRules(TContext c) => Rules;
+        public override IEnumerable<Rule<TContext, TOut>> GetRules(TContext c) => Rules;
 
-        public override IReadOnlyRule<TContext> ToReadOnly() => new ReadOnlyArrayRule<TContext>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlyArrayRule<TContext, TOut>(this);
 
         public override XElement ToXml()
         {

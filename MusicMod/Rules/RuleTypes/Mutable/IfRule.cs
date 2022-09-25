@@ -10,9 +10,9 @@ namespace Rules.RuleTypes.Mutable
     {
     }
 
-    public class IfRule<TContext> : UpperRule<TContext>, IIfRule<TContext>
+    public class IfRule<TContext, TOut> : UpperRule<TContext, TOut>, IIfRule<TContext, TOut>
     {
-        public IfRule(IPattern<TContext> pattern = null, Rule<TContext> thenRule = null, Rule<TContext> elseRule = null)
+        public IfRule(IPattern<TContext> pattern = null, Rule<TContext, TOut> thenRule = null, Rule<TContext, TOut> elseRule = null)
         {
             Pattern = pattern;
             ThenRule = thenRule;
@@ -21,17 +21,17 @@ namespace Rules.RuleTypes.Mutable
 
         public IPattern<TContext> Pattern { get; set; }
 
-        public Rule<TContext> ThenRule { get; set; }
+        public Rule<TContext, TOut> ThenRule { get; set; }
 
-        public Rule<TContext> ElseRule { get; set; }
+        public Rule<TContext, TOut> ElseRule { get; set; }
 
-        IRule<TContext> IIfRule<TContext>.ThenRule => ThenRule;
+        IRule<TContext, TOut> IIfRule<TContext, TOut>.ThenRule => ThenRule;
 
-        IRule<TContext> IIfRule<TContext>.ElseRule => ElseRule;
+        IRule<TContext, TOut> IIfRule<TContext, TOut>.ElseRule => ElseRule;
 
-        public override IEnumerable<(string, Rule<TContext>)> Children => new[] { (Pattern.ToString(), ThenRule), ("Otherwise", ElseRule) };
+        public override IEnumerable<(string, Rule<TContext, TOut>)> Children => new[] { (Pattern.ToString(), ThenRule), ("Otherwise", ElseRule) };
 
-        public override IEnumerable<Rule<TContext>> GetRules(TContext c)
+        public override IEnumerable<Rule<TContext, TOut>> GetRules(TContext c)
         {
             yield return Pattern.IsMatch(c) ? ThenRule : ElseRule;
         }
@@ -61,6 +61,6 @@ namespace Rules.RuleTypes.Mutable
             return element;
         }
 
-        public override IReadOnlyRule<TContext> ToReadOnly() => new ReadOnlyIfRule<TContext>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlyIfRule<TContext, TOut>(this);
     }
 }

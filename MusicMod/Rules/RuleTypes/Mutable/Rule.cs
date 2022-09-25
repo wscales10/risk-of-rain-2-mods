@@ -2,6 +2,7 @@
 using Rules.RuleTypes.Interfaces;
 using Spotify.Commands;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
@@ -36,61 +37,60 @@ namespace Rules.RuleTypes.Mutable
         }
     }
 
-    public abstract class Rule<TContext> : Rule, IRule<TContext>, ITreeItem<Rule<TContext>>, ITreeItem
+    public abstract class Rule<TContext, TOut> : Rule, IRule<TContext, TOut>, ITreeItem<Rule<TContext, TOut>>, ITreeItem
     {
-        public virtual IEnumerable<(string, Rule<TContext>)> Children => Enumerable.Empty<(string, Rule<TContext>)>();
+        public virtual IEnumerable<(string, Rule<TContext, TOut>)> Children => Enumerable.Empty<(string, Rule<TContext, TOut>)>();
 
         IEnumerable<(string, ITreeItem)> ITreeItem.Children => Children.Select(p => (p.Item1, (ITreeItem)p.Item2));
 
-        public static implicit operator Rule<TContext>(Command c) => new Bucket<TContext>(c);
+        public static implicit operator Rule<TContext, TOut>(TOut output) => new Bucket<TContext, TOut>(output);
 
-        public static implicit operator Rule<TContext>(CommandList commands) => new Bucket<TContext>(commands);
+        public static Rule<TContext, TOut> Create(Type ruleType) => (Rule<TContext, TOut>)ruleType.ConstructDefault();
 
-        public static Rule<TContext> Create(Type ruleType) => (Rule<TContext>)ruleType.ConstructDefault();
+        public abstract TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
-        public abstract TrackedResponse<TContext> GetBucket(TContext c);
+        public abstract IReadOnlyRule<TContext, TOut> ToReadOnly();
 
-        public ICommandList GetCommands(TContext oldContext, TContext newContext, bool force = false)
+        public TOut GetCommands(TContext oldContext, TContext newContext, bool force = false) => GetCommands(this, oldContext, newContext, force);
+
+        internal static TOut GetCommands(IRule<TContext, TOut> rule, TContext oldContext, TContext newContext, bool force = false)
         {
-            var newBucketResponse = GetBucket(newContext);
+            var newBucketResponse = rule.GetBucket(newContext);
             var newBucket = newBucketResponse.Bucket;
             newBucketResponse.LogRules();
 
-            if (!(newBucket?.Commands is null))
+            if (newBucket is IEnumerable collection)
             {
-                foreach (var command in newBucket.Commands)
+                foreach (var item in collection)
                 {
-                    this.Log($"Command Type: {command?.GetType().GetDisplayName() ?? "null"}");
+                    rule.Log($"Item Type: {item?.GetType().GetDisplayName() ?? "null"}");
                 }
             }
 
             if (newBucket is null)
             {
-                this.Log($"{nameof(newBucket)} is null");
+                rule.Log($"{nameof(newBucket)} is null");
+                return default;
+            }
+            else if (force)
+            {
+                // TODO: implement force on error
+                rule.Log("forcing retry");
+            }
+            else if (rule.GetBucket(oldContext).Bucket != newBucket)
+            {
+                rule.Log($"{nameof(newBucket)} is different");
             }
             else
-
-            // TODO: implement force on error
-            if (force)
             {
-                this.Log("forcing retry");
-            }
-            else if (GetBucket(oldContext).Bucket != newBucket)
-            {
-                this.Log($"{nameof(newBucket)} is different");
-            }
-            else
-            {
-                this.Log($"{nameof(newBucket)} is no different from before");
-                return null;
+                rule.Log($"{nameof(newBucket)} is no different from before");
+                return default;
             }
 
-            return newBucket?.Commands;
+            return newBucket.Output;
         }
 
-        public abstract IReadOnlyRule<TContext> ToReadOnly();
-
-        internal Rule<TContext> Named(string name)
+        internal Rule<TContext, TOut> Named(string name)
         {
             Name = name;
             return this;

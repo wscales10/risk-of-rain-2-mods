@@ -126,7 +126,7 @@ namespace MusicModUnitTests
         public void ThatCaseToStringWorks()
         {
             var c = ((ReadOnlySwitchRule)MimicRule).Cases[0].ToString();
-            Assert.AreEqual(c, "Environments");
+            Assert.AreEqual("Environments", c);
         }
     }
 }

@@ -2,20 +2,20 @@
 
 namespace Ror2Mod2
 {
-    public interface IRulePicker<TContext>
+    public interface IRulePicker<TContext, TOut>
     {
-        IRule<TContext> Rule { get; }
+        IRule<TContext, TOut> Rule { get; }
     }
 
-    public class SingleRulePicker<TContext> : IRulePicker<TContext>
+    public class SingleRulePicker<TContext, TOut> : IRulePicker<TContext, TOut>
     {
-        public SingleRulePicker(IRule<TContext> rule) => Rule = rule;
+        public SingleRulePicker(IRule<TContext, TOut> rule) => Rule = rule;
 
-        public IRule<TContext> Rule { get; }
+        public IRule<TContext, TOut> Rule { get; }
     }
 
-    public class MutableRulePicker<TContext> : IRulePicker<TContext>
+    public class MutableRulePicker<TContext, TOut> : IRulePicker<TContext, TOut>
     {
-        public IRule<TContext> Rule { get; set; }
+        public IRule<TContext, TOut> Rule { get; set; }
     }
 }

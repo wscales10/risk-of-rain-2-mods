@@ -9,9 +9,9 @@ using Utils;
 
 namespace Rules.RuleTypes.Readonly
 {
-    public class ReadOnlySwitchRule<TContext> : ReadOnlyRule<StaticSwitchRule<TContext>, TContext>, ISwitchRule<TContext>
+    public class ReadOnlySwitchRule<TContext, TOut> : ReadOnlyUpperRule<StaticSwitchRule<TContext, TOut>, TContext, TOut>, ISwitchRule<TContext, TOut>
     {
-        public ReadOnlySwitchRule(StaticSwitchRule<TContext> staticSwitchRule) : base(staticSwitchRule)
+        public ReadOnlySwitchRule(StaticSwitchRule<TContext, TOut> staticSwitchRule) : base(staticSwitchRule)
         {
             PropertyInfo = staticSwitchRule.PropertyInfo;
             DefaultRule = staticSwitchRule.DefaultRule?.ToReadOnly();
@@ -20,10 +20,10 @@ namespace Rules.RuleTypes.Readonly
 
         public PropertyInfo PropertyInfo { get; }
 
-        public ReadOnlyCollection<ReadOnlyCase<IPattern, TContext>> Cases { get; }
+        public ReadOnlyCollection<ReadOnlyCase<IPattern, TContext, TOut>> Cases { get; }
 
-        public IRule<TContext> DefaultRule { get; }
+        public IRule<TContext, TOut> DefaultRule { get; }
 
-        IEnumerable<ICase<IPattern, TContext>> ISwitchRule<TContext>.Cases => Cases;
+        IEnumerable<ICase<IPattern, TContext, TOut>> ISwitchRule<TContext, TOut>.Cases => Cases;
     }
 }

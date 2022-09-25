@@ -3,6 +3,7 @@ using MyRoR2;
 using Rules;
 using Rules.RuleTypes.Interfaces;
 using Spotify;
+using Spotify.Commands;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,16 +19,13 @@ namespace Ror2Mod2
     [BepInDependency("com.rune580.riskofoptions")]
     public class MusicMod : BaseUnityPlugin
     {
-        private readonly RuleParser<Context> ruleParser = new RuleParser<Context>(RoR2PatternParser.Instance);
+        private readonly RuleParser<Context, ICommandList> ruleParser = new RuleParser<Context, ICommandList>(RoR2PatternParser.Instance, s => CommandList.Parse(XElement.Parse(s)));
 
         private readonly Configuration configuration;
 
         private bool musicMuted;
 
-        protected MusicMod()
-        {
-            configuration = new Configuration(Config);
-        }
+        protected MusicMod() => configuration = new Configuration(Config);
 
         public SpotifyController<Context> Music { get; private set; }
 
@@ -35,7 +33,7 @@ namespace Ror2Mod2
 
         public void Awake()
         {
-            var rulePicker = new MutableRulePicker<Context>();
+            var rulePicker = new MutableRulePicker<Context, ICommandList>();
             var playlists = new List<Playlist>();
             SetRule(rulePicker, playlists);
             Music = new SpotifyController<Context>(rulePicker, playlists, new ContextHelper(SafeLogger), SafeLogger);
@@ -62,7 +60,7 @@ namespace Ror2Mod2
             }
         }
 
-        private void SetRule(MutableRulePicker<Context> rulePicker, List<Playlist> playlists)
+        private void SetRule(MutableRulePicker<Context, ICommandList> rulePicker, List<Playlist> playlists)
         {
             string uri = configuration.RuleLocation;
 
@@ -71,7 +69,7 @@ namespace Ror2Mod2
                 throw new FileNotFoundException();
             }
 
-            IRule<Context> rule;
+            IRule<Context, ICommandList> rule;
 
             playlists.Clear();
             if (string.IsNullOrEmpty(uri))

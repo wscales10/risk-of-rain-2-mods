@@ -9,16 +9,19 @@ using System;
 
 namespace Rules
 {
-    public class RuleParser<TContext>
+    public class RuleParser<TContext, TOut>
     {
-        public RuleParser(PatternParser patternParser)
+        private readonly Func<string, TOut> outputParser;
+
+        public RuleParser(PatternParser patternParser, Func<string, TOut> outputParser)
         {
             PatternParser = patternParser ?? throw new ArgumentNullException(nameof(patternParser));
+            this.outputParser = outputParser;
         }
 
         public PatternParser PatternParser { get; }
 
-        public Rule<TContext> Parse(XElement element)
+        public Rule<TContext, TOut> Parse(XElement element)
         {
             if (element is null)
             {
@@ -28,12 +31,12 @@ namespace Rules
             var name = element.Attribute("name")?.Value;
             return GetUnnamed().Named(name);
 
-            Rule<TContext> GetUnnamed()
+            Rule<TContext, TOut> GetUnnamed()
             {
                 switch (element.Attribute("type").Value)
                 {
                     case nameof(ArrayRule):
-                        return new ArrayRule<TContext>(element.Elements(nameof(Rule)).Select(Parse).ToArray());
+                        return new ArrayRule<TContext, TOut>(element.Elements(nameof(Rule)).Select(Parse).ToArray());
 
                     case nameof(IfRule):
                         var ifElement = element.Elements().First();
@@ -48,13 +51,13 @@ namespace Rules
                             pattern = null;
                         }
 
-                        return new IfRule<TContext>(pattern, Parse(element.Element("Then").OnlyChild()), Parse(element.Element("Else")?.OnlyChild()));
+                        return new IfRule<TContext, TOut>(pattern, Parse(element.Element("Then").OnlyChild()), Parse(element.Element("Else")?.OnlyChild()));
 
                     case nameof(Bucket):
-                        return new Bucket<TContext>(element.Elements().Select(Command.FromXml).ToList());
+                        return new Bucket<TContext, TOut>(outputParser(element.Value));
 
                     case nameof(StaticSwitchRule):
-                        return StaticSwitchRule<TContext>.Parse(element, this);
+                        return StaticSwitchRule<TContext, TOut>.Parse(element, this);
 
                     default:
                         throw new XmlException();
@@ -62,6 +65,6 @@ namespace Rules
             }
         }
 
-        public Rule<TContext> DeepClone(Rule<TContext> rule) => Parse(rule.ToXml());
+        public Rule<TContext, TOut> DeepClone(Rule<TContext, TOut> rule) => Parse(rule.ToXml());
     }
 }

@@ -1,18 +1,21 @@
 ﻿using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
+using Utils;
 
 namespace Rules.RuleTypes.Readonly
 {
-    public class ReadOnlyBucket<TContext> : ReadOnlyRule<Bucket<TContext>, TContext>, IBucket<TContext>
+    public class ReadOnlyBucket<TContext, TOut> : ReadOnlyRule<Bucket<TContext, TOut>, TContext, TOut>, IBucket<TContext, TOut>
     {
-        public ReadOnlyBucket(Bucket<TContext> bucket) : base(bucket)
+        public ReadOnlyBucket(Bucket<TContext, TOut> bucket) : base(bucket)
         {
-            Commands = bucket.Commands.ToReadOnly();
+            var output = bucket.Output;
+            Output = output is IMutable<TOut> mutable ? mutable.ToReadOnly() : output;
         }
 
-        public ReadOnlyCommandList Commands { get; }
+        public TOut Output { get; }
 
-        ICommandList IBucket<TContext>.Commands => Commands;
+        TOut IBucket<TContext, TOut>.Output => Output;
+
+        public override TrackedResponse<TContext, TOut> GetBucket(TContext c) => TrackedResponse.Create(this).ToReadOnly();
     }
 }

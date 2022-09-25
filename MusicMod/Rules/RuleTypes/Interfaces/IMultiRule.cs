@@ -2,9 +2,9 @@
 
 namespace Rules.RuleTypes.Interfaces
 {
-    public interface IMultiRule<T, TContext>
+    public interface IMultiRule<T, TContext, TOut>
     {
-        IEnumerable<(T expectedValue, IRule<TContext> rule)> Pairs { get; }
+        IEnumerable<(T expectedValue, IRule<TContext, TOut> rule)> Pairs { get; }
 
         string PropertyName { get; }
     }

@@ -1,10 +1,10 @@
 ﻿using Rules.RuleTypes.Interfaces;
-using Spotify.Commands;
+using Rules.RuleTypes.Mutable;
 using System.Xml.Linq;
 
 namespace Rules.RuleTypes.Readonly
 {
-    public abstract class ReadOnlyRule<T, TContext> : IReadOnlyRule<TContext> where T : Mutable.Rule<TContext>
+    public abstract class ReadOnlyRule<T, TContext, TOut> : IReadOnlyRule<TContext, TOut> where T : Rule<TContext, TOut>
     {
         private readonly T mutable;
 
@@ -12,23 +12,12 @@ namespace Rules.RuleTypes.Readonly
 
         public string Name => mutable.Name;
 
-        public TrackedResponse<TContext> GetBucket(TContext c) => mutable.GetBucket(c).ToReadOnly();
+        public abstract TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
-        public ICommandList GetCommands(TContext oldContext, TContext newContext, bool force = false)
-        {
-            var output = mutable.GetCommands(oldContext, newContext, force);
+        // TODO: make GetCommands actually use this object's properties and mutable's methods or whatever
+        public TOut GetCommands(TContext oldContext, TContext newContext, bool force = false) => Rule<TContext, TOut>.GetCommands(this, oldContext, newContext, force);
 
-            if (output is CommandList commandList)
-            {
-                return commandList.ToReadOnly();
-            }
-            else
-            {
-                return output;
-            }
-        }
-
-        public IReadOnlyRule<TContext> ToReadOnly() => this;
+        public IReadOnlyRule<TContext, TOut> ToReadOnly() => this;
 
         public sealed override string ToString() => Name ?? GetType().Name;
 

@@ -4,9 +4,9 @@ using Rules.RuleTypes.Mutable;
 
 namespace Rules.RuleTypes.Readonly
 {
-    public class ReadOnlyIfRule<TContext> : ReadOnlyRule<IfRule<TContext>, TContext>, IIfRule<TContext>
+    public class ReadOnlyIfRule<TContext, TOut> : ReadOnlyUpperRule<IfRule<TContext, TOut>, TContext, TOut>, IIfRule<TContext, TOut>
     {
-        public ReadOnlyIfRule(IfRule<TContext> ifRule) : base(ifRule)
+        public ReadOnlyIfRule(IfRule<TContext, TOut> ifRule) : base(ifRule)
         {
             Pattern = new ReadOnlyPattern<TContext>(ifRule.Pattern);
             ThenRule = ifRule.ThenRule.ToReadOnly();
@@ -15,8 +15,8 @@ namespace Rules.RuleTypes.Readonly
 
         public IPattern<TContext> Pattern { get; }
 
-        public IRule<TContext> ThenRule { get; }
+        public IRule<TContext, TOut> ThenRule { get; }
 
-        public IRule<TContext> ElseRule { get; }
+        public IRule<TContext, TOut> ElseRule { get; }
     }
 }

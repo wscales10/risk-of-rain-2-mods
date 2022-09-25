@@ -68,6 +68,12 @@ namespace Spotify.Authorisation
                         break;
 
                     case FlowState.TokenRefreshed:
+
+                        if (data is null)
+                        {
+                            throw new InvalidOperationException();
+                        }
+
                         OnAccessTokenReceived?.Invoke(this, data.AccessToken);
                         RefreshIn(GetWaitTime(data.ExpiresIn));
                         break;

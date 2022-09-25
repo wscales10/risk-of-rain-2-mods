@@ -7,26 +7,26 @@ namespace Rules
 {
     public static class TrackedResponse
     {
-        public static TrackedResponse<TContext> Create<TContext>(IBucket<TContext> bucket) => new TrackedResponse<TContext>(bucket);
+        public static TrackedResponse<TContext, TOut> Create<TContext, TOut>(IBucket<TContext, TOut> bucket) => new TrackedResponse<TContext, TOut>(bucket);
     }
 
-    public class TrackedResponse<TContext>
+    public class TrackedResponse<TContext, TOut>
     {
-        public TrackedResponse(IBucket<TContext> bucket) : this(bucket, Enumerable.Empty<IRule<TContext>>())
+        public TrackedResponse(IBucket<TContext, TOut> bucket) : this(bucket, Enumerable.Empty<IRule<TContext, TOut>>())
         {
         }
 
-        private TrackedResponse(IBucket<TContext> bucket, IEnumerable<IRule<TContext>> rules)
+        private TrackedResponse(IBucket<TContext, TOut> bucket, IEnumerable<IRule<TContext, TOut>> rules)
         {
-            Rules = new Stack<IRule<TContext>>(rules);
+            Rules = new Stack<IRule<TContext, TOut>>(rules);
             Rules.Push(Bucket = bucket);
         }
 
-        public IBucket<TContext> Bucket { get; }
+        public IBucket<TContext, TOut> Bucket { get; }
 
-        public Stack<IRule<TContext>> Rules { get; }
+        public Stack<IRule<TContext, TOut>> Rules { get; }
 
-        public TrackedResponse<TContext> With(IRule<TContext> rule)
+        public TrackedResponse<TContext, TOut> With(IRule<TContext, TOut> rule)
         {
             Rules.Push(rule);
             return this;
@@ -43,6 +43,6 @@ namespace Rules
             }
         }
 
-        public TrackedResponse<TContext> ToReadOnly() => new TrackedResponse<TContext>((IBucket<TContext>)Bucket.ToReadOnly(), Rules.Select(r => r.ToReadOnly()));
+        public TrackedResponse<TContext, TOut> ToReadOnly() => new TrackedResponse<TContext, TOut>((IBucket<TContext, TOut>)Bucket.ToReadOnly(), Rules.Select(r => r.ToReadOnly()));
     }
 }

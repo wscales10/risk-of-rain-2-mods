@@ -5,7 +5,7 @@ using Utils;
 
 namespace Spotify
 {
-    public class PlaylistRef : IXmlExportable, ISpotifyItem
+    public class PlaylistRef : ISpotifyItem
     {
         public PlaylistRef(string name) => Name = name;
 

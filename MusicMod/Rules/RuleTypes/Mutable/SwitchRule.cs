@@ -17,29 +17,29 @@ namespace Rules.RuleTypes.Mutable
     public static class StaticSwitchRule
     { }
 
-    public class SwitchRule<T, TContext> : UpperRule<TContext>
+    public class SwitchRule<T, TContext, TOut> : UpperRule<TContext, TOut>
     {
-        private readonly RuleParser<TContext> ruleParser;
+        private readonly RuleParser<TContext, TOut> ruleParser;
 
         private readonly PatternGenerator<T> patternGenerator;
 
-        public SwitchRule(string propertyName, params ICaseGetter<T, TContext>[] cases)
+        public SwitchRule(string propertyName, params ICaseGetter<T, TContext, TOut>[] cases)
         {
             PropertyName = propertyName;
             Cases = cases.SelectMany(c => c.GetCases()).ToReadOnlyCollection();
         }
 
-        public SwitchRule(string propertyName, PatternGenerator<T> patternGenerator, params ICaseGetter<T, TContext>[] cases) : this(propertyName, cases)
+        public SwitchRule(string propertyName, PatternGenerator<T> patternGenerator, params ICaseGetter<T, TContext, TOut>[] cases) : this(propertyName, cases)
         {
             this.patternGenerator = patternGenerator;
         }
 
-        public SwitchRule(string propertyName, Rule<TContext> defaultRule, params ICaseGetter<T, TContext>[] cases) : this(propertyName, cases)
+        public SwitchRule(string propertyName, Rule<TContext, TOut> defaultRule, params ICaseGetter<T, TContext, TOut>[] cases) : this(propertyName, cases)
         {
             DefaultRule = defaultRule;
         }
 
-        public SwitchRule(string propertyName, Rule<TContext> defaultRule, PatternGenerator<T> patternGenerator, params ICaseGetter<T, TContext>[] cases) : this(propertyName, cases)
+        public SwitchRule(string propertyName, Rule<TContext, TOut> defaultRule, PatternGenerator<T> patternGenerator, params ICaseGetter<T, TContext, TOut>[] cases) : this(propertyName, cases)
         {
             DefaultRule = defaultRule;
             this.patternGenerator = patternGenerator;
@@ -47,33 +47,33 @@ namespace Rules.RuleTypes.Mutable
 
         public string PropertyName { get; }
 
-        public ReadOnlyCollection<RuleCase<T, TContext>> Cases { get; }
+        public ReadOnlyCollection<RuleCase<T, TContext, TOut>> Cases { get; }
 
-        public Rule<TContext> DefaultRule { get; }
+        public Rule<TContext, TOut> DefaultRule { get; }
 
-        public ArrayRule<TContext> ToArrayRule()
+        public ArrayRule<TContext, TOut> ToArrayRule()
         {
             var rules = Cases.Select(c =>
             {
                 var pattern = new OrPattern<T>(c.Arr.Select(GeneratePattern).ToArray());
-                return new IfRule<TContext>(PropertyPattern<TContext>.Create(PropertyName, pattern) & (c.WherePattern ?? ConstantPattern<TContext>.True), c.Output);
-            }).Cast<Rule<TContext>>().ToList();
+                return new IfRule<TContext, TOut>(PropertyPattern<TContext>.Create(PropertyName, pattern) & (c.WherePattern ?? ConstantPattern<TContext>.True), c.Output);
+            }).Cast<Rule<TContext, TOut>>().ToList();
 
             if (!(DefaultRule is null))
                 rules.Add(DefaultRule);
 
-            return (ArrayRule<TContext>)new ArrayRule<TContext>(rules).Named(Name);
+            return (ArrayRule<TContext, TOut>)new ArrayRule<TContext, TOut>(rules).Named(Name);
         }
 
-        public StaticSwitchRule<TContext> ToStatic()
+        public StaticSwitchRule<TContext, TOut> ToStatic()
         {
-            return (StaticSwitchRule<TContext>)new StaticSwitchRule<TContext>(
+            return (StaticSwitchRule<TContext, TOut>)new StaticSwitchRule<TContext, TOut>(
                 new PropertyInfo(PropertyName, typeof(T)),
                 DefaultRule,
-                Cases.Select(c => (RuleCase<TContext>)new RuleCase<TContext>(c.Output, c.WherePattern, c.Arr.Select(GeneratePattern).ToArray()).Named(c.Name)).ToArray()).Named(Name);
+                Cases.Select(c => (RuleCase<TContext, TOut>)new RuleCase<TContext, TOut>(c.Output, c.WherePattern, c.Arr.Select(GeneratePattern).ToArray()).Named(c.Name)).ToArray()).Named(Name);
         }
 
-        public override IEnumerable<Rule<TContext>> GetRules(TContext c)
+        public override IEnumerable<Rule<TContext, TOut>> GetRules(TContext c)
         {
             T seenValue = c.GetPropertyValue<T>(PropertyName);
 
@@ -99,7 +99,7 @@ namespace Rules.RuleTypes.Mutable
             return ToStatic().ToXml();
         }
 
-        public override IReadOnlyRule<TContext> ToReadOnly() => ToStatic().ToReadOnly();
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => ToStatic().ToReadOnly();
 
         private IPattern<T> GeneratePattern(T value)
         {
@@ -107,9 +107,9 @@ namespace Rules.RuleTypes.Mutable
         }
     }
 
-    public class StaticSwitchRule<TContext> : UpperRule<TContext>, ISwitchRule<TContext>
+    public class StaticSwitchRule<TContext, TOut> : UpperRule<TContext, TOut>, ISwitchRule<TContext, TOut>
     {
-        public StaticSwitchRule(PropertyInfo propertyInfo = null, Rule<TContext> defaultRule = null, params RuleCase<TContext>[] cases)
+        public StaticSwitchRule(PropertyInfo propertyInfo = null, Rule<TContext, TOut> defaultRule = null, params RuleCase<TContext, TOut>[] cases)
         {
             PropertyInfo = propertyInfo;
             DefaultRule = defaultRule;
@@ -118,21 +118,21 @@ namespace Rules.RuleTypes.Mutable
 
         public PropertyInfo PropertyInfo { get; set; }
 
-        public List<RuleCase<TContext>> Cases { get; }
+        public List<RuleCase<TContext, TOut>> Cases { get; }
 
-        public Rule<TContext> DefaultRule { get; set; }
+        public Rule<TContext, TOut> DefaultRule { get; set; }
 
-        IEnumerable<ICase<IPattern, TContext>> ISwitchRule<TContext>.Cases => Cases.Cast<RuleCase<IPattern, TContext>>();
+        IEnumerable<ICase<IPattern, TContext, TOut>> ISwitchRule<TContext, TOut>.Cases => Cases.Cast<RuleCase<IPattern, TContext, TOut>>();
 
-        IRule<TContext> ISwitchRule<TContext>.DefaultRule => DefaultRule;
+        IRule<TContext, TOut> ISwitchRule<TContext, TOut>.DefaultRule => DefaultRule;
 
-        public override IEnumerable<(string, Rule<TContext>)> Children => Cases.Select(c => (c.ToString(), c.Output)).With(($"Other {PropertyInfo}", DefaultRule));
+        public override IEnumerable<(string, Rule<TContext, TOut>)> Children => Cases.Select(c => (c.ToString(), c.Output)).With(($"Other {PropertyInfo}", DefaultRule));
 
-        public static StaticSwitchRule<TContext> Parse(XElement element, RuleParser<TContext> ruleParser)
+        public static StaticSwitchRule<TContext, TOut> Parse(XElement element, RuleParser<TContext, TOut> ruleParser)
         {
             PropertyInfo propertyInfo = null;
-            Rule<TContext> defaultRule = null;
-            var cases = new List<RuleCase<TContext>>();
+            Rule<TContext, TOut> defaultRule = null;
+            var cases = new List<RuleCase<TContext, TOut>>();
             var list = new List<IPattern>();
             string name = null;
             IPattern<TContext> where = null;
@@ -150,7 +150,7 @@ namespace Rules.RuleTypes.Mutable
                         break;
 
                     case "Case":
-                        list.Add(ruleParser.PatternParser.Parse(propertyInfo.Type, child.OnlyChild()));
+                        list.Add(ruleParser.PatternParser.Parse(propertyInfo?.Type, child.OnlyChild()));
                         break;
 
                     case "Where":
@@ -158,7 +158,7 @@ namespace Rules.RuleTypes.Mutable
                         break;
 
                     case "Return":
-                        cases.Add((RuleCase<TContext>)new RuleCase<TContext>(ruleParser.Parse(child.OnlyChild()), where, list.ToArray()).Named(name));
+                        cases.Add((RuleCase<TContext, TOut>)new RuleCase<TContext, TOut>(ruleParser.Parse(child.OnlyChild()), where, list.ToArray()).Named(name));
                         where = null;
                         name = null;
                         list.Clear();
@@ -173,10 +173,10 @@ namespace Rules.RuleTypes.Mutable
                 }
             }
 
-            return new StaticSwitchRule<TContext>(propertyInfo, defaultRule, cases.ToArray());
+            return new StaticSwitchRule<TContext, TOut>(propertyInfo, defaultRule, cases.ToArray());
         }
 
-        public override IEnumerable<Rule<TContext>> GetRules(TContext c)
+        public override IEnumerable<Rule<TContext, TOut>> GetRules(TContext c)
         {
             var seenValue = c.GetPropertyValue(PropertyInfo.Name);
 
@@ -230,6 +230,6 @@ namespace Rules.RuleTypes.Mutable
             return element;
         }
 
-        public override IReadOnlyRule<TContext> ToReadOnly() => new ReadOnlySwitchRule<TContext>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlySwitchRule<TContext, TOut>(this);
     }
 }

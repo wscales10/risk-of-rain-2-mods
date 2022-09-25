@@ -6,15 +6,15 @@ using Utils;
 
 namespace Rules.RuleTypes.Readonly
 {
-    public class ReadOnlyMultiRule<T, TContext> : ReadOnlyRule<MultiRule<T, TContext>, TContext>
+    public class ReadOnlyMultiRule<T, TContext, TOut> : ReadOnlyUpperRule<MultiRule<T, TContext, TOut>, TContext, TOut>
     {
-        public ReadOnlyMultiRule(MultiRule<T, TContext> multiRule) : base(multiRule)
+        public ReadOnlyMultiRule(MultiRule<T, TContext, TOut> multiRule) : base(multiRule)
         {
             PropertyName = multiRule.PropertyName;
             Pairs = multiRule.Pairs.Select(p => (p.expectedValue, p.rule.ToReadOnly())).ToReadOnlyCollection();
         }
 
-        public ReadOnlyCollection<(T expectedValue, IReadOnlyRule<TContext> rule)> Pairs { get; }
+        public ReadOnlyCollection<(T expectedValue, IReadOnlyRule<TContext, TOut> rule)> Pairs { get; }
 
         public string PropertyName { get; }
     }

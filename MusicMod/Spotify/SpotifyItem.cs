@@ -18,7 +18,7 @@ namespace Spotify
         User
     }
 
-    public class SpotifyItem : IEquatable<SpotifyItem>, ISpotifyItem
+    public sealed class SpotifyItem : IEquatable<SpotifyItem>, ISpotifyItem
     {
         public SpotifyItem(SpotifyItemType type, string id)
         {
