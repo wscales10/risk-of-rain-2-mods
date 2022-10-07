@@ -68,7 +68,11 @@ namespace WPFApp.Controls.Pickers
                 if (Info.PatternParser.TryGetTypeDef(new TypeRef(type), out TypeDef typeDef))
                 {
                     Type patternType = typeDef.PatternTypeGetter(type);
-                    output.Add(patternType);
+
+                    if (!patternType.IsAbstract)
+                    {
+                        output.Add(patternType);
+                    }
                 }
 
                 if (type.IsClass)

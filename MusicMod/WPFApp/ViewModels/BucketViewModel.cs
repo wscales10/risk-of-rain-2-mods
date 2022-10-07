@@ -11,12 +11,12 @@ using MyRoR2;
 
 namespace WPFApp.ViewModels
 {
-    internal class BucketViewModel : RuleViewModelBase<Bucket<Context>>
+    internal class BucketViewModel : RuleViewModelBase<Bucket<Context, ICommandList>>
     {
-        public BucketViewModel(Bucket<Context> item, NavigationContext navigationContext) : base(item, navigationContext)
+        public BucketViewModel(Bucket<Context, ICommandList> item, NavigationContext navigationContext) : base(FillBucket(item), navigationContext)
         {
             ((INotifyCollectionChanged)TypedRowManager.Items).CollectionChanged += BucketViewModel_CollectionChanged;
-            TypedRowManager.BindTo(Item.Commands, AddCommand, r => r.Output);
+            TypedRowManager.BindTo(Item.Output, AddCommand, r => r.Output);
 
             ExtraCommands = new[]
             {
@@ -60,6 +60,16 @@ namespace WPFApp.ViewModels
         }
 
         protected override RowManager<BucketRow> TypedRowManager { get; } = new();
+
+        private static Bucket<Context, ICommandList> FillBucket(Bucket<Context, ICommandList> bucket)
+        {
+            if (bucket.Output is null)
+            {
+                bucket.Output = new CommandList();
+            }
+
+            return bucket;
+        }
 
         private void BucketViewModel_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {

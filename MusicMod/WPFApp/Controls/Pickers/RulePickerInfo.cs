@@ -1,5 +1,6 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Mutable;
+using Spotify.Commands;
 using System;
 using System.Collections;
 using System.Linq;
@@ -26,8 +27,8 @@ namespace WPFApp.Controls.Pickers
 
         public IControlWrapper CreateWrapper(object selectedInfo)
         {
-            var output = new ItemButtonWrapper<Rule<Context>>(buttonGetter());
-            output.SetValue(Rule<Context>.Create((Type)selectedInfo));
+            var output = new ItemButtonWrapper<Rule<Context, ICommandList>>(buttonGetter());
+            output.SetValue(Rule<Context, ICommandList>.Create((Type)selectedInfo));
             return output;
         }
 

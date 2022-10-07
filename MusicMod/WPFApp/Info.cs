@@ -21,7 +21,7 @@ namespace WPFApp
 
         public static ReadOnlyCollection<PropertyInfo> ContextProperties { get; } = new(GetProperties<Context>().ToList());
 
-        public static ReadOnlyCollection<Type> SupportedRuleTypes { get; } = new(new Type[] { typeof(StaticSwitchRule), typeof(ArrayRule), typeof(IfRule), typeof(Bucket) });
+        public static ReadOnlyCollection<Type> SupportedRuleTypes { get; } = new(new Type[] { typeof(StaticSwitchRule<,>), typeof(ArrayRule<,>), typeof(IfRule<,>), typeof(Bucket<,>) });
 
         public static ReadOnlyCollection<Type> SupportedCommandTypes { get; } = new(new Type[] { typeof(PlayCommand), typeof(StopCommand), typeof(TransferCommand), typeof(SeekToCommand), typeof(SetPlaybackOptionsCommand), typeof(LoopCommand), typeof(PlayOnceCommand), typeof(SkipCommand) });
 
@@ -29,7 +29,7 @@ namespace WPFApp
 
         public static PatternParser PatternParser { get; } = RoR2PatternParser.Instance;
 
-        public static RuleParser<Context> RuleParser { get; } = new RuleParser<Context>(PatternParser);
+        public static RuleParser<Context, ICommandList> RuleParser { get; } = Rules.RuleParser.RoR2ToSpotify;
 
         public static IEnumerable<PropertyInfo> GetProperties<T>() => GetProperties(typeof(T));
 

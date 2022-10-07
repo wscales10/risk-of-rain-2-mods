@@ -5,7 +5,7 @@ using WPFApp.ViewModels;
 using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.Controls.Wrappers;
 using System.Windows;
-using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context>;
+using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context, Spotify.Commands.ICommandList>;
 
 namespace WPFApp.Controls.Rows
 {

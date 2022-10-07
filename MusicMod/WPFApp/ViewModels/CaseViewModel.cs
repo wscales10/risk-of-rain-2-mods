@@ -6,7 +6,7 @@ using WPFApp.Controls;
 using WPFApp.Controls.Pickers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Controls.Wrappers.SaveResults;
-using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context>;
+using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context, Spotify.Commands.ICommandList>;
 
 namespace WPFApp.ViewModels
 {

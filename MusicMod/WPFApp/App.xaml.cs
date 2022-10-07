@@ -348,10 +348,10 @@ namespace WPFApp
 
         private NavigationViewModelBase GetRuleViewModel(Rule rule) => rule switch
         {
-            StaticSwitchRule<Context> sr => new SwitchRuleViewModel(sr, NavigationContext),
-            ArrayRule<Context> ar => new ArrayRuleViewModel(ar, NavigationContext),
-            IfRule<Context> ir => new IfRuleViewModel(ir, NavigationContext),
-            Bucket<Context> b => new BucketViewModel(b, NavigationContext),
+            StaticSwitchRule<Context, ICommandList> sr => new SwitchRuleViewModel(sr, NavigationContext),
+            ArrayRule<Context, ICommandList> ar => new ArrayRuleViewModel(ar, NavigationContext),
+            IfRule<Context, ICommandList> ir => new IfRuleViewModel(ir, NavigationContext),
+            Bucket<Context, ICommandList> b => new BucketViewModel(b, NavigationContext),
             _ => null,
         };
 

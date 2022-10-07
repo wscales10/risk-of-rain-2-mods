@@ -34,7 +34,7 @@
 				 Text="{Binding Text}"
 				 Grid.Row="1"
 				 TextAlignment="Center"
-				 FontSize="14"
+				 FontSize="13"
 				 Margin="2"
                  MinWidth="60"
 				 behaviors:AutoCompleteBehavior.AutoCompleteItemsSource="{Binding TypeableNames}"

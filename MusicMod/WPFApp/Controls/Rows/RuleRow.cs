@@ -1,5 +1,6 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Mutable;
+using Spotify.Commands;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,7 +10,7 @@ using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
-    internal abstract class RuleRow<TRow> : ButtonRow<Rule<Context>, TRow>, IRuleRow
+    internal abstract class RuleRow<TRow> : ButtonRow<Rule<Context, ICommandList>, TRow>, IRuleRow
         where TRow : RuleRow<TRow>
     {
         private RuleWrapper ruleWrapper;
@@ -35,7 +36,7 @@ namespace WPFApp.Controls.Rows
             set => SetProperty(ref parent, value);
         }
 
-        public override Rule<Context> Output
+        public override Rule<Context, ICommandList> Output
         {
             get => RuleWrapper.GetValueBypassValidation();
 
@@ -48,13 +49,13 @@ namespace WPFApp.Controls.Rows
 
         public override string ToString() => Label ?? base.ToString();
 
-        protected sealed override Rule<Context> CloneOutput() => Info.RuleParser.Parse(Output.ToXml());
+        protected sealed override Rule<Context, ICommandList> CloneOutput() => Info.RuleParser.Parse(Output.ToXml());
 
         protected override SaveResult trySaveChanges() => base.trySaveChanges() & RuleWrapper.TryGetValue(true);
 
         protected override UIElement MakeOutputUi() => RuleWrapper.UIElement;
 
-        protected override void RefreshOutputUi(UIElement ui, Rule<Context> output)
+        protected override void RefreshOutputUi(UIElement ui, Rule<Context, ICommandList> output)
         {
             if (output is not null)
             {

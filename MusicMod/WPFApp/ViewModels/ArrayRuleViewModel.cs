@@ -1,14 +1,15 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Mutable;
+using Spotify.Commands;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 
 namespace WPFApp.ViewModels
 {
-    internal class ArrayRuleViewModel : RuleViewModelBase<ArrayRule<Context>>
+    internal class ArrayRuleViewModel : RuleViewModelBase<ArrayRule<Context, ICommandList>>
     {
-        public ArrayRuleViewModel(ArrayRule<Context> arrayRule, NavigationContext navigationContext) : base(arrayRule, navigationContext)
+        public ArrayRuleViewModel(ArrayRule<Context, ICommandList> arrayRule, NavigationContext navigationContext) : base(arrayRule, navigationContext)
         {
             ExtraCommands = new[]
             {
@@ -24,6 +25,6 @@ namespace WPFApp.ViewModels
 
         protected override RowManager<ArrayRow> TypedRowManager { get; } = new();
 
-        private ArrayRow AddRule(Rule<Context> rule = null) => TypedRowManager.Add(new ArrayRow(NavigationContext) { Output = rule });
+        private ArrayRow AddRule(Rule<Context, ICommandList> rule = null) => TypedRowManager.Add(new ArrayRow(NavigationContext) { Output = rule });
     }
 }

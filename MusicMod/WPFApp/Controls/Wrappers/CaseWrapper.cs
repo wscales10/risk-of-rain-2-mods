@@ -6,7 +6,7 @@ using WPFApp.ViewModels;
 using System.Linq;
 using System;
 using System.Windows.Media;
-using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context>;
+using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context, Spotify.Commands.ICommandList>;
 
 namespace WPFApp.Controls.Wrappers
 {

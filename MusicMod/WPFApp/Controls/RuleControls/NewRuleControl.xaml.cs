@@ -1,5 +1,6 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Mutable;
+using Spotify.Commands;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,7 +28,7 @@ namespace WPFApp.Controls.RuleControls
 
         private void AddRuleButton_Click(object sender, RoutedEventArgs e)
         {
-            var rule = Rule<Context>.Create((Type)newRuleTypeComboBox.SelectedItem);
+            var rule = Rule<Context, ICommandList>.Create((Type)newRuleTypeComboBox.SelectedItem);
 
             if (rule is not null)
             {

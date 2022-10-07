@@ -1,5 +1,6 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Mutable;
+using Spotify.Commands;
 using System.Collections.Generic;
 using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
@@ -7,9 +8,9 @@ using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
-    internal class IfRuleViewModel : RuleViewModelBase<IfRule<Context>>
+    internal class IfRuleViewModel : RuleViewModelBase<IfRule<Context, ICommandList>>
     {
-        public IfRuleViewModel(IfRule<Context> ifRule, NavigationContext navigationContext) : base(ifRule, navigationContext)
+        public IfRuleViewModel(IfRule<Context, ICommandList> ifRule, NavigationContext navigationContext) : base(ifRule, navigationContext)
         {
             ExtraCommands = new[]
             {
@@ -48,7 +49,7 @@ namespace WPFApp.ViewModels
             }
         }
 
-        private void AddElse(Rule<Context> rule = null)
+        private void AddElse(Rule<Context, ICommandList> rule = null)
         {
             ElseRow elseRow = new(NavigationContext) { Output = rule };
             _ = TypedRowManager.AddDefault(elseRow);

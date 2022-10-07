@@ -13,9 +13,9 @@
              BorderThickness="1">
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter False="Hidden" x:Key="BooleanToVisibilityConverter" />
-        <converters:FlagsToMarginsConverter Maximum="29 3" Minimum="3"  x:Key="FlagsToMarginsConverter" />
+        <converters:FlagsToMarginsConverter Maximum="23 3" Minimum="3"  x:Key="FlagsToMarginsConverter" />
     </UserControl.Resources>
-    <Grid Background="Transparent" Margin="2">
+    <Grid Background="Transparent" Margin="1">
         <Grid>
             <Grid.Margin>
                 <MultiBinding Converter="{StaticResource FlagsToMarginsConverter}">
@@ -28,7 +28,7 @@
                        Visibility="{Binding IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}" />
         </Grid>
         <commandcontrols:DeleteButton HorizontalAlignment="Right"
-                                      Margin="5"
+                                      Margin="2"
 									  x:Name="deleteButton"
 									  Click="deleteButton_Click"
 									  Visibility="{Binding IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}, RelativeSource={RelativeSource AncestorType=local:ValueContainer}}">

@@ -1,5 +1,6 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Mutable;
+using Spotify.Commands;
 using System.ComponentModel;
 using WPFApp.ViewModels;
 
@@ -11,7 +12,7 @@ namespace WPFApp.Controls.Rows
 
         NavigationViewModelBase OutputViewModel { get; }
 
-        Rule<Context> Output { get; }
+        Rule<Context, ICommandList> Output { get; }
 
         ICollectionView Children { get; }
 
