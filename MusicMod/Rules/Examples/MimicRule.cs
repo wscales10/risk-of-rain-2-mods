@@ -1,4 +1,4 @@
-﻿using MyRoR2;
+using MyRoR2;
 using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using RoR2;
 using Rules.RuleTypes.Interfaces;
@@ -19,7 +19,7 @@ namespace Rules
 
     public static partial class Examples
     {
-        private static readonly Rule IdleRule = new SwitchRule<MyScene, Context, ICommandList>(nameof(Context.SceneName), ScenePattern.Equals,
+        private static readonly Rule IdleRule = Switcher.Instance.Create<MyScene>(nameof(Context.SceneName), ScenePattern.Equals,
                     C<MyScene>(Play("0YPqWkd7ad07IJfaGDgBLE"), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Simulacrum)), Scenes.AbandonedAqueduct),
                     M("7qOPvD6VE4EsC6LU3VBCOR", Scenes.DistantRoost),
                     M("0ViueDwpuVR94Ny75ItU1P", Scenes.AbandonedAqueduct, Scenes.AbyssalDepths),
@@ -38,12 +38,12 @@ namespace Rules
                     M("0YPqWkd7ad07IJfaGDgBLE", Scenes.SulfurPools)
             ).Named("Other");
 
-        private static readonly Rule SpecialRule = new SwitchRule<MyScene, Context, ICommandList>(
+        private static readonly Rule SpecialRule = Switcher.Instance.Create<MyScene>(
             nameof(Context.SceneName),
             ScenePattern.Equals,
             C<MyScene>(new IfRule(
                 Query.Create<bool>(nameof(Context.IsBossEncounter), BoolPattern.True),
-                new SwitchRule<int, Context, ICommandList>(
+                Switcher.Instance.Create<int>(
                     nameof(Context.ScenePart),
                     C(Play("3KE5ossIfDAnBqNJFF8LfF", 6280), 0).Named("Phase 1"),
                     C(Play("3KE5ossIfDAnBqNJFF8LfF", 85675), 1).Named("Phase 2"),
@@ -56,7 +56,7 @@ namespace Rules
                 Play("5fdiSSxvIsrCJ7sVkuhxnD"),
                 Play("2pl3Mzh2LeeUyzFacnHyZc")).Named("The Planetarium"), Scenes.ThePlanetarium)).Named("Final Stages");
 
-        private static readonly Rule BossRule = new SwitchRule<MyScene, Context, ICommandList>(
+        private static readonly Rule BossRule = Switcher.Instance.Create<MyScene>(
             nameof(Context.SceneName),
             ScenePattern.Equals,
             M("0j6CuhzD0XQlA5iTiRkx5P", Scenes.TitanicPlains, Scenes.DistantRoost, Scenes.AbandonedAqueduct),
@@ -66,13 +66,13 @@ namespace Rules
             M("0G44J59yRCMqJp5k8JVYcz", Scenes.SiphonedForest, Scenes.AphelianSanctuary),
             M("6uwL79qmtMJZA3Cxxd94c7", Scenes.SulfurPools));
 
-        private static readonly Rule EnvironmentRule = new SwitchRule<ActivationState?, Context, ICommandList>(
+        private static readonly Rule EnvironmentRule = Switcher.Instance.Create<ActivationState?>(
             nameof(Context.TeleporterState),
             C<ActivationState?>(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }), ActivationState.Charged).Named("Teleporter Charged"),
             C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging).Named("Teleporter"),
             C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null).Named("Other"));
 
-        private static readonly Rule OtherRule = new SwitchRule<MyScene, Context, ICommandList>(
+        private static readonly Rule OtherRule = Switcher.Instance.Create<MyScene>(
             nameof(Context.SceneName),
             ScenePattern.Equals,
             C<MyScene>(Play("6H6LnqmjEcW8gl6D7dIRKJ"), Scenes.SplashScreen, Scenes.IntroCutscene),
@@ -84,10 +84,10 @@ namespace Rules
             C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.PrismaticTrial)), Scenes.PrismaticTrialsMenu, Scenes.CharacterSelect),
             C<MyScene>(Play("6umrQw3KWPFS6CQHN7J5BW"), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Simulacrum)), Scenes.SimulacrumMenu, Scenes.CharacterSelect));
 
-        public static IReadOnlyRule<Context, ICommandList> MimicRule { get; } = new SwitchRule<SceneType, Context, ICommandList>(
+        public static IReadOnlyRule<Context, ICommandList> MimicRule { get; } = Switcher.Instance.Create<SceneType>(
             nameof(Context.SceneType),
             OtherRule,
-            C(EnvironmentRule, SceneType.Stage, SceneType.Intermission).Named("Environments")).ToReadOnly();
+            C(EnvironmentRule, SceneType.Stage, SceneType.Intermission).Named("Environments")).ToReadOnly(RuleParser.RoR2ToSpotify);
 
         private static Bucket Dehydrated() => Transfer("3BBYYGOlrDKEVOQvXD4huf", Switch("ms", P<int, string>("ms - 8000", IntPattern.x > 68000)), StringPattern.Equals("0Q4NqUpiuOnQxYOGjnbuCh"));
 

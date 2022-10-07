@@ -43,6 +43,9 @@ namespace Rules
             }
         }
 
-        public TrackedResponse<TContext, TOut> ToReadOnly() => new TrackedResponse<TContext, TOut>((IBucket<TContext, TOut>)Bucket.ToReadOnly(), Rules.Select(r => r.ToReadOnly()));
+        public TrackedResponse<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser)
+        {
+            return new TrackedResponse<TContext, TOut>((IBucket<TContext, TOut>)Bucket.ToReadOnly(ruleParser), Rules.Select(r => r.ToReadOnly(ruleParser)));
+        }
     }
 }

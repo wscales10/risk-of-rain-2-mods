@@ -11,13 +11,13 @@ namespace Rules.RuleTypes.Readonly
     {
         private readonly string toString;
 
-        public ReadOnlyCase(RuleCase<TValue, TContext, TOut> mutable)
+        public ReadOnlyCase(RuleCase<TValue, TContext, TOut> mutable, RuleParser<TContext, TOut> ruleParser)
         {
             toString = mutable.ToString();
             Name = mutable.Name;
             WherePattern = new ReadOnlyPattern<TContext>(mutable.WherePattern);
             Arr = mutable.Arr.ToReadOnlyCollection();
-            Output = mutable.Output.ToReadOnly();
+            Output = mutable.Output.ToReadOnly(ruleParser);
         }
 
         public ReadOnlyPattern<TContext> WherePattern { get; }

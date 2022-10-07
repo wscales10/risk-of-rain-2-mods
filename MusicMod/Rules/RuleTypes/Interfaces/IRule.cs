@@ -10,6 +10,6 @@ namespace Rules.RuleTypes.Interfaces
 
         TOut GetCommands(TContext oldContext, TContext newContext, bool force = false);
 
-        IReadOnlyRule<TContext, TOut> ToReadOnly();
+        IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
     }
 }

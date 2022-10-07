@@ -6,11 +6,11 @@ namespace Rules.RuleTypes.Readonly
 {
     public class ReadOnlyIfRule<TContext, TOut> : ReadOnlyUpperRule<IfRule<TContext, TOut>, TContext, TOut>, IIfRule<TContext, TOut>
     {
-        public ReadOnlyIfRule(IfRule<TContext, TOut> ifRule) : base(ifRule)
+        public ReadOnlyIfRule(IfRule<TContext, TOut> ifRule, RuleParser<TContext, TOut> ruleParser) : base(ifRule, ruleParser)
         {
-            Pattern = new ReadOnlyPattern<TContext>(ifRule.Pattern);
-            ThenRule = ifRule.ThenRule.ToReadOnly();
-            ElseRule = ifRule.ElseRule?.ToReadOnly();
+            Pattern = new ReadOnlyPattern<TContext>(mutable.Pattern);
+            ThenRule = mutable.ThenRule.ToReadOnly(ruleParser);
+            ElseRule = mutable.ElseRule?.ToReadOnly(ruleParser);
         }
 
         public IPattern<TContext> Pattern { get; }

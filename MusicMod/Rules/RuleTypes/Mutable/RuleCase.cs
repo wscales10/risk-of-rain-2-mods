@@ -70,7 +70,7 @@ namespace Rules.RuleTypes.Mutable
             }
         }
 
-        public ReadOnlyCase<TValue, TContext, TOut> ToReadOnly() => new ReadOnlyCase<TValue, TContext, TOut>(this);
+        public ReadOnlyCase<TValue, TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyCase<TValue, TContext, TOut>(this, ruleParser);
 
         public IEnumerable<RuleCase<TValue, TContext, TOut>> GetCases()
         {

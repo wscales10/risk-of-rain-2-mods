@@ -53,6 +53,6 @@ namespace Rules.RuleTypes.Mutable
 
         public override XElement ToXml() => ((StaticSwitchRule<TContext, TOut>)this).ToXml();
 
-        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlyMultiRule<T, TContext, TOut>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyMultiRule<T, TContext, TOut>(this, ruleParser);
     }
 }

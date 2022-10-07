@@ -45,11 +45,11 @@ namespace Rules.RuleTypes.Mutable
 
         public static implicit operator Rule<TContext, TOut>(TOut output) => new Bucket<TContext, TOut>(output);
 
-        public static Rule<TContext, TOut> Create(Type ruleType) => (Rule<TContext, TOut>)ruleType.ConstructDefault();
+        public static Rule<TContext, TOut> Create(Type ruleType) => (Rule<TContext, TOut>)ruleType.MakeGenericType(typeof(TContext), typeof(TOut)).ConstructDefault();
 
         public abstract TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
-        public abstract IReadOnlyRule<TContext, TOut> ToReadOnly();
+        public abstract IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
 
         public TOut GetCommands(TContext oldContext, TContext newContext, bool force = false) => GetCommands(this, oldContext, newContext, force);
 

@@ -13,7 +13,7 @@ namespace Rules.RuleTypes.Mutable
 
     public class Bucket<TContext, TOut> : Rule<TContext, TOut>, IBucket<TContext, TOut>
     {
-        public Bucket(TOut output) => Output = output;
+        public Bucket(TOut output = default) => Output = output;
 
         public TOut Output { get; set; }
 
@@ -56,6 +56,6 @@ namespace Rules.RuleTypes.Mutable
 
         public override string ToString() => Name ?? base.ToString() + $"({Output})";
 
-        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlyBucket<TContext, TOut>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyBucket<TContext, TOut>(this, ruleParser);
     }
 }

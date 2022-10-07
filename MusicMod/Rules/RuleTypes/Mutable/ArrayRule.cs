@@ -25,7 +25,7 @@ namespace Rules.RuleTypes.Mutable
 
         public override IEnumerable<Rule<TContext, TOut>> GetRules(TContext c) => Rules;
 
-        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlyArrayRule<TContext, TOut>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyArrayRule<TContext, TOut>(this, ruleParser);
 
         public override XElement ToXml()
         {

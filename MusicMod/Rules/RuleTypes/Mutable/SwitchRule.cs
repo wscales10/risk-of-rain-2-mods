@@ -1,7 +1,10 @@
-﻿using Patterns;
+﻿using MyRoR2;
+using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Readonly;
+using Spotify.Commands;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -17,10 +20,52 @@ namespace Rules.RuleTypes.Mutable
     public static class StaticSwitchRule
     { }
 
-    public class SwitchRule<T, TContext, TOut> : UpperRule<TContext, TOut>
+    public class Switcher : Switcher<Context, ICommandList>
+    {
+        private Switcher(RuleParser<Context, ICommandList> ruleParser) : base(ruleParser)
+        {
+        }
+
+        public static Switcher Instance { get; } = new Switcher(RuleParser.RoR2ToSpotify);
+    }
+
+    public class Switcher<TContext, TOut>
     {
         private readonly RuleParser<TContext, TOut> ruleParser;
 
+        public Switcher(RuleParser<TContext, TOut> ruleParser) => this.ruleParser = ruleParser;
+
+        public StaticSwitchRule<TContext, TOut> Create<T>(string propertyName, params ICaseGetter<T, TContext, TOut>[] cases)
+        {
+            return Create(propertyName, null, null, cases);
+        }
+
+        public StaticSwitchRule<TContext, TOut> Create<T>(string propertyName, Rule<TContext, TOut> defaultRule, params ICaseGetter<T, TContext, TOut>[] cases)
+        {
+            return Create(propertyName, defaultRule, null, cases);
+        }
+
+        public StaticSwitchRule<TContext, TOut> Create<T>(string propertyName, Rule<TContext, TOut> defaultRule, PatternGenerator<T> patternGenerator, params ICaseGetter<T, TContext, TOut>[] cases)
+        {
+            return new StaticSwitchRule<TContext, TOut>(
+                new PropertyInfo(propertyName, typeof(T)),
+                defaultRule,
+                cases.SelectMany(c => c.GetCases()).Select(c => (RuleCase<TContext, TOut>)new RuleCase<TContext, TOut>(c.Output, c.WherePattern, c.Arr.Select(x => GeneratePattern(patternGenerator, x)).ToArray()).Named(c.Name)).ToArray());
+        }
+
+        public StaticSwitchRule<TContext, TOut> Create<T>(string propertyName, PatternGenerator<T> patternGenerator, params ICaseGetter<T, TContext, TOut>[] cases)
+        {
+            return Create(propertyName, null, patternGenerator, cases);
+        }
+
+        private IPattern<T> GeneratePattern<T>(PatternGenerator<T> patternGenerator, T value)
+        {
+            return patternGenerator is null ? ruleParser.PatternParser.GetEqualizer(value) : patternGenerator(value);
+        }
+    }
+
+    public class SwitchRule<T, TContext, TOut> : UpperRule<TContext, TOut>
+    {
         private readonly PatternGenerator<T> patternGenerator;
 
         public SwitchRule(string propertyName, params ICaseGetter<T, TContext, TOut>[] cases)
@@ -51,11 +96,11 @@ namespace Rules.RuleTypes.Mutable
 
         public Rule<TContext, TOut> DefaultRule { get; }
 
-        public ArrayRule<TContext, TOut> ToArrayRule()
+        public ArrayRule<TContext, TOut> ToArrayRule(RuleParser<TContext, TOut> ruleParser)
         {
             var rules = Cases.Select(c =>
             {
-                var pattern = new OrPattern<T>(c.Arr.Select(GeneratePattern).ToArray());
+                var pattern = new OrPattern<T>(c.Arr.Select(x => GeneratePattern(x, ruleParser)).ToArray());
                 return new IfRule<TContext, TOut>(PropertyPattern<TContext>.Create(PropertyName, pattern) & (c.WherePattern ?? ConstantPattern<TContext>.True), c.Output);
             }).Cast<Rule<TContext, TOut>>().ToList();
 
@@ -65,12 +110,12 @@ namespace Rules.RuleTypes.Mutable
             return (ArrayRule<TContext, TOut>)new ArrayRule<TContext, TOut>(rules).Named(Name);
         }
 
-        public StaticSwitchRule<TContext, TOut> ToStatic()
+        public StaticSwitchRule<TContext, TOut> ToStatic(RuleParser<TContext, TOut> ruleParser)
         {
             return (StaticSwitchRule<TContext, TOut>)new StaticSwitchRule<TContext, TOut>(
                 new PropertyInfo(PropertyName, typeof(T)),
                 DefaultRule,
-                Cases.Select(c => (RuleCase<TContext, TOut>)new RuleCase<TContext, TOut>(c.Output, c.WherePattern, c.Arr.Select(GeneratePattern).ToArray()).Named(c.Name)).ToArray()).Named(Name);
+                Cases.Select(c => (RuleCase<TContext, TOut>)new RuleCase<TContext, TOut>(c.Output, c.WherePattern, c.Arr.Select(x => GeneratePattern(x, ruleParser)).ToArray()).Named(c.Name)).ToArray()).Named(Name);
         }
 
         public override IEnumerable<Rule<TContext, TOut>> GetRules(TContext c)
@@ -95,13 +140,13 @@ namespace Rules.RuleTypes.Mutable
 
         public override XElement ToXml()
         {
-            // return ((ArrayRule)this).ToXml();
-            return ToStatic().ToXml();
+            // return ToStatic().ToXml();
+            throw new InvalidOperationException($"Use {nameof(StaticSwitchRule)}");
         }
 
-        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => ToStatic().ToReadOnly();
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => ToStatic(ruleParser).ToReadOnly(ruleParser);
 
-        private IPattern<T> GeneratePattern(T value)
+        private IPattern<T> GeneratePattern(T value, RuleParser<TContext, TOut> ruleParser)
         {
             return patternGenerator is null ? ruleParser.PatternParser.GetEqualizer(value) : patternGenerator(value);
         }
@@ -230,6 +275,6 @@ namespace Rules.RuleTypes.Mutable
             return element;
         }
 
-        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlySwitchRule<TContext, TOut>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlySwitchRule<TContext, TOut>(this, ruleParser);
     }
 }

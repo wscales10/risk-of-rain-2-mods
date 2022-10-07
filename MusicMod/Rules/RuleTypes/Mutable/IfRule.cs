@@ -61,6 +61,6 @@ namespace Rules.RuleTypes.Mutable
             return element;
         }
 
-        public override IReadOnlyRule<TContext, TOut> ToReadOnly() => new ReadOnlyIfRule<TContext, TOut>(this);
+        public override IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyIfRule<TContext, TOut>(this, ruleParser);
     }
 }

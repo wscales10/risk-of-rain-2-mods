@@ -6,9 +6,9 @@ namespace Rules.RuleTypes.Readonly
 {
     public abstract class ReadOnlyRule<T, TContext, TOut> : IReadOnlyRule<TContext, TOut> where T : Rule<TContext, TOut>
     {
-        private readonly T mutable;
+        protected readonly T mutable;
 
-        protected ReadOnlyRule(T mutable) => this.mutable = mutable;
+        protected ReadOnlyRule(T mutable, RuleParser<TContext, TOut> ruleParser) => this.mutable = (T)ruleParser.DeepClone(mutable);
 
         public string Name => mutable.Name;
 
@@ -17,7 +17,7 @@ namespace Rules.RuleTypes.Readonly
         // TODO: make GetCommands actually use this object's properties and mutable's methods or whatever
         public TOut GetCommands(TContext oldContext, TContext newContext, bool force = false) => Rule<TContext, TOut>.GetCommands(this, oldContext, newContext, force);
 
-        public IReadOnlyRule<TContext, TOut> ToReadOnly() => this;
+        public IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => this;
 
         public sealed override string ToString() => Name ?? GetType().Name;
 

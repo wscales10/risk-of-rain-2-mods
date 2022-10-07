@@ -19,8 +19,6 @@ namespace Ror2Mod2
     [BepInDependency("com.rune580.riskofoptions")]
     public class MusicMod : BaseUnityPlugin
     {
-        private readonly RuleParser<Context, ICommandList> ruleParser = new RuleParser<Context, ICommandList>(RoR2PatternParser.Instance, s => CommandList.Parse(XElement.Parse(s)));
-
         private readonly Configuration configuration;
 
         private bool musicMuted;
@@ -79,7 +77,7 @@ namespace Ror2Mod2
             else
             {
                 this.Log($"Rule Location: {uri}");
-                rule = ruleParser.Parse(XElement.Load(uri));
+                rule = RuleParser.RoR2ToSpotify.Parse(XElement.Load(uri));
                 var playlistsFile = new FileInfo(uri).Directory.GetFiles("playlists.xml").FirstOrDefault();
                 if (!(playlistsFile is null))
                 {

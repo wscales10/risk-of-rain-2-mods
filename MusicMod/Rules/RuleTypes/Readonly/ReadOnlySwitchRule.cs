@@ -11,14 +11,13 @@ namespace Rules.RuleTypes.Readonly
 {
     public class ReadOnlySwitchRule<TContext, TOut> : ReadOnlyUpperRule<StaticSwitchRule<TContext, TOut>, TContext, TOut>, ISwitchRule<TContext, TOut>
     {
-        public ReadOnlySwitchRule(StaticSwitchRule<TContext, TOut> staticSwitchRule) : base(staticSwitchRule)
+        public ReadOnlySwitchRule(StaticSwitchRule<TContext, TOut> staticSwitchRule, RuleParser<TContext, TOut> ruleParser) : base(staticSwitchRule, ruleParser)
         {
-            PropertyInfo = staticSwitchRule.PropertyInfo;
-            DefaultRule = staticSwitchRule.DefaultRule?.ToReadOnly();
-            Cases = staticSwitchRule.Cases.Select(c => c.ToReadOnly()).ToReadOnlyCollection();
+            DefaultRule = mutable.DefaultRule?.ToReadOnly(ruleParser);
+            Cases = mutable.Cases.Select(c => c.ToReadOnly(ruleParser)).ToReadOnlyCollection();
         }
 
-        public PropertyInfo PropertyInfo { get; }
+        public PropertyInfo PropertyInfo => mutable.PropertyInfo;
 
         public ReadOnlyCollection<ReadOnlyCase<IPattern, TContext, TOut>> Cases { get; }
 
