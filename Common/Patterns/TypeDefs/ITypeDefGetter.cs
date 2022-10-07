@@ -1,9 +1,7 @@
-﻿using System;
-
-namespace Patterns.TypeDefs
+﻿namespace Patterns.TypeDefs
 {
-	public interface ITypeDefGetter
-	{
-		TypeDef GetTypeDef(TypeRef typeref);
-	}
+    public interface ITypeDefGetter
+    {
+        TypeDef GetTypeDef(TypeRef typeRef);
+    }
 }
