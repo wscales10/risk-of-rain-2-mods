@@ -29,7 +29,11 @@ namespace Utils.Reflection
             return null;
         }
 
-        public static object ConstructDefault(this Type type) => type.GetEmptyConstructor().Invoke(Array.Empty<object>());
+        public static object ConstructDefault(this Type type)
+        {
+            ConstructorInfo constructor = type.GetEmptyConstructor();
+            return constructor.Invoke(Enumerable.Repeat(Type.Missing, constructor.GetParameters().Length).ToArray());
+        }
 
         private static ConstructorInfo GetConstructor(this Type type, BindingFlags flags, params Type[] argTypes)
         {
