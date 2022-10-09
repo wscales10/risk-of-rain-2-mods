@@ -41,15 +41,9 @@ namespace Patterns.Patterns.SmallPatterns
     {
         public override sealed bool IsMatch(T value) => base.IsMatch(value);
 
-        public bool IsMatch(T? value)
-        {
-            return IsMatch(value.Value);
-        }
+        public bool IsMatch(T? value) => IsMatch(value.Value);
 
-        IPattern<T?> IPattern<T?>.Simplify()
-        {
-            return this;
-        }
+        IPattern<T?> IPattern<T?>.Simplify() => this;
     }
 
     public abstract class ClassValuePattern<T> : ValuePattern<T> where T : class

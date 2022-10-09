@@ -1,15 +1,8 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using SpotifyAPI.Web;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Utils;
