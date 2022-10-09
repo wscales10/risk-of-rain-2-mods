@@ -7,19 +7,14 @@ namespace WPFApp.Controls.Wrappers
     {
         public SpotifyItemWrapper2(NavigationContext navigationContext) : base(new SpotifyItemPickerInfo(navigationContext))
         {
+            UIElement.comboBox.SelectedItem = new TypeWrapper(typeof(SpotifyItem));
         }
 
         protected override bool Validate(ISpotifyItem value) => base.Validate(value) && value is not null;
 
         protected override void setValue(ISpotifyItem value)
         {
-            IControlWrapper valueWrapper = value switch
-            {
-                SpotifyItem => new SpotifyItemWrapper(),
-                PlaylistRef => new PlaylistWrapper(),
-                _ => null,
-            };
-
+            IControlWrapper valueWrapper = CreateWrapper(value?.GetType());
             valueWrapper?.SetValue(value);
             UIElement.ViewModel.HandleSelection(valueWrapper);
         }

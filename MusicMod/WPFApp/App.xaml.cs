@@ -405,7 +405,7 @@ namespace WPFApp
 
         private bool TrySave(bool isViewModelSaved = false)
         {
-            if (ViewModelList[0] is not IXmlViewModel xmlViewModel)
+            if (ViewModelList.FirstOrDefault() is not IXmlViewModel xmlViewModel)
             {
                 return false;
             }

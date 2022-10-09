@@ -37,7 +37,7 @@ namespace WPFApp.Controls.Pickers
                 return new PlaylistWrapper();
             }
 
-            throw new NotSupportedException();
+            return null;
         }
     }
 }

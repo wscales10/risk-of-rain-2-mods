@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using WPFApp.Controls.Pickers;
 using WPFApp.Controls.Wrappers.SaveResults;
 
@@ -8,6 +9,7 @@ namespace WPFApp.Controls.Wrappers
     {
         protected SinglePickerWrapper(IPickerInfo config)
         {
+            CreateWrapper = t => (IControlWrapper)config.CreateWrapper(t);
             NavigationContext = config.NavigationContext;
             UIElement = new() { ViewModel = new(config) };
             UIElement.ViewModel.ValueChanged += NotifyValueChanged;
@@ -22,7 +24,9 @@ namespace WPFApp.Controls.Wrappers
 
         protected NavigationContext NavigationContext { get; }
 
-        protected sealed override SaveResult<T> tryGetValue(GetValueRequest request)
+        protected Func<Type, IControlWrapper> CreateWrapper { get; }
+
+        protected override SaveResult<T> tryGetValue(GetValueRequest request)
         {
             var valueWrapper = UIElement.ViewModel.ValueWrapper;
 

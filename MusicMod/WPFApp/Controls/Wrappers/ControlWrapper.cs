@@ -32,6 +32,8 @@ namespace WPFApp.Controls.Wrappers
 
     internal interface IReadableControlWrapper<TValue> : IReadableControlWrapper
     {
+        event MyValidationEventHandler<TValue> OnValidate;
+
         SaveResult<TValue> TryGetValue(GetValueRequest request);
 
         void ForceGetValue(out TValue value);

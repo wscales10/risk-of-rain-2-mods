@@ -14,14 +14,21 @@ using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using System.Reflection;
 using System.Linq;
+using Spotify.Commands;
 
 namespace WPFApp.Controls.CommandControls
 {
     internal abstract class PropertyString : NotifyPropertyChangedBase
     {
+        private readonly Type propertyType;
+
         private readonly StackPanel stackPanel = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(2) };
 
         private readonly ArrayList stringParts = new();
+
+        private bool isInitialised;
+
+        private IControlWrapper controlWrapper;
 
         protected PropertyString(Type objectType, bool required, IControlWrapper controlWrapper, string[] chunks)
         {
@@ -39,21 +46,15 @@ namespace WPFApp.Controls.CommandControls
                 else
                 {
                     PropertyName = chunk;
-                    ControlWrapper = controlWrapper ?? GetControlWrapper(propertyInfo.PropertyType);
-                    SetPropertyDependency(nameof(AsString), ControlWrapper, nameof(ControlWrapper.ValueString));
-
-                    if (!required && propertyInfo.PropertyType.IsGenericType(typeof(Nullable<>)))
-                    {
-                        ControlWrapper.SetValue(Activator.CreateInstance(propertyInfo.PropertyType.GenericTypeArguments[0]));
-                    }
-
-                    ControlWrapper.UIElement.Margin = new Thickness(1);
-                    stackPanel.Children.Add(ControlWrapper.UIElement);
-                    stringParts.Add(ControlWrapper);
+                    propertyType = propertyInfo.PropertyType;
+                    this.controlWrapper = controlWrapper;
                 }
             }
 
-            IsRequired = required;
+            if (IsRequired = required)
+            {
+                Initialise();
+            }
         }
 
         public string AsString => string.Concat(GetStringParts());
@@ -62,7 +63,14 @@ namespace WPFApp.Controls.CommandControls
 
         public Border FocusElement { get; } = new Border { Focusable = true, FocusVisualStyle = null };
 
-        public IControlWrapper ControlWrapper { get; }
+        public IControlWrapper ControlWrapper
+        {
+            get
+            {
+                Initialise();
+                return controlWrapper;
+            }
+        }
 
         public string PropertyName { get; }
 
@@ -75,12 +83,32 @@ namespace WPFApp.Controls.CommandControls
             [typeof(TimeSpan)] = () => new TimeSpanWrapper(),
             [typeof(ISpotifyItem)] = () => new SpotifyItemWrapper2(NavigationContext),
             [typeof(SpotifyItem)] = () => new SpotifyItemWrapper(),
-            [typeof(bool)] = () => new BoolWrapper()
+            [typeof(bool)] = () => new BoolWrapper(),
+            [typeof(IOffset)] = () => new OffsetWrapper(NavigationContext)
         });
 
         public static PropertyString<T> Create<T>(bool required, params string[] chunks) => new(required, chunks);
 
         public static PropertyString<T> Create<T>(bool required, IControlWrapper controlWrapper, params string[] chunks) => new(required, controlWrapper, chunks);
+
+        internal void Initialise()
+        {
+            if (!isInitialised)
+            {
+                controlWrapper ??= GetControlWrapper(propertyType);
+                SetPropertyDependency(nameof(AsString), controlWrapper, nameof(controlWrapper.ValueString));
+
+                if (!IsRequired && propertyType.IsGenericType(typeof(Nullable<>)))
+                {
+                    controlWrapper.SetValue(Activator.CreateInstance(propertyType.GenericTypeArguments[0]));
+                }
+
+                controlWrapper.UIElement.Margin = new Thickness(1);
+                stackPanel.Children.Add(controlWrapper.UIElement);
+                stringParts.Add(controlWrapper);
+                isInitialised = true;
+            }
+        }
 
         private static IControlWrapper GetControlWrapper(Type type)
         {
@@ -101,7 +129,12 @@ namespace WPFApp.Controls.CommandControls
                 throw new InvalidOperationException("You have to specify this in the constructor call");
             }
 
-            return Controls.TryGetValue(type, out var func) ? func() : Controls[valueType]();
+            if (!Controls.TryGetValue(type, out var func) && !Controls.TryGetValue(valueType, out func))
+            {
+                throw new NotImplementedException();
+            }
+
+            return func();
         }
 
         private IEnumerable<string> GetStringParts()
@@ -151,13 +184,13 @@ namespace WPFApp.Controls.CommandControls
         }
     }
 
-    internal sealed class PropertyString<T> : PropertyString
+    internal class PropertyString<TObject> : PropertyString
     {
         public PropertyString(bool required, params string[] chunks) : this(required, null, chunks)
         {
         }
 
-        public PropertyString(bool required, IControlWrapper controlWrapper, params string[] chunks) : base(typeof(T), required, controlWrapper, chunks)
+        public PropertyString(bool required, IControlWrapper controlWrapper, params string[] chunks) : base(typeof(TObject), required, controlWrapper, chunks)
         {
         }
     }

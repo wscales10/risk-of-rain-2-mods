@@ -12,7 +12,7 @@ namespace WPFApp.Controls.Wrappers
             UIElement.ValueChanged += (s, e) => NotifyValueChanged();
         }
 
-        public override IntegerUpDown UIElement { get; } = new();
+        public override IntegerUpDown UIElement { get; } = new() { VerticalAlignment = System.Windows.VerticalAlignment.Center };
 
         protected override void setValue(int value) => UIElement.Value = value;
 

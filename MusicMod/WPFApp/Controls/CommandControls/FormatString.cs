@@ -1,5 +1,6 @@
 ﻿using Spotify.Commands;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
@@ -12,8 +13,10 @@ using WPFApp.Converters;
 
 namespace WPFApp.Controls.CommandControls
 {
-    internal sealed class FormatString : NotifyPropertyChangedBase
+    internal class FormatString : NotifyPropertyChangedBase
     {
+        protected readonly List<Predicate<Command>> predicates = new();
+
         private readonly PropertyString[] propertyStrings;
 
         private readonly ObservableCollection<PropertyString> notDisplayed = new();
@@ -34,7 +37,7 @@ namespace WPFApp.Controls.CommandControls
 
         public Type Type { get; }
 
-        internal static FormatString Create<T>(params PropertyString<T>[] propertyStrings) => new(typeof(T), propertyStrings);
+        internal static FormatString<TCommand> Create<TCommand>(params PropertyString<TCommand>[] propertyStrings) where TCommand : Command => new(propertyStrings);
 
         internal StackPanel BuildControl()
         {
@@ -132,11 +135,12 @@ namespace WPFApp.Controls.CommandControls
 
         internal SaveResult TryGetProperties(Command command, bool trySave)
         {
-            return propertyStrings.All(propertyString =>
+            var duplicate = Command.FromXml(command.ToXml());
+            var output = propertyStrings.All(propertyString =>
             {
                 if (!propertyString.IsRequired && notDisplayed.Contains(propertyString))
                 {
-                    command.SetPropertyValue(propertyString.PropertyName, null);
+                    duplicate.SetPropertyValue(propertyString.PropertyName, null);
                     return null;
                 }
                 else
@@ -145,18 +149,34 @@ namespace WPFApp.Controls.CommandControls
 
                     if (result.IsSuccess)
                     {
-                        command.SetPropertyValue(propertyString.PropertyName, result.Value);
+                        duplicate.SetPropertyValue(propertyString.PropertyName, result.Value);
                     }
 
                     return result;
                 }
             });
+
+            foreach (var predicate in predicates)
+            {
+                output &= new SaveResult(predicate(duplicate));
+            }
+
+            if (output.IsSuccess)
+            {
+                foreach (var propertyName in propertyStrings.Select(s => s.PropertyName))
+                {
+                    command.SetPropertyValue(propertyName, duplicate.GetPropertyValue(propertyName));
+                }
+            }
+
+            return output;
         }
 
         private void Display(PropertyString propertyString)
         {
             if (notDisplayed.Contains(propertyString))
             {
+                propertyString.Initialise();
                 _ = notDisplayed.Remove(propertyString);
                 propertyString.UI.Visibility = Visibility.Visible;
             }
@@ -169,6 +189,20 @@ namespace WPFApp.Controls.CommandControls
                 notDisplayed.Add(propertyString);
                 propertyString.UI.Visibility = Visibility.Collapsed;
             }
+        }
+    }
+
+    internal sealed class FormatString<TCommand> : FormatString
+        where TCommand : Command
+    {
+        internal FormatString(params PropertyString[] propertyStrings) : base(typeof(TCommand), propertyStrings)
+        {
+        }
+
+        internal FormatString Where(params Predicate<TCommand>[] predicates)
+        {
+            this.predicates.AddRange(predicates.Select<Predicate<TCommand>, Predicate<Command>>(p => c => p((TCommand)c)));
+            return this;
         }
     }
 }

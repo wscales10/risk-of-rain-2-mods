@@ -1,4 +1,5 @@
-﻿using Spotify.Commands;
+﻿using Spotify;
+using Spotify.Commands;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -116,8 +117,10 @@ namespace WPFApp.Controls.Rows
                 case LoopCommand:
                 case PlayOnceCommand:
                     return FormatString.Create(
-                        PropertyString.Create<PlayCommand>(true, nameof(PlayCommand.Item)),
-                        PropertyString.Create<PlayCommand>(false, "at ", nameof(PlayCommand.At)));
+                        PropertyString.Create<PlayCommandBase>(true, nameof(PlayCommand.Item)),
+                        PropertyString.Create<PlayCommandBase>(false, "at track ", nameof(PlayCommand.Offset)),
+                        PropertyString.Create<PlayCommandBase>(false, "at ", nameof(PlayCommand.At)))
+                        .Where(c => c.Item is not SpotifyItem item || c.Offset is null || item.Type == SpotifyItemType.Playlist || item.Type == SpotifyItemType.Album);
 
                 case SeekToCommand:
                     return FormatString.Create(PropertyString.Create<SeekToCommand>(true, nameof(SeekToCommand.At)));
