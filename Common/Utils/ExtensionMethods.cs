@@ -13,6 +13,8 @@ namespace Utils
     {
         private static readonly Regex genericTypeNameInfoRegex = new Regex(@"`\d+$");
 
+        public static Type Denullabled(this Type type, Type[] genericTypeArguments = null) => (type?.IsGenericType(typeof(Nullable<>)) ?? false) ? (genericTypeArguments ?? type.GenericTypeArguments).SingleOrDefault() : type;
+
         public static T AsEnum<T>(this string value, bool ignoreCase = false)
             where T : struct, Enum
         {

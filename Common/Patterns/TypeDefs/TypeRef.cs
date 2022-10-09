@@ -5,54 +5,54 @@ using Utils;
 
 namespace Patterns.TypeDefs
 {
-	public class TypeRef
-	{
-		private Type fullType;
+    public class TypeRef
+    {
+        private Type fullType;
 
-		public TypeRef(Type fullType)
-		{
-			FullType = fullType;
-		}
+        public TypeRef(Type fullType)
+        {
+            FullType = fullType;
+        }
 
-		public TypeRef(string typeKey, params Type[] genericTypeArgs)
-		{
-			TypeKey = typeKey;
-			GenericTypeArguments = genericTypeArgs;
-		}
+        public TypeRef(string typeKey, params Type[] genericTypeArgs)
+        {
+            TypeKey = typeKey;
+            GenericTypeArguments = genericTypeArgs;
+        }
 
-		public string TypeKey { get; set; }
+        public string TypeKey { get; set; }
 
-		public string[] GenericTypeKeys { get; set; } = Array.Empty<string>();
+        public string[] GenericTypeKeys { get; set; } = Array.Empty<string>();
 
-		public Type FullType
-		{
-			get { return fullType; }
+        public Type FullType
+        {
+            get { return fullType; }
 
-			set
-			{
-				if (value.IsGenericType)
-				{
-					GenericTypeDef = value.GetGenericTypeDefinition();
-					GenericTypeArguments = value.GenericTypeArguments;
-				}
+            set
+            {
+                if (value.IsGenericType)
+                {
+                    GenericTypeDef = value.GetGenericTypeDefinition();
+                    GenericTypeArguments = value.GenericTypeArguments;
+                }
 
-				fullType = value;
-			}
-		}
+                fullType = value;
+            }
+        }
 
-		public Type GenericTypeDef { get; set; }
+        public Type GenericTypeDef { get; set; }
 
-		public Type[] GenericTypeArguments { get; set; } = Array.Empty<Type>();
+        public Type[] GenericTypeArguments { get; set; } = Array.Empty<Type>();
 
-		public int GenericSize => Math.Max(GenericTypeKeys.Length, GenericTypeArguments.Length);
+        public int GenericSize => Math.Max(GenericTypeKeys.Length, GenericTypeArguments.Length);
 
-		public Type DenullabledType => (FullType?.IsGenericType(typeof(Nullable<>)) ?? false) ? GenericTypeArguments.SingleOrDefault() : FullType;
+        public Type DenullabledType => FullType?.Denullabled();
 
-		public void AssumeTypeKey()
-		{
-			TypeKey = PatternBase.GetTypeDefKey(fullType);
-		}
+        public void AssumeTypeKey()
+        {
+            TypeKey = PatternBase.GetTypeDefKey(fullType);
+        }
 
-		public TypeRef Clone() => (TypeRef)MemberwiseClone();
-	}
+        public TypeRef Clone() => (TypeRef)MemberwiseClone();
+    }
 }
