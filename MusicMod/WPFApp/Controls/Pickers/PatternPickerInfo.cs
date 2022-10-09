@@ -75,6 +75,11 @@ namespace WPFApp.Controls.Pickers
                     }
                 }
 
+                if (typeof(IComparable).IsAssignableFrom(type))
+                {
+                    output.Add(typeof(MathsPattern<>).MakeGenericType(type));
+                }
+
                 if (type.IsClass)
                 {
                     output.Add(typeof(ClassNullPattern<>).MakeGenericType(type));
