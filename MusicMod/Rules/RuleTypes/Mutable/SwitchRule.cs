@@ -245,7 +245,7 @@ namespace Rules.RuleTypes.Mutable
         {
             var element = base.ToXml();
             var onElement = new XElement("On");
-            PropertyInfo.AddAttributesTo(onElement);
+            PropertyInfo?.AddAttributesTo(onElement);
             element.Add(onElement);
             foreach (var @case in Cases)
             {

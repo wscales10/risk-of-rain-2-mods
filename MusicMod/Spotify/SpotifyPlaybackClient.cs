@@ -85,13 +85,13 @@ namespace Spotify
                     return await Client.Player.SkipNext();
 
                 case PlayCommand playCommand:
-                    return await PlayInner(playCommand.Item, playCommand.Milliseconds);
+                    return await PlayInner(playCommand.Item, playCommand.Milliseconds, playCommand.Offset);
 
                 case PlayOnceCommand playOnceCommand:
-                    return await PlayInner(playOnceCommand.Item, playOnceCommand.Milliseconds) && await HandleAsync(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }, cancellationToken);
+                    return await PlayInner(playOnceCommand.Item, playOnceCommand.Milliseconds, playOnceCommand.Offset) && await HandleAsync(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }, cancellationToken);
 
                 case LoopCommand loopCommand:
-                    return await PlayInner(loopCommand.Item, loopCommand.Milliseconds) && await HandleAsync(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Context }, cancellationToken);
+                    return await PlayInner(loopCommand.Item, loopCommand.Milliseconds, loopCommand.Offset) && await HandleAsync(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Context }, cancellationToken);
 
                 case SeekToCommand seekToCommand:
                     {
@@ -210,16 +210,16 @@ namespace Spotify
             playlistIndex = -1;
         }
 
-        private async Task<bool> PlayInner(ISpotifyItem item, int milliseconds)
+        private async Task<bool> PlayInner(ISpotifyItem item, int milliseconds, IOffset offset)
         {
             ClearCurrentPlaylist();
             switch (item)
             {
                 case SpotifyItem spotifyItem:
-                    return await PlayItem(spotifyItem, milliseconds);
+                    return await PlayItem(spotifyItem, milliseconds, offset);
 
                 case PlaylistRef pRef:
-                    return await PlayPlaylist(playlists.FirstOrDefault(p => p.Name == pRef.Name), milliseconds);
+                    return await PlayPlaylist(playlists.FirstOrDefault(p => p.Name == pRef.Name), milliseconds, offset);
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(item));
@@ -243,10 +243,28 @@ namespace Spotify
             return true;
         }
 
-        private async Task<bool> PlayPlaylist(Playlist playlist, int milliseconds)
+        private async Task<bool> PlayPlaylist(Playlist playlist, int milliseconds, IOffset offset)
         {
-            playlistIndex = -1;
             currentPlaylist = playlist;
+
+            switch (offset)
+            {
+                case null:
+                    playlistIndex = -1;
+                    break;
+
+                case IndexOffset indexOffset:
+                    playlistIndex = indexOffset.Position - 1;
+                    break;
+
+                case ItemOffset itemOffset:
+                    playlistIndex = playlist.IndexOf(itemOffset.Item) - 1;
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
             return await NextPlaylistItem(milliseconds);
         }
 
@@ -276,7 +294,7 @@ namespace Spotify
             return await GetState() == PlayerState.Paused;
         }
 
-        private async Task<bool> PlayItem(SpotifyItem item, int milliseconds)
+        private async Task<bool> PlayItem(SpotifyItem item, int milliseconds, IOffset offset = null)
         {
             if (item is null)
             {
@@ -285,7 +303,40 @@ namespace Spotify
 
             var s = item?.GetUri().ToString();
             var positionMs = await GetPosition(milliseconds);
-            var request = item?.Type == SpotifyItemType.Track ? new PlayerResumePlaybackRequest { Uris = new string[] { s }, PositionMs = positionMs } : new PlayerResumePlaybackRequest { ContextUri = s, PositionMs = positionMs };
+            PlayerResumePlaybackRequest request;
+            if (item?.Type == SpotifyItemType.Track)
+            {
+                if (!(offset is null))
+                {
+                    throw new InvalidOperationException("Offset cannot be used with tracks");
+                }
+
+                request = new PlayerResumePlaybackRequest { Uris = new string[] { s }, PositionMs = positionMs };
+            }
+            else
+            {
+                PlayerResumePlaybackRequest.Offset convertedOffset;
+
+                switch (offset)
+                {
+                    case null:
+                        convertedOffset = null;
+                        break;
+
+                    case ItemOffset itemOffset:
+                        convertedOffset = new PlayerResumePlaybackRequest.Offset { Uri = itemOffset.Item.GetUri().ToString() };
+                        break;
+
+                    case IndexOffset indexOffset:
+                        convertedOffset = new PlayerResumePlaybackRequest.Offset { Position = indexOffset.Position };
+                        break;
+
+                    default:
+                        throw new FormatException();
+                }
+
+                request = new PlayerResumePlaybackRequest { ContextUri = s, PositionMs = positionMs, OffsetParam = convertedOffset };
+            }
 
             if (await Client.Player.ResumePlayback(request))
             {

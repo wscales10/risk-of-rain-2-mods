@@ -13,7 +13,7 @@ namespace Patterns.Patterns
             Pattern = pattern;
         }
 
-        private PropertyPattern(PropertyInfo propertyInfo, IPattern pattern)
+        private PropertyPattern(PropertyInfo propertyInfo = null, IPattern pattern = null)
         {
             PropertyInfo = propertyInfo;
             Pattern = pattern;
