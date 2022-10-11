@@ -33,16 +33,17 @@ namespace WPFApp.ViewModels
             });
             ExportCommand = new(_ =>
             {
-                if (TryGetExportLocation(out string fileName))
-                {
-                    OnExportFile?.Invoke(fileName);
-                }
-            });
-            NewCommand = new(_ =>
-            {
-                if (MessageBox.Show("Are you sure you want to close this?", "Are you sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
-                {
-                    OnReset?.Invoke();
+				if (TryGetExportLocation(out string fileName))
+				{
+					OnExportFile?.Invoke(fileName);
+				}
+			});
+			CopyCommand = new(_ => OnCopy?.Invoke());
+			NewCommand = new(_ =>
+			{
+				if (MessageBox.Show("Are you sure you want to close this?", "Are you sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
+				{
+					OnReset?.Invoke();
                 }
             }, this, nameof(HasContent));
             LoadExampleCommand = new(_ =>
@@ -68,6 +69,8 @@ namespace WPFApp.ViewModels
 
         public event Action<string> OnExportFile;
 
+        public event Action OnCopy;
+
         public ButtonCommand NavigateTreeCommand { get; }
 
         public ButtonCommand BackCommand { get; }
@@ -81,6 +84,8 @@ namespace WPFApp.ViewModels
         public ButtonCommand ImportCommand { get; }
 
         public ButtonCommand ExportCommand { get; }
+
+        public ButtonCommand CopyCommand { get; }
 
         public ButtonCommand NewCommand { get; }
 

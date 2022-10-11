@@ -43,6 +43,7 @@
             <Button Command="{Binding HomeCommand}">Home</Button>
             <Button Command="{Binding ImportCommand}">Import XML</Button>
             <Button Command="{Binding ExportCommand}">Export XML</Button>
+            <Button Command="{Binding CopyCommand}">Copy</Button>
             <Button Command="{Binding NewCommand}" Visibility="{Binding IsEnabled, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">New...</Button>
             <Button Command="{Binding LoadExampleCommand}" Visibility="{Binding HasContent, Converter={StaticResource ReverseBooleanToVisibilityConverter}}">Load Example</Button>
             <Button Command="{Binding ClearCacheCommand}">Clear Cache</Button>

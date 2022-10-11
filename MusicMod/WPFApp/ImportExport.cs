@@ -57,12 +57,12 @@ namespace WPFApp
             Export(element, new(Path.Combine(directoryInfo.FullName, "playlists.xml")));
         }
 
-        private static void ExportToFile(IXmlViewModel xmlControl, FileInfo fileName)
+        private static void ExportToFile(IXmlViewModel xmlViewModel, FileInfo fileName)
         {
             XElement xml;
             try
             {
-                xml = xmlControl.GetContentXml();
+                xml = xmlViewModel.GetContentXml();
             }
             catch (XmlException)
             {

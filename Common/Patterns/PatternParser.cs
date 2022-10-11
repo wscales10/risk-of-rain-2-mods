@@ -1,8 +1,17 @@
-﻿using System;
+﻿using Patterns.Patterns;
+using Patterns.Patterns.CollectionPatterns;
+using Patterns.Patterns.SmallPatterns;
+using Patterns.Patterns.SmallPatterns.ValuePatterns;
+using Patterns.TypeDefs;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Xml;
+using System.Xml.Linq;
+using Utils;
+using Utils.Reflection;
 
 namespace Patterns
 {
