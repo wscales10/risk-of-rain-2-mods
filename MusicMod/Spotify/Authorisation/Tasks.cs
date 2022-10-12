@@ -6,84 +6,90 @@ using System.Threading.Tasks;
 
 namespace Spotify.Authorisation
 {
-    [SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Tasks")]
-    public partial class Authorisation
-    {
-        protected override async Task StartAsync()
-        {
-            flow = getFlow();
-            try
-            {
-                _ = await server.TryStartAsync();
-            }
-            catch (HttpListenerException e)
-            {
-                Debugger.Break();
-            }
-        }
+	[SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Tasks")]
+	public partial class Authorisation
+	{
+		protected override async Task StartAsync()
+		{
+			flow = getFlow();
+			flow.StateChanged += Flow_StateChanged;
+			flow.ErrorStateChanged += Flow_ErrorStateChanged;
+			try
+			{
+				_ = await server.TryStartAsync();
+			}
+			catch (HttpListenerException e)
+			{
+				Debugger.Break();
+			}
+		}
 
-        protected override async Task ResumeAsync()
-        {
-            _ = await server.TryResumeAsync();
+		protected override async Task ResumeAsync()
+		{
+			_ = await server.TryResumeAsync();
 
-            if (flow?.State >= FlowState.TokenGranted)
-            {
-                refreshTask = Async.Manager.RunSafely(RefreshLoop);
-            }
-        }
+			if (flow?.State >= FlowState.TokenGranted)
+			{
+				refreshTask = Async.Manager.RunSafely(RefreshLoop);
+			}
+		}
 
-        private async Task RefreshLoop()
-        {
-            while (true)
-            {
-                var delay = RefreshBy - DateTime.UtcNow;
+		private void Flow_ErrorStateChanged(ErrorState obj) => ErrorStateChanged?.Invoke(obj.ToString());
 
-                if (delay > TimeSpan.Zero)
-                {
-                    await Task.Delay(delay, cancellationTokenSource.Token);
-                }
+		private void Flow_StateChanged(FlowState obj) => FlowStateChanged?.Invoke(obj.ToString());
 
-                data = await flow.TryRefreshTokenAsync();
+		private async Task RefreshLoop()
+		{
+			while (true)
+			{
+				var delay = RefreshBy - DateTime.UtcNow;
 
-                if (!(data?.Scope is null))
-                {
-                    foreach (var scope in data.Scope.Split(' '))
-                    {
-                        scopes[scope] = true;
-                    }
-                }
+				if (delay > TimeSpan.Zero)
+				{
+					await Task.Delay(delay, cancellationTokenSource.Token);
+				}
 
-                switch (flow.State)
-                {
-                    case FlowState.Error:
-                        switch (flow.ErrorState)
-                        {
-                            case ErrorState.Unlucky:
-                                RefreshIn(TimeSpan.FromSeconds(6));
-                                break;
+				data = await flow.TryRefreshTokenAsync();
 
-                            default:
-                                throw new NotImplementedException();
-                        }
-                        break;
+				if (!(data?.Scope is null))
+				{
+					foreach (var scope in data.Scope.Split(' '))
+					{
+						scopes[scope] = true;
+					}
+				}
 
-                    case FlowState.TokenRefreshed:
+				switch (flow.State)
+				{
+					case FlowState.Error:
+						switch (flow.ErrorState)
+						{
+							case ErrorState.Unlucky:
+								RefreshIn(TimeSpan.FromSeconds(6));
+								break;
 
-                        if (data is null)
-                        {
-                            throw new InvalidOperationException();
-                        }
+							default:
+								throw new NotImplementedException();
+						}
+						break;
 
-                        OnAccessTokenReceived?.Invoke(this, data.AccessToken);
-                        RefreshIn(GetWaitTime(data.ExpiresIn));
-                        break;
+					case FlowState.TokenRefreshed:
 
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
-        }
+						if (data is null)
+						{
+							throw new InvalidOperationException();
+						}
 
-        private void RefreshIn(TimeSpan timeSpan) => RefreshBy = DateTime.UtcNow + timeSpan;
-    }
+						OnAccessTokenReceived?.Invoke(this, data.AccessToken);
+						RefreshIn(GetWaitTime(data.ExpiresIn));
+						break;
+
+					default:
+						throw new NotImplementedException();
+				}
+			}
+		}
+
+		private void RefreshIn(TimeSpan timeSpan) => RefreshBy = DateTime.UtcNow + timeSpan;
+	}
 }
