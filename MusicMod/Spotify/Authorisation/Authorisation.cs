@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Async;
 using Utils.Reflection;
 
 namespace Spotify.Authorisation
@@ -65,11 +66,11 @@ namespace Spotify.Authorisation
 
 		public delegate void AccessTokenHandler(Authorisation sender, string accessToken);
 
-		public event AccessTokenHandler OnAccessTokenReceived;
-
 		public event Action<string> FlowStateChanged;
 
 		public event Action<string> ErrorStateChanged;
+
+		public event AccessTokenHandler OnAccessTokenReceived;
 
 		public event Action<Uri> OnClientRequested;
 
@@ -106,14 +107,14 @@ namespace Spotify.Authorisation
 
 			cancellationTokenSource.Cancel();
 			await server.TryPauseAsync();
-			await refreshTask;
+			await AsyncManager.WaitForAnyCompletionAsync(refreshTask.Task, cancellationTokenSource.Token);
 		}
 
 		protected override async Task StopAsync()
 		{
 			cancellationTokenSource.Cancel();
 			await server.TryStopAsync();
-			await refreshTask;
+			await AsyncManager.WaitForAnyCompletionAsync(refreshTask.Task, cancellationTokenSource.Token);
 		}
 
 		private static async Task MakeResponseAsync(HttpListenerResponse res, byte[] byteArray)

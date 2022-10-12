@@ -12,3 +12,6 @@ dotnet_diagnostic.VSTHRD200.severity = silent
 
 # S1121: Assignments should not be made from within sub-expressions
 dotnet_diagnostic.S1121.severity = silent
+
+# S4487: Unread "private" fields should be removed
+dotnet_diagnostic.S4487.severity = none
