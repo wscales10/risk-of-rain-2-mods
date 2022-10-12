@@ -62,6 +62,16 @@ namespace SpotifyAuthenticationWinForms
 			authorisation.OnAccessTokenReceived += (a, s) => OnAccessTokenReceived?.Invoke(a, s);
 			authorisation.FlowStateChanged += Form.Authorisation_FlowStateChanged;
 			authorisation.ErrorStateChanged += Form.Authorisation_ErrorStateChanged;
+			authorisation.Preferences.PropertyChanged += (name) =>
+			{
+				if (name == nameof(authorisation.Preferences.DefaultDevice))
+				{
+					foreach (var client in clients.Values)
+					{
+						SendMessage(client, $"devi | {authorisation.Preferences.DefaultDeviceString}");
+					}
+				}
+			};
 			_ = authorisation.InitiateScopeRequestAsync();
 			Form.RestartButtonEnabled = true;
 		}
@@ -89,33 +99,50 @@ namespace SpotifyAuthenticationWinForms
 
 				foreach (var client in clients.Values)
 				{
-					client.Send($"toke | {accessToken}");
+					SendMessage(client, $"toke | {accessToken}");
 				}
 			}
 		}
 
+		private IEnumerable<string> SendMessage(IpcClient sender, params string[] messages)
+		{
+			return sender.Send(string.Join("\r\n", messages)).Split("\r\n");
+		}
+
 		private void Receiver_ReceivedRequest(object? sender, ReceivedRequestEventArgs e)
 		{
-			switch (e.Request[..4])
+			List<string> responses = new();
+
+			foreach (var request in e.Request.Split("\r\n"))
 			{
-				case "port":
-					e.Response = $"port | {GetPort(e.Request[7..])}";
-					break;
+				switch (request[..4])
+				{
+					case "port":
+						responses.Add($"port | {GetPort(request[7..])}");
+						break;
 
-				case "conf":
-					authorisation?.OpenConfigurationPage();
-					break;
+					case "conf":
+						authorisation?.OpenConfigurationPage();
+						break;
 
-				case "conn":
-					AddClient(e.Request[7..]);
+					case "conn":
+						AddClient(request[7..]);
 
-					if (lastToken is not null)
-					{
-						e.Response = $"toke | {lastToken}";
-					}
-					break;
+						if (lastToken is not null)
+						{
+							responses.Add($"toke | {lastToken}");
+						}
+
+						if (!string.IsNullOrWhiteSpace(authorisation?.Preferences.DefaultDeviceString))
+						{
+							responses.Add($"devi | {authorisation.Preferences.DefaultDeviceString}");
+						}
+
+						break;
+				}
 			}
 
+			e.Response = string.Join("\r\n", responses);
 			e.Handled = true;
 		}
 
@@ -124,6 +151,16 @@ namespace SpotifyAuthenticationWinForms
 			var client = new IpcClient();
 			clients[guid] = client;
 			client.Initialize(ports[guid]);
+			if (authorisation is not null)
+			{
+				authorisation.Preferences.PropertyChanged += (name) =>
+				{
+					if (name == nameof(authorisation.Preferences.DefaultDevice))
+					{
+						SendMessage(client, $"devi | {authorisation.Preferences.DefaultDeviceString}");
+					}
+				};
+			}
 		}
 
 		private int GetPort(string guid)

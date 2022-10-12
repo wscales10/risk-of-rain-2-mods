@@ -74,6 +74,8 @@ namespace Spotify.Authorisation
 
 		public event Action<Uri> OnClientRequested;
 
+		public Preferences Preferences { get; } = new Preferences();
+
 		public Func<int, TimeSpan> GetWaitTime { get; set; } = expiresIn => TimeSpan.FromSeconds(Math.Max(expiresIn - 300, expiresIn / 2));
 
 		private DateTime RefreshBy

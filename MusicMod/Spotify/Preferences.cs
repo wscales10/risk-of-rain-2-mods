@@ -1,16 +1,55 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Utils;
 
 namespace Spotify
 {
-	public static class Preferences
+	public interface IPreferences
+	{
+		event Action<string> PropertyChanged;
+
+		byte[] DefaultDevice { get; set; }
+
+		string DefaultDeviceString { get; set; }
+
+		string AccessToken { get; }
+	}
+
+	public class PreferencesLite : IPreferences
+	{
+		private byte[] defaultDevice;
+
+		private string accessToken;
+
+		public event Action<string> PropertyChanged;
+
+		public byte[] DefaultDevice
+		{
+			get => defaultDevice; set
+
+			{
+				defaultDevice = value;
+				PropertyChanged?.Invoke(nameof(DefaultDevice));
+			}
+		}
+
+		public string DefaultDeviceString
+		{
+			get => Encoding.UTF8.GetString(DefaultDevice);
+			set => DefaultDevice = Encoding.UTF8.GetBytes(value);
+		}
+
+		public string AccessToken => accessToken;
+	}
+
+	public class Preferences : IPreferences
 	{
 		private static readonly string preferencesDirectory = Paths.AssemblyDirectory;
 
-		public static event Action<string> PropertyChanged;
+		public event Action<string> PropertyChanged;
 
-		public static byte[] DefaultDevice
+		public byte[] DefaultDevice
 		{
 			get => ReadBytesFromFile(Path.Combine(preferencesDirectory, "defaultDevice.json"));
 
@@ -21,7 +60,18 @@ namespace Spotify
 			}
 		}
 
-		internal static string AccessToken => ReadFromFile(
+		public string DefaultDeviceString
+		{
+			get => ReadFromFile(Path.Combine(preferencesDirectory, "defaultDevice.json"));
+
+			set
+			{
+				WriteToFile(Path.Combine(preferencesDirectory, "defaultDevice.json"), value);
+				PropertyChanged?.Invoke(nameof(DefaultDevice));
+			}
+		}
+
+		public string AccessToken => ReadFromFile(
 					Path.Combine(preferencesDirectory, "spotifyAccessToken.txt"),
 			path => DateTime.UtcNow - File.GetLastWriteTimeUtc(path) < TimeSpan.FromHours(1))?.Trim();
 
