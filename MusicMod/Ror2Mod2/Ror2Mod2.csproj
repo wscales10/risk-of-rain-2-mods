@@ -22,6 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Mono.Unofficial.pdb2mdb" Version="4.2.3.4" />
+    <PackageReference Include="ZetaIpc" Version="1.0.4.12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Rules\Rules.csproj" />
