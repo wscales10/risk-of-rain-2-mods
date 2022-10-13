@@ -1,7 +1,5 @@
-﻿using Spotify.Authorisation;
-using ZetaIpc.Runtime.Client;
-using ZetaIpc.Runtime.Helper;
-using ZetaIpc.Runtime.Server;
+﻿using IPC;
+using Spotify.Authorisation;
 
 namespace SpotifyAuthenticationWinForms
 {
@@ -9,9 +7,7 @@ namespace SpotifyAuthenticationWinForms
 	{
 		private static readonly string logFilePath = "log.txt";
 
-		private readonly Dictionary<string, int> ports = new();
-
-		private readonly Dictionary<string, IpcClient> clients = new();
+		private readonly IPC.Server server = new(5007);
 
 		private string? lastToken;
 
@@ -20,7 +16,15 @@ namespace SpotifyAuthenticationWinForms
 		internal MyServer()
 		{
 			ClearLogFile();
-			_ = DoServer();
+			server.ReceivedRequest += Server_ReceivedRequest;
+			server.TryStart();
+			OnAccessTokenReceived += BroadcastToken;
+			void BroadcastToken(Authorisation _, string accessToken)
+			{
+				lastToken = accessToken;
+				server.Broadcast($"toke | {accessToken}");
+			}
+
 			Form = new();
 			Form.OnRestart += () => _ = Restart();
 			Form.OnConfigure += () => authorisation?.OpenConfigurationPage();
@@ -66,10 +70,7 @@ namespace SpotifyAuthenticationWinForms
 			{
 				if (name == nameof(authorisation.Preferences.DefaultDevice))
 				{
-					foreach (var client in clients.Values)
-					{
-						SendMessage(client, $"devi | {authorisation.Preferences.DefaultDeviceString}");
-					}
+					server.Broadcast($"devi | {authorisation.Preferences.DefaultDeviceString}");
 				}
 			};
 			_ = authorisation.InitiateScopeRequestAsync();
@@ -82,43 +83,14 @@ namespace SpotifyAuthenticationWinForms
 			throw exception;
 		}
 
-		private async Task DoServer()
+		private IEnumerable<string> Server_ReceivedRequest(IEnumerable<string> request)
 		{
-			var receiver = new IpcServer();
-			receiver.Start(5007);
-
-			receiver.ReceivedRequest += Receiver_ReceivedRequest;
-
-			OnAccessTokenReceived += BroadcastToken;
-
-			await Task.Delay(Timeout.InfiniteTimeSpan);
-
-			void BroadcastToken(Authorisation _, string accessToken)
+			foreach (var requestPart in request)
 			{
-				lastToken = accessToken;
-
-				foreach (var client in clients.Values)
-				{
-					SendMessage(client, $"toke | {accessToken}");
-				}
-			}
-		}
-
-		private IEnumerable<string> SendMessage(IpcClient sender, params string[] messages)
-		{
-			return sender.Send(string.Join("\r\n", messages)).Split("\r\n");
-		}
-
-		private void Receiver_ReceivedRequest(object? sender, ReceivedRequestEventArgs e)
-		{
-			List<string> responses = new();
-
-			foreach (var request in e.Request.Split("\r\n"))
-			{
-				switch (request[..4])
+				switch (requestPart[..4])
 				{
 					case "port":
-						responses.Add($"port | {GetPort(request[7..])}");
+						yield return $"port | {server.GetPort(requestPart[7..])}";
 						break;
 
 					case "conf":
@@ -126,48 +98,32 @@ namespace SpotifyAuthenticationWinForms
 						break;
 
 					case "conn":
-						AddClient(request[7..]);
+						var client = server.AddClient(requestPart[7..]);
+
+						if (authorisation is not null)
+						{
+							authorisation.Preferences.PropertyChanged += (name) =>
+							{
+								if (name == nameof(authorisation.Preferences.DefaultDevice))
+								{
+									Methods.SendMessage(client, $"devi | {authorisation.Preferences.DefaultDeviceString}");
+								}
+							};
+						}
 
 						if (lastToken is not null)
 						{
-							responses.Add($"toke | {lastToken}");
+							yield return $"toke | {lastToken}";
 						}
 
 						if (!string.IsNullOrWhiteSpace(authorisation?.Preferences.DefaultDeviceString))
 						{
-							responses.Add($"devi | {authorisation.Preferences.DefaultDeviceString}");
+							yield return $"devi | {authorisation.Preferences.DefaultDeviceString}";
 						}
 
 						break;
 				}
 			}
-
-			e.Response = string.Join("\r\n", responses);
-			e.Handled = true;
-		}
-
-		private void AddClient(string guid)
-		{
-			var client = new IpcClient();
-			clients[guid] = client;
-			client.Initialize(ports[guid]);
-			if (authorisation is not null)
-			{
-				authorisation.Preferences.PropertyChanged += (name) =>
-				{
-					if (name == nameof(authorisation.Preferences.DefaultDevice))
-					{
-						SendMessage(client, $"devi | {authorisation.Preferences.DefaultDeviceString}");
-					}
-				};
-			}
-		}
-
-		private int GetPort(string guid)
-		{
-			int port = FreePortHelper.GetFreePort();
-			ports[guid] = port;
-			return port;
 		}
 
 		private void LogInfo(string message)

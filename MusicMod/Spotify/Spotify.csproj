@@ -40,6 +40,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IPC\IPC.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Maths">
       <HintPath>..\..\Common\Maths\bin\$(Configuration)\netstandard2.0\Maths.dll</HintPath>
     </Reference>

@@ -13,7 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicModUnitTests", "MusicM
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Music", "Music\Music.csproj", "{6324BBD6-DC82-4829-A591-2BDFE867EC80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpotifyAuthenticationWinForms", "SpotifyAuthenticationWinForms\SpotifyAuthenticationWinForms.csproj", "{9EEE6508-2520-47CD-B084-D980CEB91F1B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpotifyAuthenticationWinForms", "SpotifyAuthenticationWinForms\SpotifyAuthenticationWinForms.csproj", "{9EEE6508-2520-47CD-B084-D980CEB91F1B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPC", "IPC\IPC.csproj", "{711D4FAE-3CE9-4490-B6ED-F47B1A91752F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{9EEE6508-2520-47CD-B084-D980CEB91F1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9EEE6508-2520-47CD-B084-D980CEB91F1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9EEE6508-2520-47CD-B084-D980CEB91F1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{711D4FAE-3CE9-4490-B6ED-F47B1A91752F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{711D4FAE-3CE9-4490-B6ED-F47B1A91752F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{711D4FAE-3CE9-4490-B6ED-F47B1A91752F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{711D4FAE-3CE9-4490-B6ED-F47B1A91752F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

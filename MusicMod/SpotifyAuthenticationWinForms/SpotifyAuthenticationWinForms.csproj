@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\IPC\IPC.csproj" />
     <ProjectReference Include="..\Spotify\Spotify.csproj" />
   </ItemGroup>
 

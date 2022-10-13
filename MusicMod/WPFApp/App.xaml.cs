@@ -50,6 +50,8 @@ namespace WPFApp
 
 		private readonly ClipboardWindow clipboardWindow;
 
+		private readonly AuthorisationClient authorisationClient = new();
+
 		private Action Render;
 
 		private MainViewModel mainViewModel;
@@ -86,11 +88,10 @@ namespace WPFApp
 			};
 			NavigationContext = new(navigationContext);
 			history.ActionRequested += TryInner;
-			MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x));
+			MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x), authorisationClient.Preferences);
 			MetadataClient.OnError += SpotifyClient_OnError;
-			PlaybackClient = new SpotifyPlaybackClient(Info.Playlists, x => PlaybackClient.Log(x));
+			PlaybackClient = new SpotifyPlaybackClient(Info.Playlists, x => PlaybackClient.Log(x), authorisationClient.Preferences);
 			PlaybackClient.OnError += SpotifyClient_OnError;
-			Authorisation = new Authorisation(Scopes.Metadata.Concat(Scopes.Playback), logger: x => Authorisation.Log(x));
 			Settings.Default.PropertyChanged += OnSettingChanged;
 		}
 
@@ -106,8 +107,6 @@ namespace WPFApp
 		}
 
 		public NavigationContext NavigationContext { get; }
-
-		public Authorisation Authorisation { get; }
 
 		public SpotifyMetadataClient MetadataClient { get; }
 
@@ -205,16 +204,16 @@ namespace WPFApp
 			Render();
 			mainView.Show();
 
-			Authorisation.OnAccessTokenReceived += (_, t) =>
+			authorisationClient.OnNewAccessToken += (t) =>
 			{
 				MetadataClient.GiftNewAccessToken(t);
 				PlaybackClient.GiftNewAccessToken(t);
 				SpotifyItemPickerViewModel.Refresh();
 			};
-			Authorisation.OnClientRequested += Web.Goto;
+
 			if (!Settings.Default.OfflineMode)
 			{
-				Authorisation.InitiateScopeRequestAsync();
+				authorisationClient.TryStart();
 			}
 		}
 
@@ -306,19 +305,9 @@ namespace WPFApp
 			{
 				case nameof(Settings.OfflineMode):
 
-					// TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
-					if (settings.OfflineMode)
+					if (!settings.OfflineMode)
 					{
-						_ = Authorisation.TryPauseAsync();
-					}
-					else if (Authorisation.Info.IsOn)
-					{
-						Authorisation.TryResumeAsync();
-						SpotifyItemPickerViewModel.Refresh();
-					}
-					else
-					{
-						Authorisation.InitiateScopeRequestAsync();
+						authorisationClient.TryStart();
 					}
 
 					break;

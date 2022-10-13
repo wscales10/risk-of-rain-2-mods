@@ -25,6 +25,7 @@
     <PackageReference Include="ZetaIpc" Version="1.0.4.12" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IPC\IPC.csproj" />
     <ProjectReference Include="..\Rules\Rules.csproj" />
     <ProjectReference Include="..\Spotify\Spotify.csproj" />
   </ItemGroup>
