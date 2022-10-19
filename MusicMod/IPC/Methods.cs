@@ -1,13 +1,23 @@
 ﻿using System.Collections.Generic;
+using Utils;
 using ZetaIpc.Runtime.Client;
 
 namespace IPC
 {
 	public static class Methods
 	{
-		public static IEnumerable<string> SendMessage(IpcClient sender, params string[] messages)
+		public static Packet SendPacket(IpcClient sender, Packet packet)
 		{
-			return Split(sender.Send(Join(messages)));
+			var outgoing = packet.ToString();
+			sender.Log("***");
+			sender.Log("Outgoing:");
+			sender.Log(outgoing);
+			var incoming = sender.Send(outgoing);
+			sender.Log("Incoming:");
+			sender.Log(incoming);
+			sender.Log("");
+			sender.Log("***");
+			return Packet.Parse(incoming);
 		}
 
 		public static IEnumerable<string> Split(string joined)
@@ -17,7 +27,7 @@ namespace IPC
 
 		public static string Join(IEnumerable<string> messages)
 		{
-			return string.Join("\r\n", messages);
+			return messages is null ? null : string.Join("\r\n", messages);
 		}
 	}
 }

@@ -1,63 +1,160 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Utils;
 using ZetaIpc.Runtime.Client;
 using ZetaIpc.Runtime.Helper;
 using ZetaIpc.Runtime.Server;
 
 namespace IPC
 {
-	public class Server : Utils.Runner
+	public class Server : Entity
 	{
-		private readonly Dictionary<string, int> ports = new Dictionary<string, int>();
+		public event Func<string, IEnumerable<Message>> OnAddClient;
+
+		private readonly Dictionary<string, int> strikes = new Dictionary<string, int>();
+
+		private readonly PortHelper portHelper = new PortHelper();
 
 		private readonly Dictionary<string, IpcClient> clients = new Dictionary<string, IpcClient>();
 
 		public Server(int port)
 		{
-			Port = port;
+			MyPort = port;
 		}
 
-		public event Func<IEnumerable<string>, IEnumerable<string>> ReceivedRequest;
+		protected override string GuidString => null;
 
-		public int Port { get; }
-
-		public IpcClient AddClient(string guid)
+		public IEnumerable<Message> AddClient(string guid)
 		{
 			var client = new IpcClient();
 			clients[guid] = client;
-			client.Initialize(ports[guid]);
-			return client;
+			strikes[guid] = 0;
+			client.Initialize(portHelper.GetPort(guid));
+			return OnAddClient?.Invoke(guid);
 		}
 
-		public int GetPort(string guid)
+		public void Broadcast(params Message[] messages)
 		{
-			int port = FreePortHelper.GetFreePort();
-			ports[guid] = port;
-			return port;
-		}
-
-		public void Broadcast(params string[] messages)
-		{
-			foreach (var client in clients.Values)
+			foreach (var guid in clients.Keys)
 			{
-				Methods.SendMessage(client, messages);
+				SendToClient(guid, messages);
+			}
+		}
+
+		public void SendToClient(string guid, params Message[] messages)
+		{
+			try
+			{
+				Methods.SendPacket(clients[guid], MakePacket(guid, messages));
+			}
+			catch (WebException ex)
+			{
+				System.Diagnostics.Debugger.Break();
+				this.Log(ex);
+				AddStrike(guid);
+			}
+			catch
+			{
+				System.Diagnostics.Debugger.Break();
+				throw;
 			}
 		}
 
 		protected override void Start()
 		{
 			var receiver = new IpcServer();
-			receiver.Start(Port);
+			receiver.Start(MyPort.Value);
 
-			receiver.ReceivedRequest += (s, e) =>
-			{
-				e.Response = Methods.Join(ReceivedRequest?.Invoke(Methods.Split(e.Request)));
-				e.Handled = true;
-			};
+			receiver.ReceivedRequest += Receiver_ReceivedRequest;
 
 			_ = Task.Delay(Timeout.InfiniteTimeSpan);
+		}
+
+		protected override Packet HandleReceivedPacket(Packet packet)
+		{
+			List<Message> response = new List<Message>();
+			if (!portHelper.IsPortDefined(packet.Guid))
+			{
+				if (packet.Port is int port)
+				{
+					portHelper.SetPort(packet.Guid, port);
+					response.AddRange(AddClient(packet.Guid));
+				}
+				else
+				{
+					portHelper.SetPort(packet.Guid);
+				}
+			}
+			else if (!clients.ContainsKey(packet.Guid))
+			{
+				response.AddRange(AddClient(packet.Guid));
+			}
+
+			var output = MakePacket(packet.Guid, response.Concat(HandleReceivedRequest(packet.Messages)));
+			return output;
+		}
+
+		private void AddStrike(string guid)
+		{
+			if (++strikes[guid] > 2)
+			{
+				clients.Remove(guid);
+				portHelper.Reset(guid);
+				strikes.Remove(guid);
+			}
+		}
+
+		private Packet MakePacket(string guid, IEnumerable<Message> messages)
+		{
+			return new Packet(guid, portHelper.GetPort(guid), messages);
+		}
+
+		private sealed class PortHelper
+		{
+			private readonly Dictionary<string, int> ports = new Dictionary<string, int>();
+
+			public bool IsPortDefined(string guid)
+			{
+				return ports.ContainsKey(guid);
+			}
+
+			public int GetPort(string guid)
+			{
+				return ports[guid];
+			}
+
+			public void SetPort(string guid)
+			{
+				for (int i = 0; i < 5; i++)
+				{
+					if (SetPort(guid, FreePortHelper.GetFreePort()))
+					{
+						return;
+					}
+				}
+
+				throw new NotImplementedException("Failed to find valid port");
+			}
+
+			public bool SetPort(string guid, int port)
+			{
+				if (ports.Any(pair => pair.Value == port && pair.Key != guid))
+				{
+					return false;
+				}
+
+				ports[guid] = port;
+				return true;
+			}
+
+			public void Reset(string guid)
+			{
+				ports.Remove(guid);
+			}
 		}
 	}
 }

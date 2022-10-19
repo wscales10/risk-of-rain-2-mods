@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
@@ -9,7 +9,7 @@ using ZetaIpc.Runtime.Server;
 
 namespace IPC
 {
-	public class Client : Runner
+	public class Client : Entity
 	{
 		private IpcClient sender;
 
@@ -17,19 +17,25 @@ namespace IPC
 		{
 			ServerPort = serverPort;
 			Guid = Guid.NewGuid();
+			MyPort = null;
 		}
 
-		public event Action<IEnumerable<string>> HandleConnResponse;
-
-		public event Func<IEnumerable<string>, IEnumerable<string>> ReceivedRequest;
+		public event Action<IEnumerable<Message>> HandleConnResponse;
 
 		public int ServerPort { get; }
 
 		public Guid Guid { get; }
 
-		public void SendToServer(params string[] messages)
+		protected override string GuidString => Guid.ToString();
+
+		public Packet SendToServer(params Message[] messages)
 		{
-			Methods.SendMessage(sender, messages);
+			return Methods.SendPacket(sender, MakePacket(messages));
+		}
+
+		protected override Packet HandleReceivedPacket(Packet packet)
+		{
+			return MakePacket(HandleReceivedRequest(packet.Messages));
 		}
 
 		protected override void Start()
@@ -38,24 +44,21 @@ namespace IPC
 			{
 				sender = new IpcClient();
 				sender.Initialize(ServerPort);
-				var portResponse = Methods.SendMessage(sender, $"port | {Guid}").Single();
+				var portResponse = SendToServerIgnoreTimeout();
 
-				if (portResponse.Substring(0, 4) != "port")
-				{
-					throw new NotSupportedException();
-				}
-
-				int port = int.Parse(portResponse.Substring(7));
+				MyPort = portResponse.Port.Value;
 				var receiver = new IpcServer();
-				receiver.Start(port);
+				receiver.Start(MyPort.Value);
 
-				HandleConnResponse?.Invoke(Methods.SendMessage(sender, $"conn | {Guid}"));
+				this.Log("Connecting");
+				var connectionResponse = SendToServerIgnoreTimeout(new Message("conn"));
+				this.Log(connectionResponse);
 
-				receiver.ReceivedRequest += (s, e) =>
-				{
-					e.Response = Methods.Join(ReceivedRequest?.Invoke(Methods.Split(e.Request)));
-					e.Handled = true;
-				};
+				this.Log("Handling Connection Response");
+				HandleConnResponse?.Invoke(connectionResponse.Messages);
+				this.Log("Handled Connection Response");
+
+				receiver.ReceivedRequest += Receiver_ReceivedRequest;
 
 				_ = Task.Delay(Timeout.InfiniteTimeSpan);
 			}
@@ -65,6 +68,40 @@ namespace IPC
 				System.Diagnostics.Debugger.Break();
 				throw;
 			}
+		}
+
+		private Packet SendToServerIgnoreTimeout(params Message[] messages)
+		{
+			while (true)
+			{
+				try
+				{
+					return SendToServer(messages);
+				}
+				catch (WebException ex)
+				{
+					switch (ex.Status)
+					{
+						case WebExceptionStatus.Timeout:
+							break;
+
+						case WebExceptionStatus.ConnectFailure:
+						case WebExceptionStatus.UnknownError:
+							Thread.Sleep(1000);
+							break;
+
+						default:
+							throw;
+					}
+
+					this.Log(ex);
+				}
+			}
+		}
+
+		private Packet MakePacket(IEnumerable<Message> messages)
+		{
+			return new Packet(GuidString, MyPort, messages);
 		}
 	}
 }
