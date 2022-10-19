@@ -15,24 +15,34 @@ namespace WPFApp.Controls.Rows
         {
         }
 
-        public override SpotifyItem Output
-        {
-            get => base.Output = spotifyItemWrapper.TryGetValue(false).Value;
+		public override SpotifyItem Output
+		{
+			get
+			{
+				var value = spotifyItemWrapper.TryGetValue(false).Value;
 
-            set
-            {
-                if (!isInitialised)
-                {
-                    spotifyItemWrapper.ValueSet += SpotifyItemWrapper_ValueSet;
-                    isInitialised = true;
-                }
+				if (base.Output != value)
+				{
+					base.Output = value;
+				}
 
-                spotifyItemWrapper.SetValue(value);
-                NotifyPropertyChanged();
-            }
-        }
+				return value;
+			}
 
-        protected override SaveResult<SpotifyItem> trySaveChanges()
+			set
+			{
+				if (!isInitialised)
+				{
+					spotifyItemWrapper.ValueSet += SpotifyItemWrapper_ValueSet;
+					isInitialised = true;
+				}
+
+				spotifyItemWrapper.SetValue(value);
+				NotifyPropertyChanged();
+			}
+		}
+
+		protected override SaveResult<SpotifyItem> trySaveChanges()
         {
             var result = spotifyItemWrapper.TryGetValue(true);
 

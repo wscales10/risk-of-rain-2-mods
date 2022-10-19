@@ -144,7 +144,14 @@ namespace Utils
 
                     if (!Inert)
                     {
-                        ChangeTimer(remaining);
+                        if (remaining > TimeSpan.Zero)
+                        {
+                            ChangeTimer(remaining);
+						}
+						else
+						{
+                            Wrap(DateTime.UtcNow);
+						}
                     }
                 }
             }
