@@ -19,7 +19,7 @@ namespace Ror2Mod2
 		{
 			this.rulePicker = rulePicker;
 			Client = new SpotifyPlaybackClient(playlists, logger, authorisationClient.Preferences);
-			authorisationClient.OnNewAccessToken += Client.GiftNewAccessToken;
+			Client.OnAccessTokenRequested += authorisationClient.RequestNewAccessToken;
 			Client.OnError += e => Log(e);
 
 			authorisationClient.TryStart();
@@ -69,6 +69,11 @@ namespace Ror2Mod2
 
 		protected override object GetMusicIdentifier(TContext oldContext, TContext newContext)
 		{
+			if (newContext?.Equals(default) ?? true)
+			{
+				return new StopCommand();
+			}
+
 			var commands = rulePicker.Rule.GetCommands(oldContext, newContext);
 			return commands;
 		}
