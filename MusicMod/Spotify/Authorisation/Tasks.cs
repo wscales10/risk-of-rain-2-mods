@@ -6,84 +6,123 @@ using System.Threading.Tasks;
 
 namespace Spotify.Authorisation
 {
-    [SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Tasks")]
-    public partial class Authorisation
-    {
-        protected override async Task StartAsync()
-        {
-            flow = getFlow();
-            try
-            {
-                _ = await server.TryStartAsync();
-            }
-            catch (HttpListenerException e)
-            {
-                Debugger.Break();
-            }
-        }
+	[SuppressMessage("Style", "VSTHRD200:Use \"Async\" suffix for async methods", Justification = "Tasks")]
+	public partial class Authorisation
+	{
+		protected override async Task StartAsync()
+		{
+			flow = getFlow();
+			flow.StateChanged += Flow_StateChanged;
+			flow.ErrorStateChanged += Flow_ErrorStateChanged;
 
-        protected override async Task ResumeAsync()
-        {
-            _ = await server.TryResumeAsync();
+			try
+			{
+				bool startRefreshLoopNow = false;
 
-            if (flow?.State >= FlowState.TokenGranted)
-            {
-                refreshTask = Async.Manager.RunSafely(RefreshLoop);
-            }
-        }
+				if (!string.IsNullOrEmpty(Preferences.RefreshToken))
+				{
+					var expiresIn = Preferences.AccessTokenUpdated + TimeSpan.FromHours(1) - DateTime.UtcNow;
 
-        private async Task RefreshLoop()
-        {
-            while (true)
-            {
-                var delay = RefreshBy - DateTime.UtcNow;
+					Startup = expiresIn > TimeSpan.Zero ? AuthorisationStartup.Access : AuthorisationStartup.Refresh;
 
-                if (delay > TimeSpan.Zero)
-                {
-                    await Task.Delay(delay, cancellationTokenSource.Token);
-                }
+					flow.SkipLoginEtc(Preferences.RefreshToken);
+					RefreshIn(expiresIn);
+					startRefreshLoopNow = true;
+				}
+				else
+				{
+					Startup = AuthorisationStartup.Full;
+				}
 
-                data = await flow.TryRefreshTokenAsync();
+				await server.TryStartAsync();
 
-                if (!(data?.Scope is null))
-                {
-                    foreach (var scope in data.Scope.Split(' '))
-                    {
-                        scopes[scope] = true;
-                    }
-                }
+				if (startRefreshLoopNow)
+				{
+					InitiateRefreshLoop();
+				}
+			}
+			catch (HttpListenerException e)
+			{
+				Debugger.Break();
+			}
+		}
 
-                switch (flow.State)
-                {
-                    case FlowState.Error:
-                        switch (flow.ErrorState)
-                        {
-                            case ErrorState.Unlucky:
-                                RefreshIn(TimeSpan.FromSeconds(6));
-                                break;
+		protected override async Task ResumeAsync()
+		{
+			_ = await server.TryResumeAsync();
 
-                            default:
-                                throw new NotImplementedException();
-                        }
-                        break;
+			if (flow?.State >= FlowState.TokenGranted)
+			{
+				InitiateRefreshLoop();
+			}
+		}
 
-                    case FlowState.TokenRefreshed:
+		private void Flow_ErrorStateChanged(ErrorState obj) => ErrorStateChanged?.Invoke(obj.ToString());
 
-                        if (data is null)
-                        {
-                            throw new InvalidOperationException();
-                        }
+		private void Flow_StateChanged(FlowState obj) => FlowStateChanged?.Invoke(obj.ToString());
 
-                        OnAccessTokenReceived?.Invoke(this, data.AccessToken);
-                        RefreshIn(GetWaitTime(data.ExpiresIn));
-                        break;
+		private async Task RefreshLoop()
+		{
+			while (true)
+			{
+				var delay = RefreshBy - DateTime.UtcNow;
 
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
-        }
+				if (delay > TimeSpan.Zero)
+				{
+					await Task.Delay(delay, cancellationTokenSource.Token);
+				}
 
-        private void RefreshIn(TimeSpan timeSpan) => RefreshBy = DateTime.UtcNow + timeSpan;
-    }
+				var data = await flow.TryRefreshTokenAsync();
+
+				if (!(data?.Scope is null))
+				{
+					foreach (var scope in data.Scope.Split(' '))
+					{
+						scopes[scope] = true;
+					}
+				}
+
+				switch (flow.State)
+				{
+					case FlowState.Error:
+						switch (flow.ErrorState)
+						{
+							case ErrorState.Unlucky:
+								RefreshIn(TimeSpan.FromSeconds(6));
+								break;
+
+							case ErrorState.ApiDenied:
+								Preferences.RefreshToken = null;
+								break;
+
+							default:
+								throw new NotImplementedException();
+						}
+						break;
+
+					case FlowState.TokenRefreshed:
+
+						if (data is null)
+						{
+							throw new InvalidOperationException();
+						}
+
+						Preferences.AccessToken = data.AccessToken;
+
+						if (data.RefreshToken != null)
+						{
+							Preferences.RefreshToken = data.RefreshToken;
+						}
+
+						RefreshIn(GetWaitTime(data.ExpiresIn));
+						break;
+
+					default:
+						throw new NotImplementedException();
+				}
+			}
+		}
+
+		private void RefreshIn(TimeSpan timeSpan) => RefreshBy = DateTime.UtcNow + timeSpan;
+	}
 }

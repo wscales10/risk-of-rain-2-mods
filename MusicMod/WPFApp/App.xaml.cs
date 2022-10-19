@@ -28,6 +28,7 @@ using System.Collections.ObjectModel;
 using Utils.Async;
 using MyRoR2;
 using System.Xml.Linq;
+using System.Windows.Threading;
 
 namespace WPFApp
 {
@@ -49,6 +50,8 @@ namespace WPFApp
 		private readonly XmlClipboard clipboard = new();
 
 		private readonly ClipboardWindow clipboardWindow;
+
+		private readonly AuthorisationClient authorisationClient = new();
 
 		private Action Render;
 
@@ -86,11 +89,10 @@ namespace WPFApp
 			};
 			NavigationContext = new(navigationContext);
 			history.ActionRequested += TryInner;
-			MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x));
+			MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x), authorisationClient.Preferences);
 			MetadataClient.OnError += SpotifyClient_OnError;
-			PlaybackClient = new SpotifyPlaybackClient(Info.Playlists, x => PlaybackClient.Log(x));
+			PlaybackClient = new SpotifyPlaybackClient(Info.Playlists, x => PlaybackClient.Log(x), authorisationClient.Preferences);
 			PlaybackClient.OnError += SpotifyClient_OnError;
-			Authorisation = new Authorisation(Scopes.Metadata.Concat(Scopes.Playback), logger: x => Authorisation.Log(x));
 			Settings.Default.PropertyChanged += OnSettingChanged;
 		}
 
@@ -106,8 +108,6 @@ namespace WPFApp
 		}
 
 		public NavigationContext NavigationContext { get; }
-
-		public Authorisation Authorisation { get; }
 
 		public SpotifyMetadataClient MetadataClient { get; }
 
@@ -202,20 +202,22 @@ namespace WPFApp
 				ImportXml(Rules.Examples.MimicRule.ToXml());
 			}
 
-			Render();
-			mainView.Show();
-
-			Authorisation.OnAccessTokenReceived += (_, t) =>
+			authorisationClient.Preferences.PropertyChanged += (name) =>
 			{
-				MetadataClient.GiftNewAccessToken(t);
-				PlaybackClient.GiftNewAccessToken(t);
-				SpotifyItemPickerViewModel.Refresh();
+				if (name == nameof(IPreferences.AccessToken))
+				{
+					Current.Dispatcher.BeginInvoke(SpotifyItemPickerViewModel.Refresh);
+				}
 			};
-			Authorisation.OnClientRequested += Web.Goto;
+
 			if (!Settings.Default.OfflineMode)
 			{
-				Authorisation.InitiateScopeRequestAsync();
+				authorisationClient.TryStart();
+				SpotifyItemPickerViewModel.Refresh();
 			}
+
+			Render();
+			mainView.Show();
 		}
 
 		private bool NavigationContext_TreeNavigationRequested(IRuleRow arg)
@@ -306,19 +308,10 @@ namespace WPFApp
 			{
 				case nameof(Settings.OfflineMode):
 
-					// TODO: Authorisation needs improving so it stops if it fails to connect and it can be restarted at any time. There should be a public function to manually request a refreshed token or restart the process.
-					if (settings.OfflineMode)
+					if (!settings.OfflineMode)
 					{
-						_ = Authorisation.TryPauseAsync();
-					}
-					else if (Authorisation.Info.IsOn)
-					{
-						Authorisation.TryResumeAsync();
+						authorisationClient.TryStart();
 						SpotifyItemPickerViewModel.Refresh();
-					}
-					else
-					{
-						Authorisation.InitiateScopeRequestAsync();
 					}
 
 					break;

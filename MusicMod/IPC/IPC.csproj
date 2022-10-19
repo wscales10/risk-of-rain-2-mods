@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="HttpServer.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="HttpServer.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ZetaIpc" Version="1.0.4.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Utils">
+      <HintPath>..\..\Common\Utils\bin\$(Configuration)\netstandard2.0\Utils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

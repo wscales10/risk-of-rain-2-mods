@@ -1,6 +1,4 @@
-﻿using MyRoR2;
-using Spotify;
-using Spotify.Authorisation;
+﻿using Spotify;
 using Spotify.Commands;
 using System;
 using System.Collections.Generic;
@@ -9,73 +7,75 @@ using Utils;
 
 namespace Ror2Mod2
 {
-    public class SpotifyController<TContext> : MusicBase<TContext>
-    {
-        private readonly IRulePicker<TContext, ICommandList> rulePicker;
+	public class SpotifyController<TContext> : MusicBase<TContext>
+	{
+		private readonly AuthorisationClient authorisationClient = new AuthorisationClient();
 
-        private readonly IContextHelper<TContext> contextHelper;
+		private readonly IRulePicker<TContext, ICommandList> rulePicker;
 
-        public SpotifyController(IRulePicker<TContext, ICommandList> rulePicker, IEnumerable<Playlist> playlists, IContextHelper<TContext> contextHelper, Logger logger) : base(logger)
-        {
-            this.rulePicker = rulePicker;
-            Client = new SpotifyPlaybackClient(playlists, logger);
-            Client.OnError += e => Log(e);
-            Authorisation = new Authorisation(Scopes.Playback, logger: logger);
-            Authorisation.OnAccessTokenReceived += Authorisation_OnAccessTokenReceived;
-            Authorisation.OnClientRequested += Web.Goto;
-            _ = Authorisation.InitiateScopeRequestAsync();
-            this.contextHelper = contextHelper;
-            contextHelper.NewContext += c => _ = Update(c);
-        }
+		private readonly IContextHelper<TContext> contextHelper;
 
-        public Authorisation Authorisation { get; }
+		public SpotifyController(IRulePicker<TContext, ICommandList> rulePicker, IEnumerable<Playlist> playlists, IContextHelper<TContext> contextHelper, Logger logger) : base(logger)
+		{
+			this.rulePicker = rulePicker;
+			Client = new SpotifyPlaybackClient(playlists, logger, authorisationClient.Preferences);
+			Client.OnAccessTokenRequested += authorisationClient.RequestNewAccessToken;
+			Client.OnError += e => Log(e);
 
-        protected SpotifyPlaybackClient Client { get; }
+			authorisationClient.TryStart();
+			ConfigurationPageRequested += () => authorisationClient.RequestConfigurationPage();
+			this.contextHelper = contextHelper;
+			contextHelper.NewContext += c => _ = Update(c);
+		}
 
-        public override void Pause()
-        {
-            _ = Client.Pause();
-        }
+		private event Action ConfigurationPageRequested;
 
-        public override void Resume()
-        {
-            _ = Client.Resume();
-        }
+		protected SpotifyPlaybackClient Client { get; }
 
-        public override void OpenConfigurationPage()
-        {
-            Authorisation.OpenConfigurationPage();
-        }
+		public override void Pause()
+		{
+			_ = Client.Pause();
+		}
 
-        protected override async Task Play(object musicIdentifier)
-        {
-            if (!(musicIdentifier is null))
-            {
-                switch (musicIdentifier)
-                {
-                    case Command c:
-                        await Client.Do(c);
-                        break;
+		public override void Resume()
+		{
+			_ = Client.Resume();
+		}
 
-                    case ICommandList commands:
-                        await Client.Do(commands);
-                        break;
+		public override void OpenConfigurationPage()
+		{
+			ConfigurationPageRequested?.Invoke();
+		}
 
-                    default:
-                        throw new ArgumentException($"Expected a {nameof(ICommandList)} but received a {musicIdentifier.GetType().Name} instead", nameof(musicIdentifier));
-                }
-            }
-        }
+		protected override async Task Play(object musicIdentifier)
+		{
+			if (!(musicIdentifier is null))
+			{
+				switch (musicIdentifier)
+				{
+					case Command c:
+						await Client.Do(c);
+						break;
 
-        protected override object GetMusicIdentifier(TContext oldContext, TContext newContext)
-        {
-            var commands = rulePicker.Rule.GetCommands(oldContext, newContext);
-            return commands;
-        }
+					case ICommandList commands:
+						await Client.Do(commands);
+						break;
 
-        private void Authorisation_OnAccessTokenReceived(Authorisation sender, string accessToken)
-        {
-            Client.GiftNewAccessToken(accessToken);
-        }
-    }
+					default:
+						throw new ArgumentException($"Expected a {nameof(ICommandList)} but received a {musicIdentifier.GetType().Name} instead", nameof(musicIdentifier));
+				}
+			}
+		}
+
+		protected override object GetMusicIdentifier(TContext oldContext, TContext newContext)
+		{
+			if (newContext?.Equals(default) ?? true)
+			{
+				return new StopCommand();
+			}
+
+			var commands = rulePicker.Rule.GetCommands(oldContext, newContext);
+			return commands;
+		}
+	}
 }

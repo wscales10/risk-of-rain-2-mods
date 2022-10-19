@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="spotifyAccessToken.txt" />
+    <None Remove="spotifyRefreshToken.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="spotifyAccessToken.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="spotifyRefreshToken.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ZetaIpc" Version="1.0.4.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IPC\IPC.csproj" />
+    <ProjectReference Include="..\Spotify\Spotify.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Utils">
+      <HintPath>..\..\Common\Utils\bin\$(Configuration)\netstandard2.0\Utils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

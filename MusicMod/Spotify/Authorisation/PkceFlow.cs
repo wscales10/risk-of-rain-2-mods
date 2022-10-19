@@ -2,6 +2,7 @@
 using System.Collections.Specialized;
 using System.Threading.Tasks;
 using SpotifyAPI.Web;
+using Utils;
 
 namespace Spotify.Authorisation
 {
@@ -45,8 +46,9 @@ namespace Spotify.Authorisation
             {
                 return await ((OAuthClient)client).RequestToken(new PKCETokenRefreshRequest(app.ClientId, RefreshToken));
             }
-            catch (APIException)
+            catch (APIException ex)
             {
+                this.Log(ex);
                 ErrorState = ErrorState.ApiDenied;
                 return null;
             }
