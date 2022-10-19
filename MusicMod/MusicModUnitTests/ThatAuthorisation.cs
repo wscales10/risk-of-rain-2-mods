@@ -17,7 +17,14 @@ namespace MusicModUnitTests
 		public async Task TestMethod6()
 		{
 			var auth = new Authorisation(Scopes.Playback, true, logger: s => this.Log(s));
-			auth.OnAccessTokenReceived += (_, a) => this.Log(a);
+			auth.Preferences.PropertyChanged += (name) =>
+			{
+				if (name == nameof(Preferences.AccessToken))
+				{
+					this.Log(auth.Preferences.AccessToken);
+				}
+			};
+
 			auth.OnClientRequested += Web.Goto;
 			_ = auth.InitiateScopeRequestAsync();
 			await auth.Info.WaitUntilOffAsync();
@@ -27,12 +34,15 @@ namespace MusicModUnitTests
 		public async Task TestMethod1()
 		{
 			var auth = new Authorisation(Scopes.Playback, true, logger: s => this.Log(s));
-			var client = new SpotifyPlaybackClient(Enumerable.Empty<Playlist>(), s => this.Log(s), new PreferencesLite());
-			auth.OnAccessTokenReceived += (s, a) =>
+			var client = new SpotifyPlaybackClient(Enumerable.Empty<Playlist>(), s => this.Log(s), auth.Preferences);
+			auth.Preferences.PropertyChanged += (name) =>
 			{
-				client.GiftNewAccessToken(a);
-				_ = client.Do(new PlayCommand(SpotifyItemType.Track, "2pl3Mzh2LeeUyzFacnHyZc"));
+				if (name == nameof(Preferences.AccessToken))
+				{
+					_ = client.Do(new PlayCommand(SpotifyItemType.Track, "2pl3Mzh2LeeUyzFacnHyZc"));
+				}
 			};
+
 			auth.OnClientRequested += Web.Goto;
 			_ = auth.InitiateScopeRequestAsync();
 			await auth.Info.WaitUntilOffAsync();

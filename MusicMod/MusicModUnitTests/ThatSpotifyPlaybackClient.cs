@@ -17,10 +17,13 @@ namespace MusicModUnitTests
 		{
 			var auth = new Authorisation(Scopes.Playback, logger: s => this.Log(s));
 			var client = new SpotifyPlaybackClient(Enumerable.Empty<Playlist>(), s => this.Log(s), new PreferencesLite(), -200);
-			auth.OnAccessTokenReceived += (s, a) =>
+
+			auth.Preferences.PropertyChanged += (name) =>
 			{
-				client.GiftNewAccessToken(a);
-				_ = Switch();
+				if (name == nameof(Preferences.AccessToken))
+				{
+					_ = Switch();
+				}
 			};
 			auth.OnClientRequested += Web.Goto;
 			await auth.InitiateScopeRequestAsync();
