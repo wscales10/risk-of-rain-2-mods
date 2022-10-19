@@ -124,7 +124,18 @@ namespace Spotify.Authorisation
 			return deserialised;
 		}
 
-		public async Task<AccessTokenInfo> TryRefreshTokenAsync()
+		public void SkipLoginEtc(string refreshToken)
+		{
+			if (state != FlowState.None)
+			{
+				throw new InvalidOperationException();
+			}
+
+			State = FlowState.TokenGranted;
+			RefreshToken = refreshToken;
+		}
+
+		public async Task<RefreshTokenInfo> TryRefreshTokenAsync()
 		{
 			this.Log("Attempting to refresh access token");
 			ThrowIfFaulted();
@@ -153,8 +164,15 @@ namespace Spotify.Authorisation
 			if (deserialised is null)
 			{
 				// TODO: not working Possibly not connection - check responseMessage please!
-				Debugger.Break();
-				ErrorState = ErrorState.Connection;
+				if (ErrorState != ErrorState.ApiDenied)
+				{
+					Debugger.Break();
+				}
+
+				if (ErrorState == ErrorState.None)
+				{
+					ErrorState = ErrorState.Connection;
+				}
 			}
 			else
 			{

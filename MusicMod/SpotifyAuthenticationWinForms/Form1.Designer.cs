@@ -34,6 +34,8 @@
 			this.ErrorStateLabel = new System.Windows.Forms.Label();
 			this.RestartButton = new System.Windows.Forms.Button();
 			this.ConfigureButton = new System.Windows.Forms.Button();
+			this.ResetAccessButton = new System.Windows.Forms.Button();
+			this.ResetRefreshButton = new System.Windows.Forms.Button();
 			this.SuspendLayout();
 			// 
 			// label1
@@ -76,7 +78,7 @@
 			// 
 			this.RestartButton.Location = new System.Drawing.Point(12, 49);
 			this.RestartButton.Name = "RestartButton";
-			this.RestartButton.Size = new System.Drawing.Size(75, 23);
+			this.RestartButton.Size = new System.Drawing.Size(117, 23);
 			this.RestartButton.TabIndex = 4;
 			this.RestartButton.Text = "Restart";
 			this.RestartButton.UseVisualStyleBackColor = true;
@@ -84,19 +86,41 @@
 			// 
 			// ConfigureButton
 			// 
-			this.ConfigureButton.Location = new System.Drawing.Point(93, 49);
+			this.ConfigureButton.Location = new System.Drawing.Point(135, 49);
 			this.ConfigureButton.Name = "ConfigureButton";
-			this.ConfigureButton.Size = new System.Drawing.Size(75, 23);
+			this.ConfigureButton.Size = new System.Drawing.Size(122, 23);
 			this.ConfigureButton.TabIndex = 5;
 			this.ConfigureButton.Text = "Configure";
 			this.ConfigureButton.UseVisualStyleBackColor = true;
 			this.ConfigureButton.Click += new System.EventHandler(this.ConfigureButton_Click);
+			// 
+			// ResetAccessButton
+			// 
+			this.ResetAccessButton.Location = new System.Drawing.Point(12, 78);
+			this.ResetAccessButton.Name = "ResetAccessButton";
+			this.ResetAccessButton.Size = new System.Drawing.Size(117, 23);
+			this.ResetAccessButton.TabIndex = 6;
+			this.ResetAccessButton.Text = "Reset Access Token";
+			this.ResetAccessButton.UseVisualStyleBackColor = true;
+			this.ResetAccessButton.Click += new System.EventHandler(this.ResetAccessButton_Click);
+			// 
+			// ResetRefreshButton
+			// 
+			this.ResetRefreshButton.Location = new System.Drawing.Point(135, 78);
+			this.ResetRefreshButton.Name = "ResetRefreshButton";
+			this.ResetRefreshButton.Size = new System.Drawing.Size(122, 23);
+			this.ResetRefreshButton.TabIndex = 7;
+			this.ResetRefreshButton.Text = "Reset Refresh Token";
+			this.ResetRefreshButton.UseVisualStyleBackColor = true;
+			this.ResetRefreshButton.Click += new System.EventHandler(this.ResetRefreshButton_Click);
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(269, 129);
+			this.Controls.Add(this.ResetRefreshButton);
+			this.Controls.Add(this.ResetAccessButton);
 			this.Controls.Add(this.ConfigureButton);
 			this.Controls.Add(this.RestartButton);
 			this.Controls.Add(this.ErrorStateLabel);
@@ -118,5 +142,7 @@
 		private Label ErrorStateLabel;
 		private Button RestartButton;
 		private Button ConfigureButton;
+		private Button ResetAccessButton;
+		private Button ResetRefreshButton;
 	}
 }

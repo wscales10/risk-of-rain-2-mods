@@ -88,6 +88,22 @@ namespace Utils.Async
 			});
 		}
 
+		public JoinableTask<T> RunSafely<T>(Func<Task<T>> taskGetter)
+		{
+			return joinableTaskFactory.RunAsync(async () =>
+			{
+				try
+				{
+					return await taskGetter();
+				}
+				catch (OperationCanceledException ex)
+				{
+					System.Diagnostics.Debugger.Break();
+					throw;
+				}
+			});
+		}
+
 		public async Task SwitchToMainThreadAsync() => await joinableTaskFactory.SwitchToMainThreadAsync();
 
 		//public SingletonTaskWithAsyncSetup CreateSingletonTask(Func<Task> taskGetter) => new SingletonTaskWithAsyncSetup(taskGetter, this);

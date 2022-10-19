@@ -36,11 +36,20 @@ namespace Spotify
 
 		public string DefaultDeviceString
 		{
-			get => Encoding.UTF8.GetString(DefaultDevice);
-			set => DefaultDevice = Encoding.UTF8.GetBytes(value);
+			get => DefaultDevice is null ? null : Encoding.UTF8.GetString(DefaultDevice);
+			set => DefaultDevice = value is null ? null : Encoding.UTF8.GetBytes(value);
 		}
 
-		public string AccessToken => accessToken;
+		public string AccessToken
+		{
+			get => accessToken;
+
+			set
+			{
+				accessToken = value;
+				PropertyChanged?.Invoke(nameof(AccessToken));
+			}
+		}
 	}
 
 	public class Preferences : IPreferences
@@ -51,29 +60,63 @@ namespace Spotify
 
 		public byte[] DefaultDevice
 		{
-			get => ReadBytesFromFile(Path.Combine(preferencesDirectory, "defaultDevice.json"));
+			get => ReadBytesFromFile(defaultDeviceFilePath);
 
 			set
 			{
-				WriteToFile(Path.Combine(preferencesDirectory, "defaultDevice.json"), value);
+				WriteToFile(defaultDeviceFilePath, value);
 				PropertyChanged?.Invoke(nameof(DefaultDevice));
 			}
 		}
 
 		public string DefaultDeviceString
 		{
-			get => ReadFromFile(Path.Combine(preferencesDirectory, "defaultDevice.json"));
+			get => ReadFromFile(defaultDeviceFilePath);
 
 			set
 			{
-				WriteToFile(Path.Combine(preferencesDirectory, "defaultDevice.json"), value);
+				WriteToFile(defaultDeviceFilePath, value);
 				PropertyChanged?.Invoke(nameof(DefaultDevice));
 			}
 		}
 
-		public string AccessToken => ReadFromFile(
-					Path.Combine(preferencesDirectory, "spotifyAccessToken.txt"),
-			path => DateTime.UtcNow - File.GetLastWriteTimeUtc(path) < TimeSpan.FromHours(1))?.Trim();
+		public string AccessToken
+		{
+			get
+			{
+				return ReadFromFile(
+					Path.Combine(accessTokenFilePath),
+					path => DateTime.UtcNow - File.GetLastWriteTimeUtc(path) < TimeSpan.FromHours(1))?.Trim();
+			}
+
+			set
+			{
+				WriteToFile(accessTokenFilePath, value);
+				PropertyChanged?.Invoke(nameof(AccessToken));
+			}
+		}
+
+		public string RefreshToken
+		{
+			get
+			{
+				return ReadFromFile(Path.Combine(refreshTokenFilePath))?.Trim();
+			}
+
+			set
+			{
+				WriteToFile(refreshTokenFilePath, value);
+				PropertyChanged?.Invoke(nameof(RefreshToken));
+			}
+		}
+
+		public DateTime AccessTokenUpdated => File.GetLastWriteTimeUtc(accessTokenFilePath);
+
+		private string refreshTokenFilePath => Path.Combine(preferencesDirectory, "spotifyRefreshToken.txt");
+
+		private string accessTokenFilePath => Path.Combine(preferencesDirectory, "spotifyAccessToken.txt");
+
+		private string defaultDeviceFilePath => Path.Combine(preferencesDirectory, "defaultDevice.json");
 
 		private static string ReadFromFile(string path, Predicate<string> predicate = null)
 		{

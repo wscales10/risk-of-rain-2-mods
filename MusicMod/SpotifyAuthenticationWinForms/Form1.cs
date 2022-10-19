@@ -11,6 +11,10 @@ namespace SpotifyAuthenticationWinForms
 
 		public event Action? OnConfigure;
 
+		public event Action? OnResetAccess;
+
+		public event Action? OnResetRefresh;
+
 		internal bool RestartButtonEnabled { get => RestartButton.Enabled; set => RestartButton.Enabled = value; }
 
 		internal void Authorisation_ErrorStateChanged(string obj) => ErrorStateLabel.Text = obj;
@@ -26,6 +30,16 @@ namespace SpotifyAuthenticationWinForms
 		private void ConfigureButton_Click(object sender, EventArgs e)
 		{
 			OnConfigure?.Invoke();
+		}
+
+		private void ResetAccessButton_Click(object sender, EventArgs e)
+		{
+			OnResetAccess?.Invoke();
+		}
+
+		private void ResetRefreshButton_Click(object sender, EventArgs e)
+		{
+			OnResetRefresh?.Invoke();
 		}
 	}
 }

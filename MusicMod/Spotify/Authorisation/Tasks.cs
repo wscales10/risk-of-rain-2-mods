@@ -14,9 +14,32 @@ namespace Spotify.Authorisation
 			flow = getFlow();
 			flow.StateChanged += Flow_StateChanged;
 			flow.ErrorStateChanged += Flow_ErrorStateChanged;
+
 			try
 			{
-				_ = await server.TryStartAsync();
+				bool startRefreshLoopNow = false;
+
+				if (!string.IsNullOrEmpty(Preferences.RefreshToken))
+				{
+					var expiresIn = Preferences.AccessTokenUpdated + TimeSpan.FromHours(1) - DateTime.UtcNow;
+
+					Startup = expiresIn > TimeSpan.Zero ? AuthorisationStartup.Access : AuthorisationStartup.Refresh;
+
+					flow.SkipLoginEtc(Preferences.RefreshToken);
+					RefreshIn(expiresIn);
+					startRefreshLoopNow = true;
+				}
+				else
+				{
+					Startup = AuthorisationStartup.Full;
+				}
+
+				await server.TryStartAsync();
+
+				if (startRefreshLoopNow)
+				{
+					InitiateRefreshLoop();
+				}
 			}
 			catch (HttpListenerException e)
 			{
@@ -30,7 +53,7 @@ namespace Spotify.Authorisation
 
 			if (flow?.State >= FlowState.TokenGranted)
 			{
-				refreshTask = Async.Manager.RunSafely(RefreshLoop);
+				InitiateRefreshLoop();
 			}
 		}
 
@@ -49,7 +72,7 @@ namespace Spotify.Authorisation
 					await Task.Delay(delay, cancellationTokenSource.Token);
 				}
 
-				data = await flow.TryRefreshTokenAsync();
+				var data = await flow.TryRefreshTokenAsync();
 
 				if (!(data?.Scope is null))
 				{
@@ -68,6 +91,10 @@ namespace Spotify.Authorisation
 								RefreshIn(TimeSpan.FromSeconds(6));
 								break;
 
+							case ErrorState.ApiDenied:
+								Preferences.RefreshToken = null;
+								break;
+
 							default:
 								throw new NotImplementedException();
 						}
@@ -80,7 +107,13 @@ namespace Spotify.Authorisation
 							throw new InvalidOperationException();
 						}
 
-						OnAccessTokenReceived?.Invoke(this, data.AccessToken);
+						Preferences.AccessToken = data.AccessToken;
+
+						if (data.RefreshToken != null)
+						{
+							Preferences.RefreshToken = data.RefreshToken;
+						}
+
 						RefreshIn(GetWaitTime(data.ExpiresIn));
 						break;
 

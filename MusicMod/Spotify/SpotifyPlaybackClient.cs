@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VisualStudio.Threading;
+using Newtonsoft.Json;
 using Spotify.Commands;
 using SpotifyAPI.Web;
 using System;
@@ -30,6 +31,8 @@ namespace Spotify
 		private PlayerState cachedState = PlayerState.Stopped;
 
 		private string deviceId;
+
+		private JoinableTask<FullTrack> getTrackInfoTask;
 
 		public SpotifyPlaybackClient(IEnumerable<Playlist> playlists, Logger logger, IPreferences preferences, int transferFix = 0) : base(logger, preferences)
 		{
@@ -163,21 +166,67 @@ namespace Spotify
 			await ActivateDeviceAsync();
 		}
 
-		protected override async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken cancellationToken, List<Type> exceptionTypes = null)
+		protected override async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken cancellationToken, List<SpotifyError> errors = null)
 		{
+			var error = ClassifyException(e);
 			switch (e)
 			{
 				case APIException _:
-					if (!exceptionTypes.Contains(e.GetType()) && e.Message.Contains("active device"))
+					if (!errors.Contains(error))
 					{
-						await ActivateDeviceAsync();
-						exceptionTypes.Add(e.GetType());
-						return await ExecuteAsync(commands, cancellationToken, exceptionTypes);
+						switch (error.Subtype)
+						{
+							case ErrorType.BadGateway:
+								errors.Add(error);
+								return await ExecuteAsync(commands, cancellationToken, errors);
+
+							case ErrorType.RestrictionViolated:
+								Log(e);
+								System.Diagnostics.Debugger.Break();
+								return true;
+
+							case ErrorType.NoActiveDevice:
+								await ActivateDeviceAsync();
+								errors.Add(error);
+								return await ExecuteAsync(commands, cancellationToken, errors);
+						}
 					}
+
 					break;
 			}
 
-			return await base.HandleErrorAsync(e, commands, cancellationToken, exceptionTypes);
+			return await base.HandleErrorAsync(e, commands, cancellationToken, errors);
+		}
+
+		protected override SpotifyError ClassifyException(Exception e)
+		{
+			var message = e.Message?.ToLower();
+
+			var output = new SpotifyError(e.GetType());
+
+			switch (e)
+			{
+				case APIException _:
+					if (!(message is null))
+					{
+						if (message.Contains("active device"))
+						{
+							return output.With(ErrorType.NoActiveDevice);
+						}
+						else if (message.Contains("restriction violated"))
+						{
+							return output.With(ErrorType.RestrictionViolated);
+						}
+						else if (message.Contains("bad gateway"))
+						{
+							return output.With(ErrorType.BadGateway);
+						}
+					}
+
+					break;
+			}
+
+			return base.ClassifyException(e);
 		}
 
 		private void Timers(Action<BasicTimer> action)
@@ -188,17 +237,24 @@ namespace Spotify
 
 		private async Task<bool> ResumeInner()
 		{
+			Log($"Entering method {nameof(ResumeInner)}");
 			if (await GetState() == PlayerState.Paused)
 			{
+				Log($"State is PlayerState.Paused, attempting resume");
 				if (!await Client.Player.ResumePlayback())
 				{
+					Log("Resume unsuccessful");
 					return false;
 				}
+
+				Log($"Resume successful");
 
 				SetState(PlayerState.Playing);
 			}
 
 			Timers(t => t.Resume());
+
+			Log($"Exiting method {nameof(ResumeInner)}");
 			return true;
 		}
 
@@ -282,15 +338,25 @@ namespace Spotify
 
 		private async Task<bool> PauseInner()
 		{
+			Log($"Entered method {nameof(PauseInner)}");
 			Timers(t => t.Pause());
 
+			Log("await pause playback");
 			if (await Client.Player.PausePlayback())
 			{
+				Log("Playback paused");
 				SetState(PlayerState.Paused);
 				return true;
 			}
+			else
+			{
+				Log("Playback not paused");
+			}
 
-			return await GetState() == PlayerState.Paused;
+			Log("Get state (verify pause successful)");
+			var state = await GetState();
+			Log($"State got: {state}");
+			return state == PlayerState.Paused;
 		}
 
 		private async Task<bool> PlayItem(SpotifyItem item, int milliseconds, IOffset offset = null)
@@ -348,7 +414,16 @@ namespace Spotify
 
 		private async Task<bool> SetPlaylistIndex()
 		{
-			var playbackState = await Client.Player.GetCurrentPlayback();
+			CurrentlyPlayingContext playbackState;
+			try
+			{
+				playbackState = await Client.Player.GetCurrentPlayback();
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debugger.Break();
+				throw;
+			}
 
 			if (playbackState is null)
 			{
@@ -393,7 +468,9 @@ namespace Spotify
 			if (playlistIndex != -1)
 			{
 				bool result = await PlayItem(currentPlaylist[playlistIndex], milliseconds);
-				secondaryPlaylistTimer.Start(TimeSpan.FromSeconds(1));
+				getTrackInfoTask = Async.Manager.RunSafely(() => Client.Tracks.Get(currentPlaylist[playlistIndex].Id));
+				Log(DateTime.UtcNow);
+				secondaryPlaylistTimer.Start(TimeSpan.FromSeconds(3));
 				return result;
 			}
 			else
@@ -406,17 +483,27 @@ namespace Spotify
 
 		private async Task<bool> PrepareNextTime()
 		{
-			var info = await GetCurrentlyPlaying();
+			Log($"{playlistIndex} / {DateTime.UtcNow}");
+			var currentlyPlaying = await GetCurrentlyPlaying();
+
+			if ((currentlyPlaying.Item as FullTrack)?.Id != currentPlaylist[playlistIndex].Id)
+			{
+				System.Diagnostics.Debugger.Break();
+			}
+
+			var desiredTrack = await getTrackInfoTask;
 
 			int durationMs;
-			switch (info.Item)
+			switch (currentlyPlaying.Item)
 			{
 				case FullTrack t:
-					durationMs = t.DurationMs - (info.ProgressMs ?? 0);
+					Log($"Currently playing: {t.Name} at {TimeSpan.FromMilliseconds(currentlyPlaying.ProgressMs ?? 0)}");
+					durationMs = desiredTrack.DurationMs - (currentlyPlaying.ProgressMs ?? 0);
 					break;
 
 				case FullEpisode e:
-					durationMs = e.DurationMs - (info.ProgressMs ?? 0);
+					Log($"Currently playing: {e.Name} at {TimeSpan.FromMilliseconds(currentlyPlaying.ProgressMs ?? 0)}");
+					durationMs = e.DurationMs - (currentlyPlaying.ProgressMs ?? 0);
 					break;
 
 				default:
@@ -432,13 +519,22 @@ namespace Spotify
 		{
 			try
 			{
-				var response = await Client.Player.GetAvailableDevices();
-				return response?.Devices;
+				if (!(Client is null))
+				{
+					var response = await Client.Player.GetAvailableDevices();
+
+					if (!(response is null))
+					{
+						return response.Devices;
+					}
+				}
 			}
-			catch (HttpRequestException)
+			catch (HttpRequestException ex)
 			{
-				return new List<Device>();
+				Log(ex);
 			}
+
+			return new List<Device>();
 		}
 
 		private async Task<CurrentlyPlaying> GetCurrentlyPlaying()
@@ -503,8 +599,9 @@ namespace Spotify
 				{
 					defaultDevice = JsonConvert.DeserializeObject<DeviceInfo>(str);
 				}
-				catch
+				catch (Exception ex)
 				{
+					Log(ex);
 				}
 
 				if (!(defaultDevice?.Id is null) && devices.Any(d => d.Id == defaultDevice.Id))
@@ -514,7 +611,7 @@ namespace Spotify
 				}
 			}
 
-			var activeDevice = (await Client.Player.GetCurrentPlayback())?.Device;
+			var activeDevice = Client is null ? null : (await Client.Player.GetCurrentPlayback())?.Device;
 
 			if (!(activeDevice is null))
 			{

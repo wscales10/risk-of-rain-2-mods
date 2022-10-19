@@ -1,5 +1,7 @@
-﻿using System;
+﻿using IPC;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Utils;
 
 namespace Spotify
@@ -10,17 +12,21 @@ namespace Spotify
 
 		public AuthorisationClient()
 		{
-			ipcClient.HandleConnResponse += IpcClient_HandleConnResponse;
+			ipcClient.HandleConnResponse += HandleResponse;
 			ipcClient.ReceivedRequest += IpcClient_ReceivedRequest;
 		}
-
-		public event Action<string> OnNewAccessToken;
 
 		public PreferencesLite Preferences { get; } = new PreferencesLite();
 
 		public void RequestConfigurationPage()
 		{
-			ipcClient.SendToServer("conf");
+			ipcClient.SendToServer(new Message("conf"));
+		}
+
+		public void RequestNewAccessToken()
+		{
+			var response = ipcClient.SendToServer(new Message("toke"));
+			HandleResponse(response.Messages);
 		}
 
 		protected override void Start()
@@ -31,18 +37,21 @@ namespace Spotify
 			}
 		}
 
-		private IEnumerable<string> IpcClient_ReceivedRequest(IEnumerable<string> arg)
+		private IEnumerable<Message> IpcClient_ReceivedRequest(IEnumerable<Message> arg)
 		{
+			this.Log("Request Start");
+
 			foreach (var request in arg)
 			{
-				switch (request.Substring(0, 4))
+				this.Log($"Request Line: {request}");
+				switch (request.Key)
 				{
 					case "toke":
-						OnNewAccessToken?.Invoke(request.Substring(7));
+						Preferences.AccessToken = request.Value;
 						break;
 
 					case "devi":
-						Preferences.DefaultDeviceString = request.Substring(7);
+						Preferences.DefaultDeviceString = request.Value;
 						break;
 
 					default:
@@ -50,12 +59,14 @@ namespace Spotify
 				}
 			}
 
+			this.Log("Request End");
+
 			yield break;
 		}
 
-		private void IpcClient_HandleConnResponse(IEnumerable<string> obj)
+		private void HandleResponse(IEnumerable<Message> obj)
 		{
-			_ = IpcClient_ReceivedRequest(obj);
+			_ = IpcClient_ReceivedRequest(obj).LastOrDefault();
 		}
 	}
 }

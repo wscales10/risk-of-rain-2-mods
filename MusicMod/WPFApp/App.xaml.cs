@@ -28,6 +28,7 @@ using System.Collections.ObjectModel;
 using Utils.Async;
 using MyRoR2;
 using System.Xml.Linq;
+using System.Windows.Threading;
 
 namespace WPFApp
 {
@@ -201,20 +202,22 @@ namespace WPFApp
 				ImportXml(Rules.Examples.MimicRule.ToXml());
 			}
 
-			Render();
-			mainView.Show();
-
-			authorisationClient.OnNewAccessToken += (t) =>
+			authorisationClient.Preferences.PropertyChanged += (name) =>
 			{
-				MetadataClient.GiftNewAccessToken(t);
-				PlaybackClient.GiftNewAccessToken(t);
-				SpotifyItemPickerViewModel.Refresh();
+				if (name == nameof(IPreferences.AccessToken))
+				{
+					Current.Dispatcher.BeginInvoke(SpotifyItemPickerViewModel.Refresh);
+				}
 			};
 
 			if (!Settings.Default.OfflineMode)
 			{
 				authorisationClient.TryStart();
+				SpotifyItemPickerViewModel.Refresh();
 			}
+
+			Render();
+			mainView.Show();
 		}
 
 		private bool NavigationContext_TreeNavigationRequested(IRuleRow arg)
@@ -308,6 +311,7 @@ namespace WPFApp
 					if (!settings.OfflineMode)
 					{
 						authorisationClient.TryStart();
+						SpotifyItemPickerViewModel.Refresh();
 					}
 
 					break;

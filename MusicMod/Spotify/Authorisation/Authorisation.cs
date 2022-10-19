@@ -37,8 +37,6 @@ namespace Spotify.Authorisation
 
 		private JoinableTask refreshTask;
 
-		private AccessTokenInfo data;
-
 		private CodeFlowBase flow;
 
 		private DateTime refreshBy;
@@ -70,9 +68,18 @@ namespace Spotify.Authorisation
 
 		public event Action<string> ErrorStateChanged;
 
-		public event AccessTokenHandler OnAccessTokenReceived;
-
 		public event Action<Uri> OnClientRequested;
+
+		public enum AuthorisationStartup
+		{
+			Full,
+
+			Refresh,
+
+			Access
+		}
+
+		public AuthorisationStartup Startup { get; private set; }
 
 		public Preferences Preferences { get; } = new Preferences();
 
@@ -96,8 +103,12 @@ namespace Spotify.Authorisation
 
 		public async Task InitiateScopeRequestAsync()
 		{
-			_ = await TryStartAsync();
-			OnClientRequested?.Invoke(App.Instance.RootUri);
+			await TryStartAsync();
+
+			if (Startup == AuthorisationStartup.Full)
+			{
+				OnClientRequested?.Invoke(App.Instance.RootUri);
+			}
 		}
 
 		protected override async Task PauseAsync()
@@ -166,7 +177,7 @@ namespace Spotify.Authorisation
 
 				res.Redirect("index.html");
 
-				data = await flow.RequestTokensAsync();
+				var data = await flow.RequestTokensAsync();
 
 				if (data is null || flow.State == FlowState.Error)
 				{
@@ -174,9 +185,11 @@ namespace Spotify.Authorisation
 					return;
 				}
 
-				OnAccessTokenReceived?.Invoke(this, data.AccessToken);
+				Preferences.AccessToken = data.AccessToken;
+				Preferences.RefreshToken = data.RefreshToken;
+
 				RefreshIn(GetWaitTime(data.ExpiresIn));
-				refreshTask = Async.Manager.RunSafely(RefreshLoop);
+				InitiateRefreshLoop();
 			});
 
 			server.On("POST", "/shutdown", (req, res) =>
@@ -217,7 +230,16 @@ namespace Spotify.Authorisation
 				{
 					res.Redirect("index.html");
 				}
+				else if (flow.State == FlowState.Login)
+				{
+					res.Redirect(App.Instance.RootUri + "login");
+				}
 			});
+		}
+
+		private void InitiateRefreshLoop()
+		{
+			refreshTask = Async.Manager.RunSafely(RefreshLoop);
 		}
 
 		private async Task<byte[]> GetRequestBodyAsync(HttpListenerRequest req)
@@ -232,7 +254,7 @@ namespace Spotify.Authorisation
 		{
 			using (var request = new HttpRequestMessage(HttpMethod.Get, "https://api.spotify.com/v1/me/player/devices"))
 			{
-				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", data.AccessToken);
+				request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Preferences.AccessToken);
 				var responseMessage = await client.SendAsync(request);
 				return responseMessage.Content;
 			}

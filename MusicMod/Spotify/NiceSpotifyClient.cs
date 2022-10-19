@@ -2,6 +2,7 @@
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
@@ -19,19 +20,30 @@ namespace Spotify
 
 		private string accessToken;
 
-		private string backupAccessToken;
-
 		private bool isAuthorised;
 
 		protected NiceSpotifyClient(Logger logger, IPreferences preferences)
 		{
 			Log = logger;
-			this.preferences = preferences;
+			(this.preferences = preferences).PropertyChanged += (name) =>
+			{
+				switch (name)
+				{
+					case nameof(IPreferences.AccessToken):
+						if (!IsAuthorised)
+						{
+							TryAuthorise();
+						}
+						break;
+				}
+			};
 			Log("initialising");
 			_ = InitialiseAsync().ContinueWith(_ => Log("initialised"), TaskScheduler.Default);
 		}
 
 		public event Action<Exception> OnError;
+
+		public event Action OnAccessTokenRequested;
 
 		public bool IsAuthorised
 		{
@@ -61,16 +73,13 @@ namespace Spotify
 		{
 			async Task func(CancellationToken token) => await ExecuteAsync(input, token);
 			var cancellableTask = new CancellableTask(func);
-			await asyncJobQueue.WaitForMyJobAsync(cancellableTask, cancellationToken);
-		}
 
-		public void GiftNewAccessToken(string accessToken)
-		{
-			backupAccessToken = accessToken;
 			if (!IsAuthorised)
 			{
-				Authorise();
+				OnAccessTokenRequested?.Invoke();
 			}
+
+			await asyncJobQueue.WaitForMyJobAsync(cancellableTask, cancellationToken);
 		}
 
 		protected void Throw(Exception e)
@@ -82,17 +91,25 @@ namespace Spotify
 		// TODO: make more use of cancellation token
 		protected abstract Task<bool> HandleAsync(Command command, CancellationToken cancellationToken);
 
-		protected virtual async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken cancellationToken, List<Type> exceptionTypes = null)
+		protected virtual async Task<bool> HandleErrorAsync(Exception e, ICommandList commands, CancellationToken cancellationToken, List<SpotifyError> errors = null)
 		{
+			var error = ClassifyException(e);
 			switch (e)
 			{
 				case APIUnauthorizedException _:
 				case APIException _:
-					if (!exceptionTypes.Contains(e.GetType()))
+
+					switch (errors.Count(t => t == error))
 					{
-						Authorise();
-						exceptionTypes.Add(e.GetType());
-						return await ExecuteAsync(commands, cancellationToken, exceptionTypes);
+						case 0:
+							TryAuthorise();
+							errors.Add(error);
+							return await ExecuteAsync(commands, cancellationToken, errors);
+
+						case 1:
+							IsAuthorised = false;
+							OnAccessTokenRequested?.Invoke();
+							return await ExecuteAsync(commands, cancellationToken, errors);
 					}
 
 					IsAuthorised = false;
@@ -103,9 +120,14 @@ namespace Spotify
 			return false;
 		}
 
-		protected virtual async Task<bool> ExecuteAsync(ICommandList commands, CancellationToken cancellationToken, List<Type> exceptionTypes = null)
+		protected virtual SpotifyError ClassifyException(Exception e)
 		{
-			exceptionTypes = exceptionTypes ?? new List<Type>();
+			return new SpotifyError(e.GetType());
+		}
+
+		protected virtual async Task<bool> ExecuteAsync(ICommandList commands, CancellationToken cancellationToken, List<SpotifyError> exceptionTypes = null)
+		{
+			exceptionTypes = exceptionTypes ?? new List<SpotifyError>();
 			try
 			{
 				// TODO: move try-catch inside loop?
@@ -131,24 +153,19 @@ namespace Spotify
 
 		protected virtual Task InitialiseAsync()
 		{
-			Authorise();
+			TryAuthorise();
 			return Task.CompletedTask;
 		}
 
-		private void Authorise()
+		private bool TryAuthorise()
 		{
-			if (backupAccessToken is null)
+			if (!(preferences.AccessToken is null))
 			{
-				IsAuthorised = !((accessToken = preferences.AccessToken) is null);
-			}
-			else
-			{
-				accessToken = backupAccessToken;
-				backupAccessToken = null;
-				IsAuthorised = true;
+				Client = new SpotifyClient(accessToken = preferences.AccessToken);
+				return IsAuthorised = true;
 			}
 
-			Client = new SpotifyClient(accessToken);
+			return false;
 		}
 	}
 }
