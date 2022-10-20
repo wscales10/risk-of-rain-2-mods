@@ -12,11 +12,11 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 
 		private static readonly Regex regex = new Regex(@"^(?<num1>-?\d+)?(?<dots>\.\.)?(?<num2>-?\d+)?$");
 
+		public int? Max { get; private set; }
+
+		public int? Min { get; private set; }
+
 		internal static TypeDef TypeDef { get; } = TypeDef.Create<int, IntPattern>((s) => (IntPattern)new IntPattern().DefineWith(s), i => (IntPattern)(x == i));
-
-		internal int? Max { get; private set; }
-
-		internal int? Min { get; private set; }
 
 		public static IPattern<int> Create(int? min, int? max)
 		{
