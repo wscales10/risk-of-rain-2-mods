@@ -4,6 +4,7 @@ using Patterns;
 using Patterns.Patterns;
 using Patterns.Patterns.CollectionPatterns;
 using Patterns.Patterns.SmallPatterns;
+using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using System;
 using System.Windows;
 using Utils;
@@ -67,6 +68,16 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			if (patternType.IsGenericType(typeof(PropertyPattern<>)))
 			{
 				return (IReadableControlWrapper)typeof(PropertyPatternWrapper<>).MakeGenericType(patternType.GenericTypeArguments).GetAnyConstructor(patternType, typeof(NavigationContext)).Invoke(new object[] { pattern, navigationContext });
+			}
+
+			if (patternType == typeof(IntPattern))
+			{
+				return new IntPatternWrapper(pattern as IntPattern);
+			}
+
+			if (patternType.IsGenericType(typeof(EnumRangePattern<>)))
+			{
+				return (IReadableControlWrapper)typeof(EnumPatternWrapper<>).MakeGenericType(patternType.GenericTypeArguments).Construct(pattern);
 			}
 
 			if (typeof(IValuePattern).IsAssignableFrom(patternType))

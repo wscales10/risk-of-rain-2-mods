@@ -1,226 +1,246 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using Patterns.TypeDefs;
+using Utils;
 using Utils.Reflection;
 
 namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 {
-    public class EnumRangePattern : ClassValuePattern<Enum>
-    {
-        private readonly IntPattern basePattern = new IntPattern();
+	public class EnumRangePattern : ClassValuePattern<Enum>
+	{
+		private readonly IntPattern basePattern = new IntPattern();
 
-        private string minString;
+		private string minString;
 
-        private string maxString;
+		private string maxString;
 
-        internal static TypeDef TypeDef { get; } = TypeDef.Create<Enum, EnumRangePattern>((s) => (EnumRangePattern)new EnumRangePattern().DefineWith(s), e => Equals(e));
+		internal static TypeDef TypeDef { get; } = TypeDef.Create<Enum, EnumRangePattern>((s) => (EnumRangePattern)new EnumRangePattern().DefineWith(s), e => Equals(e));
 
-        internal static ParserSpecificTypeDefGetter GenericTypeDef { get; } = new ParserSpecificTypeDefGetter(
-                patternParser => new BestTypeDefGetter(typeRef =>
-                    typeRef.FullType is null ? TypeDef : new TypeDef(
-                    (s) => GenericDefiner(s, typeRef, patternParser),
-                    Equalizer,
-                    typeRef.DenullabledType,
-                    (t) => typeof(EnumRangePattern<>).MakeGenericType(t))
-                    )
-                );
+		internal static ParserSpecificTypeDefGetter GenericTypeDef { get; } = new ParserSpecificTypeDefGetter(
+				patternParser => new BestTypeDefGetter(typeRef =>
+					typeRef.FullType is null ? TypeDef : new TypeDef(
+					(s) => GenericDefiner(s, typeRef, patternParser),
+					Equalizer,
+					typeRef.DenullabledType,
+					(t) => typeof(EnumRangePattern<>).MakeGenericType(t))
+					)
+				);
 
-        internal static Regex Regex { get; } = new Regex(@"^(?<item1>(?<string1>.*)\((?<num1>-?\d+)\))?(?<dots>\.\.)?(?<item2>(?<string2>.*)\((?<num2>-?\d+)\))?$");
+		internal static Regex Regex { get; } = new Regex(@"^(?<item1>(?<string1>.*?)\((?<num1>-?\d+)\))?(?<dots>\.\.)?(?<item2>(?<string2>.*)\((?<num2>-?\d+)\))?$");
 
-        private (string, int)? Min => Ensure(minString, basePattern.Min);
+		private (string, int)? Min => Ensure(minString, basePattern.Min);
 
-        private (string, int)? Max => Ensure(maxString, basePattern.Max);
+		private (string, int)? Max => Ensure(maxString, basePattern.Max);
 
-        public static void Validate(Type type, int index, string expectedName)
-        {
-            if (!Inherits(type, typeof(Enum)))
-            {
-                throw new ArgumentOutOfRangeException(nameof(type), type, "Not an enum");
-            }
+		public static void Validate(Type type, int index, string expectedName)
+		{
+			if (!Inherits(type, typeof(Enum)))
+			{
+				throw new ArgumentOutOfRangeException(nameof(type), type, "Not an enum");
+			}
 
-            string actualName = Enum.GetName(type, index);
+			string actualName = Enum.GetName(type, index);
 
-            if (actualName != expectedName)
-            {
-                throw new Exception($"Expected {type}[{index}] to be {expectedName} but found {actualName}.");
-            }
-        }
+			if (actualName != expectedName)
+			{
+				throw new Exception($"Expected {type}[{index}] to be {expectedName} but found {actualName}.");
+			}
+		}
 
-        public static EnumRangePattern<T> Equals<T>(T value)
-                where T : struct, Enum
-        {
-            return (EnumRangePattern<T>)new EnumRangePattern<T>().DefineWith($"{value}({EnumRangePattern<T>.GetIndex(value)})");
-        }
+		public static EnumRangePattern<T> Equals<T>(T value)
+				where T : struct, Enum
+		{
+			return (EnumRangePattern<T>)new EnumRangePattern<T>().DefineWith($"{value}({EnumRangePattern<T>.GetIndex(value)})");
+		}
 
-        public static EnumRangePattern Equals(Enum value)
-        {
-            return (EnumRangePattern)new EnumRangePattern().DefineWith($"{value}({GetIndex(value)})");
-        }
+		public static EnumRangePattern Equals(Enum value)
+		{
+			return (EnumRangePattern)new EnumRangePattern().DefineWith($"{value}({GetIndex(value)})");
+		}
 
-        internal static (string, int)? Ensure(string s, int? n)
-        {
-            if (s is null)
-            {
-                if (n is null)
-                {
-                    return null;
-                }
-            }
-            else if (n is int i)
-            {
-                return (s, i);
-            }
+		public static int GetIndex(Enum value)
+		{
+			return (int)Convert.ChangeType(value, value.GetTypeCode());
+		}
 
-            throw new NullReferenceException();
-        }
+		public Enum GetMinValue(Type enumType) => minString is null ? null : (Enum)Enum.Parse(enumType, minString);
 
-        internal static int GetIndex(Enum value)
-        {
-            return (int)Convert.ChangeType(value, value.GetTypeCode());
-        }
+		public Enum GetMaxValue(Type enumType) => maxString is null ? null : (Enum)Enum.Parse(enumType, maxString);
 
-        protected override bool defineWith(string stringDefinition)
-        {
-            var match = Regex.Match(stringDefinition);
+		internal static (string, int)? Ensure(string s, int? n)
+		{
+			if (s is null)
+			{
+				if (n is null)
+				{
+					return null;
+				}
+			}
+			else if (n is int i)
+			{
+				return (s, i);
+			}
 
-            if (!match.Success)
-            {
-                return false;
-            }
+			throw new NullReferenceException();
+		}
 
-            var dotGroup = match.Groups["dots"];
+		protected override bool defineWith(string stringDefinition)
+		{
+			var match = Regex.Match(stringDefinition);
 
-            var string1Group = match.Groups["string1"];
-            var num1Group = match.Groups["num1"];
-            var string2Group = match.Groups["string2"];
-            var num2Group = match.Groups["num2"];
+			if (!match.Success)
+			{
+				return false;
+			}
 
-            basePattern.DefineWith($"{ num1Group.Value }{ dotGroup.Value }{ num2Group.Value }");
-            if (basePattern.Definition is null)
-            {
-                return false;
-            }
-            else
-            {
-                minString = basePattern.Min is null ? null : string1Group.Value;
-                maxString = basePattern.Max is null ? null : string2Group.Value;
+			var dotGroup = match.Groups["dots"];
 
-                if (maxString?.Length == 0)
-                {
-                    maxString = minString;
-                }
+			var string1Group = match.Groups["string1"];
+			var num1Group = match.Groups["num1"];
+			var string2Group = match.Groups["string2"];
+			var num2Group = match.Groups["num2"];
 
-                return true;
-            }
-        }
+			basePattern.DefineWith($"{ num1Group.Value }{ dotGroup.Value }{ num2Group.Value }");
+			if (basePattern.Definition is null)
+			{
+				return false;
+			}
+			else
+			{
+				minString = basePattern.Min is null ? null : string1Group.Value;
+				maxString = basePattern.Max is null ? null : string2Group.Value;
 
-        protected override bool isMatch(Enum value)
-        {
-            if (Min.HasValue)
-            {
-                Validate(value.GetType(), Min.Value.Item2, Min.Value.Item1);
-            }
+				if (maxString?.Length == 0)
+				{
+					maxString = minString;
+				}
 
-            if (Max.HasValue)
-            {
-                Validate(value.GetType(), Max.Value.Item2, Max.Value.Item1);
-            }
+				return true;
+			}
+		}
 
-            var converted = Convert.ChangeType(value, value.GetTypeCode());
-            return (Min is null || (int)converted >= Min.Value.Item2) && (Max is null || (int)converted <= Max.Value.Item2);
-        }
+		protected override bool isMatch(Enum value)
+		{
+			if (Min.HasValue)
+			{
+				Validate(value.GetType(), Min.Value.Item2, Min.Value.Item1);
+			}
 
-        private static IPattern GenericDefiner(string s, TypeRef typeRef, PatternParser patternParser)
-        {
-            var pattern = typeof(EnumRangePattern<>).MakeGenericType(patternParser.GetType(typeRef)).Construct();
-            return pattern.InvokeMethod<IPattern>(nameof(DefineWith), s);
-        }
+			if (Max.HasValue)
+			{
+				Validate(value.GetType(), Max.Value.Item2, Max.Value.Item1);
+			}
 
-        private static PatternBase Equalizer(object x)
-        {
-            return (PatternBase)typeof(EnumRangePattern)
-                .GetMethod("Equals", mi => mi.IsGenericMethod)
-                .MakeGenericMethod(x.GetType())
-                .InvokeStatic(x);
-        }
-    }
+			var converted = Convert.ChangeType(value, value.GetTypeCode());
+			return (Min is null || (int)converted >= Min.Value.Item2) && (Max is null || (int)converted <= Max.Value.Item2);
+		}
 
-    public class EnumRangePattern<T> : StructValuePattern<T>
-        where T : struct, Enum
-    {
-        private readonly IntPattern basePattern = new IntPattern();
+		private static IPattern GenericDefiner(string s, TypeRef typeRef, PatternParser patternParser)
+		{
+			var pattern = typeof(EnumRangePattern<>).MakeGenericType(patternParser.GetType(typeRef)).Construct();
+			return pattern.InvokeMethod<IPattern>(nameof(DefineWith), s);
+		}
 
-        private string minString;
+		private static PatternBase Equalizer(object x)
+		{
+			return (PatternBase)typeof(EnumRangePattern)
+				.GetMethod("Equals", mi => mi.IsGenericMethod)
+				.MakeGenericMethod(x.GetType())
+				.InvokeStatic(x);
+		}
+	}
 
-        private string maxString;
+	public class EnumRangePattern<T> : StructValuePattern<T>
+		where T : struct, Enum
+	{
+		private readonly IntPattern basePattern = new IntPattern();
 
-        private (string, int)? Min => EnumRangePattern.Ensure(minString, basePattern.Min);
+		private string minString;
 
-        private (string, int)? Max => EnumRangePattern.Ensure(maxString, basePattern.Max);
+		private string maxString;
 
-        public static void Validate(int index, string expectedName)
-        {
-            EnumRangePattern.Validate(typeof(T), index, expectedName);
-        }
+		public T? MinValue => minString is null ? (T?)null : minString.AsEnum<T>();
 
-        public override IPattern Correct() => new EnumRangePattern().DefineWith(Definition);
+		public T? MaxValue => maxString is null ? (T?)null : maxString.AsEnum<T>();
 
-        internal static int GetIndex(T value)
-        {
-            return (int)Convert.ChangeType(value, value.GetTypeCode());
-        }
+		private (string, int)? Min => EnumRangePattern.Ensure(minString, basePattern.Min);
 
-        protected override bool defineWith(string stringDefinition)
-        {
-            var match = EnumRangePattern.Regex.Match(stringDefinition);
+		private (string, int)? Max => EnumRangePattern.Ensure(maxString, basePattern.Max);
 
-            if (!match.Success)
-            {
-                return false;
-            }
+		public static EnumRangePattern<T> Create(T? min, T? max)
+		{
+			string part1, part2, part3;
 
-            var dotGroup = match.Groups["dots"];
+			part1 = min is null ? null : $"{min}({GetIndex(min.Value)})";
+			part2 = !(min is null) && Equals(min, max) ? null : "..";
+			part3 = Equals(min, max) ? null : $"{max}({GetIndex(max.Value)})";
 
-            var string1Group = match.Groups["string1"];
-            var num1Group = match.Groups["num1"];
+			return (EnumRangePattern<T>)new EnumRangePattern<T>().DefineWith($"{part1}{part2}{part3}");
+		}
 
-            if (string1Group.Success)
-            {
-                Validate(int.Parse(num1Group.Value), string1Group.Value);
-            }
+		public static void Validate(int index, string expectedName)
+		{
+			EnumRangePattern.Validate(typeof(T), index, expectedName);
+		}
 
-            var string2Group = match.Groups["string2"];
-            var num2Group = match.Groups["num2"];
+		public static int GetIndex(T value)
+		{
+			return (int)Convert.ChangeType(value, value.GetTypeCode());
+		}
 
-            if (string2Group.Success)
-            {
-                Validate(int.Parse(num2Group.Value), string2Group.Value);
-            }
+		public override IPattern Correct() => new EnumRangePattern().DefineWith(Definition);
 
-            basePattern.DefineWith($"{ num1Group.Value }{ dotGroup.Value }{ num2Group.Value }");
+		protected override bool defineWith(string stringDefinition)
+		{
+			var match = EnumRangePattern.Regex.Match(stringDefinition);
 
-            if (basePattern.Definition is null)
-            {
-                return false;
-            }
-            else
-            {
-                minString = basePattern.Min is null ? null : string1Group.Value;
-                maxString = basePattern.Max is null ? null : string2Group.Value;
+			if (!match.Success)
+			{
+				return false;
+			}
 
-                if (maxString?.Length == 0)
-                {
-                    maxString = minString;
-                }
+			var dotGroup = match.Groups["dots"];
 
-                return true;
-            }
-        }
+			var string1Group = match.Groups["string1"];
+			var num1Group = match.Groups["num1"];
 
-        protected override bool isMatch(T value)
-        {
-            var index = GetIndex(value);
-            return (Min is null || index >= Min.Value.Item2) && (Max is null || index <= Max.Value.Item2);
-        }
-    }
+			if (string1Group.Success)
+			{
+				Validate(int.Parse(num1Group.Value), string1Group.Value);
+			}
+
+			var string2Group = match.Groups["string2"];
+			var num2Group = match.Groups["num2"];
+
+			if (string2Group.Success)
+			{
+				Validate(int.Parse(num2Group.Value), string2Group.Value);
+			}
+
+			basePattern.DefineWith($"{ num1Group.Value }{ dotGroup.Value }{ num2Group.Value }");
+
+			if (basePattern.Definition is null)
+			{
+				return false;
+			}
+			else
+			{
+				minString = basePattern.Min is null ? null : string1Group.Value;
+				maxString = basePattern.Max is null ? null : string2Group.Value;
+
+				if (maxString?.Length == 0)
+				{
+					maxString = minString;
+				}
+
+				return true;
+			}
+		}
+
+		protected override bool isMatch(T value)
+		{
+			var index = GetIndex(value);
+			return (Min is null || index >= Min.Value.Item2) && (Max is null || index <= Max.Value.Item2);
+		}
+	}
 }
