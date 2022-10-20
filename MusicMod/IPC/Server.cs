@@ -13,8 +13,6 @@ namespace IPC
 {
 	public class Server : Entity
 	{
-		public event Func<string, IEnumerable<Message>> OnAddClient;
-
 		private readonly Dictionary<string, int> strikes = new Dictionary<string, int>();
 
 		private readonly PortHelper portHelper = new PortHelper();
@@ -25,6 +23,8 @@ namespace IPC
 		{
 			MyPort = port;
 		}
+
+		public event Func<string, IEnumerable<Message>> OnAddClient;
 
 		protected override string GuidString => null;
 
@@ -53,7 +53,6 @@ namespace IPC
 			}
 			catch (WebException ex)
 			{
-				System.Diagnostics.Debugger.Break();
 				this.Log(ex);
 				AddStrike(guid);
 			}
