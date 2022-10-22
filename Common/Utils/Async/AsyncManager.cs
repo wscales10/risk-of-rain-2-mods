@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Threading;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,6 +8,7 @@ namespace Utils.Async
 {
 	public class AsyncManager
 	{
+		[SuppressMessage("Minor Code Smell", "S1450:Private fields only used as local variables in methods should become local variables", Justification = "To be used in the future")]
 		private readonly JoinableTaskContext joinableTaskContext;
 
 		private readonly JoinableTaskFactory joinableTaskFactory;
@@ -105,9 +107,5 @@ namespace Utils.Async
 		}
 
 		public async Task SwitchToMainThreadAsync() => await joinableTaskFactory.SwitchToMainThreadAsync();
-
-		//public SingletonTaskWithAsyncSetup CreateSingletonTask(Func<Task> taskGetter) => new SingletonTaskWithAsyncSetup(taskGetter, this);
-
-		//public SingletonTaskWithAsyncSetup CreateSingletonTask(Func<Task> setupGetter, Func<Task> taskGetter) => new SingletonTaskWithAsyncSetup(setupGetter, taskGetter, this);
 	}
 }

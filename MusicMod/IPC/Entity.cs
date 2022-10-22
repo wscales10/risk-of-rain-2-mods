@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Utils;
+using Utils.Runners;
 using ZetaIpc.Runtime.Server;
 
 namespace IPC
 {
-	public abstract class Entity : Runner
+	public abstract class Entity : CoroutineRunner
 	{
 		public event Func<IEnumerable<Message>, IEnumerable<Message>> ReceivedRequest;
 

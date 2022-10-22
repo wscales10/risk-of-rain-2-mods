@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -12,6 +11,7 @@ using System.Threading.Tasks;
 using Utils;
 using Utils.Async;
 using Utils.Reflection;
+using Utils.Runners;
 
 namespace Spotify.Authorisation
 {

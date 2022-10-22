@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Coroutines;
 using ZetaIpc.Runtime.Client;
 using ZetaIpc.Runtime.Helper;
 using ZetaIpc.Runtime.Server;
@@ -63,14 +64,18 @@ namespace IPC
 			}
 		}
 
-		protected override void Start()
+		protected override CoroutineMethod Start()
 		{
-			var receiver = new IpcServer();
-			receiver.Start(MyPort.Value);
+			return reference =>
+			{
+				var receiver = new IpcServer();
+				receiver.Start(MyPort.Value);
 
-			receiver.ReceivedRequest += Receiver_ReceivedRequest;
+				receiver.ReceivedRequest += Receiver_ReceivedRequest;
 
-			_ = Task.Delay(Timeout.InfiniteTimeSpan);
+				_ = Task.Delay(Timeout.InfiniteTimeSpan);
+				return new object[] { };
+			};
 		}
 
 		protected override Packet HandleReceivedPacket(Packet packet)

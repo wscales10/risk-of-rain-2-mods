@@ -15,6 +15,7 @@
     <Compile Remove="Controls\PatternControls\NewPatternPicker.xaml.cs" />
     <Compile Remove="Controls\Rows\ButtonsControl.xaml.cs" />
     <Compile Remove="Controls\Rows\RowButtonsControl.xaml.cs" />
+    <Compile Remove="Coroutine.cs" />
     <Compile Remove="Settings.cs" />
     <Compile Remove="ViewModels\XmlViewModelBase.cs" />
   </ItemGroup>

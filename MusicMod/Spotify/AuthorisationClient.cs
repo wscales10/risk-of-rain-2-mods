@@ -3,10 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Utils;
+using Utils.Coroutines;
+using Utils.Runners;
 
 namespace Spotify
 {
-	public class AuthorisationClient : Runner
+	public class AuthorisationClient : CoroutineRunner
 	{
 		private readonly IPC.Client ipcClient = new IPC.Client(5007);
 
@@ -29,12 +31,15 @@ namespace Spotify
 			HandleResponse(response.Messages);
 		}
 
-		protected override void Start()
+		protected override CoroutineMethod Start()
 		{
-			if (!ipcClient.TryStart())
+			return reference =>
 			{
-				throw new InvalidOperationException();
-			}
+				if (!ipcClient.TryStart())
+				{
+					throw new InvalidOperationException();
+				}
+			};
 		}
 
 		private IEnumerable<Message> IpcClient_ReceivedRequest(IEnumerable<Message> arg)

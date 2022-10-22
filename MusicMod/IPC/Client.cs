@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Coroutines;
 using ZetaIpc.Runtime.Client;
 using ZetaIpc.Runtime.Server;
 
@@ -38,20 +40,59 @@ namespace IPC
 			return MakePacket(HandleReceivedRequest(packet.Messages));
 		}
 
-		protected override void Start()
+		protected override CoroutineMethod Start()
 		{
-			try
+			IEnumerable coroutineMethod(Reference reference)
 			{
 				sender = new IpcClient();
 				sender.Initialize(ServerPort);
-				var portResponse = SendToServerIgnoreTimeout();
+				Packet portResponse = null;
+
+				while (portResponse is null)
+				{
+					var response = SendToServerCatchWebException();
+
+					switch (response)
+					{
+						case Packet packet:
+							portResponse = packet;
+							break;
+
+						case Exception ex:
+							yield return ex;
+							break;
+
+						default:
+							throw new NotSupportedException();
+					}
+				}
 
 				MyPort = portResponse.Port.Value;
 				var receiver = new IpcServer();
 				receiver.Start(MyPort.Value);
 
 				this.Log("Connecting");
-				var connectionResponse = SendToServerIgnoreTimeout(new Message("conn"));
+				Packet connectionResponse = null;
+
+				while (connectionResponse is null)
+				{
+					var response = SendToServerCatchWebException(new Message("conn"));
+
+					switch (response)
+					{
+						case Packet packet:
+							connectionResponse = packet;
+							break;
+
+						case Exception ex:
+							yield return ex;
+							break;
+
+						default:
+							throw new NotSupportedException();
+					}
+				}
+
 				this.Log(connectionResponse);
 
 				this.Log("Handling Connection Response");
@@ -60,42 +101,20 @@ namespace IPC
 
 				receiver.ReceivedRequest += Receiver_ReceivedRequest;
 
-				_ = Task.Delay(Timeout.InfiniteTimeSpan);
+				reference.Complete(true);
 			}
-			catch (Exception ex)
-			{
-				this.Log(ex);
-				System.Diagnostics.Debugger.Break();
-				throw;
-			}
+			return coroutineMethod;
 		}
 
-		private Packet SendToServerIgnoreTimeout(params Message[] messages)
+		private object SendToServerCatchWebException(params Message[] messages)
 		{
-			while (true)
+			try
 			{
-				try
-				{
-					return SendToServer(messages);
-				}
-				catch (WebException ex)
-				{
-					switch (ex.Status)
-					{
-						case WebExceptionStatus.Timeout:
-							break;
-
-						case WebExceptionStatus.ConnectFailure:
-						case WebExceptionStatus.UnknownError:
-							Thread.Sleep(1000);
-							break;
-
-						default:
-							throw;
-					}
-
-					this.Log(ex);
-				}
+				return SendToServer(messages);
+			}
+			catch (WebException ex)
+			{
+				return ex;
 			}
 		}
 
