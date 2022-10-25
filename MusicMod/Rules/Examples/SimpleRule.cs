@@ -6,7 +6,7 @@ using static RoR2.TeleporterInteraction;
 
 namespace Rules
 {
-	using static Rules.RuleTypes.Mutable.RuleCase<Context, ICommandList>;
+	using static RuleCase<Context, ICommandList>;
 
 	public static partial class Examples
 	{

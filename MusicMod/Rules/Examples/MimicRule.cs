@@ -11,11 +11,6 @@ namespace Rules
 {
 	using static RuleCase<Context, ICommandList>;
 	using static Bucket<Context, ICommandList>;
-	using Rule = Rule<Context, ICommandList>;
-	using IfRule = IfRule<Context, ICommandList>;
-	using ArrayRule = ArrayRule<Context, ICommandList>;
-
-	using Bucket = Bucket<Context, ICommandList>;
 
 	public static partial class Examples
 	{
@@ -41,7 +36,7 @@ namespace Rules
 		private static readonly Rule SpecialRule = Switcher.Instance.Create(
 			nameof(Context.SceneName),
 			ScenePattern.Equals,
-			C<MyScene>(new IfRule(
+			C<MyScene>(IfRule.Create(
 				Query.Create<bool>(nameof(Context.IsBossEncounter), BoolPattern.True),
 				Switcher.Instance.Create(
 					nameof(Context.ScenePart),
@@ -51,12 +46,12 @@ namespace Rules
 					C(Play("3KE5ossIfDAnBqNJFF8LfF", 259950), 3).Named("Phase 4"),
 					C(new CommandList(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }), 4).Named("Death Animation")),
 				Play("7G349JbUH3PRdj5e7780Iz").Named("Escape sequence")).Named("Commencement"), Scenes.Commencement),
-			C<MyScene>(new IfRule(
+			C<MyScene>(IfRule.Create(
 				Query.Create<bool>(nameof(Context.IsBossEncounter), BoolPattern.True),
 				Play("5fdiSSxvIsrCJ7sVkuhxnD"),
 				Play("2pl3Mzh2LeeUyzFacnHyZc")).Named("The Planetarium"), Scenes.ThePlanetarium)).Named("Final Stages");
 
-		private static readonly Rule BossRule = Switcher.Instance.Create(
+		private static readonly Rule<Context, ICommandList> BossRule = Switcher.Instance.Create(
 			nameof(Context.SceneName),
 			ScenePattern.Equals,
 			M("0j6CuhzD0XQlA5iTiRkx5P", Scenes.TitanicPlains, Scenes.DistantRoost, Scenes.AbandonedAqueduct),
@@ -70,14 +65,14 @@ namespace Rules
 			nameof(Context.TeleporterState),
 			C<ActivationState?>(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }), ActivationState.Charged).Named("Teleporter Charged"),
 			C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging).Named("Teleporter"),
-			C<ActivationState?>(new ArrayRule(SpecialRule, IdleRule), ActivationState.Idle, null).Named("Other"));
+			C<ActivationState?>(ArrayRule.Create(SpecialRule, IdleRule), ActivationState.Idle, null).Named("Other"));
 
 		private static readonly Rule OtherRule = Switcher.Instance.Create(
 			nameof(Context.SceneName),
 			ScenePattern.Equals,
 			C<MyScene>(Play("6H6LnqmjEcW8gl6D7dIRKJ"), Scenes.SplashScreen, Scenes.IntroCutscene),
 			C<MyScene>(Main(), Scenes.MainMenu),
-			C<MyScene>(new IfRule(Query.Create(nameof(Context.ScenePart), IntPattern.x == 0), Play("3tEnANZ8EeFj3FDBEYXQxG"), Play("5cCjhYmgJwQwm5eEgttDxC", 42000)), Scenes.Outro),
+			C<MyScene>(IfRule.Create(Query.Create(nameof(Context.ScenePart), IntPattern.x == 0), Play("3tEnANZ8EeFj3FDBEYXQxG"), Play("5cCjhYmgJwQwm5eEgttDxC", 42000)), Scenes.Outro),
 			C<MyScene>(Dehydrated(), Scenes.Logbook),
 			C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Normal)), Scenes.CharacterSelect),
 			C<MyScene>(Dehydrated(), Query.Create<RunType>(nameof(Context.RunType), EnumRangePattern.Equals(RunType.Eclipse)), Scenes.EclipseMenu, Scenes.CharacterSelect),
@@ -89,9 +84,9 @@ namespace Rules
 			OtherRule,
 			C(EnvironmentRule, SceneType.Stage, SceneType.Intermission).Named("Environments")).ToReadOnly(RuleParser.RoR2ToSpotify);
 
-		private static Bucket Dehydrated() => Transfer("3BBYYGOlrDKEVOQvXD4huf", Switch("ms", P<int, string>("ms - 8000", IntPattern.x > 68000)), StringPattern.Equals("0Q4NqUpiuOnQxYOGjnbuCh"));
+		private static Bucket<Context, ICommandList> Dehydrated() => Transfer("3BBYYGOlrDKEVOQvXD4huf", Switch("ms", P<int, string>("ms - 8000", IntPattern.x > 68000)), StringPattern.Equals("0Q4NqUpiuOnQxYOGjnbuCh"));
 
-		private static Bucket Main() => Transfer("0Q4NqUpiuOnQxYOGjnbuCh", Switch("ms", P<int, string>("ms + 8000", IntPattern.x > 60000)), StringPattern.Equals("3BBYYGOlrDKEVOQvXD4huf"));
+		private static Bucket<Context, ICommandList> Main() => Transfer("0Q4NqUpiuOnQxYOGjnbuCh", Switch("ms", P<int, string>("ms + 8000", IntPattern.x > 60000)), StringPattern.Equals("3BBYYGOlrDKEVOQvXD4huf"));
 
 		private static MultiCase<MyScene, Context, ICommandList> M(string trackId, params DefinedScene[] sceneNames)
 		{
