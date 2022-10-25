@@ -4,6 +4,7 @@ using Spotify.Commands;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -16,6 +17,15 @@ namespace Spotify
 {
 	public class SpotifyPlaybackClient : NiceSpotifyClient
 	{
+		private static readonly ReadOnlyDictionary<SpotifyItemType, Type> enumToTypeDictionary = new Dictionary<SpotifyItemType, Type>
+		{
+			[SpotifyItemType.Album] = typeof(FullAlbum),
+			[SpotifyItemType.Artist] = typeof(FullArtist),
+			[SpotifyItemType.Playlist] = typeof(FullPlaylist),
+			[SpotifyItemType.Track] = typeof(FullTrack),
+			[SpotifyItemType.User] = typeof(PublicUser)
+		}.ToReadOnly();
+
 		private readonly BasicTimer mainPlaylistTimer;
 
 		private readonly BasicTimer secondaryPlaylistTimer;
@@ -102,7 +112,7 @@ namespace Spotify
 							return false;
 						}
 
-						var positionMs = await GetPosition(seekToCommand.Milliseconds);
+						var positionMs = await GetPositionAsync(seekToCommand.Milliseconds);
 						Log(positionMs);
 						var request = new PlayerSeekToRequest(positionMs);
 						return await Client.Player.SeekTo(request);
@@ -182,7 +192,6 @@ namespace Spotify
 
 							case ErrorType.RestrictionViolated:
 								Log(e);
-								System.Diagnostics.Debugger.Break();
 								return true;
 
 							case ErrorType.NoActiveDevice:
@@ -359,6 +368,95 @@ namespace Spotify
 			return state == PlayerState.Paused;
 		}
 
+		private async Task<(object, bool)> TryGetTrackAsync(SpotifyItem item, IOffset offset)
+		{
+			try
+			{
+				return (await GetTrackAsync(item, offset), true);
+			}
+			catch
+			{
+				return (null, false);
+			}
+		}
+
+		private async Task<bool> GetShuffleStateAsync()
+		{
+			return (await Client.Player.GetCurrentPlayback()).ShuffleState;
+		}
+
+		private async Task<object> GetTrackAsync(SpotifyItem item, IOffset offset)
+		{
+			if (item.Type == SpotifyItemType.Track)
+			{
+				if (!(offset is null))
+				{
+					throw new ArgumentOutOfRangeException(nameof(offset), offset, "Offset cannot be used with tracks");
+				}
+
+				return await GetSpotifyItemInfoAsync<FullTrack>(item);
+			}
+
+			if (await GetShuffleStateAsync())
+			{
+				throw new InvalidOperationException();
+			}
+
+			switch (offset)
+			{
+				case null:
+					return (await GetSpotifyItemInfoAsync<FullAlbum>(item)).Tracks.Items[0];
+
+				case ItemOffset itemOffset:
+					return await GetSpotifyItemInfoAsync<FullTrack>(itemOffset.Item);
+
+				case IndexOffset indexOffset:
+					return (await GetSpotifyItemInfoAsync<FullAlbum>(item)).Tracks.Items[indexOffset.Position];
+
+				default:
+					throw new NotSupportedException();
+			}
+
+			switch (item.Type)
+			{
+				case SpotifyItemType.Album:
+
+					switch (offset)
+					{
+						case null:
+							return (await GetSpotifyItemInfoAsync<FullAlbum>(item)).Tracks.Items[0];
+
+						case ItemOffset itemOffset:
+							return await GetSpotifyItemInfoAsync<FullTrack>(itemOffset.Item);
+
+						case IndexOffset indexOffset:
+							return (await GetSpotifyItemInfoAsync<FullAlbum>(item)).Tracks.Items[indexOffset.Position];
+
+						default:
+							throw new NotSupportedException();
+					}
+
+				case SpotifyItemType.Playlist:
+
+					switch (offset)
+					{
+						case null:
+							return (await GetSpotifyItemInfoAsync<FullPlaylist>(item)).Tracks.Items[0];
+
+						case ItemOffset itemOffset:
+							return await GetSpotifyItemInfoAsync<FullTrack>(itemOffset.Item);
+
+						case IndexOffset indexOffset:
+							return (await GetSpotifyItemInfoAsync<FullPlaylist>(item)).Tracks.Items[indexOffset.Position];
+
+						default:
+							throw new NotSupportedException();
+					}
+			}
+
+			throw new NotSupportedException();
+		}
+
 		private async Task<bool> PlayItem(SpotifyItem item, int milliseconds, IOffset offset = null)
 		{
 			if (item is null)
@@ -367,7 +465,7 @@ namespace Spotify
 			}
 
 			var s = item?.GetUri().ToString();
-			var positionMs = await GetPosition(milliseconds);
+			var positionMs = await GetPositionAsync(milliseconds, item, offset);
 			PlayerResumePlaybackRequest request;
 			if (item?.Type == SpotifyItemType.Track)
 			{
@@ -542,12 +640,91 @@ namespace Spotify
 			return await Client.Player.GetCurrentlyPlaying(new PlayerCurrentlyPlayingRequest());
 		}
 
-		private async Task<int> GetPosition(int milliseconds)
+		private async Task<T> GetSpotifyItemInfoAsync<T>(SpotifyItem item)
+			where T : class
+		{
+			if (item is null)
+			{
+				throw new ArgumentNullException(nameof(item));
+			}
+
+			if (enumToTypeDictionary[item.Type] != typeof(T))
+			{
+				throw new ArgumentOutOfRangeException(nameof(item), item, $"type mismatch with {typeof(T).Name}");
+			}
+
+			switch (item.Type)
+			{
+				case SpotifyItemType.Track:
+					return await Client.Tracks.Get(item.Id) as T;
+
+				case SpotifyItemType.Playlist:
+					return await Client.Playlists.Get(item.Id) as T;
+
+				case SpotifyItemType.Album:
+					return await Client.Albums.Get(item.Id) as T;
+
+				case SpotifyItemType.Artist:
+					return await Client.Artists.Get(item.Id) as T;
+
+				case SpotifyItemType.User:
+					return await Client.UserProfile.Get(item.Id) as T;
+
+				default:
+					throw new NotSupportedException($"Item type {item.Type} not supported");
+			}
+		}
+
+		private async Task<int> GetPositionAsync(int milliseconds, SpotifyItem spotifyItem, IOffset offset)
+		{
+			if (spotifyItem is null)
+			{
+				return await GetPositionAsync(milliseconds);
+			}
+			else
+			{
+				return await GetPositionAsync(milliseconds, async () =>
+				{
+					var (track, success) = await TryGetTrackAsync(spotifyItem, offset);
+
+					if (success)
+					{
+						return GetDuration(track);
+					}
+					else
+					{
+						return null;
+					}
+				});
+			}
+		}
+
+		private int GetDuration(object track)
+		{
+			switch (track)
+			{
+				case SimpleTrack simpleTrack:
+					return simpleTrack.DurationMs;
+
+				case FullTrack fullTrack:
+					return fullTrack.DurationMs;
+
+				default:
+					throw new ArgumentOutOfRangeException(nameof(track), track, $"Type {track.GetType()} not supported");
+			}
+		}
+
+		private async Task<int> GetPositionAsync(int milliseconds, Func<Task<int?>> getTrackDurationMs = null)
 		{
 			if (milliseconds < 0)
 			{
-				var track = (await GetCurrentlyPlaying()).Item as FullTrack;
-				return Math.Max(0, track.DurationMs + milliseconds);
+				int? trackDurationMs;
+				if (getTrackDurationMs is null || (trackDurationMs = await getTrackDurationMs()) is null)
+				{
+					trackDurationMs = ((FullTrack)(await GetCurrentlyPlaying()).Item).DurationMs;
+				}
+
+				return Math.Max(0, trackDurationMs.Value + milliseconds);
 			}
 			else
 			{
