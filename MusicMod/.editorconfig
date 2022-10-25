@@ -18,3 +18,6 @@ dotnet_diagnostic.S4487.severity = none
 
 # S1144: Unused private types or members should be removed
 dotnet_diagnostic.S1144.severity = none
+
+# IDE0065: Misplaced using directive
+dotnet_diagnostic.IDE0065.severity = none
