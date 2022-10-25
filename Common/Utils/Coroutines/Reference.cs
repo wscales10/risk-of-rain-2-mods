@@ -31,7 +31,7 @@ namespace Utils.Coroutines
 
 		public TaskStatus Status { get; private set; }
 
-		public void Complete(object value)
+		public void Complete(object value = null)
 		{
 			if (Status <= TaskStatus.Running)
 			{
@@ -46,7 +46,7 @@ namespace Utils.Coroutines
 
 		public void Fail()
 		{
-			if (Status < TaskStatus.Faulted)
+			if (Status < TaskStatus.RanToCompletion)
 			{
 				Value = null;
 				Status = TaskStatus.Faulted;

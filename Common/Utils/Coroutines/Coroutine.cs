@@ -1,11 +1,47 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Utils.Coroutines
 {
 	public delegate bool ProgressHandler(object progressUpdate);
 
-	public delegate IEnumerable CoroutineMethod(Reference reference);
+	public delegate IEnumerable<ProgressUpdate> CoroutineMethod(Reference reference);
+
+	[Serializable]
+	public class FailedCoroutineRunException : Exception
+	{
+		public FailedCoroutineRunException()
+		{
+		}
+
+		public FailedCoroutineRunException(string message) : base(message)
+		{
+		}
+
+		public FailedCoroutineRunException(string message, Exception innerException) : base(message, innerException)
+		{
+		}
+
+		protected FailedCoroutineRunException(SerializationInfo info, StreamingContext context) : base(info, context)
+		{
+		}
+	}
+
+	public class ProgressUpdate
+	{
+		public ProgressUpdate(object sender, object args)
+		{
+			Sender = sender;
+			Args = args;
+		}
+
+		public object Sender { get; }
+
+		public object Args { get; }
+	}
 
 	public class CoroutineRun
 	{
@@ -16,15 +52,34 @@ namespace Utils.Coroutines
 			this.func = func ?? throw new ArgumentNullException(nameof(func));
 		}
 
-		public bool Continue { get; set; }
+		public bool Continue { get; set; } = true;
 
 		public Result Result { get; private set; }
 
-		public IEnumerable Invoke()
+		public CoroutineRun RunToCompletion()
+		{
+			_ = GetProgressUpdates().LastOrDefault();
+			return this;
+		}
+
+		public CoroutineRun ThrowOnFailure()
+		{
+			RunToCompletion();
+			if (Result)
+			{
+				return this;
+			}
+			else
+			{
+				throw new FailedCoroutineRunException();
+			}
+		}
+
+		public IEnumerable<ProgressUpdate> GetProgressUpdates()
 		{
 			var reference = new Reference();
 
-			foreach (object progressUpdate in func(reference))
+			foreach (var progressUpdate in func(reference))
 			{
 				if (reference.IsFinished)
 				{
@@ -57,66 +112,21 @@ namespace Utils.Coroutines
 		}
 	}
 
-	public class Coroutine2
-	{
-		private readonly Func<CoroutineMethod> getter;
-
-		public Coroutine2(Func<CoroutineMethod> getter) => this.getter = getter;
-
-		public CoroutineRun Instantiate()
-		{
-			return new CoroutineRun(getter());
-		}
-	}
-
 	public class Coroutine
 	{
-		private readonly Func<CoroutineMethod> getter;
+		private readonly CoroutineMethod method;
 
-		public Coroutine(Func<CoroutineMethod> getter) => this.getter = getter;
+		public Coroutine(CoroutineMethod method) => this.method = method;
 
-		public static Result Run(Func<CoroutineMethod> getter, ProgressHandler handler = null)
+		public static IEnumerable<ProgressUpdate> DefaultMethod(Reference reference)
 		{
-			return new Coroutine(getter).Invoke(handler);
+			reference.Complete();
+			yield break;
 		}
 
-		public Result Invoke(ProgressHandler handler)
+		public CoroutineRun CreateRun()
 		{
-			CoroutineMethod func = getter();
-
-			if (func is null)
-			{
-				return Result.Faulted;
-			}
-
-			var reference = new Reference();
-
-			foreach (object progressUpdate in func(reference))
-			{
-				if (reference.IsFinished)
-				{
-					return new Result(reference);
-				}
-
-				if (!(handler?.Invoke(progressUpdate) ?? true))
-				{
-					reference.Cancel();
-				}
-
-				if (reference.IsFinished)
-				{
-					return new Result(reference);
-				}
-			}
-
-			if (reference.IsFinished)
-			{
-				return new Result(reference);
-			}
-			else
-			{
-				throw new InvalidOperationException("Iterator ended without finalizing reference");
-			}
+			return new CoroutineRun(method);
 		}
 	}
 }

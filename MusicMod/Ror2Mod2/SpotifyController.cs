@@ -2,9 +2,10 @@
 using Spotify.Commands;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Utils;
-using Utils.Runners;
 
 namespace Ror2Mod2
 {
@@ -23,7 +24,40 @@ namespace Ror2Mod2
 			Client.OnAccessTokenRequested += authorisationClient.RequestNewAccessToken;
 			Client.OnError += e => Log(e);
 
-			authorisationClient.TryStart();
+			var run = authorisationClient.TryStart.CreateRun();
+
+			foreach (var progressUpdate in run.GetProgressUpdates())
+			{
+				switch (progressUpdate.Sender)
+				{
+					case IPC.Client _:
+						switch (progressUpdate.Args)
+						{
+							case WebException ex:
+								switch (ex.Status)
+								{
+									case WebExceptionStatus.Timeout:
+										break;
+
+									case WebExceptionStatus.ConnectFailure:
+									case WebExceptionStatus.UnknownError:
+										Thread.Sleep(1000);
+										break;
+
+									default:
+										throw ex;
+								}
+
+								Log(ex);
+								break;
+						}
+						break;
+
+					default:
+						throw new NotSupportedException(progressUpdate.Sender?.GetType().GetDisplayName());
+				}
+			}
+
 			ConfigurationPageRequested += () => authorisationClient.RequestConfigurationPage();
 			this.contextHelper = contextHelper;
 			contextHelper.NewContext += c => _ = Update(c);

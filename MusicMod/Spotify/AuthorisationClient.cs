@@ -31,15 +31,23 @@ namespace Spotify
 			HandleResponse(response.Messages);
 		}
 
-		protected override CoroutineMethod Start()
+		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
-			return reference =>
+			var run = ipcClient.TryStart.CreateRun();
+
+			foreach (var progressUpdate in run.GetProgressUpdates())
 			{
-				if (!ipcClient.TryStart())
-				{
-					throw new InvalidOperationException();
-				}
-			};
+				yield return progressUpdate;
+			}
+
+			if (run.Result.Success)
+			{
+				reference.Complete();
+			}
+			else
+			{
+				reference.Fail();
+			}
 		}
 
 		private IEnumerable<Message> IpcClient_ReceivedRequest(IEnumerable<Message> arg)

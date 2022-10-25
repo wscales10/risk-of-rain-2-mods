@@ -64,18 +64,16 @@ namespace IPC
 			}
 		}
 
-		protected override CoroutineMethod Start()
+		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
-			return reference =>
-			{
-				var receiver = new IpcServer();
-				receiver.Start(MyPort.Value);
+			var receiver = new IpcServer();
+			receiver.Start(MyPort.Value);
 
-				receiver.ReceivedRequest += Receiver_ReceivedRequest;
+			receiver.ReceivedRequest += Receiver_ReceivedRequest;
 
-				_ = Task.Delay(Timeout.InfiniteTimeSpan);
-				return new object[] { };
-			};
+			_ = Task.Delay(Timeout.InfiniteTimeSpan);
+			reference.Complete();
+			yield break;
 		}
 
 		protected override Packet HandleReceivedPacket(Packet packet)

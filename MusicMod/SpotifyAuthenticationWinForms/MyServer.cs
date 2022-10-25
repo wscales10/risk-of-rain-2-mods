@@ -18,7 +18,7 @@ namespace SpotifyAuthenticationWinForms
 			ClearLogFile();
 			server.ReceivedRequest += Server_ReceivedRequest;
 			server.OnAddClient += Server_OnAddClient;
-			server.TryStart();
+			server.TryStart.CreateRun().RunToCompletion();
 			OnAccessTokenReceived += BroadcastToken;
 
 			Form = new();

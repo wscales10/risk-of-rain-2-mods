@@ -1,146 +1,9 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using Utils.Coroutines;
 
 namespace Utils.Runners
 {
-	public abstract class CoroutineRunner2
-	{
-		private readonly RunStateHolder runStateHolder;
-
-		private readonly object lockObject = new object();
-
-		protected CoroutineRunner2(RunState initialState = RunState.Off, bool initialiseWithCorrespondingMethod = false)
-		{
-			runStateHolder = new RunStateHolder(initialState);
-			Info = runStateHolder.ToReadOnly();
-
-			TryStart = new Coroutine2(() => tryStart);
-
-			if (initialiseWithCorrespondingMethod)
-			{
-				switch (initialState)
-				{
-					case RunState.Off:
-						if (!Coroutine.Run(Stop, (progressUpdate) => true))
-						{
-							throw new Exception("stop failed");
-						}
-
-						break;
-
-					case RunState.Running:
-						if (!Coroutine.Run(Start, (progressUpdate) => true))
-						{
-							throw new Exception("start failed");
-						}
-						break;
-
-					case RunState.Paused:
-						if (!Coroutine.Run(Pause, (progressUpdate) => true))
-						{
-							throw new Exception("pause failed");
-						}
-						break;
-				}
-			}
-		}
-
-		public ReadOnlyRunStateHolder Info { get; }
-
-		public Coroutine2 TryStart { get; }
-
-		public bool TryStop(ProgressHandler handler)
-		{
-			lock (lockObject)
-			{
-				if (runStateHolder.IsOn && Coroutine.Run(Stop, handler).Success)
-				{
-					runStateHolder.State = RunState.Off;
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-		}
-
-		public bool TryResume(ProgressHandler handler)
-		{
-			lock (lockObject)
-			{
-				if (runStateHolder.IsPaused && Coroutine.Run(resume, handler).Success)
-				{
-					runStateHolder.State = RunState.Running;
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-		}
-
-		public bool TryPause(ProgressHandler handler)
-		{
-			lock (lockObject)
-			{
-				if (runStateHolder.IsRunning && Coroutine.Run(resume, handler).Success)
-				{
-					runStateHolder.State = RunState.Paused;
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-		}
-
-		protected virtual CoroutineMethod Stop()
-		{
-			return reference => new[] { true };
-		}
-
-		protected virtual CoroutineMethod Start()
-		{
-			return reference => new[] { true };
-		}
-
-		protected virtual CoroutineMethod resume() => Start();
-
-		protected virtual CoroutineMethod Pause()
-		{
-			return reference => new[] { true };
-		}
-
-		private IEnumerable tryStart(Reference reference)
-		{
-			lock (lockObject)
-			{
-				var coroutine = new Coroutine2(Start);
-				var run = coroutine.Instantiate();
-
-				if (!runStateHolder.IsOn)
-				{
-					foreach (object progressUpdate in run.Invoke())
-					{
-						yield return progressUpdate;
-					}
-
-					if (run.Result.Success)
-					{
-						runStateHolder.State = RunState.Running;
-						reference.Complete(true);
-					}
-				}
-
-				reference.Fail();
-			}
-		}
-	}
-
 	public abstract class CoroutineRunner
 	{
 		private readonly RunStateHolder runStateHolder;
@@ -151,12 +14,21 @@ namespace Utils.Runners
 		{
 			runStateHolder = new RunStateHolder(initialState);
 			Info = runStateHolder.ToReadOnly();
+
+			TryStart = new Coroutine(tryStart);
+			TryResume = new Coroutine(tryResume);
+			TryStop = new Coroutine(tryStop);
+			TryPause = new Coroutine(tryPause);
+
 			if (initialiseWithCorrespondingMethod)
 			{
+				CoroutineRun run;
 				switch (initialState)
 				{
 					case RunState.Off:
-						if (!Coroutine.Run(Stop, (progressUpdate) => true))
+						run = new Coroutine(Stop).CreateRun().RunToCompletion();
+
+						if (!run.Result.Success)
 						{
 							throw new Exception("stop failed");
 						}
@@ -164,17 +36,23 @@ namespace Utils.Runners
 						break;
 
 					case RunState.Running:
-						if (!Coroutine.Run(Start, (progressUpdate) => true))
+						run = new Coroutine(Start).CreateRun().RunToCompletion();
+
+						if (!run.Result.Success)
 						{
 							throw new Exception("start failed");
 						}
+
 						break;
 
 					case RunState.Paused:
-						if (!Coroutine.Run(Pause, (progressUpdate) => true))
+						run = new Coroutine(Pause).CreateRun().RunToCompletion();
+
+						if (!run.Result.Success)
 						{
 							throw new Exception("pause failed");
 						}
+
 						break;
 				}
 			}
@@ -182,85 +60,120 @@ namespace Utils.Runners
 
 		public ReadOnlyRunStateHolder Info { get; }
 
-		public bool TryStop(ProgressHandler handler)
+		public Coroutine TryStart { get; }
+
+		public Coroutine TryStop { get; }
+
+		public Coroutine TryResume { get; }
+
+		public Coroutine TryPause { get; }
+
+		public IEnumerable<ProgressUpdate> tryStop(Reference reference)
 		{
 			lock (lockObject)
 			{
-				if (runStateHolder.IsOn && Coroutine.Run(Stop, handler).Success)
+				var run = new Coroutine(Stop).CreateRun();
+
+				if (runStateHolder.IsOn)
 				{
-					runStateHolder.State = RunState.Off;
-					return true;
+					foreach (var progressUpdate in run.GetProgressUpdates())
+					{
+						yield return progressUpdate;
+					}
+
+					if (run.Result.Success)
+					{
+						runStateHolder.State = RunState.Off;
+						reference.Complete();
+						yield break;
+					}
 				}
-				else
-				{
-					return false;
-				}
+
+				reference.Fail();
 			}
 		}
 
-		public bool TryStart(ProgressHandler handler)
+		public IEnumerable<ProgressUpdate> tryResume(Reference reference)
 		{
 			lock (lockObject)
 			{
-				if (!runStateHolder.IsOn && Coroutine.Run(Start, handler).Success)
+				var run = new Coroutine(Resume).CreateRun();
+
+				if (runStateHolder.IsPaused)
 				{
-					runStateHolder.State = RunState.Running;
-					return true;
+					foreach (var progressUpdate in run.GetProgressUpdates())
+					{
+						yield return progressUpdate;
+					}
+
+					if (run.Result.Success)
+					{
+						runStateHolder.State = RunState.Running;
+						reference.Complete();
+						yield break;
+					}
 				}
-				else
-				{
-					return false;
-				}
+
+				reference.Fail();
 			}
 		}
 
-		public bool TryResume(ProgressHandler handler)
+		public IEnumerable<ProgressUpdate> tryPause(Reference reference)
 		{
 			lock (lockObject)
 			{
-				if (runStateHolder.IsPaused && Coroutine.Run(resume, handler).Success)
+				var run = new Coroutine(Pause).CreateRun();
+
+				if (runStateHolder.IsRunning)
 				{
-					runStateHolder.State = RunState.Running;
-					return true;
+					foreach (var progressUpdate in run.GetProgressUpdates())
+					{
+						yield return progressUpdate;
+					}
+
+					if (run.Result.Success)
+					{
+						runStateHolder.State = RunState.Paused;
+						reference.Complete();
+						yield break;
+					}
 				}
-				else
-				{
-					return false;
-				}
+
+				reference.Fail();
 			}
 		}
 
-		public bool TryPause(ProgressHandler handler)
+		protected virtual IEnumerable<ProgressUpdate> Resume(Reference reference) => Start(reference);
+
+		protected virtual IEnumerable<ProgressUpdate> Pause(Reference reference) => Coroutine.DefaultMethod(reference);
+
+		protected virtual IEnumerable<ProgressUpdate> Start(Reference reference) => Coroutine.DefaultMethod(reference);
+
+		protected virtual IEnumerable<ProgressUpdate> Stop(Reference reference) => Coroutine.DefaultMethod(reference);
+
+		private IEnumerable<ProgressUpdate> tryStart(Reference reference)
 		{
 			lock (lockObject)
 			{
-				if (runStateHolder.IsRunning && Coroutine.Run(resume, handler).Success)
+				var run = new Coroutine(Start).CreateRun();
+
+				if (!runStateHolder.IsOn)
 				{
-					runStateHolder.State = RunState.Paused;
-					return true;
+					foreach (ProgressUpdate progressUpdate in run.GetProgressUpdates())
+					{
+						yield return progressUpdate;
+					}
+
+					if (run.Result.Success)
+					{
+						runStateHolder.State = RunState.Running;
+						reference.Complete(true);
+						yield break;
+					}
 				}
-				else
-				{
-					return false;
-				}
+
+				reference.Fail();
 			}
-		}
-
-		protected virtual CoroutineMethod Stop()
-		{
-			return reference => new[] { true };
-		}
-
-		protected virtual CoroutineMethod Start()
-		{
-			return reference => new[] { true };
-		}
-
-		protected virtual CoroutineMethod resume() => Start();
-
-		protected virtual CoroutineMethod Pause()
-		{
-			return reference => new[] { true };
 		}
 	}
 }

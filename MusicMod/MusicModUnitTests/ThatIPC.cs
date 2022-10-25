@@ -1,9 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using IPC;
 using System.Collections.Generic;
 using System.Threading;
-using System.Diagnostics;
 using Utils;
 
 namespace MusicModUnitTests
@@ -15,10 +13,10 @@ namespace MusicModUnitTests
 		public void TestMethod1()
 		{
 			var server = new Server(5007);
-			server.TryStart();
+			server.TryStart.CreateRun().RunToCompletion();
 
 			var client = new Client(5007);
-			client.TryStart();
+			client.TryStart.CreateRun().RunToCompletion();
 
 			server.ReceivedRequest += Server_ReceivedRequest;
 			client.ReceivedRequest += Client_ReceivedRequest;
