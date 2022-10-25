@@ -24,7 +24,7 @@
             </Grid.RowDefinitions>
             <TextBlock Text="Input" />
             <TextBlock Grid.Column="2" Text="Output" />
-            <ListBox x:Name="ListBox" Grid.Row="1" Grid.ColumnSpan="3" HorizontalContentAlignment="Stretch" BorderThickness="0">
+            <ListBox x:Name="ListBox" Grid.Row="1" Grid.ColumnSpan="3" HorizontalContentAlignment="Stretch" BorderThickness="0" MouseDown="ListBox_MouseDown">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Grid Loaded="Grid_Loaded">

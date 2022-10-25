@@ -41,16 +41,6 @@ namespace Patterns
 
 		public IPattern DeepClone(IPattern pattern) => Parse(pattern.ValueType, pattern.ToXml());
 
-		public IPattern Parse(Type type, XElement element)
-		{
-			if (!TryGetTypeDef(new TypeRef(type), out var typeDef))
-			{
-				throw new NotSupportedException();
-			}
-
-			return typeDef.GetParser(this)(element);
-		}
-
 		public bool TryGetTypeDef(TypeRef typeRef, out TypeDef typeDef)
 		{
 			var clone = typeRef.Clone();
@@ -76,16 +66,6 @@ namespace Patterns
 			return false;
 		}
 
-		public TypeDef GetTypeDef(TypeRef typeRef)
-		{
-			if (!TryGetTypeDef(typeRef, out var typeDef))
-			{
-				throw new NotSupportedException();
-			}
-
-			return typeDef;
-		}
-
 		public Type GetType(TypeRef typeRef)
 		{
 			return GetTypeDef(typeRef).Type;
@@ -94,6 +74,16 @@ namespace Patterns
 		public Type GetType(string typeKey, string genericTypeKey = null)
 		{
 			return GetTypeDef(typeKey, genericTypeKey).Type;
+		}
+
+		public TypeDef GetTypeDef(TypeRef typeRef)
+		{
+			if (!TryGetTypeDef(typeRef, out var typeDef))
+			{
+				throw new NotSupportedException();
+			}
+
+			return typeDef;
 		}
 
 		public TypeDef GetTypeDef<T>()
@@ -130,6 +120,16 @@ namespace Patterns
 		public IPattern<T> GetEqualizer<T>(T value)
 		{
 			return (IPattern<T>)GetTypeDef<T>().Equalizer(typeof(T), value);
+		}
+
+		public IPattern Parse(Type type, XElement element)
+		{
+			if (!TryGetTypeDef(new TypeRef(type), out var typeDef))
+			{
+				throw new NotSupportedException();
+			}
+
+			return typeDef.GetParser(this)(element);
 		}
 
 		public IPattern<T> Parse<T>(XElement element)

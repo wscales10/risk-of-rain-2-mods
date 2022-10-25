@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Coroutines;
 using ZetaIpc.Runtime.Client;
 using ZetaIpc.Runtime.Server;
 
@@ -38,64 +40,78 @@ namespace IPC
 			return MakePacket(HandleReceivedRequest(packet.Messages));
 		}
 
-		protected override void Start()
+		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
+		{
+			sender = new IpcClient();
+			sender.Initialize(ServerPort);
+			Packet portResponse = null;
+
+			while (portResponse is null)
+			{
+				var response = SendToServerCatchWebException();
+
+				switch (response)
+				{
+					case Packet packet:
+						portResponse = packet;
+						break;
+
+					case Exception ex:
+						yield return new ProgressUpdate(this, ex);
+						break;
+
+					default:
+						throw new NotSupportedException();
+				}
+			}
+
+			MyPort = portResponse.Port.Value;
+			var receiver = new IpcServer();
+			receiver.Start(MyPort.Value);
+
+			this.Log("Connecting");
+			Packet connectionResponse = null;
+
+			while (connectionResponse is null)
+			{
+				var response = SendToServerCatchWebException(new Message("conn"));
+
+				switch (response)
+				{
+					case Packet packet:
+						connectionResponse = packet;
+						break;
+
+					case Exception ex:
+						yield return new ProgressUpdate(this, ex);
+						break;
+
+					default:
+						throw new NotSupportedException();
+				}
+			}
+
+			this.Log(connectionResponse);
+
+			this.Log("Handling Connection Response");
+			HandleConnResponse?.Invoke(connectionResponse.Messages);
+			this.Log("Handled Connection Response");
+
+			receiver.ReceivedRequest += Receiver_ReceivedRequest;
+
+			_ = Task.Delay(Timeout.InfiniteTimeSpan);
+			reference.Complete();
+		}
+
+		private object SendToServerCatchWebException(params Message[] messages)
 		{
 			try
 			{
-				sender = new IpcClient();
-				sender.Initialize(ServerPort);
-				var portResponse = SendToServerIgnoreTimeout();
-
-				MyPort = portResponse.Port.Value;
-				var receiver = new IpcServer();
-				receiver.Start(MyPort.Value);
-
-				this.Log("Connecting");
-				var connectionResponse = SendToServerIgnoreTimeout(new Message("conn"));
-				this.Log(connectionResponse);
-
-				this.Log("Handling Connection Response");
-				HandleConnResponse?.Invoke(connectionResponse.Messages);
-				this.Log("Handled Connection Response");
-
-				receiver.ReceivedRequest += Receiver_ReceivedRequest;
-
-				_ = Task.Delay(Timeout.InfiniteTimeSpan);
+				return SendToServer(messages);
 			}
-			catch (Exception ex)
+			catch (WebException ex)
 			{
-				this.Log(ex);
-				System.Diagnostics.Debugger.Break();
-				throw;
-			}
-		}
-
-		private Packet SendToServerIgnoreTimeout(params Message[] messages)
-		{
-			while (true)
-			{
-				try
-				{
-					return SendToServer(messages);
-				}
-				catch (WebException ex)
-				{
-					switch (ex.Status)
-					{
-						case WebExceptionStatus.Timeout:
-							break;
-
-						case WebExceptionStatus.ConnectFailure:
-						case WebExceptionStatus.UnknownError:
-							Thread.Sleep(1000);
-							break;
-
-						default:
-							throw;
-					}
-
-					this.Log(ex);
-				}
+				return ex;
 			}
 		}
 

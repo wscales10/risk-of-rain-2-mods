@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Coroutines;
 using ZetaIpc.Runtime.Client;
 using ZetaIpc.Runtime.Helper;
 using ZetaIpc.Runtime.Server;
@@ -63,7 +64,7 @@ namespace IPC
 			}
 		}
 
-		protected override void Start()
+		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
 			var receiver = new IpcServer();
 			receiver.Start(MyPort.Value);
@@ -71,6 +72,8 @@ namespace IPC
 			receiver.ReceivedRequest += Receiver_ReceivedRequest;
 
 			_ = Task.Delay(Timeout.InfiniteTimeSpan);
+			reference.Complete();
+			yield break;
 		}
 
 		protected override Packet HandleReceivedPacket(Packet packet)

@@ -196,6 +196,11 @@ namespace WPFApp
 				{
 					Settings.Default.Autosave = false;
 				}
+				catch (FileNotFoundException ex)
+				{
+					Settings.Default.Autosave = false;
+					MessageBox.Show(ex.Message);
+				}
 			}
 			else
 			{
@@ -212,12 +217,44 @@ namespace WPFApp
 
 			if (!Settings.Default.OfflineMode)
 			{
-				authorisationClient.TryStart();
-				SpotifyItemPickerViewModel.Refresh();
+				TryAuthorise();
 			}
 
 			Render();
 			mainView.Show();
+		}
+
+		private void TryAuthorise()
+		{
+			var run = authorisationClient.TryStart.CreateRun();
+
+			foreach (var progressUpdate in run.GetProgressUpdates())
+			{
+				switch (progressUpdate.Sender)
+				{
+					case IPC.Client:
+						switch (progressUpdate.Args)
+						{
+							case Exception ex:
+								run.Continue = false;
+								MessageBox.Show(ex.Message, ex.GetType().FullName);
+								break;
+						}
+						break;
+
+					default:
+						throw new NotSupportedException();
+				}
+			}
+
+			if (run.Result)
+			{
+				SpotifyItemPickerViewModel.Refresh();
+			}
+			else
+			{
+				Settings.Default.OfflineMode = true;
+			}
 		}
 
 		private bool NavigationContext_TreeNavigationRequested(IRuleRow arg)
@@ -310,8 +347,7 @@ namespace WPFApp
 
 					if (!settings.OfflineMode)
 					{
-						authorisationClient.TryStart();
-						SpotifyItemPickerViewModel.Refresh();
+						TryAuthorise();
 					}
 
 					break;
