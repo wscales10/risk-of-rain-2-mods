@@ -18,17 +18,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 
 		internal static TypeDef TypeDef { get; } = TypeDef.Create<int, IntPattern>((s) => (IntPattern)new IntPattern().DefineWith(s), i => (IntPattern)(x == i));
 
-		public static IPattern<int> Create(int? min, int? max)
-		{
-			if (min is null && max is null)
-			{
-				return ConstantPattern<int>.True;
-			}
-			else
-			{
-				return new IntPattern().DefineWith($"{min}..{max}");
-			}
-		}
+		public static IntPattern Create(int? min, int? max) => (IntPattern)new IntPattern().DefineWith($"{min}..{max}");
 
 		public static Pattern<int> operator <(IntPattern ip, int? i) => (Pattern<int>)(ip & x < i).Simplify();
 
@@ -37,6 +27,18 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 		public static Pattern<int> operator >(IntPattern ip, int? i) => throw new InvalidOperationException();
 
 		public static Pattern<int> operator >=(IntPattern ip, int? i) => throw new InvalidOperationException();
+
+		public override IPattern<int> Simplify()
+		{
+			if (Min is null && Max is null)
+			{
+				return ConstantPattern<int>.True;
+			}
+			else
+			{
+				return this;
+			}
+		}
 
 		public IPattern<int> SimplifyAnd(IPattern<int> other)
 		{
@@ -63,7 +65,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 			int? min = Min is null ? ip.Min : ip.Min is null ? Min : Math.Max(Min.Value, ip.Min.Value);
 			int? max = Max is null ? ip.Max : ip.Max is null ? Max : Math.Min(Max.Value, ip.Max.Value);
 
-			return Create(min, max);
+			return Create(min, max).Simplify();
 		}
 
 		public IPattern<int> SimplifyOr(IPattern<int> other)
@@ -91,7 +93,7 @@ namespace Patterns.Patterns.SmallPatterns.ValuePatterns
 			int? min = (Min is null || ip.Min is null) ? null : (int?)Math.Min(Min.Value, ip.Min.Value);
 			int? max = (Max is null || ip.Max is null) ? null : (int?)Math.Max(Max.Value, ip.Max.Value);
 
-			return Create(min, max);
+			return Create(min, max).Simplify();
 		}
 
 		protected override bool defineWith(string stringDefinition)

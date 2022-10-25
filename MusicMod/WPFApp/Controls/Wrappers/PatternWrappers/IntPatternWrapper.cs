@@ -10,8 +10,6 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 
 		private readonly IntegerUpDown maxUpDown;
 
-		public override bool NeedsLeftMargin => false;
-
 		public IntPatternWrapper(IntPattern pattern) : this()
 		{
 			setValue(pattern);
@@ -25,9 +23,11 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			UIElement.maxContentPresenter.Content = maxUpDown;
 		}
 
+		public override bool NeedsLeftMargin => false;
+
 		protected override SaveResult<IntPattern> tryGetValue(GetValueRequest request)
 		{
-			return new((IntPattern)(minUpDown.Value <= IntPattern.x <= maxUpDown.Value));
+			return new(IntPattern.Create(minUpDown.Value, maxUpDown.Value));
 		}
 
 		protected override void setValue(IntPattern value)
