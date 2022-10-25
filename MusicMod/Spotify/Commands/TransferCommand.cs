@@ -2,15 +2,11 @@
 using MyRoR2;
 using Patterns;
 using Patterns.Patterns;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Xml.Linq;
 using Utils;
 
 namespace Spotify.Commands
 {
-	//public delegate SymbolicExpression MathFunc(SymbolicExpression ms);
-
 	public class TransferCommand : Command
 	{
 		public TransferCommand(SpotifyItemType type, string id, Switch<int, string> mapping, IPattern<string> fromTrackId = null)
@@ -40,13 +36,10 @@ namespace Spotify.Commands
 
 		internal TransferCommand(XElement element)
 		{
-			Item = new SpotifyItem(element.Element(nameof(Item)).OnlyChild(true));
+			Item = (SpotifyItem)SpotifyItem.FromXml(element.Element(nameof(Item)).OnlyChild(true));
 			Mapping = Switch<int, string>.Parse(element.Element(nameof(Mapping)).Element("Switch"), e => e.Value, RoR2PatternParser.Instance);
 			FromTrackId = PatternParser.Instance.Parse<string>(element.Element(nameof(FromTrackId)).OnlyChild(true));
 		}
-
-		//[SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
-		//public static MathExpression ms { get; } = MathExpression.Variable("ms");
 
 		public IPattern<string> FromTrackId { get; set; }
 
