@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Utils.Runners
 {
@@ -15,6 +16,10 @@ namespace Utils.Runners
 		public bool IsRunning => mutable.IsRunning;
 
 		public bool IsPaused => mutable.IsPaused;
+
+		public void ThrowIfNotRunning([CallerMemberName] string caller = null) => mutable.ThrowIfNotRunning(caller);
+
+		public void ThrowIfOff([CallerMemberName] string caller = null) => mutable.ThrowIfOff(caller);
 
 		public Task WaitUntilNotRunningAsync() => mutable.WaitUntilNotRunningAsync();
 
