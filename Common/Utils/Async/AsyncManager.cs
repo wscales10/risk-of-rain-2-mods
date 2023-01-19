@@ -19,6 +19,8 @@ namespace Utils.Async
 			joinableTaskFactory = new JoinableTaskFactory(joinableTaskContext);
 		}
 
+		internal static AsyncManager Instance { get; } = new AsyncManager();
+
 		public static async Task WaitForAnyCompletionAsync(Task task, CancellationToken cancellationToken)
 		{
 			try
