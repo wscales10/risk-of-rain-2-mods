@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
 using Utils.Coroutines;
-using ZetaIpc.Runtime.Client;
-using ZetaIpc.Runtime.Helper;
-using ZetaIpc.Runtime.Server;
 
 namespace IPC
 {
@@ -18,7 +16,7 @@ namespace IPC
 
 		private readonly PortHelper portHelper = new PortHelper();
 
-		private readonly Dictionary<string, IpcClient> clients = new Dictionary<string, IpcClient>();
+		private readonly Dictionary<string, IClient> clients = new Dictionary<string, IClient>();
 
 		public Server(int port)
 		{
@@ -31,42 +29,51 @@ namespace IPC
 
 		public IEnumerable<Message> AddClient(string guid)
 		{
-			var client = new IpcClient();
+			Info.ThrowIfNotRunning();
+
+			var client = Manager.CreateClient();
 			clients[guid] = client;
 			strikes[guid] = 0;
 			client.Initialize(portHelper.GetPort(guid));
-			return OnAddClient?.Invoke(guid);
+			return OnAddClient?.Invoke(guid) ?? Enumerable.Empty<Message>();
 		}
 
 		public void Broadcast(params Message[] messages)
 		{
-			foreach (var guid in clients.Keys)
+			Info.ThrowIfNotRunning();
+			var guids = clients.Keys.ToList();
+
+			foreach (var guid in guids)
 			{
-				SendToClient(guid, messages);
+				sendToClientDynamic(guid, messages);
 			}
 		}
 
 		public void SendToClient(string guid, params Message[] messages)
 		{
-			try
+			Info.ThrowIfNotRunning();
+			sendToClientDynamic(guid, messages);
+		}
+
+		public async Task SendToClientAsync(string guid, params Message[] messages)
+		{
+			Info.ThrowIfNotRunning();
+
+			var client = clients[guid];
+
+			if (client is IAsyncClient asyncClient)
 			{
-				Methods.SendPacket(clients[guid], MakePacket(guid, messages));
+				await sendToClientAsync(asyncClient, guid, messages);
 			}
-			catch (WebException ex)
+			else
 			{
-				this.Log(ex);
-				AddStrike(guid);
-			}
-			catch
-			{
-				System.Diagnostics.Debugger.Break();
-				throw;
+				throw new NotSupportedException();
 			}
 		}
 
 		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
-			var receiver = new IpcServer();
+			var receiver = Manager.CreateServer();
 			receiver.Start(MyPort.Value);
 
 			receiver.ReceivedRequest += Receiver_ReceivedRequest;
@@ -78,6 +85,8 @@ namespace IPC
 
 		protected override Packet HandleReceivedPacket(Packet packet)
 		{
+			Info.ThrowIfNotRunning();
+
 			List<Message> response = new List<Message>();
 			if (!portHelper.IsPortDefined(packet.Guid))
 			{
@@ -98,6 +107,56 @@ namespace IPC
 
 			var output = MakePacket(packet.Guid, response.Concat(HandleReceivedRequest(packet.Messages)));
 			return output;
+		}
+
+		private void sendToClientDynamic(string guid, params Message[] messages)
+		{
+			var client = clients[guid];
+
+			if (client is IAsyncClient asyncClient)
+			{
+				_ = sendToClientAsync(asyncClient, guid, messages);
+			}
+			else
+			{
+				sendToClient(client, guid, messages);
+			}
+		}
+
+		private void sendToClient(IClient client, string guid, params Message[] messages)
+		{
+			try
+			{
+				Methods.SendPacket(client, MakePacket(guid, messages));
+			}
+			catch (SendException ex)
+			{
+				this.Log(ex);
+				AddStrike(guid);
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debugger.Break();
+				throw;
+			}
+		}
+
+		private async Task sendToClientAsync(IAsyncClient asyncClient, string guid, params Message[] messages)
+		{
+			try
+			{
+				await Methods.SendPacketAsync(asyncClient, MakePacket(guid, messages));
+			}
+			catch (SendException ex)
+			{
+				this.Log(ex);
+				AddStrike(guid);
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debugger.Break();
+				throw;
+			}
 		}
 
 		private void AddStrike(string guid)
@@ -133,7 +192,7 @@ namespace IPC
 			{
 				for (int i = 0; i < 5; i++)
 				{
-					if (SetPort(guid, FreePortHelper.GetFreePort()))
+					if (SetPort(guid, Manager.GetFreePort()))
 					{
 						return;
 					}

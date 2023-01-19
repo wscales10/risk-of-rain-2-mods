@@ -6,14 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Utils;
 using Utils.Coroutines;
-using ZetaIpc.Runtime.Client;
-using ZetaIpc.Runtime.Server;
 
 namespace IPC
 {
 	public class Client : Entity
 	{
-		private IpcClient sender;
+		private IClient sender;
 
 		public Client(int serverPort)
 		{
@@ -35,14 +33,27 @@ namespace IPC
 			return Methods.SendPacket(sender, MakePacket(messages));
 		}
 
+		public async Task<Packet> SendToServerAsync(params Message[] messages)
+		{
+			if (sender is IAsyncClient asyncClient)
+			{
+				return await Methods.SendPacketAsync(asyncClient, MakePacket(messages));
+			}
+			else
+			{
+				throw new NotSupportedException();
+			}
+		}
+
 		protected override Packet HandleReceivedPacket(Packet packet)
 		{
+			Info.ThrowIfNotRunning();
 			return MakePacket(HandleReceivedRequest(packet.Messages));
 		}
 
 		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
-			sender = new IpcClient();
+			sender = Manager.CreateClient();
 			sender.Initialize(ServerPort);
 			Packet portResponse = null;
 
@@ -66,7 +77,7 @@ namespace IPC
 			}
 
 			MyPort = portResponse.Port.Value;
-			var receiver = new IpcServer();
+			var receiver = Manager.CreateServer();
 			receiver.Start(MyPort.Value);
 
 			this.Log("Connecting");

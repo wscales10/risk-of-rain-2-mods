@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Utils;
-using ZetaIpc.Runtime.Client;
 
 namespace IPC
 {
 	public static class Methods
 	{
-		public static Packet SendPacket(IpcClient sender, Packet packet)
+		public static Packet SendPacket(IClient sender, Packet packet)
 		{
 			var outgoing = packet.ToString();
 			sender.Log("***");
@@ -17,7 +17,21 @@ namespace IPC
 			sender.Log(incoming);
 			sender.Log("");
 			sender.Log("***");
-			return Packet.Parse(incoming);
+			return Packet.ParseJson(incoming);
+		}
+
+		public static async Task<Packet> SendPacketAsync(IAsyncClient sender, Packet packet)
+		{
+			var outgoing = packet.ToString();
+			sender.Log("***");
+			sender.Log("Outgoing:");
+			sender.Log(outgoing);
+			var incoming = await sender.SendAsync(outgoing);
+			sender.Log("Incoming:");
+			sender.Log(incoming);
+			sender.Log("");
+			sender.Log("***");
+			return Packet.ParseJson(incoming);
 		}
 
 		public static IEnumerable<string> Split(string joined)

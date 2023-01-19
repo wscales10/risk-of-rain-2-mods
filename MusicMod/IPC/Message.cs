@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json;
 
 namespace IPC
 {
@@ -11,11 +12,6 @@ namespace IPC
 				throw new ArgumentNullException(nameof(key));
 			}
 
-			if (key.Length > 4)
-			{
-				throw new ArgumentException("Key length must be no longer than 4");
-			}
-
 			Key = key;
 			Value = value;
 		}
@@ -24,7 +20,12 @@ namespace IPC
 
 		public string Value { get; }
 
-		public static Message Parse(string s)
+		public static Message ParseJson(string json)
+		{
+			return JsonConvert.DeserializeObject<Message>(json);
+		}
+
+		public static Message ParseOneLineString(string s)
 		{
 			if (s is null)
 			{
@@ -55,6 +56,11 @@ namespace IPC
 			throw new FormatException();
 		}
 
-		public sealed override string ToString() => Value is null ? Key : $"{Key} | {Value}";
+		public string ToOneLineString()
+		{
+			return Value is null ? Key : $"{Key} | {Value}";
+		}
+
+		public sealed override string ToString() => JsonConvert.SerializeObject(this);
 	}
 }
