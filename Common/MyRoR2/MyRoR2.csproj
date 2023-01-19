@@ -4,9 +4,6 @@
     <Authors>Woody Scales</Authors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Patterns\Patterns.csproj" />
     <ProjectReference Include="..\Utils\Utils.csproj" />
   </ItemGroup>

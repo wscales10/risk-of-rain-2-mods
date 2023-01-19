@@ -89,13 +89,13 @@ namespace Ror2Mod2
 			return new Context()
 			{
 				SceneName = SceneName,
-				SceneType = SceneCatalog.mostRecentSceneDef?.sceneType ?? SceneType.Invalid,
+				SceneType = SceneCatalog.mostRecentSceneDef?.sceneType.AsEnum<MyRoR2.SceneType>() ?? MyRoR2.SceneType.Invalid,
 				StageNumber = Run.instance?.stageClearCount + 1,
 				WaveNumber = (Run.instance as InfiniteTowerRun)?.waveIndex,
 				LoopIndex = Run.instance?.loopClearCount,
 				BossBodyName = new Entity(bossGroup?.bestObservedName?.ToUpper()),
 				Bosses = (bossGroup?.combatSquad?.readOnlyMembersList?.Select(m => GetEntity(m?.bodyPrefab)) ?? Enumerable.Empty<Entity>()).ToReadOnlyCollection(),
-				TeleporterState = TeleporterInteraction.instance?.activationState,
+				TeleporterState = TeleporterInteraction.instance?.activationState.AsEnum<TeleporterState>(),
 				IsBossEncounter = isBossEncounter || !(bossGroup is null),
 				ScenePart = scenePart,
 				RunType = GetRunType(Run.instance) ?? runType,

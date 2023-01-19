@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ror2Mod2\Ror2Mod2.csproj" />
+    <ProjectReference Include="..\Music\Music.csproj" />
+    <ProjectReference Include="..\Rules\Rules.csproj" />
+    <ProjectReference Include="..\Spotify\Spotify.csproj" />
   </ItemGroup>
 
   <ItemGroup>

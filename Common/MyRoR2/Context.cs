@@ -1,8 +1,6 @@
-﻿using RoR2;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Utils;
-using Utils.Reflection;
 using Utils.Reflection.Properties;
 
 namespace MyRoR2
@@ -25,7 +23,7 @@ namespace MyRoR2
 
 		public bool IsBossEncounter { get; set; }
 
-		public TeleporterInteraction.ActivationState? TeleporterState { get; set; }
+		public TeleporterState? TeleporterState { get; set; }
 
 		public int ScenePart { get; set; }
 

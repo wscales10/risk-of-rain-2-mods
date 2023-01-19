@@ -1,10 +1,8 @@
 ﻿using MyRoR2;
 using Patterns.Patterns;
 using Patterns.Patterns.SmallPatterns.ValuePatterns;
-using RoR2;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
-using static RoR2.TeleporterInteraction;
 
 namespace Rules.Examples
 {
@@ -62,9 +60,9 @@ namespace Rules.Examples
 
 		private static readonly Rule<Context, string> EnvironmentRule = Switcher.RoR2ToString.Create(
 			nameof(Context.TeleporterState),
-			C<ActivationState?>("Teleporter Charged", ActivationState.Charged),
-			C<ActivationState?>(BossRule, ActivationState.IdleToCharging, ActivationState.Charging).Named("Teleporter"),
-			C<ActivationState?>(ArrayRule.Create(SpecialRule, IdleRule), ActivationState.Idle, null).Named("Other"));
+			C<TeleporterState?>("Teleporter Charged", TeleporterState.Charged),
+			C<TeleporterState?>(BossRule, TeleporterState.IdleToCharging, TeleporterState.Charging).Named("Teleporter"),
+			C<TeleporterState?>(ArrayRule.Create(SpecialRule, IdleRule), TeleporterState.Idle, null).Named("Other"));
 
 		private static readonly Rule<Context, string> OtherRule = Switcher.RoR2ToString.Create(
 			nameof(Context.SceneName),

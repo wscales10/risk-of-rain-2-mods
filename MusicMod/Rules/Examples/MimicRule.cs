@@ -1,5 +1,4 @@
 using MyRoR2;
-using Patterns.Patterns;
 using Patterns.Patterns.SmallPatterns.ValuePatterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
