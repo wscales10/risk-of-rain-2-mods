@@ -6,9 +6,6 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <Authors>Woody Scales</Authors>
   </PropertyGroup>
-	<ItemGroup>
-		<PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
-	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Spotify\Spotify.csproj" />
   </ItemGroup>

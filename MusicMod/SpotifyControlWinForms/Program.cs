@@ -11,7 +11,9 @@ namespace SpotifyControlWinForms
 			// To customize application configuration such as set high DPI settings or default font,
 			// see https://aka.ms/applicationconfiguration.
 			ApplicationConfiguration.Initialize();
-			Application.Run(new SpotifyControl().Form);
+			SpotifyControl spotifyControl = new();
+			Form1 form = spotifyControl.Form;
+			Application.Run(form);
 		}
 	}
 }

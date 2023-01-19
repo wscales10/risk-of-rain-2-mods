@@ -1,7 +1,6 @@
 ﻿using MyRoR2;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
-using static RoR2.TeleporterInteraction;
 
 namespace Rules
 {
@@ -13,8 +12,8 @@ namespace Rules
 		(
 			nameof(Context.TeleporterState),
 			new Bucket<Context, string>("Stop"),
-			C<ActivationState?>("Teleporter Charging", ActivationState.Charging),
-			C<ActivationState?>("Teleporter Idle", ActivationState.Idle)
+			C<TeleporterState?>("Teleporter Charging", TeleporterState.Charging),
+			C<TeleporterState?>("Teleporter Idle", TeleporterState.Idle)
 		).ToReadOnly(RuleParser.RoR2ToString);
 	}
 }

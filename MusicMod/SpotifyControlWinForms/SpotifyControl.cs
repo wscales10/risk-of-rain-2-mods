@@ -11,34 +11,6 @@ using Utils;
 
 namespace SpotifyControlWinForms
 {
-	public abstract class Unit<TIn, TOut>
-	{
-		public event Action<TOut>? Trigger;
-
-		public abstract void Ingest(TIn input);
-
-		protected void Output(TOut output) => Trigger?.Invoke(output);
-	}
-
-	public class Unit1<TIn, TOut> : Unit<TIn, TOut>
-	{
-		private readonly IRulePicker<TIn, TOut> rulePicker;
-
-		private TIn? cached;
-
-		public Unit1(IRulePicker<TIn, TOut> rulePicker)
-		{
-			this.rulePicker = rulePicker;
-		}
-
-		public override void Ingest(TIn input)
-		{
-			var output = rulePicker.Rule.GetOutput(cached, input);
-			cached = input;
-			Output(output);
-		}
-	}
-
 	internal class SpotifyControl
 	{
 		private readonly Unit1<Context, string> unit1;
