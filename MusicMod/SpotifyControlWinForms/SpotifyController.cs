@@ -1,14 +1,12 @@
-﻿using Spotify;
+﻿using Music;
+using Rules;
+using Spotify;
 using Spotify.Commands;
-using System;
-using System.Collections.Generic;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Utils;
 using Utils.Coroutines;
 
-namespace Ror2Mod2
+namespace SpotifyControlWinForms
 {
 	public class SpotifyController<TContext> : MusicBase<TContext>
 	{

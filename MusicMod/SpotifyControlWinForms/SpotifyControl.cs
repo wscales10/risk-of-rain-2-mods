@@ -1,6 +1,5 @@
 ﻿using MyRoR2;
 using Newtonsoft.Json;
-using Ror2Mod2;
 using Rules;
 using Rules.Examples;
 using Rules.RuleTypes.Interfaces;
