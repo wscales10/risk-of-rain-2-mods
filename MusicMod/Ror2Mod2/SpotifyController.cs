@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
+using Utils.Coroutines;
 
 namespace Ror2Mod2
 {
@@ -15,18 +16,14 @@ namespace Ror2Mod2
 
 		private readonly IRulePicker<TContext, ICommandList> rulePicker;
 
-		private readonly IContextHelper<TContext> contextHelper;
-
-		public SpotifyController(IRulePicker<TContext, ICommandList> rulePicker, IEnumerable<Playlist> playlists, IContextHelper<TContext> contextHelper, Logger logger) : base(logger)
+		public SpotifyController(IRulePicker<TContext, ICommandList> rulePicker, IEnumerable<Playlist> playlists, Logger logger) : base(logger)
 		{
 			this.rulePicker = rulePicker;
 			Client = new SpotifyPlaybackClient(playlists, logger, authorisationClient.Preferences);
 			Client.OnAccessTokenRequested += authorisationClient.RequestNewAccessToken;
 			Client.OnError += e => Log(e);
 
-			var run = authorisationClient.TryStart.CreateRun();
-
-			foreach (var progressUpdate in run.GetProgressUpdates())
+			ConnectionUpdateHandler += progressUpdate =>
 			{
 				switch (progressUpdate.Sender)
 				{
@@ -56,16 +53,41 @@ namespace Ror2Mod2
 					default:
 						throw new NotSupportedException(progressUpdate.Sender?.GetType().GetDisplayName());
 				}
-			}
+
+				return true;
+			};
 
 			ConfigurationPageRequested += () => authorisationClient.RequestConfigurationPage();
-			this.contextHelper = contextHelper;
-			contextHelper.NewContext += c => _ = Update(c);
 		}
+
+		public event Func<ProgressUpdate, bool> ConnectionUpdateHandler;
 
 		private event Action ConfigurationPageRequested;
 
 		protected SpotifyPlaybackClient Client { get; }
+
+		public bool TryInit()
+		{
+			var run = authorisationClient.TryStart.CreateRun();
+
+			foreach (var progressUpdate in run.GetProgressUpdates())
+			{
+				if (!(ConnectionUpdateHandler is null))
+				{
+					foreach (var connectionUpdateHandler in ConnectionUpdateHandler.GetInvocationList())
+					{
+						var result = (bool)connectionUpdateHandler.DynamicInvoke(progressUpdate);
+
+						if (!result)
+						{
+							run.Continue = false;
+						}
+					}
+				}
+			}
+
+			return run.Result;
+		}
 
 		public override void Pause()
 		{
@@ -109,7 +131,7 @@ namespace Ror2Mod2
 				return new StopCommand();
 			}
 
-			var commands = rulePicker.Rule.GetCommands(oldContext, newContext);
+			var commands = rulePicker.Rule.GetOutput(oldContext, newContext);
 			return commands;
 		}
 	}

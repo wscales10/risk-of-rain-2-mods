@@ -15,7 +15,7 @@ namespace Rules.RuleTypes.Readonly
         public abstract TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
         // TODO: make GetCommands actually use this object's properties and mutable's methods or whatever
-        public TOut GetCommands(TContext oldContext, TContext newContext, bool force = false) => Rule<TContext, TOut>.GetCommands(this, oldContext, newContext, force);
+        public TOut GetOutput(TContext oldContext, TContext newContext, bool force = false) => Rule<TContext, TOut>.GetOutput(this, oldContext, newContext, force);
 
         public IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => this;
 

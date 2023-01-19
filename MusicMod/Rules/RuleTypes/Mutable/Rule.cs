@@ -54,9 +54,9 @@ namespace Rules.RuleTypes.Mutable
 
 		public abstract IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
 
-		public TOut GetCommands(TContext oldContext, TContext newContext, bool force = false) => GetCommands(this, oldContext, newContext, force);
+		public TOut GetOutput(TContext oldContext, TContext newContext, bool force = false) => GetOutput(this, oldContext, newContext, force);
 
-		internal static TOut GetCommands(IRule<TContext, TOut> rule, TContext oldContext, TContext newContext, bool force = false)
+		internal static TOut GetOutput(IRule<TContext, TOut> rule, TContext oldContext, TContext newContext, bool force = false)
 		{
 			var newBucketResponse = rule.GetBucket(newContext);
 			var newBucket = newBucketResponse.Bucket;

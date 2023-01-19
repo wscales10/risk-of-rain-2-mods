@@ -1,7 +1,6 @@
 ﻿using MyRoR2;
 using RoR2;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -79,7 +78,7 @@ namespace Ror2Mod2
 
 		private MyScene SceneName => new MyScene(currentScene?.name?.ToUpper());
 
-		public void UpdateMusic() => NewContext?.Invoke(GetContext());
+		public void UpdateContext() => NewContext?.Invoke(GetContext());
 
 		public Context GetContext()
 		{
@@ -129,14 +128,14 @@ namespace Ror2Mod2
 		private void Run_onRunDestroyGlobal(Run obj)
 		{
 			runOutcome = null;
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
 		{
 			orig(self, gameEndingDef);
 			runOutcome = ConvertEndingToOutcome(gameEndingDef);
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private RunOutcome ConvertEndingToOutcome(GameEndingDef ending)
@@ -162,25 +161,25 @@ namespace Ror2Mod2
 		private void Run_onRunStartGlobal(Run obj)
 		{
 			runOutcome = RunOutcome.Undecided;
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private void CombatSquad_AddMember(On.RoR2.CombatSquad.orig_AddMember orig, CombatSquad self, CharacterMaster memberMaster)
 		{
 			orig(self, memberMaster);
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private void BossGroup_UpdateBossMemories(On.RoR2.BossGroup.orig_UpdateBossMemories orig, BossGroup self)
 		{
 			orig(self);
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private void BossGroup_RememberBoss(On.RoR2.BossGroup.orig_RememberBoss orig, BossGroup self, CharacterMaster master)
 		{
 			orig(self, master);
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private Entity GetEntity(GameObject bodyPrefab)
@@ -198,14 +197,14 @@ namespace Ror2Mod2
 		{
 			orig(self);
 			scenePart++;
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private void CreditsController_OnEnable(On.RoR2.CreditsController.orig_OnEnable orig, CreditsController self)
 		{
 			orig(self);
 			scenePart++;
-			UpdateMusic();
+			UpdateContext();
 		}
 
 		private void OnSceneChanged(Scene _, Scene newScene)
