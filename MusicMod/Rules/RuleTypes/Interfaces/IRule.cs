@@ -8,7 +8,7 @@ namespace Rules.RuleTypes.Interfaces
 
 		TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
-		TOut GetOutput(TContext oldContext, TContext newContext, bool force = false);
+		TOut GetOutput(TContext newContext);
 
 		IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
 	}

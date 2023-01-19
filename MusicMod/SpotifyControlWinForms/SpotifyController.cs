@@ -129,7 +129,7 @@ namespace SpotifyControlWinForms
 				return new StopCommand();
 			}
 
-			var commands = rulePicker.Rule.GetOutput(oldContext, newContext);
+			var commands = rulePicker.Rule.GetOutput(newContext);
 			return commands;
 		}
 	}

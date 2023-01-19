@@ -6,8 +6,6 @@ namespace SpotifyControlWinForms
 	{
 		private readonly IRulePicker<TIn, TOut> rulePicker;
 
-		private TIn? cached;
-
 		public Unit1(IRulePicker<TIn, TOut> rulePicker)
 		{
 			this.rulePicker = rulePicker;
@@ -15,8 +13,7 @@ namespace SpotifyControlWinForms
 
 		public override void Ingest(TIn input)
 		{
-			var output = rulePicker.Rule.GetOutput(cached, input);
-			cached = input;
+			var output = rulePicker.Rule.GetOutput(input);
 			Output(output);
 		}
 	}

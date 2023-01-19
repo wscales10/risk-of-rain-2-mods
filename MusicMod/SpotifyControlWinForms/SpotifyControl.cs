@@ -15,6 +15,8 @@ namespace SpotifyControlWinForms
 	{
 		private readonly Unit1<Context, string> unit1;
 
+		private string? cachedCategory;
+
 		public SpotifyControl()
 		{
 			Client = new IPC.Client(5008);
@@ -61,7 +63,13 @@ namespace SpotifyControlWinForms
 			return true;
 		}
 
-		private void Unit1_Trigger(string obj) => _ = Music.Update(obj);
+		private void Unit1_Trigger(string obj)
+		{
+			if (obj != cachedCategory)
+			{
+				_ = Music.Update(cachedCategory = obj);
+			}
+		}
 
 		private void SetPlaylists(List<Playlist> playlists, string uri)
 		{
