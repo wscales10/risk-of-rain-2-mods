@@ -54,9 +54,9 @@ namespace Rules.RuleTypes.Mutable
 
 		public abstract IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
 
-		public TOut GetOutput(TContext oldContext, TContext newContext, bool force = false) => GetOutput(this, oldContext, newContext, force);
+		public TOut GetOutput(TContext newContext) => GetOutput(this, newContext);
 
-		internal static TOut GetOutput(IRule<TContext, TOut> rule, TContext oldContext, TContext newContext, bool force = false)
+		internal static TOut GetOutput(IRule<TContext, TOut> rule, TContext newContext)
 		{
 			var newBucketResponse = rule.GetBucket(newContext);
 			var newBucket = newBucketResponse.Bucket;
@@ -75,22 +75,11 @@ namespace Rules.RuleTypes.Mutable
 				rule.Log($"{nameof(newBucket)} is null");
 				return default;
 			}
-			else if (force)
-			{
-				// TODO: implement force on error
-				rule.Log("forcing retry");
-			}
-			else if (rule.GetBucket(oldContext).Bucket != newBucket)
-			{
-				rule.Log($"{nameof(newBucket)} is different");
-			}
 			else
 			{
-				rule.Log($"{nameof(newBucket)} is no different from before");
-				return default;
+				rule.Log($"{nameof(newBucket)} is not null");
+				return newBucket.Output;
 			}
-
-			return newBucket.Output;
 		}
 
 		internal Rule<TContext, TOut> Named(string name)
