@@ -249,7 +249,7 @@ namespace Rules.RuleTypes.Mutable
 
 		public override IEnumerable<Rule<TContext, TOut>> GetRules(TContext c)
 		{
-			var seenValue = c.GetPropertyValue(PropertyInfo.Name);
+			var seenValue = PropertyInfo.Name == "this" ? c : c.GetPropertyValue(PropertyInfo.Name);
 
 			foreach (var @case in Cases)
 			{
