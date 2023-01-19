@@ -68,32 +68,15 @@ namespace Utils.Runners
 
 		public Coroutine TryPause { get; }
 
-		public IEnumerable<ProgressUpdate> tryStop(Reference reference)
-		{
-			lock (lockObject)
-			{
-				var run = new Coroutine(Stop).CreateRun();
+		protected virtual IEnumerable<ProgressUpdate> Resume(Reference reference) => Start(reference);
 
-				if (runStateHolder.IsOn)
-				{
-					foreach (var progressUpdate in run.GetProgressUpdates())
-					{
-						yield return progressUpdate;
-					}
+		protected virtual IEnumerable<ProgressUpdate> Pause(Reference reference) => Coroutine.DefaultMethod(reference);
 
-					if (run.Result.Success)
-					{
-						runStateHolder.State = RunState.Off;
-						reference.Complete();
-						yield break;
-					}
-				}
+		protected virtual IEnumerable<ProgressUpdate> Start(Reference reference) => Coroutine.DefaultMethod(reference);
 
-				reference.Fail();
-			}
-		}
+		protected virtual IEnumerable<ProgressUpdate> Stop(Reference reference) => Coroutine.DefaultMethod(reference);
 
-		public IEnumerable<ProgressUpdate> tryResume(Reference reference)
+		private IEnumerable<ProgressUpdate> tryResume(Reference reference)
 		{
 			lock (lockObject)
 			{
@@ -118,7 +101,7 @@ namespace Utils.Runners
 			}
 		}
 
-		public IEnumerable<ProgressUpdate> tryPause(Reference reference)
+		private IEnumerable<ProgressUpdate> tryPause(Reference reference)
 		{
 			lock (lockObject)
 			{
@@ -143,13 +126,30 @@ namespace Utils.Runners
 			}
 		}
 
-		protected virtual IEnumerable<ProgressUpdate> Resume(Reference reference) => Start(reference);
+		private IEnumerable<ProgressUpdate> tryStop(Reference reference)
+		{
+			lock (lockObject)
+			{
+				var run = new Coroutine(Stop).CreateRun();
 
-		protected virtual IEnumerable<ProgressUpdate> Pause(Reference reference) => Coroutine.DefaultMethod(reference);
+				if (runStateHolder.IsOn)
+				{
+					foreach (var progressUpdate in run.GetProgressUpdates())
+					{
+						yield return progressUpdate;
+					}
 
-		protected virtual IEnumerable<ProgressUpdate> Start(Reference reference) => Coroutine.DefaultMethod(reference);
+					if (run.Result.Success)
+					{
+						runStateHolder.State = RunState.Off;
+						reference.Complete();
+						yield break;
+					}
+				}
 
-		protected virtual IEnumerable<ProgressUpdate> Stop(Reference reference) => Coroutine.DefaultMethod(reference);
+				reference.Fail();
+			}
+		}
 
 		private IEnumerable<ProgressUpdate> tryStart(Reference reference)
 		{
