@@ -3,12 +3,41 @@ using IPC;
 using System.Collections.Generic;
 using System.Threading;
 using Utils;
+using System;
+using MyRoR2;
+using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Linq;
 
 namespace MusicModUnitTests
 {
 	[TestClass]
 	public class ThatIPC
 	{
+		[TestMethod]
+		public void TestServer()
+		{
+			var server = new Server(5008);
+			server.TryStart.CreateRun().RunToCompletion(true);
+
+			for (int i = 0; ; i++)
+			{
+				Thread.Sleep(5000);
+				server.Broadcast(new IPC.Message("pause"));
+				Thread.Sleep(5000);
+				server.Broadcast(new IPC.Message("resume"));
+			}
+		}
+
+		[TestMethod]
+		public void TestClient()
+		{
+			var client = new Client(5008);
+			client.ReceivedRequest += Client_ReceivedRequest1;
+			client.TryStart.CreateRun().RunToCompletion(true);
+			Thread.Sleep(60000);
+		}
+
 		[TestMethod]
 		public void TestMethod1()
 		{
@@ -30,6 +59,63 @@ namespace MusicModUnitTests
 			client.SendToServer(new Message("msg", "client to server message"), new Message("msg", "cts line 2"));
 
 			Thread.Sleep(10000);
+		}
+
+		[TestMethod]
+		public void TestMethod2()
+		{
+			Server server = new Server(5007);
+			Client client = new Client(5007);
+			bool tested = false;
+			Context expectedContext = new Context { BossBodyName = Entities.Gup, IsBossEncounter = true, LoopIndex = 0, Survivor = Entities.Captain, SceneName = Scenes.SunderedGrove };
+			server.ReceivedRequest += arg =>
+			{
+				foreach (var message in arg)
+				{
+					if (message.Key == "context")
+					{
+						var receivedContext = JsonConvert.DeserializeObject<Context>(arg.Single().Value);
+
+						foreach (var property in typeof(Context).GetProperties())
+						{
+							object expectedValue = property.GetValue(expectedContext);
+							object actualValue = property.GetValue(receivedContext);
+							if (!object.Equals(expectedValue, actualValue))
+							{
+								Debug.WriteLine($"{property.Name}: {expectedValue} != {actualValue}");
+							}
+						}
+
+						tested = true;
+					}
+				}
+
+				return Enumerable.Empty<Message>();
+			};
+			Assert.IsTrue(server.TryStart.CreateRun().Run(u => !(u.Args is Exception)).Result.Success);
+			Assert.IsTrue(client.TryStart.CreateRun().Run(u => !(u.Args is Exception)).Result.Success);
+			client.SendToServer(new Message("context", JsonConvert.SerializeObject(expectedContext)));
+			Assert.IsTrue(tested);
+		}
+
+		private IEnumerable<Message> Client_ReceivedRequest1(IEnumerable<Message> arg)
+		{
+			foreach (var message in arg)
+			{
+				this.Log(message);
+			}
+
+			yield break;
+		}
+
+		private IEnumerable<Message> Server_ReceivedRequest1(IEnumerable<Message> arg)
+		{
+			foreach (var message in arg)
+			{
+				Debug.Write(message);
+			}
+
+			yield break;
 		}
 
 		private IEnumerable<Message> Client_ReceivedRequest(IEnumerable<Message> arg)
