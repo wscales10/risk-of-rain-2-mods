@@ -37,6 +37,7 @@ namespace Ror2Mod2
 
 		public void Update()
 		{
+			// TODO: allow running of context mod without this
 			if (!musicMuted && RoR2.Console.instance != null)
 			{
 				var convar = RoR2.Console.instance.FindConVar("volume_music");
