@@ -5,30 +5,32 @@ using Utils.Reflection.Properties;
 
 namespace MyRoR2
 {
-    public sealed class DefinedEntity : Entity
-    {
-        private DefinedEntity(string displayName, string name) : this(displayName, name, displayName)
-        {
-        }
+	public sealed class DefinedEntity : Entity
+	{
+		private DefinedEntity(string displayName, string name) : this(displayName, name, displayName)
+		{
+		}
 
-        private DefinedEntity(string displayName, string name, string typeableName) : base(name)
-        {
-            DisplayName = displayName;
-            TypeableName = typeableName;
-        }
+		private DefinedEntity(string displayName, string name, string typeableName) : base(name)
+		{
+			DisplayName = displayName;
+			TypeableName = typeableName;
+		}
 
-        public string DisplayName { get; }
+		public string DisplayName { get; }
 
-        public string TypeableName { get; }
+		public string TypeableName { get; }
 
-        public static implicit operator DefinedEntity((string displayName, string name) tuple)
-            => new DefinedEntity(HelperMethods.AddSpacesToPascalCaseString(tuple.displayName), tuple.name);
+		public static implicit operator DefinedEntity((string displayName, string name) tuple)
+			=> new DefinedEntity(HelperMethods.AddSpacesToPascalCaseString(tuple.displayName), tuple.name);
 
-        public static implicit operator DefinedEntity((string displayName, string name, string typeableName) tuple)
-            => new DefinedEntity(HelperMethods.AddSpacesToPascalCaseString(tuple.displayName), tuple.name, tuple.typeableName);
+		public static implicit operator DefinedEntity((string displayName, string name, string typeableName) tuple)
+			=> new DefinedEntity(HelperMethods.AddSpacesToPascalCaseString(tuple.displayName), tuple.name, tuple.typeableName);
 
-        public static IEnumerable<DefinedEntity> GetAll(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValues(predicate);
+		public static IEnumerable<DefinedEntity> GetAll(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValues(predicate);
 
-        public static DefinedEntity Get(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValue(predicate);
-    }
+		public static DefinedEntity Get(Predicate<DefinedEntity> predicate = null) => typeof(Entities).GetStaticPropertyValue(predicate);
+
+		public override string ToString() => HelperMethods.GetNullSafeString(DisplayName);
+	}
 }
