@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Utils.Runners
 {
@@ -19,5 +20,9 @@ namespace Utils.Runners
 		Task WaitUntilRunningAsync();
 
 		Task WaitUntilOnAsync();
+
+		void ThrowIfOff([CallerMemberName] string caller = null);
+
+		void ThrowIfNotRunning([CallerMemberName] string caller = null);
 	}
 }

@@ -9,9 +9,9 @@ using Utils;
 using Utils.Async;
 using Utils.Runners;
 
-namespace Spotify.Authorisation
+namespace Utils
 {
-	public class Server : AsyncRunner
+	public class HttpServer : AsyncRunner
 	{
 		private readonly Dictionary<string, List<(string, AsyncBoolCallback, bool)>> callbacks = new Dictionary<string, List<(string, AsyncBoolCallback, bool)>>();
 
@@ -23,7 +23,7 @@ namespace Spotify.Authorisation
 
 		private bool runServer;
 
-		public Server(Uri rootUri, Logger logger)
+		public HttpServer(Uri rootUri, Logger logger)
 		{
 			listener.Prefixes.Add((RootUri = rootUri).ToString());
 			Log = logger;
@@ -31,9 +31,32 @@ namespace Spotify.Authorisation
 			callbacks["POST"] = new List<(string, AsyncBoolCallback, bool)>();
 		}
 
+		public delegate Task<bool> AsyncBoolCallback(HttpListenerRequest request, HttpListenerResponse response);
+
+		public delegate Task AsyncCallback(HttpListenerRequest request, HttpListenerResponse response);
+
+		public delegate bool BoolCallback(HttpListenerRequest request, HttpListenerResponse response);
+
+		public delegate void VoidCallback(HttpListenerRequest request, HttpListenerResponse response);
+
 		public Task ListenTask { get; private set; }
 
 		public Uri RootUri { get; }
+
+		public static async Task MakeResponseAsync(HttpListenerResponse res, byte[] byteArray)
+		{
+			res.ContentLength64 = byteArray?.Length ?? 0;
+			if (!(byteArray is null))
+			{
+				await res.OutputStream.WriteAsync(byteArray, 0, byteArray.Length);
+			}
+			else
+			{
+				res.StatusCode = (int)HttpStatusCode.NoContent;
+			}
+
+			res.OutputStream.Close();
+		}
 
 		public async Task ListenAsync()
 		{
@@ -98,7 +121,7 @@ namespace Spotify.Authorisation
 					Log("Listening for a request");
 
 					// Wait here until we hear from a connection
-					HttpListenerContext ctx = await Async.Manager.MakeCancellable(listener.GetContextAsync(), cancellationTokenSource.Token);
+					HttpListenerContext ctx = await AsyncManager.Instance.MakeCancellable(listener.GetContextAsync(), cancellationTokenSource.Token);
 					Log("Request received");
 					if (!runServer)
 					{

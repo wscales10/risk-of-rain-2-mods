@@ -15,14 +15,6 @@ using Utils.Runners;
 
 namespace Spotify.Authorisation
 {
-	public delegate Task<bool> AsyncBoolCallback(HttpListenerRequest request, HttpListenerResponse response);
-
-	public delegate Task AsyncCallback(HttpListenerRequest request, HttpListenerResponse response);
-
-	public delegate bool BoolCallback(HttpListenerRequest request, HttpListenerResponse response);
-
-	public delegate void VoidCallback(HttpListenerRequest request, HttpListenerResponse response);
-
 	public partial class Authorisation : AsyncRunner
 	{
 		private static readonly HttpClient client = new HttpClient();
@@ -33,7 +25,7 @@ namespace Spotify.Authorisation
 
 		private readonly Dictionary<string, bool> scopes = new Dictionary<string, bool>();
 
-		private readonly Server server;
+		private readonly HttpServer server;
 
 		private JoinableTask refreshTask;
 
@@ -43,7 +35,7 @@ namespace Spotify.Authorisation
 
 		public Authorisation(IEnumerable<string> scopes, bool usePkce = true, Logger logger = null)
 		{
-			server = new Server(App.Instance.RootUri, logger);
+			server = new HttpServer(App.Instance.RootUri, logger);
 
 			if (usePkce)
 			{
@@ -130,20 +122,6 @@ namespace Spotify.Authorisation
 			await AsyncManager.WaitForAnyCompletionAsync(refreshTask.Task, cancellationTokenSource.Token);
 		}
 
-		private static async Task MakeResponseAsync(HttpListenerResponse res, byte[] byteArray)
-		{
-			res.ContentLength64 = byteArray?.Length ?? 0;
-			if (!(byteArray is null))
-			{
-				await res.OutputStream.WriteAsync(byteArray, 0, byteArray.Length);
-			}
-			else
-			{
-				res.StatusCode = (int)HttpStatusCode.NoContent;
-			}
-			res.OutputStream.Close();
-		}
-
 		private void SetupServer()
 		{
 			server.On("GET", "/login", (req, res) =>
@@ -202,20 +180,20 @@ namespace Spotify.Authorisation
 			{
 				res.ContentType = "application/json";
 				var content = await GetDevicesAsync();
-				await MakeResponseAsync(res, await content.ReadAsByteArrayAsync());
+				await HttpServer.MakeResponseAsync(res, await content.ReadAsByteArrayAsync());
 			});
 
 			server.On("GET", "defaultDevice.json", async (req, res) =>
 			{
 				res.ContentType = "application/json";
 				var content = Preferences.DefaultDevice;
-				await MakeResponseAsync(res, content?.Length == 0 ? null : content);
+				await HttpServer.MakeResponseAsync(res, content?.Length == 0 ? null : content);
 			});
 
 			server.On("GET", "index.html", async (req, res) =>
 			{
 				res.ContentType = "text/html";
-				await MakeResponseAsync(res, Assembly.GetExecutingAssembly().GetByteArray("Spotify.Authorisation.Client.index.html"));
+				await HttpServer.MakeResponseAsync(res, Assembly.GetExecutingAssembly().GetByteArray("Spotify.Authorisation.Client.index.html"));
 			});
 
 			server.On("POST", "defaultDevice.json", async (req, res) =>

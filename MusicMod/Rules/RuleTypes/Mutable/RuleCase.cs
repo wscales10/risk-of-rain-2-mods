@@ -7,95 +7,103 @@ using System.Linq;
 
 namespace Rules.RuleTypes.Mutable
 {
-    public class RuleCase<TContext, TOut> : RuleCase<IPattern, TContext, TOut>
-    {
-        public RuleCase(Rule<TContext, TOut> rule, params IPattern[] arr) : base(rule, arr)
-        {
-        }
+	public static class MultiCase
+	{
+		public static MultiCase<TValue, TContext, TOut> Create<TValue, TContext, TOut>(Func<TValue, Rule<TContext, TOut>> ruleGenerator, params TValue[] candidates)
+		{
+			return new MultiCase<TValue, TContext, TOut>(ruleGenerator, candidates);
+		}
+	}
 
-        public RuleCase(Rule<TContext, TOut> rule, IPattern<TContext> wherePattern, params IPattern[] arr) : base(rule, wherePattern, arr)
-        {
-        }
+	public class RuleCase<TContext, TOut> : RuleCase<IPattern, TContext, TOut>
+	{
+		public RuleCase(Rule<TContext, TOut> rule, params IPattern[] arr) : base(rule, arr)
+		{
+		}
 
-        public static RuleCase<T, TContext, TOut> C<T>(Rule<TContext, TOut> rule, params T[] arr) => new RuleCase<T, TContext, TOut>(rule, arr);
+		public RuleCase(Rule<TContext, TOut> rule, IPattern<TContext> wherePattern, params IPattern[] arr) : base(rule, wherePattern, arr)
+		{
+		}
 
-        public static RuleCase<T, TContext, TOut> C<T>(Rule<TContext, TOut> rule, Pattern<TContext> wherePattern, params T[] arr) => new RuleCase<T, TContext, TOut>(rule, wherePattern, arr);
+		public static RuleCase<T, TContext, TOut> C<T>(Rule<TContext, TOut> rule, params T[] arr) => new RuleCase<T, TContext, TOut>(rule, arr);
 
-        public RuleCase<TContext, TOut> DeepClone(RuleParser<TContext, TOut> ruleParser) => new RuleCase<TContext, TOut>(ruleParser.DeepClone(Output), WherePattern is null ? null : ruleParser.PatternParser.DeepClone(WherePattern), Arr.Select(ruleParser.PatternParser.DeepClone).ToArray());
-    }
+		public static RuleCase<T, TContext, TOut> C<T>(Rule<TContext, TOut> rule, Pattern<TContext> wherePattern, params T[] arr) => new RuleCase<T, TContext, TOut>(rule, wherePattern, arr);
 
-    public class RuleCase<TValue, TContext, TOut> : Case<TValue, Rule<TContext, TOut>>, ICase<TValue, TContext, TOut>, ICaseGetter<TValue, TContext, TOut>
-    {
-        public RuleCase(Rule<TContext, TOut> rule, params TValue[] arr) : base(rule, arr)
-        {
-        }
+		public RuleCase<TContext, TOut> DeepClone(RuleParser<TContext, TOut> ruleParser) => new RuleCase<TContext, TOut>(ruleParser.DeepClone(Output), WherePattern is null ? null : ruleParser.PatternParser.DeepClone(WherePattern), Arr.Select(ruleParser.PatternParser.DeepClone).ToArray());
+	}
 
-        public RuleCase(Rule<TContext, TOut> rule, IPattern<TContext> wherePattern, params TValue[] arr) : this(rule, arr)
-        {
-            WherePattern = wherePattern;
-        }
+	public class RuleCase<TValue, TContext, TOut> : Case<TValue, Rule<TContext, TOut>>, ICase<TValue, TContext, TOut>, ICaseGetter<TValue, TContext, TOut>
+	{
+		public RuleCase(Rule<TContext, TOut> rule, params TValue[] arr) : base(rule, arr)
+		{
+		}
 
-        public IPattern<TContext> WherePattern { get; set; }
+		public RuleCase(Rule<TContext, TOut> rule, IPattern<TContext> wherePattern, params TValue[] arr) : this(rule, arr)
+		{
+			WherePattern = wherePattern;
+		}
 
-        IEnumerable<TValue> ICase<TValue, TContext, TOut>.Arr => Arr;
+		public IPattern<TContext> WherePattern { get; set; }
 
-        IRule<TContext, TOut> ICase<TValue, TContext, TOut>.Output => Output;
+		IEnumerable<TValue> ICase<TValue, TContext, TOut>.Arr => Arr;
 
-        public string Name { get; set; }
+		IRule<TContext, TOut> ICase<TValue, TContext, TOut>.Output => Output;
 
-        public static implicit operator RuleCase<TValue, TContext, TOut>((TValue, Rule<TContext, TOut>) pair)
-        {
-            return new RuleCase<TValue, TContext, TOut>(pair.Item2, pair.Item1);
-        }
+		public string Name { get; set; }
 
-        public static implicit operator RuleCase<TValue, TContext, TOut>((TValue, IPattern<TContext>, Rule<TContext, TOut>) triplet)
-        {
-            return new RuleCase<TValue, TContext, TOut>(triplet.Item3, triplet.Item2, triplet.Item1);
-        }
+		public static implicit operator RuleCase<TValue, TContext, TOut>((TValue, Rule<TContext, TOut>) pair)
+		{
+			return new RuleCase<TValue, TContext, TOut>(pair.Item2, pair.Item1);
+		}
 
-        public override string ToString()
-        {
-            if (!(Name is null))
-            {
-                return Name;
-            }
+		public static implicit operator RuleCase<TValue, TContext, TOut>((TValue, IPattern<TContext>, Rule<TContext, TOut>) triplet)
+		{
+			return new RuleCase<TValue, TContext, TOut>(triplet.Item3, triplet.Item2, triplet.Item1);
+		}
 
-            if (WherePattern is null)
-            {
-                return base.ToString();
-            }
-            else
-            {
-                return $"{base.ToString()} with {WherePattern}";
-            }
-        }
+		public override string ToString()
+		{
+			if (!(Name is null))
+			{
+				return Name;
+			}
 
-        public ReadOnlyCase<TValue, TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyCase<TValue, TContext, TOut>(this, ruleParser);
+			if (WherePattern is null)
+			{
+				return base.ToString();
+			}
+			else
+			{
+				return $"{base.ToString()} with {WherePattern}";
+			}
+		}
 
-        public IEnumerable<RuleCase<TValue, TContext, TOut>> GetCases()
-        {
-            yield return this;
-        }
+		public ReadOnlyCase<TValue, TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyCase<TValue, TContext, TOut>(this, ruleParser);
 
-        internal RuleCase<TValue, TContext, TOut> Named(string name)
-        {
-            Name = name;
-            return this;
-        }
-    }
+		public IEnumerable<RuleCase<TValue, TContext, TOut>> GetCases()
+		{
+			yield return this;
+		}
 
-    public class MultiCase<TValue, TContext, TOut> : ICaseGetter<TValue, TContext, TOut>
-    {
-        private readonly Func<Rule<TContext, TOut>> ruleGenerator;
+		internal RuleCase<TValue, TContext, TOut> Named(string name)
+		{
+			Name = name;
+			return this;
+		}
+	}
 
-        private readonly TValue[] candidates;
+	public class MultiCase<TValue, TContext, TOut> : ICaseGetter<TValue, TContext, TOut>
+	{
+		private readonly Func<TValue, Rule<TContext, TOut>> ruleGenerator;
 
-        public MultiCase(Func<Rule<TContext, TOut>> ruleGenerator, params TValue[] candidates)
-        {
-            this.ruleGenerator = ruleGenerator;
-            this.candidates = candidates;
-        }
+		private readonly TValue[] candidates;
 
-        public IEnumerable<RuleCase<TValue, TContext, TOut>> GetCases() => candidates.Select(c => new RuleCase<TValue, TContext, TOut>(ruleGenerator(), c));
-    }
+		public MultiCase(Func<TValue, Rule<TContext, TOut>> ruleGenerator, params TValue[] candidates)
+		{
+			this.ruleGenerator = ruleGenerator;
+			this.candidates = candidates;
+		}
+
+		public IEnumerable<RuleCase<TValue, TContext, TOut>> GetCases() => candidates.Select(c => new RuleCase<TValue, TContext, TOut>(ruleGenerator(c), c));
+	}
 }

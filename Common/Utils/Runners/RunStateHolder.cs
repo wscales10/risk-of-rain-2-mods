@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Threading;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Utils.Runners
@@ -122,5 +123,21 @@ namespace Utils.Runners
 		public async Task WaitUntilRunningAsync() => await runningEvent.WaitAsync();
 
 		public async Task WaitUntilOnAsync() => await onEvent.WaitAsync();
+
+		public void ThrowIfOff([CallerMemberName] string caller = null)
+		{
+			if (!IsOn)
+			{
+				throw new InvalidOperationException($"This {GetType().GetDisplayName()} does not allow {caller} while off.");
+			}
+		}
+
+		public void ThrowIfNotRunning([CallerMemberName] string caller = null)
+		{
+			if (!IsRunning)
+			{
+				throw new InvalidOperationException($"This {GetType().GetDisplayName()} does not allow {caller} while not running.");
+			}
+		}
 	}
 }

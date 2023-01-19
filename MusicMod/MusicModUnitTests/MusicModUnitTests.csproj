@@ -148,6 +148,7 @@
     <Compile Include="ThatIPC.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ThatSpotifyPlaybackClient.cs" />
+    <Compile Include="ThatRule.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.editorconfig">

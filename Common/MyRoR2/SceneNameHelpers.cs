@@ -28,18 +28,6 @@ namespace MyRoR2
 			return new Fase<T>((out T variable) => Compress(out variable, condition, value), constants);
 		}
 
-		private static bool Compress<T>(out T variable, Func<bool> condition, T value)
-		{
-			if (condition())
-			{
-				variable = value;
-				return true;
-			}
-
-			variable = default;
-			return false;
-		}
-
 		public static bool GetValueFromSceneName<T>(out T variable, MyScene scene, params Fase<T>[] fases)
 		{
 			foreach (var fase in fases)
@@ -64,7 +52,19 @@ namespace MyRoR2
 
 		public static PropertyPattern<Context> GetPropertyPattern(params DefinedScene[] candidates)
 		{
-			return Query.Create(nameof(Context.SceneName), GetPattern(candidates));
+			return Query<Context>.Create(nameof(Context.SceneName), GetPattern(candidates));
+		}
+
+		private static bool Compress<T>(out T variable, Func<bool> condition, T value)
+		{
+			if (condition())
+			{
+				variable = value;
+				return true;
+			}
+
+			variable = default;
+			return false;
 		}
 	}
 }

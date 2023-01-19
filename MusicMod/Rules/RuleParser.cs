@@ -10,78 +10,80 @@ using MyRoR2;
 
 namespace Rules
 {
-    public static class RuleParser
-    {
-        // TODO: move elsewhere
-        public static RuleParser<Context, ICommandList> RoR2ToSpotify { get; } = new RuleParser<Context, ICommandList>(RoR2PatternParser.Instance, s =>
-        {
-            return CommandList.Parse(XElement.Parse(s));
-        });
-    }
+	public static class RuleParser
+	{
+		// TODO: move elsewhere
+		public static RuleParser<Context, string> RoR2ToString { get; } = new RuleParser<Context, string>(RoR2PatternParser.Instance, s => s);
 
-    public class RuleParser<TContext, TOut>
-    {
-        private readonly Func<string, TOut> outputParser;
+		public static RuleParser<string, ICommandList> StringToSpotify { get; } = new RuleParser<string, ICommandList>(PatternParser.Instance, s =>
+		{
+			return CommandList.Parse(XElement.Parse(s));
+		});
+	}
 
-        public RuleParser(PatternParser patternParser, Func<string, TOut> outputParser)
-        {
-            PatternParser = patternParser ?? throw new ArgumentNullException(nameof(patternParser));
-            this.outputParser = outputParser;
-        }
+	public class RuleParser<TContext, TOut>
+	{
+		private readonly Func<string, TOut> outputParser;
 
-        public PatternParser PatternParser { get; }
+		public RuleParser(PatternParser patternParser, Func<string, TOut> outputParser)
+		{
+			PatternParser = patternParser ?? throw new ArgumentNullException(nameof(patternParser));
+			this.outputParser = outputParser;
+		}
 
-        public Rule<TContext, TOut> Parse(XElement element)
-        {
-            if (element is null)
-            {
-                return null;
-            }
+		public PatternParser PatternParser { get; }
 
-            var name = element.Attribute("name")?.Value;
-            return GetUnnamed().Named(name);
+		public Rule<TContext, TOut> Parse(XElement element)
+		{
+			if (element is null)
+			{
+				return null;
+			}
 
-            Rule<TContext, TOut> GetUnnamed()
-            {
-                switch (element.Attribute("type").Value)
-                {
-                    case nameof(ArrayRule):
-                        return new ArrayRule<TContext, TOut>(element.Elements(nameof(Rule)).Select(Parse).ToArray());
+			var name = element.Attribute("name")?.Value;
+			return GetUnnamed().Named(name);
 
-                    case nameof(IfRule):
-                        var ifElement = element.Elements().FirstOrDefault();
-                        IPattern<TContext> pattern;
+			Rule<TContext, TOut> GetUnnamed()
+			{
+				switch (element.Attribute("type").Value)
+				{
+					case nameof(ArrayRule):
+						return new ArrayRule<TContext, TOut>(element.Elements(nameof(Rule)).Select(Parse).ToArray());
 
-                        if (ifElement is null)
-                        {
-                            pattern = null;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                pattern = PatternParser.Parse<TContext>(ifElement);
-                            }
-                            catch (XmlException)
-                            {
-                                pattern = null;
-                            }
-                        }
+					case nameof(IfRule):
+						var ifElement = element.Elements().FirstOrDefault();
+						IPattern<TContext> pattern;
 
-                        return new IfRule<TContext, TOut>(pattern, Parse(element.Element("Then")?.OnlyChild()), Parse(element.Element("Else")?.OnlyChild()));
+						if (ifElement is null)
+						{
+							pattern = null;
+						}
+						else
+						{
+							try
+							{
+								pattern = PatternParser.Parse<TContext>(ifElement);
+							}
+							catch (XmlException)
+							{
+								pattern = null;
+							}
+						}
 
-                    case nameof(Bucket):
-                        return new Bucket<TContext, TOut>(outputParser(element.FirstNode.ToString()));
+						return new IfRule<TContext, TOut>(pattern, Parse(element.Element("Then")?.OnlyChild()), Parse(element.Element("Else")?.OnlyChild()));
 
-                    case nameof(StaticSwitchRule):
-                        return StaticSwitchRule<TContext, TOut>.Parse(element, this);
+					case nameof(Bucket):
+						return new Bucket<TContext, TOut>(outputParser(element.FirstNode.ToString()));
 
-                    default:
-                        throw new XmlException();
-                }
-            }
-        }
+					case nameof(StaticSwitchRule):
+						return StaticSwitchRule<TContext, TOut>.Parse(element, this);
 
-        public Rule<TContext, TOut> DeepClone(Rule<TContext, TOut> rule) => Parse(rule.ToXml());
-    }
+					default:
+						throw new XmlException();
+				}
+			}
+		}
+
+		public Rule<TContext, TOut> DeepClone(Rule<TContext, TOut> rule) => Parse(rule.ToXml());
+	}
 }

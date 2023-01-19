@@ -1,111 +1,75 @@
 ﻿using BepInEx;
 using MyRoR2;
-using Rules;
-using Rules.RuleTypes.Interfaces;
-using Spotify;
-using Spotify.Commands;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Xml.Linq;
 using Utils;
-using static Rules.Examples;
+using Newtonsoft.Json;
 
 namespace Ror2Mod2
 {
-    [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.woodyscales.spotifyintegration", "Spotify Integration", "1.0.0")]
-    [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInDependency("com.rune580.riskofoptions")]
-    public class MusicMod : BaseUnityPlugin
-    {
-        private readonly Configuration configuration;
+	[BepInDependency("com.bepis.r2api")]
+	[BepInPlugin("com.woodyscales.contextmod", "Context Reporting", "1.0.0")]
+	[BepInDependency(R2API.R2API.PluginGUID)]
+	[BepInDependency("com.rune580.riskofoptions")]
+	public class ContextMod : BaseUnityPlugin
+	{
+		private readonly Configuration configuration;
 
-        private bool musicMuted;
+		private bool musicMuted;
 
-        protected MusicMod() => configuration = new Configuration(Config);
+		private ContextHelper contextHelper;
 
-        public SpotifyController<Context> Music { get; private set; }
+		protected ContextMod() => configuration = new Configuration(Config);
 
-        private Logger SafeLogger => x => Logger.LogDebug(x ?? "null");
+		public IPC.Server Server { get; private set; }
 
-        public void Awake()
-        {
-            var rulePicker = new MutableRulePicker<Context, ICommandList>();
-            var playlists = new List<Playlist>();
-            SetRule(rulePicker, playlists);
-            Music = new SpotifyController<Context>(rulePicker, playlists, new ContextHelper(SafeLogger), SafeLogger);
-            configuration.ConfigurationPageRequested += Music.OpenConfigurationPage;
-            configuration.RuleLocationChanged += () => SetRule(rulePicker, playlists);
+		private Logger SafeLogger => x => Logger.LogDebug(x ?? "null");
 
-            On.RoR2.UI.PauseScreenController.OnEnable += PauseScreenController_OnEnable;
+		public void Awake()
+		{
+			contextHelper = new ContextHelper(SafeLogger);
+			Server = new IPC.Server(5008);
+			Server.TryStart.CreateRun().RunToCompletion(true);
+			contextHelper.NewContext += ContextHelper_NewContext;
 
-            On.RoR2.UI.PauseScreenController.OnDisable += PauseScreenController_OnDisable;
-        }
+			On.RoR2.UI.PauseScreenController.OnEnable += PauseScreenController_OnEnable;
 
-        public void Update()
-        {
-            if (!musicMuted && RoR2.Console.instance != null)
-            {
-                var convar = RoR2.Console.instance.FindConVar("volume_music");
+			On.RoR2.UI.PauseScreenController.OnDisable += PauseScreenController_OnDisable;
+		}
 
-                // set in game music volume to 0 so we hear the new music only.
-                if (convar != null)
-                {
-                    convar.SetString("0");
-                    musicMuted = true;
-                }
-            }
-        }
+		public void Update()
+		{
+			if (!musicMuted && RoR2.Console.instance != null)
+			{
+				var convar = RoR2.Console.instance.FindConVar("volume_music");
 
-        private void SetRule(MutableRulePicker<Context, ICommandList> rulePicker, List<Playlist> playlists)
-        {
-            string uri = configuration.RuleLocation;
+				// set in game music volume to 0 so we hear the new music only.
+				if (convar != null)
+				{
+					convar.SetString("0");
+					musicMuted = true;
+				}
+			}
+		}
 
-            if (uri is null)
-            {
-                throw new FileNotFoundException();
-            }
+		private void ContextHelper_NewContext(Context obj)
+		{
+			Server.Broadcast(new IPC.Message(nameof(Context), JsonConvert.SerializeObject(obj)));
+		}
 
-            IRule<Context, ICommandList> rule;
+		private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)
+		{
+			orig(self);
 
-            playlists.Clear();
-            if (string.IsNullOrEmpty(uri))
-            {
-                rule = MimicRule;
-            }
-            else
-            {
-                this.Log($"Rule Location: {uri}");
-                rule = RuleParser.RoR2ToSpotify.Parse(XElement.Load(uri));
-                var playlistsFile = new FileInfo(uri).Directory.GetFiles("playlists.xml").FirstOrDefault();
-                if (!(playlistsFile is null))
-                {
-                    var imported = XElement.Load(playlistsFile.FullName).Elements().Select(x => new Playlist(x));
-                    if (!(imported is null))
-                    {
-                        playlists.AddRange(imported);
-                    }
-                }
-            }
+			if (RoR2.PlatformSystems.networkManager.isNetworkActive)
+			{
+				Server.Broadcast(new IPC.Message("resume"));
+			}
+		}
 
-            rulePicker.Rule = rule;
-        }
+		private void PauseScreenController_OnEnable(On.RoR2.UI.PauseScreenController.orig_OnEnable orig, RoR2.UI.PauseScreenController self)
+		{
+			orig(self);
 
-        private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)
-        {
-            orig(self);
-
-            if (RoR2.PlatformSystems.networkManager.isNetworkActive)
-            {
-                Music.Resume();
-            }
-        }
-
-        private void PauseScreenController_OnEnable(On.RoR2.UI.PauseScreenController.orig_OnEnable orig, RoR2.UI.PauseScreenController self)
-        {
-            orig(self);
-            Music.Pause();
-        }
-    }
+			Server.Broadcast(new IPC.Message("pause"));
+		}
+	}
 }
