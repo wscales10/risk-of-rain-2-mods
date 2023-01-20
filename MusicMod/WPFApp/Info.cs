@@ -15,24 +15,29 @@ using PropertyInfo = Patterns.Patterns.PropertyInfo;
 
 namespace WPFApp
 {
-    internal static class Info
-    {
-        public static ObservableCollection<Playlist> Playlists { get; } = new();
+	internal static class Info
+	{
+		private static readonly ReadOnlyDictionary<(Type, Type), IRuleParser> ruleParsers = new(new Dictionary<(Type, Type), IRuleParser> {
+			{(typeof(Context), typeof(string)), RuleParser.RoR2ToString },
+			{(typeof(string), typeof(ICommandList)), RuleParser.StringToSpotify },
+		});
 
-        public static ReadOnlyCollection<PropertyInfo> ContextProperties { get; } = new(GetProperties<Context>().ToList());
+		public static ObservableCollection<Playlist> Playlists { get; } = new();
 
-        public static ReadOnlyCollection<Type> SupportedRuleTypes { get; } = new(new Type[] { typeof(StaticSwitchRule<,>), typeof(ArrayRule<,>), typeof(IfRule<,>), typeof(Bucket<,>) });
+		public static ReadOnlyCollection<PropertyInfo> ContextProperties { get; } = new(GetProperties<Context>().ToList());
 
-        public static ReadOnlyCollection<Type> SupportedCommandTypes { get; } = new(new Type[] { typeof(PlayCommand), typeof(StopCommand), typeof(TransferCommand), typeof(SeekToCommand), typeof(SetPlaybackOptionsCommand), typeof(LoopCommand), typeof(PlayOnceCommand), typeof(SkipCommand) });
+		public static ReadOnlyCollection<Type> SupportedRuleTypes { get; } = new(new Type[] { typeof(StaticSwitchRule<,>), typeof(ArrayRule<,>), typeof(IfRule<,>), typeof(Bucket<,>) });
 
-        public static Regex InvalidFileNameCharsRegex { get; } = new($"[{Regex.Escape(string.Concat(Path.GetInvalidFileNameChars()))}]+");
+		public static ReadOnlyCollection<Type> SupportedCommandTypes { get; } = new(new Type[] { typeof(PlayCommand), typeof(StopCommand), typeof(TransferCommand), typeof(SeekToCommand), typeof(SetPlaybackOptionsCommand), typeof(LoopCommand), typeof(PlayOnceCommand), typeof(SkipCommand) });
 
-        public static PatternParser PatternParser { get; } = RoR2PatternParser.Instance;
+		public static Regex InvalidFileNameCharsRegex { get; } = new($"[{Regex.Escape(string.Concat(Path.GetInvalidFileNameChars()))}]+");
 
-        public static RuleParser<Context, ICommandList> RuleParser { get; } = Rules.RuleParser.RoR2ToSpotify;
+		public static PatternParser PatternParser { get; } = RoR2PatternParser.Instance;
 
-        public static IEnumerable<PropertyInfo> GetProperties<T>() => GetProperties(typeof(T));
+		public static RuleParser<TContext, TOut> GetRuleParser<TContext, TOut>() => (RuleParser<TContext, TOut>)ruleParsers[(typeof(TContext), typeof(TOut))];
 
-        public static IEnumerable<PropertyInfo> GetProperties(Type type) => type.GetPublicProperties().Where(pi => pi.GetMethod is not null).Select(p => new PropertyInfo(p.Name, p.PropertyType));
-    }
+		public static IEnumerable<PropertyInfo> GetProperties<T>() => GetProperties(typeof(T));
+
+		public static IEnumerable<PropertyInfo> GetProperties(Type type) => type.GetPublicProperties().Where(pi => pi.GetMethod is not null).Select(p => new PropertyInfo(p.Name, p.PropertyType));
+	}
 }

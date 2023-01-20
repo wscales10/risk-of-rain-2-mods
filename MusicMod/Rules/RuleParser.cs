@@ -10,8 +10,20 @@ using MyRoR2;
 
 namespace Rules
 {
-	public static class RuleParser
+	public interface IRuleParser
 	{
+		PatternParser PatternParser { get; }
+
+		RuleBase Parse(XElement element);
+	}
+
+	public abstract class RuleParser
+	{
+		protected RuleParser(PatternParser patternParser)
+		{
+			PatternParser = patternParser ?? throw new ArgumentNullException(nameof(patternParser));
+		}
+
 		// TODO: move elsewhere
 		public static RuleParser<Context, string> RoR2ToString { get; } = new RuleParser<Context, string>(RoR2PatternParser.Instance, s => s);
 
@@ -19,19 +31,18 @@ namespace Rules
 		{
 			return CommandList.Parse(XElement.Parse(s));
 		});
+
+		public PatternParser PatternParser { get; }
 	}
 
-	public class RuleParser<TContext, TOut>
+	public class RuleParser<TContext, TOut> : RuleParser, IRuleParser
 	{
 		private readonly Func<string, TOut> outputParser;
 
-		public RuleParser(PatternParser patternParser, Func<string, TOut> outputParser)
+		public RuleParser(PatternParser patternParser, Func<string, TOut> outputParser) : base(patternParser)
 		{
-			PatternParser = patternParser ?? throw new ArgumentNullException(nameof(patternParser));
 			this.outputParser = outputParser;
 		}
-
-		public PatternParser PatternParser { get; }
 
 		public Rule<TContext, TOut> Parse(XElement element)
 		{
@@ -85,5 +96,7 @@ namespace Rules
 		}
 
 		public Rule<TContext, TOut> DeepClone(Rule<TContext, TOut> rule) => Parse(rule.ToXml());
+
+		RuleBase IRuleParser.Parse(XElement element) => Parse(element);
 	}
 }

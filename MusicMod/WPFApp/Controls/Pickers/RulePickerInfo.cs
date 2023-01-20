@@ -1,7 +1,5 @@
-﻿using MyRoR2;
-using Rules;
+﻿using Rules;
 using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
 using System;
 using System.Collections;
 using System.Linq;
@@ -11,7 +9,7 @@ using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Pickers
 {
-	internal class RulePickerInfo : IPickerInfo
+	internal class RulePickerInfo<TContext, TOut> : IPickerInfo
 	{
 		private readonly Func<Button> buttonGetter;
 
@@ -29,12 +27,12 @@ namespace WPFApp.Controls.Pickers
 
 		public IControlWrapper CreateWrapper(object selectedInfo)
 		{
-			var output = new ItemButtonWrapper<Rule<Context, ICommandList>>(buttonGetter());
+			var output = new ItemButtonWrapper<Rule<TContext, TOut>>(buttonGetter());
 
 			switch (selectedInfo)
 			{
 				case Type type:
-					output.SetValue(Rule<Context, ICommandList>.Create(type));
+					output.SetValue(Rule<TContext, TOut>.Create(type));
 					break;
 
 				case "paste":
@@ -46,10 +44,10 @@ namespace WPFApp.Controls.Pickers
 					}
 					else
 					{
-						Rule<Context, ICommandList> rule;
+						Rule<TContext, TOut> rule;
 						try
 						{
-							rule = RuleParser.RoR2ToSpotify.Parse(item);
+							rule = (Rule<TContext, TOut>)Info.GetRuleParser<TContext, TOut>().Parse(item);
 						}
 						catch
 						{

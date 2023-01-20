@@ -10,57 +10,57 @@ using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
-    internal abstract class RuleRow<TRow> : ButtonRow<Rule<Context, ICommandList>, TRow>, IRuleRow
-        where TRow : RuleRow<TRow>
-    {
-        private RuleWrapper ruleWrapper;
+	internal abstract class RuleRow<TRow> : ButtonRow<Rule<Context, ICommandList>, TRow>, IRuleRow
+		where TRow : RuleRow<TRow>
+	{
+		private RuleWrapper ruleWrapper;
 
-        private IRuleRow parent;
+		private IRuleRow parent;
 
-        protected RuleRow(NavigationContext navigationContext, bool movable, bool removable = true)
-            : base(navigationContext, movable, removable)
-        {
-            SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label), nameof(OutputViewModel));
-            SetPropertyDependency(nameof(AllChildren), nameof(OutputViewModel));
-            RuleWrapper.ValueSet += _ => NotifyPropertyChanged(nameof(Output));
-        }
+		protected RuleRow(NavigationContext navigationContext, bool movable, bool removable = true)
+			: base(navigationContext, movable, removable)
+		{
+			SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label), nameof(OutputViewModel));
+			SetPropertyDependency(nameof(AllChildren), nameof(OutputViewModel));
+			RuleWrapper.ValueSet += _ => NotifyPropertyChanged(nameof(Output));
+		}
 
-        public override string ButtonContent => OutputViewModel?.AsString ?? (string.IsNullOrEmpty(Label) ? Output?.ToString() : Label);
+		public override string ButtonContent => OutputViewModel?.AsString ?? (string.IsNullOrEmpty(Label) ? Output?.ToString() : Label);
 
-        public virtual string Label => null;
+		public virtual string Label => null;
 
-        public IRuleRow Parent
-        {
-            get => parent;
+		public IRuleRow Parent
+		{
+			get => parent;
 
-            set => SetProperty(ref parent, value);
-        }
+			set => SetProperty(ref parent, value);
+		}
 
-        public override Rule<Context, ICommandList> Output
-        {
-            get => RuleWrapper.GetValueBypassValidation();
+		public override Rule<Context, ICommandList> Output
+		{
+			get => RuleWrapper.GetValueBypassValidation();
 
-            set => RuleWrapper.SetValue(value);
-        }
+			set => RuleWrapper.SetValue(value);
+		}
 
-        protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
+		protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
 
-        private RuleWrapper RuleWrapper => ruleWrapper ??= new(NavigationContext, () => (Button)base.MakeOutputUi());
+		private RuleWrapper RuleWrapper => ruleWrapper ??= new(NavigationContext, () => (Button)base.MakeOutputUi());
 
-        public override string ToString() => Label ?? base.ToString();
+		public override string ToString() => Label ?? base.ToString();
 
-        protected sealed override Rule<Context, ICommandList> CloneOutput() => Info.RuleParser.Parse(Output.ToXml());
+		protected sealed override Rule<Context, ICommandList> CloneOutput() => Info.GetRuleParser<Context, ICommandList>().Parse(Output.ToXml());
 
-        protected override SaveResult trySaveChanges() => base.trySaveChanges() & RuleWrapper.TryGetValue(true);
+		protected override SaveResult trySaveChanges() => base.trySaveChanges() & RuleWrapper.TryGetValue(true);
 
-        protected override UIElement MakeOutputUi() => RuleWrapper.UIElement;
+		protected override UIElement MakeOutputUi() => RuleWrapper.UIElement;
 
-        protected override void RefreshOutputUi(UIElement ui, Rule<Context, ICommandList> output)
-        {
-            if (output is not null)
-            {
-                NotifyPropertyChanged(nameof(ButtonContent));
-            }
-        }
-    }
+		protected override void RefreshOutputUi(UIElement ui, Rule<Context, ICommandList> output)
+		{
+			if (output is not null)
+			{
+				NotifyPropertyChanged(nameof(ButtonContent));
+			}
+		}
+	}
 }

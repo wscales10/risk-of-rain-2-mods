@@ -70,7 +70,7 @@ namespace WPFApp
 
 			viewModels = new(item => item switch
 			{
-				Rule rule => GetRuleViewModel(rule),
+				RuleBase rule => GetRuleViewModel(rule),
 				IPattern pattern => GetPatternViewModel(pattern),
 				Playlist playlist => new PlaylistViewModel(playlist, NavigationContext),
 				ObservableCollection<Playlist> playlists => new PlaylistsViewModel(playlists, NavigationContext),
@@ -142,7 +142,7 @@ namespace WPFApp
 			NavigationViewModelBase output = null;
 			IEnumerable list = obj switch
 			{
-				Rule or IPattern or Playlist or IEnumerable<Playlist> or NavigationViewModelBase => new[] { obj },
+				RuleBase or IPattern or Playlist or IEnumerable<Playlist> or NavigationViewModelBase => new[] { obj },
 				IEnumerable enumerable => enumerable,
 				_ => throw new NotImplementedException(),
 			};
@@ -204,7 +204,7 @@ namespace WPFApp
 			}
 			else
 			{
-				ImportXml(Rules.Examples.MimicRule.ToXml());
+				ImportXml(Rules.Examples.MimicRule.Instance.ToXml());
 			}
 
 			authorisationClient.Preferences.PropertyChanged += (name) =>
@@ -293,7 +293,7 @@ namespace WPFApp
 			mainViewModel.OnExportFile += ExportToFile;
 			mainViewModel.OnCopy += CopyCurrentItemToClipboard;
 			mainViewModel.OnReset += () => Reset();
-			mainViewModel.OnExampleRequested += () => ImportXml(Rules.Examples.MimicRule.ToXml());
+			mainViewModel.OnExampleRequested += () => ImportXml(Rules.Examples.MimicRule.Instance.ToXml());
 			mainView.OnTryEnableAutosave += TryEnableAutosave;
 			mainView.OnTryClose += TryClose;
 			mainView.Loaded += (s, e) => clipboardWindow.Owner = (Window)s;
@@ -398,7 +398,7 @@ namespace WPFApp
 			Render();
 		}
 
-		private NavigationViewModelBase GetRuleViewModel(Rule rule) => rule switch
+		private NavigationViewModelBase GetRuleViewModel(RuleBase rule) => rule switch
 		{
 			StaticSwitchRule<Context, ICommandList> sr => new SwitchRuleViewModel(sr, NavigationContext),
 			ArrayRule<Context, ICommandList> ar => new ArrayRuleViewModel(ar, NavigationContext),
