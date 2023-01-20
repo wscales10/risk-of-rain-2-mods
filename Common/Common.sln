@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32228.343
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32421.90
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyRoR2", "MyRoR2\MyRoR2.csproj", "{74118A71-B97C-466F-8C1C-13B5B15BE322}"
 EndProject
@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Patterns", "Patterns\Patter
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "Utils\Utils.csproj", "{673B625D-1E70-4661-AA64-0729AD7D1FC9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maths", "Maths\Maths.csproj", "{924018C4-4861-40CF-B199-2D6E4E1DFBD3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Maths", "Maths\Maths.csproj", "{924018C4-4861-40CF-B199-2D6E4E1DFBD3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils.Tests", "Utils.Tests\Utils.Tests.csproj", "{2E74B637-5EBD-4DCB-8B3A-2C21FCAD991B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{924018C4-4861-40CF-B199-2D6E4E1DFBD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{924018C4-4861-40CF-B199-2D6E4E1DFBD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{924018C4-4861-40CF-B199-2D6E4E1DFBD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E74B637-5EBD-4DCB-8B3A-2C21FCAD991B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E74B637-5EBD-4DCB-8B3A-2C21FCAD991B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E74B637-5EBD-4DCB-8B3A-2C21FCAD991B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E74B637-5EBD-4DCB-8B3A-2C21FCAD991B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
