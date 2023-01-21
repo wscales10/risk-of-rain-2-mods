@@ -1,5 +1,4 @@
 ﻿using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using WPFApp.Controls.CommandControls;
@@ -7,92 +6,99 @@ using WPFApp.Controls.GridManagers;
 using WPFApp.Controls.Rows;
 using Utils;
 using System.Linq;
-using MyRoR2;
+using Spotify.Commands;
 
 namespace WPFApp.ViewModels
 {
-    internal class BucketViewModel : RuleViewModelBase<Bucket<Context, ICommandList>>
-    {
-        public BucketViewModel(Bucket<Context, ICommandList> item, NavigationContext navigationContext) : base(FillBucket(item), navigationContext)
-        {
-            ((INotifyCollectionChanged)TypedRowManager.Items).CollectionChanged += BucketViewModel_CollectionChanged;
-            TypedRowManager.BindTo(Item.Output, AddCommand, r => r.Output);
+	internal abstract class BucketViewModel<TContext, TOut> : RuleViewModelBase<Bucket<TContext, TOut>>
+	{
+		protected BucketViewModel(Bucket<TContext, TOut> rule, NavigationContext navigationContext) : base(rule, navigationContext)
+		{
+		}
 
-            ExtraCommands = new[]
-            {
-                new ButtonContext { Label = "Add Command", Command = new ButtonCommand(_ => AddCommand()) }
-            };
+		protected static Bucket<TContext, TOut> FillBucket(Bucket<TContext, TOut> bucket)
+		{
+			if (bucket.Output is null)
+			{
+				bucket.Output = Info.Instantiate<TOut>();
+			}
 
-            SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
-        }
+			return bucket;
+		}
+	}
 
-        public override string Title => "Execute in order:";
+	internal class CommandListBucketViewModel<TContext> : BucketViewModel<TContext, ICommandList>
+	{
+		public CommandListBucketViewModel(Bucket<TContext, ICommandList> item, NavigationContext navigationContext) : base(FillBucket(item), navigationContext)
+		{
+			((INotifyCollectionChanged)TypedRowManager.Items).CollectionChanged += BucketViewModel_CollectionChanged;
+			TypedRowManager.BindTo(Item.Output, AddCommand, r => r.Output);
 
-        public override IEnumerable<ButtonContext> ExtraCommands { get; }
+			ExtraCommands = new[]
+			{
+				new ButtonContext { Label = "Add Command", Command = new ButtonCommand(_ => AddCommand()) }
+			};
 
-        public override string AsString
-        {
-            get
-            {
-                string output = base.AsString;
+			SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
+		}
 
-                if (output is not null)
-                {
-                    return output;
-                }
+		public override string Title => "Execute in order:";
 
-                int count = TypedRowManager.Items.Count;
+		public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
-                if (count == 0)
-                {
-                    return null;
-                }
+		public override string AsString
+		{
+			get
+			{
+				string output = base.AsString;
 
-                output = TypedRowManager.Items[0].AsString;
+				if (output is not null)
+				{
+					return output;
+				}
 
-                if (count > 1)
-                {
-                    output += $" (+{count - 1})";
-                }
+				int count = TypedRowManager.Items.Count;
 
-                return output;
-            }
-        }
+				if (count == 0)
+				{
+					return null;
+				}
 
-        protected override RowManager<BucketRow> TypedRowManager { get; } = new();
+				output = TypedRowManager.Items[0].AsString;
 
-        private static Bucket<Context, ICommandList> FillBucket(Bucket<Context, ICommandList> bucket)
-        {
-            if (bucket.Output is null)
-            {
-                bucket.Output = new CommandList();
-            }
+				if (count > 1)
+				{
+					output += $" (+{count - 1})";
+				}
 
-            return bucket;
-        }
+				return output;
+			}
+		}
 
-        private void BucketViewModel_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            if (CollectionChanged.GetChangedIndices<BucketRow>(sender, e).Contains(0))
-            {
-                var oldValues = CollectionChanged.GetOldValues<BucketRow>(sender, e);
+		protected override RowManager<CommandListRow> TypedRowManager { get; } = new();
 
-                if (oldValues.Count > 0)
-                {
-                    RemovePropertyDependency(nameof(AsString), oldValues[0], nameof(BucketRow.AsString));
-                }
+		private void BucketViewModel_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (CollectionChanged.GetChangedIndices<CommandListRow>(sender, e).Contains(0))
+			{
+				var oldValues = CollectionChanged.GetOldValues<CommandListRow>(sender, e);
 
-                if (TypedRowManager.Items.Count > 0)
-                {
-                    SetPropertyDependency(nameof(AsString), TypedRowManager.Items[0], nameof(BucketRow.AsString));
-                }
-            }
-        }
+				if (oldValues.Count > 0)
+				{
+					RemovePropertyDependency(nameof(AsString), oldValues[0], nameof(CommandListRow.AsString));
+				}
 
-        private BucketRow AddCommand(Command command = null)
-        {
-            PropertyString.NavigationContext = NavigationContext;
-            return TypedRowManager.Add(new BucketRow() { Output = command });
-        }
-    }
+				if (TypedRowManager.Items.Count > 0)
+				{
+					SetPropertyDependency(nameof(AsString), TypedRowManager.Items[0], nameof(CommandListRow.AsString));
+				}
+			}
+		}
+
+		private CommandListRow AddCommand(Command command = default)
+		{
+			PropertyString.NavigationContext = NavigationContext;
+			return TypedRowManager.Add(new CommandListRow() { Output = command });
+		}
+	}
 }

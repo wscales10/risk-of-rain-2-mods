@@ -1,15 +1,13 @@
-﻿using Rules.RuleTypes.Mutable;
+﻿using Rules.RuleTypes.Interfaces;
+using Rules.RuleTypes.Mutable;
 using Spotify;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
 using System.Xml.Linq;
-using Utils.Async;
+using Utils;
 using WPFApp.Properties;
 using WPFApp.ViewModels;
 
@@ -19,10 +17,13 @@ namespace WPFApp
 	{
 		public void ImportFile(string fileName)
 		{
+			this.Log("Attempting to import file " + fileName);
 			FileInfo fileInfo = new(fileName);
 			var xml = XElement.Load(fileName);
 			AutosaveLocation = fileInfo;
-			ImportXml(xml, false);
+
+			// ImportXml(xml, false);
+			throw new NotImplementedException();
 
 			var playlistsFile = fileInfo.Directory.GetFiles("playlists.xml").SingleOrDefault();
 
@@ -37,7 +38,15 @@ namespace WPFApp
 			}
 		}
 
-		public void ImportXml(XElement xml, bool resetAutosave = true) => Reset(viewModels[Info.GetRuleParser<MyRoR2.Context, Spotify.Commands.ICommandList>().Parse(xml)], resetAutosave);
+		public void ImportXml<TContext, TOut>(XElement xml, bool resetAutosave = true) => SetRule(Info.GetRuleParser<TContext, TOut>().Parse(xml), resetAutosave);
+
+		public void SetRule<TContext, TOut>(Rule<TContext, TOut> rule, bool resetAutosave = true)
+		{
+			Info.SetPatternParser<TContext>();
+			Reset(viewModels[rule], resetAutosave);
+		}
+
+		public void ImportRule<TContext, TOut>(IRule<TContext, TOut> rule, bool resetAutosave = true) => ImportXml<TContext, TOut>(rule.ToXml(), resetAutosave);
 
 		private static void Export(XElement xml, FileInfo fileName)
 		{

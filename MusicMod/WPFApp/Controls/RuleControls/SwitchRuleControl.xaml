@@ -4,8 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:app="clr-namespace:WPFApp" xmlns:viewmodels="clr-namespace:WPFApp.ViewModels"
+             xmlns:ruleControls="clr-namespace:WPFApp.Controls.RuleControls"
 			 mc:Ignorable="d"
 			 d:DesignHeight="450" d:DesignWidth="800"
 			 d:DataContext="{d:DesignInstance Type=viewmodels:SwitchRuleViewModel}">
-    <ComboBox Margin="3" DataContext="{Binding PropertyInfo}" ItemsSource="{Binding Source={x:Static app:Info.ContextProperties}}" SelectedItem="{Binding Value}" />
+    <ComboBox Margin="3" DataContext="{Binding PropertyInfo}" ItemsSource="{Binding DataContext.ContextProperties, RelativeSource={RelativeSource FindAncestor,
+    AncestorType={x:Type ruleControls:SwitchRuleControl}}}" SelectedItem="{Binding Value}" />
 </UserControl>

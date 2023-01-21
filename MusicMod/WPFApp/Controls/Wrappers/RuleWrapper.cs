@@ -1,6 +1,4 @@
-﻿using MyRoR2;
-using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
+﻿using Rules.RuleTypes.Mutable;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,11 +6,11 @@ using WPFApp.Controls.Pickers;
 
 namespace WPFApp.Controls.Wrappers
 {
-	internal class RuleWrapper : SinglePickerWrapper<Rule<Context, ICommandList>>
+	internal class RuleWrapper<TContext, TOut> : SinglePickerWrapper<Rule<TContext, TOut>>
 	{
 		private readonly Func<Button> buttonGetter;
 
-		public RuleWrapper(NavigationContext navigationContext, Func<Button> buttonGetter) : base(new RulePickerInfo<Context, ICommandList>(navigationContext, buttonGetter))
+		public RuleWrapper(NavigationContext navigationContext, Func<Button> buttonGetter) : base(new RulePickerInfo<TContext, TOut>(navigationContext, buttonGetter))
 		{
 			this.buttonGetter = buttonGetter;
 			UIElement.Alignment = HorizontalAlignment.Left;
@@ -20,18 +18,18 @@ namespace WPFApp.Controls.Wrappers
 			UIElement.aligner.Margin = new Thickness(40, 4, 4, 4);
 		}
 
-		public Rule<Context, ICommandList> GetValueBypassValidation()
+		public Rule<TContext, TOut> GetValueBypassValidation()
 		{
 			object obj = null;
 			UIElement?.ViewModel?.ValueWrapper?.ForceGetValue(out obj);
-			return (Rule<Context, ICommandList>)obj;
+			return (Rule<TContext, TOut>)obj;
 		}
 
-		protected override bool Validate(Rule<Context, ICommandList> value) => value is not null;
+		protected override bool Validate(Rule<TContext, TOut> value) => value is not null;
 
-		protected override void setValue(Rule<Context, ICommandList> value)
+		protected override void setValue(Rule<TContext, TOut> value)
 		{
-			var valueWrapper = value is null ? null : new ItemButtonWrapper<Rule<Context, ICommandList>>(buttonGetter());
+			var valueWrapper = value is null ? null : new ItemButtonWrapper<Rule<TContext, TOut>>(buttonGetter());
 			valueWrapper?.SetValue(value);
 			UIElement.ViewModel.HandleSelection(valueWrapper);
 		}

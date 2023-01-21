@@ -1,6 +1,4 @@
-﻿using MyRoR2;
-using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
+﻿using Rules.RuleTypes.Mutable;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,10 +8,10 @@ using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
-	internal abstract class RuleRow<TRow> : ButtonRow<Rule<Context, ICommandList>, TRow>, IRuleRow
-		where TRow : RuleRow<TRow>
+	internal abstract class RuleRow<TRow, TContext, TOut> : ButtonRow<Rule<TContext, TOut>, TRow>, IRuleRow
+		where TRow : RuleRow<TRow, TContext, TOut>
 	{
-		private RuleWrapper ruleWrapper;
+		private RuleWrapper<TContext, TOut> ruleWrapper;
 
 		private IRuleRow parent;
 
@@ -36,26 +34,28 @@ namespace WPFApp.Controls.Rows
 			set => SetProperty(ref parent, value);
 		}
 
-		public override Rule<Context, ICommandList> Output
+		public override Rule<TContext, TOut> Output
 		{
 			get => RuleWrapper.GetValueBypassValidation();
 
 			set => RuleWrapper.SetValue(value);
 		}
 
+		RuleBase IRuleRow.Output => Output;
+
 		protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
 
-		private RuleWrapper RuleWrapper => ruleWrapper ??= new(NavigationContext, () => (Button)base.MakeOutputUi());
+		private RuleWrapper<TContext, TOut> RuleWrapper => ruleWrapper ??= new(NavigationContext, () => (Button)base.MakeOutputUi());
 
 		public override string ToString() => Label ?? base.ToString();
 
-		protected sealed override Rule<Context, ICommandList> CloneOutput() => Info.GetRuleParser<Context, ICommandList>().Parse(Output.ToXml());
+		protected sealed override Rule<TContext, TOut> CloneOutput() => Info.GetRuleParser<TContext, TOut>().Parse(Output.ToXml());
 
 		protected override SaveResult trySaveChanges() => base.trySaveChanges() & RuleWrapper.TryGetValue(true);
 
 		protected override UIElement MakeOutputUi() => RuleWrapper.UIElement;
 
-		protected override void RefreshOutputUi(UIElement ui, Rule<Context, ICommandList> output)
+		protected override void RefreshOutputUi(UIElement ui, Rule<TContext, TOut> output)
 		{
 			if (output is not null)
 			{

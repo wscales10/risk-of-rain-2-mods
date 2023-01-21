@@ -1,7 +1,6 @@
-﻿using MyRoR2;
-using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
+﻿using Rules.RuleTypes.Mutable;
 using System;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -20,6 +19,8 @@ namespace WPFApp.Controls.RuleControls
 
 		public event Action<RuleBase> OnAddRule;
 
+		public event Func<(Type, Type)> TypesRequested;
+
 		public string ButtonText
 		{
 			get => (string)AddRuleButton.Content;
@@ -28,7 +29,8 @@ namespace WPFApp.Controls.RuleControls
 
 		private void AddRuleButton_Click(object sender, RoutedEventArgs e)
 		{
-			var rule = Rule<Context, ICommandList>.Create((Type)newRuleTypeComboBox.SelectedItem);
+			var (tContext, tOut) = TypesRequested();
+			RuleBase rule = (RuleBase)typeof(Rule<,>).MakeGenericType(tContext, tOut).GetMethod("Create", BindingFlags.Static).Invoke(null, new[] { ((Type)newRuleTypeComboBox.SelectedItem).MakeGenericType(tContext, tOut) });
 
 			if (rule is not null)
 			{

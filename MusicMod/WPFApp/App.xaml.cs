@@ -3,12 +3,10 @@ using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
 using Spotify;
-using Spotify.Authorisation;
 using Spotify.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows;
 using Utils;
@@ -17,7 +15,6 @@ using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Properties;
 using WPFApp.Views;
-using System.Diagnostics.CodeAnalysis;
 using WPFApp.ViewModels;
 using System.Collections;
 using System.ComponentModel;
@@ -26,9 +23,11 @@ using System.Xml;
 using System.Threading;
 using System.Collections.ObjectModel;
 using Utils.Async;
-using MyRoR2;
+
+//using MyRoR2;
 using System.Xml.Linq;
-using System.Windows.Threading;
+using Utils.Reflection;
+using IPC;
 
 namespace WPFApp
 {
@@ -204,7 +203,7 @@ namespace WPFApp
 			}
 			else
 			{
-				ImportXml(Rules.Examples.MimicRule.Instance.ToXml());
+				ImportRule(Rules.Examples.Ror2Rule.Instance);
 			}
 
 			authorisationClient.Preferences.PropertyChanged += (name) =>
@@ -237,7 +236,8 @@ namespace WPFApp
 						{
 							case Exception ex:
 								run.Continue = false;
-								MessageBox.Show(ex.Message, ex.GetType().FullName);
+								var displayedException = ex is SendException ? ex.InnerException : ex;
+								MessageBox.Show(displayedException.Message, displayedException.GetType().FullName);
 								break;
 						}
 						break;
@@ -281,7 +281,7 @@ namespace WPFApp
 		{
 			SpotifyItemPicker.MusicItemInfoRequested += HandleMusicItemInfoRequestAsync;
 			PatternWrapper.OnHtmlWebRequested += HandleHtmlWebRequest;
-			BucketRow.OnCommandPreviewRequested += HandleCommandPreviewRequestAsync;
+			CommandListRow.OnCommandPreviewRequested += HandleCommandPreviewRequestAsync;
 		}
 
 		private void Attach(MainView mainView)
@@ -293,7 +293,7 @@ namespace WPFApp
 			mainViewModel.OnExportFile += ExportToFile;
 			mainViewModel.OnCopy += CopyCurrentItemToClipboard;
 			mainViewModel.OnReset += () => Reset();
-			mainViewModel.OnExampleRequested += () => ImportXml(Rules.Examples.MimicRule.Instance.ToXml());
+			mainViewModel.OnExampleRequested += () => ImportRule(Rules.Examples.Ror2Rule.Instance);
 			mainView.OnTryEnableAutosave += TryEnableAutosave;
 			mainView.OnTryClose += TryClose;
 			mainView.Loaded += (s, e) => clipboardWindow.Owner = (Window)s;
@@ -306,6 +306,13 @@ namespace WPFApp
 				mainViewModel.ForwardCommand.CanExecute = history.ReverseIndex > 0;
 				mainViewModel.ItemViewModel = CurrentViewModel;
 			};
+
+			mainView.newRuleControl.TypesRequested += NewRuleControl_TypesRequested;
+		}
+
+		private (Type, Type) NewRuleControl_TypesRequested()
+		{
+			return (typeof(string), typeof(ICommandList));
 		}
 
 		private void CopyCurrentItemToClipboard()
@@ -398,14 +405,31 @@ namespace WPFApp
 			Render();
 		}
 
-		private NavigationViewModelBase GetRuleViewModel(RuleBase rule) => rule switch
+		private NavigationViewModelBase GetRuleViewModel(RuleBase rule)
 		{
-			StaticSwitchRule<Context, ICommandList> sr => new SwitchRuleViewModel(sr, NavigationContext),
-			ArrayRule<Context, ICommandList> ar => new ArrayRuleViewModel(ar, NavigationContext),
-			IfRule<Context, ICommandList> ir => new IfRuleViewModel(ir, NavigationContext),
-			Bucket<Context, ICommandList> b => new BucketViewModel(b, NavigationContext),
-			_ => null,
-		};
+			var ruleType = rule.GetType();
+
+			if (ruleType.IsGenericType(typeof(StaticSwitchRule<,>)))
+			{
+				return (NavigationViewModelBase)typeof(SwitchRuleViewModel<,>).MakeGenericType(ruleType.GenericTypeArguments).Construct(rule, NavigationContext);
+			}
+			else if (ruleType.IsGenericType(typeof(ArrayRule<,>)))
+			{
+				return (NavigationViewModelBase)typeof(ArrayRuleViewModel<,>).MakeGenericType(ruleType.GenericTypeArguments).Construct(rule, NavigationContext);
+			}
+			else if (ruleType.IsGenericType(typeof(IfRule<,>)))
+			{
+				return (NavigationViewModelBase)typeof(IfRuleViewModel<,>).MakeGenericType(ruleType.GenericTypeArguments).Construct(rule, NavigationContext);
+			}
+			else if (ruleType.IsGenericType(typeof(Bucket<,>)) && ruleType.GenericTypeArguments[1] == typeof(ICommandList))
+			{
+				return (NavigationViewModelBase)typeof(CommandListBucketViewModel<>).MakeGenericType(ruleType.GenericTypeArguments[0]).Construct(rule, NavigationContext);
+			}
+			else
+			{
+				return null;
+			}
+		}
 
 		private async Task<ConditionalValue<MusicItemInfo>> HandleMusicItemInfoRequestAsync(SpotifyItem item, CancellationToken? cancellationToken)
 		{

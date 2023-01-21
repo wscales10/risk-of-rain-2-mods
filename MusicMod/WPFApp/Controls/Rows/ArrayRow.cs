@@ -2,14 +2,14 @@
 
 namespace WPFApp.Controls.Rows
 {
-    internal class ArrayRow : RuleRow<ArrayRow>
-    {
-        internal ArrayRow(NavigationContext navigationContext) : base(navigationContext, true)
-        {
-        }
+	internal class ArrayRow<TContext, TOut> : RuleRow<ArrayRow<TContext, TOut>, TContext, TOut>
+	{
+		internal ArrayRow(NavigationContext navigationContext) : base(navigationContext, true)
+		{
+		}
 
-        public override string Label => Output?.ToString();
+		public override string Label => Output?.ToString();
 
-        protected override ArrayRow deepClone() => new(NavigationContext);
-    }
+		protected override ArrayRow<TContext, TOut> deepClone() => new(NavigationContext);
+	}
 }
