@@ -56,7 +56,7 @@ namespace MusicModUnitTests
 
 			Thread.Sleep(2000);
 
-			client.SendToServer(new Message("msg", "client to server message"), new Message("msg", "cts line 2"));
+			client.SendToServerAwaitResponse(new Message("msg", "client to server message"), new Message("msg", "cts line 2"));
 
 			Thread.Sleep(10000);
 		}
@@ -94,7 +94,7 @@ namespace MusicModUnitTests
 			};
 			Assert.IsTrue(server.TryStart.CreateRun().Run(u => !(u.Args is Exception)).Result.Success);
 			Assert.IsTrue(client.TryStart.CreateRun().Run(u => !(u.Args is Exception)).Result.Success);
-			client.SendToServer(new Message("context", JsonConvert.SerializeObject(expectedContext)));
+			client.SendToServerAwaitResponse(new Message("context", JsonConvert.SerializeObject(expectedContext)));
 			Assert.IsTrue(tested);
 		}
 

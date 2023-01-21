@@ -1,5 +1,4 @@
-﻿using IPC;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Utils;
@@ -22,12 +21,12 @@ namespace Spotify
 
 		public void RequestConfigurationPage()
 		{
-			ipcClient.SendToServer(new Message("conf"));
+			ipcClient.SendToServer(new IPC.Message("conf"));
 		}
 
 		public void RequestNewAccessToken()
 		{
-			var response = ipcClient.SendToServer(new Message("toke"));
+			var response = ipcClient.SendToServerAwaitResponse(new IPC.Message("toke"));
 			HandleResponse(response.Messages);
 		}
 
@@ -50,7 +49,7 @@ namespace Spotify
 			}
 		}
 
-		private IEnumerable<Message> IpcClient_ReceivedRequest(IEnumerable<Message> arg)
+		private IEnumerable<IPC.Message> IpcClient_ReceivedRequest(IEnumerable<IPC.Message> arg)
 		{
 			this.Log("Request Start");
 
@@ -77,7 +76,7 @@ namespace Spotify
 			yield break;
 		}
 
-		private void HandleResponse(IEnumerable<Message> obj)
+		private void HandleResponse(IEnumerable<IPC.Message> obj)
 		{
 			_ = IpcClient_ReceivedRequest(obj).LastOrDefault();
 		}

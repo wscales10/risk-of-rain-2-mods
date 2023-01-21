@@ -15,7 +15,7 @@ namespace IPC.Http
 
 		public string Send(string message)
 		{
-			var task = Task.Run(() => PostMessage(message));
+			var task = Task.Run(() => PostMessageAsync(message));
 
 			try
 			{
@@ -34,17 +34,21 @@ namespace IPC.Http
 
 		public async Task<string> SendAsync(string message)
 		{
-			var response = await PostMessage(message);
+			var response = await PostMessageAsync(message);
 			return await response.Content.ReadAsStringAsync();
 		}
 
-		private Task<HttpResponseMessage> PostMessage(string message)
+		private async Task<HttpResponseMessage> PostMessageAsync(string message)
 		{
 			try
 			{
-				return httpClient.PostAsync($"http://localhost:{serverPort}/", new StringContent(message));
+				return await httpClient.PostAsync($"http://localhost:{serverPort}/", new StringContent(message));
 			}
 			catch (SocketException ex)
+			{
+				throw new SendException(ex);
+			}
+			catch (HttpRequestException ex)
 			{
 				throw new SendException(ex);
 			}
