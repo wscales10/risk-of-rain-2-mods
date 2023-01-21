@@ -1,5 +1,4 @@
 ﻿using Maths;
-using MyRoR2;
 using Patterns;
 using Patterns.Patterns;
 using System.Xml.Linq;
@@ -37,7 +36,7 @@ namespace Spotify.Commands
 		internal TransferCommand(XElement element)
 		{
 			Item = (SpotifyItem)SpotifyItem.FromXml(element.Element(nameof(Item)).OnlyChild(true));
-			Mapping = Switch<int, string>.Parse(element.Element(nameof(Mapping)).Element("Switch"), e => e.Value, RoR2PatternParser.Instance);
+			Mapping = Switch<int, string>.Parse(element.Element(nameof(Mapping)).Element("Switch"), e => e.Value, PatternParser.Instance);
 			FromTrackId = PatternParser.Instance.Parse<string>(element.Element(nameof(FromTrackId)).OnlyChild(true));
 		}
 
