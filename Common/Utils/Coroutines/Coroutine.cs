@@ -18,9 +18,9 @@ namespace Utils.Coroutines
 			yield break;
 		}
 
-		public CoroutineRun CreateRun()
+		public CoroutineRun CreateRun(object parameter = null)
 		{
-			return new CoroutineRun(method);
+			return new CoroutineRun(method, parameter);
 		}
 	}
 }

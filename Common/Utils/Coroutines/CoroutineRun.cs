@@ -8,9 +8,12 @@ namespace Utils.Coroutines
 	{
 		private readonly CoroutineMethod func;
 
-		public CoroutineRun(CoroutineMethod func)
+		private readonly object parameter;
+
+		public CoroutineRun(CoroutineMethod func, object parameter = null)
 		{
 			this.func = func ?? throw new ArgumentNullException(nameof(func));
+			this.parameter = parameter;
 		}
 
 		public delegate bool ProgressUpdateHandler(ProgressUpdate progressUpdate);
@@ -64,7 +67,7 @@ namespace Utils.Coroutines
 
 		public IEnumerable<ProgressUpdate> GetProgressUpdates()
 		{
-			var reference = new Reference();
+			var reference = new Reference(parameter);
 
 			foreach (var progressUpdate in func(reference))
 			{

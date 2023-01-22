@@ -6,6 +6,13 @@ namespace Utils.Coroutines
 {
 	public class Reference
 	{
+		public Reference(object parameter = null)
+		{
+			Parameter = parameter;
+		}
+
+		public object Parameter { get; }
+
 		public object Value { get; private set; }
 
 		public bool IsFinished
