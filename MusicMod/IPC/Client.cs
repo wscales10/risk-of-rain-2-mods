@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -28,21 +27,41 @@ namespace IPC
 
 		protected override string GuidString => Guid.ToString();
 
-		public Packet SendToServer(params Message[] messages)
+		public void SendToServer(params Message[] messages)
 		{
-			return Methods.SendPacket(sender, MakePacket(messages));
+			if (sender is IAsyncClient)
+			{
+				_ = sendToServerAsync(messages);
+			}
+			else
+			{
+				_ = sendToServer(messages);
+			}
+		}
+
+		public Packet SendToServerAwaitResponse(params Message[] messages)
+		{
+			Info.ThrowIfNotRunning();
+			return sendToServer(messages);
+		}
+
+		public async Task<Packet> SendToServerAwaitResponseAsync(params Message[] messages)
+		{
+			Info.ThrowIfNotRunning();
+			if (sender is IAsyncClient)
+			{
+				return await sendToServerAsync(messages);
+			}
+			else
+			{
+				return sendToServer(messages);
+			}
 		}
 
 		public async Task<Packet> SendToServerAsync(params Message[] messages)
 		{
-			if (sender is IAsyncClient asyncClient)
-			{
-				return await Methods.SendPacketAsync(asyncClient, MakePacket(messages));
-			}
-			else
-			{
-				throw new NotSupportedException();
-			}
+			Info.ThrowIfNotRunning();
+			return await sendToServerAsync(messages);
 		}
 
 		protected override Packet HandleReceivedPacket(Packet packet)
@@ -59,7 +78,7 @@ namespace IPC
 
 			while (portResponse is null)
 			{
-				var response = SendToServerCatchWebException();
+				var response = SendToServerCatchSendException();
 
 				switch (response)
 				{
@@ -85,7 +104,7 @@ namespace IPC
 
 			while (connectionResponse is null)
 			{
-				var response = SendToServerCatchWebException(new Message("conn"));
+				var response = SendToServerCatchSendException(new Message("conn"));
 
 				switch (response)
 				{
@@ -114,13 +133,30 @@ namespace IPC
 			reference.Complete();
 		}
 
-		private object SendToServerCatchWebException(params Message[] messages)
+		private async Task<Packet> sendToServerAsync(params Message[] messages)
+		{
+			if (sender is IAsyncClient asyncClient)
+			{
+				return await Methods.SendPacketAsync(asyncClient, MakePacket(messages));
+			}
+			else
+			{
+				throw new NotSupportedException();
+			}
+		}
+
+		private Packet sendToServer(params Message[] messages)
+		{
+			return Methods.SendPacket(sender, MakePacket(messages));
+		}
+
+		private object SendToServerCatchSendException(params Message[] messages)
 		{
 			try
 			{
-				return SendToServer(messages);
+				return sendToServer(messages);
 			}
-			catch (WebException ex)
+			catch (SendException ex)
 			{
 				return ex;
 			}

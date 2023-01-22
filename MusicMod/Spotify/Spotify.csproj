@@ -46,9 +46,6 @@
     <Reference Include="Maths">
       <HintPath>..\..\Common\Maths\bin\$(Configuration)\netstandard2.0\Maths.dll</HintPath>
     </Reference>
-    <Reference Include="MyRoR2">
-      <HintPath>..\..\Common\MyRoR2\bin\$(Configuration)\netstandard2.0\MyRoR2.dll</HintPath>
-    </Reference>
     <Reference Include="Patterns">
       <HintPath>..\..\Common\Patterns\bin\$(Configuration)\netstandard2.0\Patterns.dll</HintPath>
     </Reference>

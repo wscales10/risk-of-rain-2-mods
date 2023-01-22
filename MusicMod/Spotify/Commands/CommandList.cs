@@ -8,6 +8,10 @@ namespace Spotify.Commands
 {
 	public class CommandList : List<Command>, ICommandList
 	{
+		public CommandList() : this(Enumerable.Empty<Command>())
+		{
+		}
+
 		public CommandList(params Command[] commands) : base(commands)
 		{
 		}

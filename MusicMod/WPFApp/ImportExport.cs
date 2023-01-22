@@ -1,121 +1,136 @@
-﻿using Rules.RuleTypes.Mutable;
+﻿using Rules.RuleTypes.Interfaces;
+using Rules.RuleTypes.Mutable;
 using Spotify;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
 using System.Xml.Linq;
-using Utils.Async;
+using Utils;
 using WPFApp.Properties;
 using WPFApp.ViewModels;
+using Utils.Reflection;
 
 namespace WPFApp
 {
-    public partial class App
-    {
-        public void ImportFile(string fileName)
-        {
-            FileInfo fileInfo = new(fileName);
-            var xml = XElement.Load(fileName);
-            AutosaveLocation = fileInfo;
-            ImportXml(xml, false);
+	public partial class App
+	{
+		public void ImportFile(string fileName)
+		{
+			this.Log("Attempting to import file " + fileName);
+			FileInfo fileInfo = new(fileName);
+			var xml = XElement.Load(fileName);
+			AutosaveLocation = fileInfo;
 
-            var playlistsFile = fileInfo.Directory.GetFiles("playlists.xml").SingleOrDefault();
+			// ImportXml(xml, false);
+			throw new NotImplementedException();
 
-            if (playlistsFile is not null)
-            {
-                Info.Playlists.Clear();
+			var playlistsFile = fileInfo.Directory.GetFiles("playlists.xml").SingleOrDefault();
 
-                foreach (var playlist in XElement.Load(playlistsFile.FullName).Elements().Select(x => new Playlist(x)))
-                {
-                    Info.Playlists.Add(playlist);
-                }
-            }
-        }
+			if (playlistsFile is not null)
+			{
+				Info.Playlists.Clear();
 
-        public void ImportXml(XElement xml, bool resetAutosave = true) => Reset(viewModels[Info.RuleParser.Parse(xml)], resetAutosave);
+				foreach (var playlist in XElement.Load(playlistsFile.FullName).Elements().Select(x => new Playlist(x)))
+				{
+					Info.Playlists.Add(playlist);
+				}
+			}
+		}
 
-        private static void Export(XElement xml, FileInfo fileName)
-        {
-            using FileStream fs = new(fileName.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-            xml?.Save(fs);
-        }
+		public void ImportXml<TContext, TOut>(XElement xml, bool resetAutosave = true) => SetRule(Info.GetRuleParser<TContext, TOut>().Parse(xml), resetAutosave);
 
-        private static void ExportPlaylists(DirectoryInfo directoryInfo)
-        {
-            XElement element = new("Playlists");
+		public void SetRule<TContext, TOut>(Rule<TContext, TOut> rule, bool resetAutosave = true)
+		{
+			Info.SetPatternParser<TContext>();
+			Reset(viewModels[rule], resetAutosave);
+		}
 
-            foreach (var playlist in Info.Playlists)
-            {
-                element.Add(playlist.ToXml());
-            }
+		public void ImportRule<TContext, TOut>(IRule<TContext, TOut> rule, bool resetAutosave = true) => ImportXml<TContext, TOut>(rule.ToXml(), resetAutosave);
 
-            Export(element, new(Path.Combine(directoryInfo.FullName, "playlists.xml")));
-        }
+		public void ImportRule(Type tContext, Type tOut, object rule, bool resetAutosave = true)
+		{
+			GetType().GetMethod("ImportRule", mi => mi.ContainsGenericParameters).MakeGenericMethod(tContext, tOut).Invoke(this, new[] { rule, resetAutosave });
+		}
 
-        private static void ExportToFile(IXmlViewModel xmlViewModel, FileInfo fileName)
-        {
-            XElement xml;
-            try
-            {
-                xml = xmlViewModel.GetContentXml();
-            }
-            catch (XmlException)
-            {
-                _ = MessageBox.Show("Export error.");
-                return;
-            }
+		private static void Export(XElement xml, FileInfo fileName)
+		{
+			using FileStream fs = new(fileName.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+			xml?.Save(fs);
+		}
 
-            Export(xml, fileName);
-            ExportPlaylists(fileName.Directory);
-        }
+		private static void ExportPlaylists(DirectoryInfo directoryInfo)
+		{
+			XElement element = new("Playlists");
 
-        private IXmlViewModel GetControlForExport()
-        {
-            var masterXmlControl = ViewModelList[0] as IXmlViewModel;
+			foreach (var playlist in Info.Playlists)
+			{
+				element.Add(playlist.ToXml());
+			}
 
-            if (ViewModelList.Count < 2)
-            {
-                return masterXmlControl;
-            }
+			Export(element, new(Path.Combine(directoryInfo.FullName, "playlists.xml")));
+		}
 
-            if (CurrentViewModel is not IXmlViewModel currentXmlControl)
-            {
-                return masterXmlControl;
-            }
+		private static void ExportToFile(IXmlViewModel xmlViewModel, FileInfo fileName)
+		{
+			XElement xml;
+			try
+			{
+				xml = xmlViewModel.GetContentXml();
+			}
+			catch (XmlException)
+			{
+				_ = MessageBox.Show("Export error.");
+				return;
+			}
 
-            MessageBoxResult result = MessageBox.Show(
-                $"Export everything? (Select No to export only this {currentXmlControl.ItemTypeName} and its descendants)",
-                "Export All?",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Question,
-                MessageBoxResult.Yes);
+			Export(xml, fileName);
+			ExportPlaylists(fileName.Directory);
+		}
 
-            return result switch
-            {
-                MessageBoxResult.Yes => masterXmlControl,
-                MessageBoxResult.No => currentXmlControl,
-                _ => null,
-            };
-        }
+		private IXmlViewModel GetControlForExport()
+		{
+			var masterXmlControl = ViewModelList[0] as IXmlViewModel;
 
-        private void ExportToFile(string fileName)
-        {
-            FileInfo fileInfo = new(fileName);
+			if (ViewModelList.Count < 2)
+			{
+				return masterXmlControl;
+			}
 
-            if (CurrentViewModel.TrySave())
-            {
-                if (Settings.Default.Autosave)
-                {
-                    AutosaveLocation = fileInfo;
-                }
+			if (CurrentViewModel is not IXmlViewModel currentXmlControl)
+			{
+				return masterXmlControl;
+			}
 
-                ExportToFile(GetControlForExport(), fileInfo);
-            }
-        }
-    }
+			MessageBoxResult result = MessageBox.Show(
+				$"Export everything? (Select No to export only this {currentXmlControl.ItemTypeName} and its descendants)",
+				"Export All?",
+				MessageBoxButton.YesNoCancel,
+				MessageBoxImage.Question,
+				MessageBoxResult.Yes);
+
+			return result switch
+			{
+				MessageBoxResult.Yes => masterXmlControl,
+				MessageBoxResult.No => currentXmlControl,
+				_ => null,
+			};
+		}
+
+		private void ExportToFile(string fileName)
+		{
+			FileInfo fileInfo = new(fileName);
+
+			if (CurrentViewModel.TrySave())
+			{
+				if (Settings.Default.Autosave)
+				{
+					AutosaveLocation = fileInfo;
+				}
+
+				ExportToFile(GetControlForExport(), fileInfo);
+			}
+		}
+	}
 }

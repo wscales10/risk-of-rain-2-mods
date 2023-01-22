@@ -3,12 +3,10 @@ using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Mutable;
 using Spotify;
-using Spotify.Authorisation;
 using Spotify.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows;
 using Utils;
@@ -17,7 +15,6 @@ using WPFApp.Controls.Rows;
 using WPFApp.Controls.Wrappers.PatternWrappers;
 using WPFApp.Properties;
 using WPFApp.Views;
-using System.Diagnostics.CodeAnalysis;
 using WPFApp.ViewModels;
 using System.Collections;
 using System.ComponentModel;
@@ -26,9 +23,10 @@ using System.Xml;
 using System.Threading;
 using System.Collections.ObjectModel;
 using Utils.Async;
-using MyRoR2;
+
 using System.Xml.Linq;
-using System.Windows.Threading;
+using Utils.Reflection;
+using IPC;
 
 namespace WPFApp
 {
@@ -70,7 +68,7 @@ namespace WPFApp
 
 			viewModels = new(item => item switch
 			{
-				Rule rule => GetRuleViewModel(rule),
+				RuleBase rule => GetRuleViewModel(rule),
 				IPattern pattern => GetPatternViewModel(pattern),
 				Playlist playlist => new PlaylistViewModel(playlist, NavigationContext),
 				ObservableCollection<Playlist> playlists => new PlaylistsViewModel(playlists, NavigationContext),
@@ -119,6 +117,20 @@ namespace WPFApp
 
 		internal static AsyncManager AsyncManager { get; } = new();
 
+		public static (Type, Type)? GetRuleType()
+		{
+			var view = new RuleTypePickerView();
+			var result = view.ShowDialog();
+			if (result == true)
+			{
+				return view.ViewModel.SelectedTypePair;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
 		public void GoBack()
 		{
 			_ = history.Undo();
@@ -142,7 +154,7 @@ namespace WPFApp
 			NavigationViewModelBase output = null;
 			IEnumerable list = obj switch
 			{
-				Rule or IPattern or Playlist or IEnumerable<Playlist> or NavigationViewModelBase => new[] { obj },
+				RuleBase or IPattern or Playlist or IEnumerable<Playlist> or NavigationViewModelBase => new[] { obj },
 				IEnumerable enumerable => enumerable,
 				_ => throw new NotImplementedException(),
 			};
@@ -204,7 +216,7 @@ namespace WPFApp
 			}
 			else
 			{
-				ImportXml(Rules.Examples.MimicRule.ToXml());
+				TryLoadExample();
 			}
 
 			authorisationClient.Preferences.PropertyChanged += (name) =>
@@ -224,6 +236,32 @@ namespace WPFApp
 			mainView.Show();
 		}
 
+		private static object GetExampleRule((Type, Type) ruleType)
+		{
+			if (ruleType == (typeof(MyRoR2.Context), typeof(string)))
+			{
+				return Rules.Examples.Ror2Rule.Instance;
+			}
+			else if (ruleType == (typeof(string), typeof(ICommandList)))
+			{
+				return Rules.Examples.MimicRule.Instance;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		private void TryLoadExample()
+		{
+			var ruleType = GetRuleType();
+
+			if (ruleType is not null)
+			{
+				ImportRule(ruleType?.Item1, ruleType?.Item2, GetExampleRule(ruleType.Value));
+			}
+		}
+
 		private void TryAuthorise()
 		{
 			var run = authorisationClient.TryStart.CreateRun();
@@ -237,7 +275,8 @@ namespace WPFApp
 						{
 							case Exception ex:
 								run.Continue = false;
-								MessageBox.Show(ex.Message, ex.GetType().FullName);
+								var displayedException = ex is SendException ? ex.InnerException : ex;
+								MessageBox.Show(displayedException.Message, displayedException.GetType().FullName);
 								break;
 						}
 						break;
@@ -281,7 +320,7 @@ namespace WPFApp
 		{
 			SpotifyItemPicker.MusicItemInfoRequested += HandleMusicItemInfoRequestAsync;
 			PatternWrapper.OnHtmlWebRequested += HandleHtmlWebRequest;
-			BucketRow.OnCommandPreviewRequested += HandleCommandPreviewRequestAsync;
+			CommandListRow.OnCommandPreviewRequested += HandleCommandPreviewRequestAsync;
 		}
 
 		private void Attach(MainView mainView)
@@ -293,7 +332,7 @@ namespace WPFApp
 			mainViewModel.OnExportFile += ExportToFile;
 			mainViewModel.OnCopy += CopyCurrentItemToClipboard;
 			mainViewModel.OnReset += () => Reset();
-			mainViewModel.OnExampleRequested += () => ImportXml(Rules.Examples.MimicRule.ToXml());
+			mainViewModel.OnExampleRequested += TryLoadExample;
 			mainView.OnTryEnableAutosave += TryEnableAutosave;
 			mainView.OnTryClose += TryClose;
 			mainView.Loaded += (s, e) => clipboardWindow.Owner = (Window)s;
@@ -306,6 +345,8 @@ namespace WPFApp
 				mainViewModel.ForwardCommand.CanExecute = history.ReverseIndex > 0;
 				mainViewModel.ItemViewModel = CurrentViewModel;
 			};
+
+			mainView.newRuleControl.TypesRequested += GetRuleType;
 		}
 
 		private void CopyCurrentItemToClipboard()
@@ -398,14 +439,31 @@ namespace WPFApp
 			Render();
 		}
 
-		private NavigationViewModelBase GetRuleViewModel(Rule rule) => rule switch
+		private NavigationViewModelBase GetRuleViewModel(RuleBase rule)
 		{
-			StaticSwitchRule<Context, ICommandList> sr => new SwitchRuleViewModel(sr, NavigationContext),
-			ArrayRule<Context, ICommandList> ar => new ArrayRuleViewModel(ar, NavigationContext),
-			IfRule<Context, ICommandList> ir => new IfRuleViewModel(ir, NavigationContext),
-			Bucket<Context, ICommandList> b => new BucketViewModel(b, NavigationContext),
-			_ => null,
-		};
+			var ruleType = rule.GetType();
+
+			if (ruleType.IsGenericType(typeof(StaticSwitchRule<,>)))
+			{
+				return (NavigationViewModelBase)typeof(SwitchRuleViewModel<,>).MakeGenericType(ruleType.GenericTypeArguments).Construct(rule, NavigationContext);
+			}
+			else if (ruleType.IsGenericType(typeof(ArrayRule<,>)))
+			{
+				return (NavigationViewModelBase)typeof(ArrayRuleViewModel<,>).MakeGenericType(ruleType.GenericTypeArguments).Construct(rule, NavigationContext);
+			}
+			else if (ruleType.IsGenericType(typeof(IfRule<,>)))
+			{
+				return (NavigationViewModelBase)typeof(IfRuleViewModel<,>).MakeGenericType(ruleType.GenericTypeArguments).Construct(rule, NavigationContext);
+			}
+			else if (ruleType.IsGenericType(typeof(Bucket<,>)) && ruleType.GenericTypeArguments[1] == typeof(ICommandList))
+			{
+				return (NavigationViewModelBase)typeof(CommandListBucketViewModel<>).MakeGenericType(ruleType.GenericTypeArguments[0]).Construct(rule, NavigationContext);
+			}
+			else
+			{
+				return null;
+			}
+		}
 
 		private async Task<ConditionalValue<MusicItemInfo>> HandleMusicItemInfoRequestAsync(SpotifyItem item, CancellationToken? cancellationToken)
 		{

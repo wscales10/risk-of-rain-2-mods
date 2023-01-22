@@ -1,6 +1,4 @@
-﻿using MyRoR2;
-using Rules.RuleTypes.Mutable;
-using Spotify.Commands;
+﻿using Rules.RuleTypes.Mutable;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,32 +6,29 @@ using WPFApp.Controls.Pickers;
 
 namespace WPFApp.Controls.Wrappers
 {
-    internal class RuleWrapper : SinglePickerWrapper<Rule<Context, ICommandList>>
-    {
-        private readonly Func<Button> buttonGetter;
+	internal class RuleWrapper<TContext, TOut> : SinglePickerWrapper<Rule<TContext, TOut>>
+	{
+		public RuleWrapper(NavigationContext navigationContext, Func<Button> buttonGetter) : base(new RulePickerInfo<TContext, TOut>(navigationContext, buttonGetter))
+		{
+			UIElement.Alignment = HorizontalAlignment.Left;
+			UIElement.FontSize = 14;
+			UIElement.aligner.Margin = new Thickness(40, 4, 4, 4);
+		}
 
-        public RuleWrapper(NavigationContext navigationContext, Func<Button> buttonGetter) : base(new RulePickerInfo(navigationContext, buttonGetter))
-        {
-            this.buttonGetter = buttonGetter;
-            UIElement.Alignment = HorizontalAlignment.Left;
-            UIElement.FontSize = 14;
-            UIElement.aligner.Margin = new Thickness(40, 4, 4, 4);
-        }
+		public Rule<TContext, TOut> GetValueBypassValidation()
+		{
+			object obj = null;
+			UIElement?.ViewModel?.ValueWrapper?.ForceGetValue(out obj);
+			return (Rule<TContext, TOut>)obj;
+		}
 
-        public Rule<Context, ICommandList> GetValueBypassValidation()
-        {
-            object obj = null;
-            UIElement?.ViewModel?.ValueWrapper?.ForceGetValue(out obj);
-            return (Rule<Context, ICommandList>)obj;
-        }
+		protected override bool Validate(Rule<TContext, TOut> value) => value is not null;
 
-        protected override bool Validate(Rule<Context, ICommandList> value) => value is not null;
-
-        protected override void setValue(Rule<Context, ICommandList> value)
-        {
-            var valueWrapper = value is null ? null : new ItemButtonWrapper<Rule<Context, ICommandList>>(buttonGetter());
-            valueWrapper?.SetValue(value);
-            UIElement.ViewModel.HandleSelection(valueWrapper);
-        }
-    }
+		protected override void setValue(Rule<TContext, TOut> value)
+		{
+			var valueWrapper = value is null ? null : CreateWrapper(value);
+			// valueWrapper?.SetValue(value);
+			UIElement.ViewModel.HandleSelection(valueWrapper);
+		}
+	}
 }

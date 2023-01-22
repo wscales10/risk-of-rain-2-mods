@@ -1,19 +1,32 @@
 ﻿using Spotify;
+using System.Windows;
 using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
-    internal class PlaylistRow : ButtonRow<Playlist, PlaylistRow>
-    {
-        public PlaylistRow(NavigationContext navigationContext) : base(navigationContext, true)
-        {
-            SetPropertyDependency(nameof(ButtonContent), OutputViewModel, nameof(PlaylistViewModel.Name));
-        }
+	internal class PlaylistRow : Row<Playlist, PlaylistRow>
+	{
+		private readonly NavigationContext navigationContext;
 
-        public override string ButtonContent => Output?.Name ?? "Untitled playlist";
+		public PlaylistRow(NavigationContext navigationContext) : base(true)
+		{
+			this.navigationContext = navigationContext;
+			ButtonOutputUi = new(
+				navigationContext,
+				RefreshOutputUi,
+				this,
+				new(
+					() => Output?.Name ?? "Untitled playlist",
+					new DependencyInformation(
+						ButtonOutputUi.OutputViewModel, nameof(PlaylistViewModel.Name))));
+		}
 
-        protected override Playlist CloneOutput() => Output.DeepClone();
+		protected ButtonOutputUi<Playlist> ButtonOutputUi { get; }
 
-        protected override PlaylistRow deepClone() => new(NavigationContext);
-    }
+		protected override Playlist CloneOutput() => Output.DeepClone();
+
+		protected override PlaylistRow deepClone() => new(navigationContext);
+
+		protected override UIElement MakeOutputUi() => ButtonOutputUi.MakeOutputUi();
+	}
 }

@@ -1,10 +1,8 @@
 ﻿using HtmlAgilityPack;
-using MyRoR2;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
@@ -13,169 +11,149 @@ using WPFApp.Controls.Wrappers.PatternWrappers;
 
 namespace WPFApp.ViewModels
 {
-    public class ScenePatternViewModel : ImagePatternViewModel<DefinedScene>
-    {
-        public override IEnumerable<DefinedScene> AllowedValues { get; } = DefinedScene.GetAll();
+	public abstract class ImagePatternViewModel : ViewModelBase
+	{
+		private static readonly AsyncJobQueue asyncJobQueue = new();
 
-        public override string GetDisplayName(DefinedScene value) => value?.DisplayName;
+		private string text;
 
-        protected override string GetImgXPathFromTableXPath(string tableXPath, string typeableName) => $"{tableXPath}//img[@data-image-key='{WebUtility.UrlEncode(typeableName.Replace(' ', '_'))}.png']";
-    }
+		private CancellationTokenSource individualCancellationTokenSource;
 
-    public class EntityPatternViewModel : ImagePatternViewModel<DefinedEntity>
-    {
-        public override IEnumerable<DefinedEntity> AllowedValues { get; } = DefinedEntity.GetAll();
+		private BitmapImage imageSource;
 
-        public override string GetDisplayName(DefinedEntity value) => value?.DisplayName;
+		public virtual string Text
+		{
+			get => text;
 
-        public override string GetTypeableName(DefinedEntity value) => value?.TypeableName;
+			set
+			{
+				SetProperty(ref text, value);
+				SetImageSource();
+			}
+		}
 
-        protected override string GetImgXPathFromTableXPath(string tableXPath, string typeableName) => $"{tableXPath}//img[contains(@data-image-name, '{typeableName}')]";
-    }
+		public BitmapImage ImageSource
+		{
+			get => imageSource;
+			set => SetProperty(ref imageSource, value);
+		}
 
-    public abstract class ImagePatternViewModel : ViewModelBase
-    {
-        private static readonly AsyncJobQueue asyncJobQueue = new();
+		public abstract IEnumerable<string> TypeableNames { get; }
 
-        private string text;
+		protected abstract string GetImgXPathFromTableXPath(string tableXPath, string typeableName);
 
-        private CancellationTokenSource individualCancellationTokenSource;
+		protected virtual string GetTypeableNameFromDisplayName(string displayName) => displayName;
 
-        private BitmapImage imageSource;
+		private static string GetFileName(string typeableName) => Info.InvalidFileNameCharsRegex.Replace(typeableName, string.Empty) + ".png";
 
-        public virtual string Text
-        {
-            get => text;
+		private static string GetWikiPageUrl(string typeableName) => "https://riskofrain2.fandom.com/wiki/" + typeableName.Replace(" ", "_");
 
-            set
-            {
-                SetProperty(ref text, value);
-                SetImageSource();
-            }
-        }
+		private async Task<string> GetImageUrlAsync(string typeableName, CancellationToken cancellationToken = default)
+		{
+			var client = PatternWrapper.RequestHtmlWeb();
 
-        public BitmapImage ImageSource
-        {
-            get => imageSource;
-            set => SetProperty(ref imageSource, value);
-        }
+			if (client is null)
+			{
+				return null;
+			}
 
-        public abstract IEnumerable<string> TypeableNames { get; }
+			string wikiPageUrl = GetWikiPageUrl(typeableName);
+			HtmlNode document;
+			try
+			{
+				CancellationTokenSource timeoutTokenSource = new(TimeSpan.FromSeconds(10));
+				CancellationToken combinedToken = CancellationTokenSource.CreateLinkedTokenSource(timeoutTokenSource.Token, cancellationToken).Token;
+				document = (await client.LoadFromWebAsync(wikiPageUrl, combinedToken)).DocumentNode;
+			}
+			catch (Exception)
+			{
+				return null;
+			}
 
-        protected abstract string GetImgXPathFromTableXPath(string tableXPath, string typeableName);
+			HtmlNode table = document.SelectSingleNode("//table[@class='infoboxtable']");
 
-        protected virtual string GetTypeableNameFromDisplayName(string displayName) => displayName;
+			if (table is null)
+			{
+				return null;
+			}
 
-        private static string GetFileName(string typeableName) => Info.InvalidFileNameCharsRegex.Replace(typeableName, string.Empty) + ".png";
+			HtmlNode img = document.SelectSingleNode(GetImgXPathFromTableXPath(table.XPath, typeableName));
 
-        private static string GetWikiPageUrl(string typeableName) => "https://riskofrain2.fandom.com/wiki/" + typeableName.Replace(" ", "_");
+			if (img is null)
+			{
+				return null;
+			}
 
-        private async Task<string> GetImageUrlAsync(string typeableName, CancellationToken cancellationToken = default)
-        {
-            var client = PatternWrapper.RequestHtmlWeb();
+			return img.GetAttributeValue("data-src", null) ?? img.GetAttributeValue("src", null);
+		}
 
-            if (client is null)
-            {
-                return null;
-            }
+		private void SetImageSource()
+		{
+			individualCancellationTokenSource?.Cancel();
+			individualCancellationTokenSource = new();
+			asyncJobQueue.WaitForMyJobAsync(new CancellableTask(token => SetImageSourceAsync(token)), individualCancellationTokenSource.Token);
+		}
 
-            string wikiPageUrl = GetWikiPageUrl(typeableName);
-            HtmlNode document;
-            try
-            {
-                CancellationTokenSource timeoutTokenSource = new(TimeSpan.FromSeconds(10));
-                CancellationToken combinedToken = CancellationTokenSource.CreateLinkedTokenSource(timeoutTokenSource.Token, cancellationToken).Token;
-                document = (await client.LoadFromWebAsync(wikiPageUrl, combinedToken)).DocumentNode;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+		private async Task SetImageSourceAsync(CancellationToken cancellationToken)
+		{
+			string typeableName = GetTypeableNameFromDisplayName(Text);
+			if (!string.IsNullOrEmpty(typeableName))
+			{
+				string filePath = Path.Combine(Images.CacheLocation, GetFileName(typeableName));
 
-            HtmlNode table = document.SelectSingleNode("//table[@class='infoboxtable']");
+				if (File.Exists(filePath))
+				{
+					ImageSource = Images.BuildFromUri(filePath);
+					Images.CacheUpdated += SetImageSource;
+					return;
+				}
+				else
+				{
+					string sourceString = await GetImageUrlAsync(typeableName, cancellationToken);
+					if (sourceString is not null)
+					{
+						Uri sourceUri = new(sourceString);
+						ImageSource = Images.BuildFromUri(sourceUri);
+						Images.CacheUpdated += SetImageSource;
+						await HttpHelper.DownloadFileAsync(sourceUri, filePath);
+						return;
+					}
+				}
+			}
 
-            if (table is null)
-            {
-                return null;
-            }
+			ImageSource = null;
+			Images.CacheUpdated -= SetImageSource;
+			return;
+		}
+	}
 
-            HtmlNode img = document.SelectSingleNode(GetImgXPathFromTableXPath(table.XPath, typeableName));
+	public abstract class ImagePatternViewModel<T> : ImagePatternViewModel
+	{
+		private string text;
 
-            if (img is null)
-            {
-                return null;
-            }
+		public override IEnumerable<string> TypeableNames => AllowedValues.Select(GetTypeableName);
 
-            return img.GetAttributeValue("data-src", null) ?? img.GetAttributeValue("src", null);
-        }
+		public abstract IEnumerable<T> AllowedValues { get; }
 
-        private void SetImageSource()
-        {
-            individualCancellationTokenSource?.Cancel();
-            individualCancellationTokenSource = new();
-            asyncJobQueue.WaitForMyJobAsync(new CancellableTask(token => SetImageSourceAsync(token)), individualCancellationTokenSource.Token);
-        }
+		public override string Text
+		{
+			get => base.Text;
 
-        private async Task SetImageSourceAsync(CancellationToken cancellationToken)
-        {
-            string typeableName = GetTypeableNameFromDisplayName(Text);
-            if (!string.IsNullOrEmpty(typeableName))
-            {
-                string filePath = Path.Combine(Images.CacheLocation, GetFileName(typeableName));
+			set
+			{
+				if (text != value)
+				{
+					text = value;
+					T foundValue = AllowedValues.FirstOrDefault(x => string.Equals(value, GetTypeableName(x), StringComparison.OrdinalIgnoreCase));
+					base.Text = GetDisplayName(foundValue) ?? value;
+				}
+			}
+		}
 
-                if (File.Exists(filePath))
-                {
-                    ImageSource = Images.BuildFromUri(filePath);
-                    Images.CacheUpdated += SetImageSource;
-                    return;
-                }
-                else
-                {
-                    string sourceString = await GetImageUrlAsync(typeableName, cancellationToken);
-                    if (sourceString is not null)
-                    {
-                        Uri sourceUri = new(sourceString);
-                        ImageSource = Images.BuildFromUri(sourceUri);
-                        Images.CacheUpdated += SetImageSource;
-                        await HttpHelper.DownloadFileAsync(sourceUri, filePath);
-                        return;
-                    }
-                }
-            }
+		public virtual string GetTypeableName(T value) => GetDisplayName(value);
 
-            ImageSource = null;
-            Images.CacheUpdated -= SetImageSource;
-            return;
-        }
-    }
+		public abstract string GetDisplayName(T value);
 
-    public abstract class ImagePatternViewModel<T> : ImagePatternViewModel
-    {
-        private string text;
-
-        public override IEnumerable<string> TypeableNames => AllowedValues.Select(GetTypeableName);
-
-        public abstract IEnumerable<T> AllowedValues { get; }
-
-        public override string Text
-        {
-            get => base.Text;
-
-            set
-            {
-                if (text != value)
-                {
-                    text = value;
-                    T foundValue = AllowedValues.FirstOrDefault(x => string.Equals(value, GetTypeableName(x), StringComparison.OrdinalIgnoreCase));
-                    base.Text = GetDisplayName(foundValue) ?? value;
-                }
-            }
-        }
-
-        public virtual string GetTypeableName(T value) => GetDisplayName(value);
-
-        public abstract string GetDisplayName(T value);
-
-        protected override string GetTypeableNameFromDisplayName(string displayName) => GetTypeableName(AllowedValues.FirstOrDefault(x => GetDisplayName(x) == displayName));
-    }
+		protected override string GetTypeableNameFromDisplayName(string displayName) => GetTypeableName(AllowedValues.FirstOrDefault(x => GetDisplayName(x) == displayName));
+	}
 }

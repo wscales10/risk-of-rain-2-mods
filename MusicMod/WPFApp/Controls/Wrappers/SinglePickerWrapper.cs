@@ -5,51 +5,55 @@ using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers
 {
-    internal abstract class SinglePickerWrapper<T> : ControlWrapper<T, SinglePicker>
-    {
-        protected SinglePickerWrapper(IPickerInfo config)
-        {
-            CreateWrapper = t => (IControlWrapper)config.CreateWrapper(t);
-            NavigationContext = config.NavigationContext;
-            UIElement = new() { ViewModel = new(config) };
-            UIElement.ViewModel.ValueChanged += NotifyValueChanged;
-            UIElement.ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-            SetPropertyDependency(nameof(ValueString), UIElement.ViewModel, nameof(UIElement.ViewModel.ValueWrapper));
-            SetValue(null);
-        }
+	internal abstract class SinglePickerWrapper<T> : ControlWrapper<T, SinglePicker>
+	{
+		private readonly Func<object, IReadableControlWrapper> createWrapper;
 
-        public sealed override SinglePicker UIElement { get; }
+		protected SinglePickerWrapper(IPickerInfo config)
+		{
+			createWrapper = config.CreateWrapper;
+			NavigationContext = config.NavigationContext;
+			UIElement = new() { ViewModel = new(config) };
+			UIElement.ViewModel.ValueChanged += NotifyValueChanged;
+			UIElement.ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+			SetPropertyDependency(nameof(ValueString), UIElement.ViewModel, nameof(UIElement.ViewModel.ValueWrapper));
+			SetValue(null);
+		}
 
-        public override string ValueString => UIElement.ViewModel.ValueWrapper?.ValueString;
+		public sealed override SinglePicker UIElement { get; }
 
-        protected NavigationContext NavigationContext { get; }
+		public override string ValueString => UIElement.ViewModel.ValueWrapper?.ValueString;
 
-        protected Func<Type, IControlWrapper> CreateWrapper { get; }
+		protected NavigationContext NavigationContext { get; }
 
-        protected override SaveResult<T> tryGetValue(GetValueRequest request)
-        {
-            var valueWrapper = UIElement.ViewModel.ValueWrapper;
+		protected IControlWrapper CreateWrapper(Type type) => (IControlWrapper)createWrapper(type);
 
-            if (valueWrapper is null)
-            {
-                return new(null);
-            }
+		protected IControlWrapper CreateWrapper(T value) => (IControlWrapper)createWrapper(value);
 
-            return SaveResult.Create<T>(valueWrapper.TryGetObject(request));
-        }
+		protected override SaveResult<T> tryGetValue(GetValueRequest request)
+		{
+			var valueWrapper = UIElement.ViewModel.ValueWrapper;
 
-        protected sealed override void setStatus(bool? status) => Outline(UIElement.comboBox, status is null ? null : UIElement.ViewModel.ValueWrapper is not null);
+			if (valueWrapper is null)
+			{
+				return new(null);
+			}
 
-        private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(SinglePickerViewModel.ValueWrapper):
-                    var viewModel = (SinglePickerViewModel)sender;
-                    RemovePropertyDependency(nameof(ValueString), nameof(IControlWrapper.ValueString));
-                    SetPropertyDependency(nameof(ValueString), viewModel.ValueWrapper, nameof(IControlWrapper.ValueString));
-                    break;
-            }
-        }
-    }
+			return SaveResult.Create<T>(valueWrapper.TryGetObject(request));
+		}
+
+		protected sealed override void setStatus(bool? status) => Outline(UIElement.comboBox, status is null ? null : UIElement.ViewModel.ValueWrapper is not null);
+
+		private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case nameof(SinglePickerViewModel.ValueWrapper):
+					var viewModel = (SinglePickerViewModel)sender;
+					RemovePropertyDependency(nameof(ValueString), nameof(IControlWrapper.ValueString));
+					SetPropertyDependency(nameof(ValueString), viewModel.ValueWrapper, nameof(IControlWrapper.ValueString));
+					break;
+			}
+		}
+	}
 }

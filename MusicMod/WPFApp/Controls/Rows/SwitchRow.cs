@@ -5,58 +5,58 @@ using WPFApp.ViewModels;
 using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.Controls.Wrappers;
 using System.Windows;
-using Case = Rules.RuleTypes.Mutable.RuleCase<MyRoR2.Context, Spotify.Commands.ICommandList>;
+using Rules.RuleTypes.Mutable;
 
 namespace WPFApp.Controls.Rows
 {
-    internal class CaseRow : SwitchRow
-    {
-        private readonly CaseWrapper caseWrapper;
+	internal class CaseRow<TContext, TOut> : SwitchRow<TContext, TOut>
+	{
+		private readonly CaseWrapper<TContext, TOut> caseWrapper;
 
-        private readonly PropertyWrapper<Type> valueType;
+		private readonly PropertyWrapper<Type> valueType;
 
-        public CaseRow(Case c, PropertyWrapper<Type> valueType, NavigationContext navigationContext) : base(navigationContext, true)
-        {
-            Case = c;
-            this.valueType = valueType;
-            SetPropertyDependency(nameof(Label), nameof(Case));
-            caseWrapper = new(new(c, valueType, navigationContext));
-            SetPropertyDependency(nameof(Label), caseWrapper.ViewModel, nameof(CaseViewModel.CaseName));
+		public CaseRow(RuleCase<TContext, TOut> c, PropertyWrapper<Type> valueType, NavigationContext navigationContext) : base(navigationContext, true)
+		{
+			Case = c;
+			this.valueType = valueType;
+			SetPropertyDependency(nameof(Label), nameof(Case));
+			caseWrapper = new(new(c, valueType, navigationContext));
+			SetPropertyDependency(nameof(Label), caseWrapper.ViewModel, nameof(CaseViewModel<TContext, TOut>.CaseName));
 
-            OnSetOutput += (rule) => Case.Output = rule;
-            Output = c.Output;
-        }
+			OnSetOutput += (rule) => Case.Output = rule;
+			Output = c.Output;
+		}
 
-        public Case Case { get; }
+		public RuleCase<TContext, TOut> Case { get; }
 
-        public override UIElement LeftElement => caseWrapper.UIElement;
+		public override UIElement LeftElement => caseWrapper.UIElement;
 
-        public override string Label => Case?.ToString();
+		public override string Label => Case?.ToString();
 
-        protected override CaseRow deepClone() => new(Case.DeepClone(Info.RuleParser), valueType, NavigationContext);
+		protected override CaseRow<TContext, TOut> deepClone() => new(Case.DeepClone(Info.GetRuleParser<TContext, TOut>()), valueType, NavigationContext);
 
-        protected override SaveResult trySaveChanges() => base.trySaveChanges() & caseWrapper.TryGetValue(true);
-    }
+		protected override SaveResult trySaveChanges() => base.trySaveChanges() & caseWrapper.TryGetValue(true);
+	}
 
-    internal class DefaultRow : SwitchRow
-    {
-        private readonly PropertyInfo propertyInfo;
+	internal class DefaultRow<TContext, TOut> : SwitchRow<TContext, TOut>
+	{
+		private readonly PropertyInfo propertyInfo;
 
-        public DefaultRow(NavigationContext navigationContext, PropertyInfo propertyInfo) : base(navigationContext, false)
-        {
-            ((TextBlock)LeftElement).Text = "Default";
-            this.propertyInfo = propertyInfo;
-        }
+		public DefaultRow(NavigationContext navigationContext, PropertyInfo propertyInfo) : base(navigationContext, false)
+		{
+			((TextBlock)LeftElement).Text = "Default";
+			this.propertyInfo = propertyInfo;
+		}
 
-        public override string Label => $"Other {propertyInfo}";
+		public override string Label => $"Other {propertyInfo}";
 
-        protected override DefaultRow deepClone() => new(NavigationContext, propertyInfo);
-    }
+		protected override DefaultRow<TContext, TOut> deepClone() => new(NavigationContext, propertyInfo);
+	}
 
-    internal abstract class SwitchRow : RuleRow<SwitchRow>
-    {
-        protected SwitchRow(NavigationContext navigationContext, bool movable) : base(navigationContext, movable)
-        {
-        }
-    }
+	internal abstract class SwitchRow<TContext, TOut> : RuleRow<SwitchRow<TContext, TOut>, TContext, TOut>
+	{
+		protected SwitchRow(NavigationContext navigationContext, bool movable) : base(navigationContext, movable)
+		{
+		}
+	}
 }
