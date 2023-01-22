@@ -24,7 +24,6 @@ using System.Threading;
 using System.Collections.ObjectModel;
 using Utils.Async;
 
-//using MyRoR2;
 using System.Xml.Linq;
 using Utils.Reflection;
 using IPC;
@@ -118,6 +117,20 @@ namespace WPFApp
 
 		internal static AsyncManager AsyncManager { get; } = new();
 
+		public static (Type, Type)? GetRuleType()
+		{
+			var view = new RuleTypePickerView();
+			var result = view.ShowDialog();
+			if (result == true)
+			{
+				return view.ViewModel.SelectedTypePair;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
 		public void GoBack()
 		{
 			_ = history.Undo();
@@ -203,7 +216,7 @@ namespace WPFApp
 			}
 			else
 			{
-				ImportRule(Rules.Examples.Ror2Rule.Instance);
+				TryLoadExample();
 			}
 
 			authorisationClient.Preferences.PropertyChanged += (name) =>
@@ -221,6 +234,32 @@ namespace WPFApp
 
 			Render();
 			mainView.Show();
+		}
+
+		private static object GetExampleRule((Type, Type) ruleType)
+		{
+			if (ruleType == (typeof(MyRoR2.Context), typeof(string)))
+			{
+				return Rules.Examples.Ror2Rule.Instance;
+			}
+			else if (ruleType == (typeof(string), typeof(ICommandList)))
+			{
+				return Rules.Examples.MimicRule.Instance;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		private void TryLoadExample()
+		{
+			var ruleType = GetRuleType();
+
+			if (ruleType is not null)
+			{
+				ImportRule(ruleType?.Item1, ruleType?.Item2, GetExampleRule(ruleType.Value));
+			}
 		}
 
 		private void TryAuthorise()
@@ -293,7 +332,7 @@ namespace WPFApp
 			mainViewModel.OnExportFile += ExportToFile;
 			mainViewModel.OnCopy += CopyCurrentItemToClipboard;
 			mainViewModel.OnReset += () => Reset();
-			mainViewModel.OnExampleRequested += () => ImportRule(Rules.Examples.Ror2Rule.Instance);
+			mainViewModel.OnExampleRequested += TryLoadExample;
 			mainView.OnTryEnableAutosave += TryEnableAutosave;
 			mainView.OnTryClose += TryClose;
 			mainView.Loaded += (s, e) => clipboardWindow.Owner = (Window)s;
@@ -307,12 +346,7 @@ namespace WPFApp
 				mainViewModel.ItemViewModel = CurrentViewModel;
 			};
 
-			mainView.newRuleControl.TypesRequested += NewRuleControl_TypesRequested;
-		}
-
-		private (Type, Type) NewRuleControl_TypesRequested()
-		{
-			return (typeof(string), typeof(ICommandList));
+			mainView.newRuleControl.TypesRequested += GetRuleType;
 		}
 
 		private void CopyCurrentItemToClipboard()

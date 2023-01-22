@@ -10,6 +10,7 @@ using System.Xml.Linq;
 using Utils;
 using WPFApp.Properties;
 using WPFApp.ViewModels;
+using Utils.Reflection;
 
 namespace WPFApp
 {
@@ -47,6 +48,11 @@ namespace WPFApp
 		}
 
 		public void ImportRule<TContext, TOut>(IRule<TContext, TOut> rule, bool resetAutosave = true) => ImportXml<TContext, TOut>(rule.ToXml(), resetAutosave);
+
+		public void ImportRule(Type tContext, Type tOut, object rule, bool resetAutosave = true)
+		{
+			GetType().GetMethod("ImportRule", mi => mi.ContainsGenericParameters).MakeGenericMethod(tContext, tOut).Invoke(this, new[] { rule, resetAutosave });
+		}
 
 		private static void Export(XElement xml, FileInfo fileName)
 		{

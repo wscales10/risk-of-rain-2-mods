@@ -33,7 +33,7 @@ namespace WPFApp.Controls.Rows
 
 		public virtual UIElement LeftElement { get; } = new TextBlock() { TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, FontSize = 14, Margin = new Thickness(4) };
 
-		public ICollectionView Children => Row.Filter(AllChildren, r => (r as IRuleRow)?.Output is not null);
+		public ICollectionView Children => Row.Filter(AllChildren, r => (r as IRuleRow)?.OutputViewModel is not null);
 
 		public bool IsSelected
 		{

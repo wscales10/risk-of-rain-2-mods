@@ -19,7 +19,7 @@ namespace WPFApp.Controls.RuleControls
 
 		public event Action<RuleBase> OnAddRule;
 
-		public event Func<(Type, Type)> TypesRequested;
+		public event Func<(Type, Type)?> TypesRequested;
 
 		public string ButtonText
 		{
@@ -29,8 +29,16 @@ namespace WPFApp.Controls.RuleControls
 
 		private void AddRuleButton_Click(object sender, RoutedEventArgs e)
 		{
-			var (tContext, tOut) = TypesRequested();
-			RuleBase rule = (RuleBase)typeof(Rule<,>).MakeGenericType(tContext, tOut).GetMethod("Create", BindingFlags.Static).Invoke(null, new[] { ((Type)newRuleTypeComboBox.SelectedItem).MakeGenericType(tContext, tOut) });
+			var types = TypesRequested();
+
+			if (types is null)
+			{
+				return;
+			}
+
+			var (tContext, tOut) = types.Value;
+			MethodInfo createMethodInfo = typeof(Rule<,>).MakeGenericType(tContext, tOut).GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
+			RuleBase rule = (RuleBase)createMethodInfo.Invoke(null, (object[])(new[] { ((Type)newRuleTypeComboBox.SelectedItem) }));
 
 			if (rule is not null)
 			{
