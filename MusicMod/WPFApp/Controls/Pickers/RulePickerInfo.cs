@@ -1,8 +1,8 @@
-﻿using Rules;
-using Rules.RuleTypes.Mutable;
+﻿using Rules.RuleTypes.Mutable;
 using System;
 using System.Collections;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using Utils;
 using WPFApp.Controls.Wrappers;
@@ -27,12 +27,13 @@ namespace WPFApp.Controls.Pickers
 
 		public IControlWrapper CreateWrapper(object selectedInfo)
 		{
-			var output = new ItemButtonWrapper<Rule<TContext, TOut>>(buttonGetter());
+			IControlWrapper output;
+			Rule<TContext, TOut> rule;
 
 			switch (selectedInfo)
 			{
 				case Type type:
-					output.SetValue(Rule<TContext, TOut>.Create(type));
+					rule = Rule<TContext, TOut>.Create(type);
 					break;
 
 				case "paste":
@@ -44,21 +45,36 @@ namespace WPFApp.Controls.Pickers
 					}
 					else
 					{
-						Rule<TContext, TOut> rule;
 						try
 						{
-							rule = (Rule<TContext, TOut>)Info.GetRuleParser<TContext, TOut>().Parse(item);
+							rule = Info.GetRuleParser<TContext, TOut>().Parse(item);
 						}
 						catch
 						{
 							return null;
 						}
-
-						output.SetValue(rule);
 					}
 
 					break;
+
+				case Rule<TContext, TOut> r:
+					rule = r;
+					break;
+
+				default:
+					throw new NotSupportedException();
 			}
+
+			if (rule.GetType().IsGenericType(typeof(Bucket<,>)) && typeof(TOut) == typeof(string))
+			{
+				output = new BucketWrapper<TContext, string, TextBox>(new TextWrapper(new() { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, MinWidth = 150, TextAlignment = TextAlignment.Center }));
+			}
+			else
+			{
+				output = new ItemButtonWrapper<Rule<TContext, TOut>>(buttonGetter());
+			}
+
+			output.SetValue(rule);
 
 			return output;
 		}

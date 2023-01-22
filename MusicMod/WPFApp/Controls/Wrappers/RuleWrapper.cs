@@ -8,11 +8,8 @@ namespace WPFApp.Controls.Wrappers
 {
 	internal class RuleWrapper<TContext, TOut> : SinglePickerWrapper<Rule<TContext, TOut>>
 	{
-		private readonly Func<Button> buttonGetter;
-
 		public RuleWrapper(NavigationContext navigationContext, Func<Button> buttonGetter) : base(new RulePickerInfo<TContext, TOut>(navigationContext, buttonGetter))
 		{
-			this.buttonGetter = buttonGetter;
 			UIElement.Alignment = HorizontalAlignment.Left;
 			UIElement.FontSize = 14;
 			UIElement.aligner.Margin = new Thickness(40, 4, 4, 4);
@@ -29,8 +26,8 @@ namespace WPFApp.Controls.Wrappers
 
 		protected override void setValue(Rule<TContext, TOut> value)
 		{
-			var valueWrapper = value is null ? null : new ItemButtonWrapper<Rule<TContext, TOut>>(buttonGetter());
-			valueWrapper?.SetValue(value);
+			var valueWrapper = value is null ? null : CreateWrapper(value);
+			// valueWrapper?.SetValue(value);
 			UIElement.ViewModel.HandleSelection(valueWrapper);
 		}
 	}

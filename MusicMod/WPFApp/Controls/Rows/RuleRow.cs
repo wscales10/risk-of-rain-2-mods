@@ -1,14 +1,13 @@
 ﻿using Rules.RuleTypes.Mutable;
 using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Controls;
 using WPFApp.Controls.Wrappers;
 using WPFApp.Controls.Wrappers.SaveResults;
 using WPFApp.ViewModels;
 
 namespace WPFApp.Controls.Rows
 {
-	internal abstract class RuleRow<TRow, TContext, TOut> : ButtonRow<Rule<TContext, TOut>, TRow>, IRuleRow
+	internal abstract class RuleRow<TRow, TContext, TOut> : Row<Rule<TContext, TOut>, TRow>, IRuleRow
 		where TRow : RuleRow<TRow, TContext, TOut>
 	{
 		private RuleWrapper<TContext, TOut> ruleWrapper;
@@ -16,14 +15,20 @@ namespace WPFApp.Controls.Rows
 		private IRuleRow parent;
 
 		protected RuleRow(NavigationContext navigationContext, bool movable, bool removable = true)
-			: base(navigationContext, movable, removable)
+			: base(movable, removable)
 		{
-			SetPropertyDependency(nameof(ButtonContent), nameof(Output), nameof(Label), nameof(OutputViewModel));
-			SetPropertyDependency(nameof(AllChildren), nameof(OutputViewModel));
+			NavigationContext = navigationContext;
+
+			ButtonOutputUi = new(
+				navigationContext,
+				RefreshOutputUi,
+				this,
+				new(
+					() => ButtonOutputUi.OutputViewModel?.AsString ?? (string.IsNullOrEmpty(Label) ? Output?.ToString() : Label),
+					new DependencyInformation(this, nameof(Output), nameof(Label))));
+			SetPropertyDependency(nameof(AllChildren), ButtonOutputUi, nameof(ButtonOutputUi.OutputViewModel));
 			RuleWrapper.ValueSet += _ => NotifyPropertyChanged(nameof(Output));
 		}
-
-		public override string ButtonContent => OutputViewModel?.AsString ?? (string.IsNullOrEmpty(Label) ? Output?.ToString() : Label);
 
 		public virtual string Label => null;
 
@@ -43,9 +48,15 @@ namespace WPFApp.Controls.Rows
 
 		RuleBase IRuleRow.Output => Output;
 
-		protected override ReadOnlyObservableCollection<IRow> AllChildren => (OutputViewModel as RowViewModelBase)?.RowManager.Rows;
+		public NavigationViewModelBase OutputViewModel => ButtonOutputUi?.OutputViewModel;
 
-		private RuleWrapper<TContext, TOut> RuleWrapper => ruleWrapper ??= new(NavigationContext, () => (Button)base.MakeOutputUi());
+		protected ButtonOutputUi<Rule<TContext, TOut>> ButtonOutputUi { get; }
+
+		protected NavigationContext NavigationContext { get; }
+
+		protected override ReadOnlyObservableCollection<IRow> AllChildren => (ButtonOutputUi.OutputViewModel as RowViewModelBase)?.RowManager.Rows;
+
+		private RuleWrapper<TContext, TOut> RuleWrapper => ruleWrapper ??= new(NavigationContext, () => ButtonOutputUi.MakeOutputUi());
 
 		public override string ToString() => Label ?? base.ToString();
 
@@ -59,7 +70,7 @@ namespace WPFApp.Controls.Rows
 		{
 			if (output is not null)
 			{
-				NotifyPropertyChanged(nameof(ButtonContent));
+				ButtonOutputUi.NotifyButtonContentChanged();
 			}
 		}
 	}
