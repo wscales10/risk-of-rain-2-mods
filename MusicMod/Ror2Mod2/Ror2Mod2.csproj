@@ -19,7 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\IPC\IPC.csproj" />
     <ProjectReference Include="..\Rules\Rules.csproj" />
-    <ProjectReference Include="..\Spotify\Spotify.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="BepInEx">
