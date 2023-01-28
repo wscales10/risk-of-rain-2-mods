@@ -70,7 +70,7 @@ namespace SpotifyControlWinForms
 
 			foreach (var progressUpdate in run.GetProgressUpdates())
 			{
-				if (!(ConnectionUpdateHandler is null))
+				if (ConnectionUpdateHandler is not null)
 				{
 					foreach (var connectionUpdateHandler in ConnectionUpdateHandler.GetInvocationList())
 					{

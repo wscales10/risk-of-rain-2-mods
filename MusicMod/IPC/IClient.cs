@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace IPC
+﻿namespace IPC
 {
 	public interface IClient
 	{

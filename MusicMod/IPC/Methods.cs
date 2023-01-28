@@ -8,7 +8,7 @@ namespace IPC
 	{
 		public static Packet SendPacket(IClient sender, Packet packet)
 		{
-			var outgoing = packet.ToString();
+			string outgoing = packet.ToString();
 			sender.Log("***");
 			sender.Log("Outgoing:");
 			sender.Log(outgoing);
