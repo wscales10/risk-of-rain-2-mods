@@ -13,7 +13,7 @@ using Logger = Utils.Logger;
 
 namespace Ror2Mod2
 {
-	internal partial class ContextHelper : IContextHelper<Context>
+	internal partial class ContextHelper : IContextHelper<RoR2Context>
 	{
 		private static readonly Regex bodyPrefabRegex = new Regex("BODY$");
 
@@ -74,19 +74,19 @@ namespace Ror2Mod2
 			Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
 		}
 
-		public event Action<Context> NewContext;
+		public event Action<RoR2Context> NewContext;
 
 		private MyScene SceneName => new MyScene(currentScene?.name?.ToUpper());
 
 		public void UpdateContext() => NewContext?.Invoke(GetContext());
 
-		public Context GetContext()
+		public RoR2Context GetContext()
 		{
 			Log("returning new Context");
 			var bossGroup = TeleporterInteraction.instance?.GetComponent<BossGroup>() ?? InstanceTracker.GetInstancesList<BossGroup>().SingleOrDefault();
 			var playerBodyPrefab = PlayerCharacterMasterController.instances.FirstOrDefault()?.master?.bodyPrefab;
 
-			return new Context()
+			return new RoR2Context()
 			{
 				SceneName = SceneName,
 				SceneType = SceneCatalog.mostRecentSceneDef?.sceneType.AsEnum<MyRoR2.SceneType>() ?? MyRoR2.SceneType.Invalid,

@@ -50,9 +50,9 @@ namespace Ror2Mod2
 			}
 		}
 
-		private void ContextHelper_NewContext(Context obj)
+		private void ContextHelper_NewContext(RoR2Context obj)
 		{
-			Server.Broadcast(new IPC.Message(nameof(Context), Json.ToJson(obj)));
+			Server.Broadcast(new IPC.Message(nameof(RoR2Context), Json.ToJson(obj)));
 		}
 
 		private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)

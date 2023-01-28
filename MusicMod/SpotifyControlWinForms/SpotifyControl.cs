@@ -12,7 +12,7 @@ namespace SpotifyControlWinForms
 {
 	internal class SpotifyControl
 	{
-		private readonly Unit1<Context, string> unit1;
+		private readonly Unit1<RoR2Context, string> unit1;
 
 		private string? cachedCategory;
 
@@ -26,7 +26,7 @@ namespace SpotifyControlWinForms
 				return true;
 			});
 
-			var rulePicker1 = new MutableRulePicker<Context, string>();
+			var rulePicker1 = new MutableRulePicker<RoR2Context, string>();
 			unit1 = new(rulePicker1);
 			unit1.Trigger += Unit1_Trigger;
 			SetRule(rulePicker1, Settings.Default.Rule1Location, RuleParser.RoR2ToString, Ror2Rule.Instance);
@@ -119,8 +119,8 @@ namespace SpotifyControlWinForms
 			{
 				switch (message.Key)
 				{
-					case nameof(Context):
-						unit1.Ingest(Json.FromJson<Context>(message.Value));
+					case nameof(RoR2Context):
+						unit1.Ingest(Json.FromJson<RoR2Context>(message.Value));
 						break;
 
 					case "pause":

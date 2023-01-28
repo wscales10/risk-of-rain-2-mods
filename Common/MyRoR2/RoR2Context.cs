@@ -5,7 +5,7 @@ using Utils.Reflection.Properties;
 
 namespace MyRoR2
 {
-	public struct Context : IEquatable<Context>
+	public struct RoR2Context : IEquatable<RoR2Context>
 	{
 		public MyScene SceneName { get; set; }
 
@@ -33,13 +33,13 @@ namespace MyRoR2
 
 		public RunOutcome? Outcome { get; set; }
 
-		public static bool operator ==(Context c1, Context c2) => c1.Equals(c2);
+		public static bool operator ==(RoR2Context c1, RoR2Context c2) => c1.Equals(c2);
 
-		public static bool operator !=(Context c1, Context c2) => !c1.Equals(c2);
+		public static bool operator !=(RoR2Context c1, RoR2Context c2) => !c1.Equals(c2);
 
-		public override bool Equals(object obj) => obj is Context context && Equals(context);
+		public override bool Equals(object obj) => obj is RoR2Context context && Equals(context);
 
-		public bool Equals(Context c) => this.PropertywiseEquals(c);
+		public bool Equals(RoR2Context c) => this.PropertywiseEquals(c);
 
 		public override int GetHashCode() => this.MyHashCode();
 	}

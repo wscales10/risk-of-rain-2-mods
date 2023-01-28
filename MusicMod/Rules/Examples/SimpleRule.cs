@@ -4,14 +4,14 @@ using Rules.RuleTypes.Mutable;
 
 namespace Rules
 {
-	using static RuleCase<Context, string>;
+	using static RuleCase<RoR2Context, string>;
 
 	public static class SimpleRule1
 	{
-		public static IReadOnlyRule<Context, string> Instance { get; } = Switcher.RoR2ToString.Create
+		public static IReadOnlyRule<RoR2Context, string> Instance { get; } = Switcher.RoR2ToString.Create
 		(
-			nameof(Context.TeleporterState),
-			new Bucket<Context, string>("Stop"),
+			nameof(RoR2Context.TeleporterState),
+			new Bucket<RoR2Context, string>("Stop"),
 			C<TeleporterState?>("Teleporter Charging", TeleporterState.Charging),
 			C<TeleporterState?>("Teleporter Idle", TeleporterState.Idle)
 		).ToReadOnly(RuleParser.RoR2ToString);

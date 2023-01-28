@@ -50,9 +50,9 @@ namespace MyRoR2
 			return new OrPattern<MyScene>(candidates.Select(c => ScenePattern.Equals(c)));
 		}
 
-		public static PropertyPattern<Context> GetPropertyPattern(params DefinedScene[] candidates)
+		public static PropertyPattern<RoR2Context> GetPropertyPattern(params DefinedScene[] candidates)
 		{
-			return Query<Context>.Create(nameof(Context.SceneName), GetPattern(candidates));
+			return Query<RoR2Context>.Create(nameof(RoR2Context.SceneName), GetPattern(candidates));
 		}
 
 		private static bool Compress<T>(out T variable, Func<bool> condition, T value)

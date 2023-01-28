@@ -20,7 +20,7 @@ namespace WPFApp
 	internal static class Info
 	{
 		private static readonly ReadOnlyDictionary<(Type, Type), IRuleParser> ruleParsers = new(new Dictionary<(Type, Type), IRuleParser> {
-			{(typeof(Context), typeof(string)), RuleParser.RoR2ToString },
+			{(typeof(RoR2Context), typeof(string)), RuleParser.RoR2ToString },
 			{(typeof(string), typeof(ICommandList)), RuleParser.StringToSpotify },
 		});
 
@@ -42,6 +42,8 @@ namespace WPFApp
 		public static Regex InvalidFileNameCharsRegex { get; } = new($"[{Regex.Escape(string.Concat(Path.GetInvalidFileNameChars()))}]+");
 
 		public static PatternParser PatternParser { get; private set; } = PatternParser.Instance;
+
+		public static ReadOnlyCollection<(Type, Type)> TypePairs => ruleParsers.Keys.ToReadOnlyCollection();
 
 		public static Type GetConcreteType<T>()
 		{
@@ -71,7 +73,7 @@ namespace WPFApp
 		// TODO: make this implementation safer and more elegant
 		internal static void SetPatternParser<TContext>()
 		{
-			if (typeof(TContext) == typeof(Context))
+			if (typeof(TContext) == typeof(RoR2Context))
 			{
 				PatternParser = RoR2PatternParser.Instance;
 			}

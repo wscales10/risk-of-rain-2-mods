@@ -22,7 +22,7 @@ namespace Rules.RuleTypes.Mutable
 
 	public static class Switcher
 	{
-		public static Switcher<Context, string> RoR2ToString { get; } = Create(RuleParser.RoR2ToString);
+		public static Switcher<RoR2Context, string> RoR2ToString { get; } = Create(RuleParser.RoR2ToString);
 
 		public static Switcher<string, ICommandList> StringToSpotify { get; } = Create(RuleParser.StringToSpotify);
 

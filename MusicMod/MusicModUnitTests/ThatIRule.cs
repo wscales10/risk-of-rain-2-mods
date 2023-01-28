@@ -24,8 +24,8 @@ namespace MusicModUnitTests
         public void TestMethod1()
         {
             var rule = MimicRule;
-            var oldContext = new Context { SceneName = Scenes.IntroCutscene };
-            var newContext = new Context { SceneName = Scenes.MainMenu };
+            var oldContext = new RoR2Context { SceneName = Scenes.IntroCutscene };
+            var newContext = new RoR2Context { SceneName = Scenes.MainMenu };
             var commands = rule.GetCommands(oldContext, newContext);
             Assert.IsTrue(commands?.Count() > 0);
         }
@@ -34,8 +34,8 @@ namespace MusicModUnitTests
         public void TestMethod2()
         {
             var rule = MimicRule;
-            var oldContext = new Context { SceneName = Scenes.SimulacrumMenu, RunType = RunType.Simulacrum };
-            var newContext = new Context { SceneName = Scenes.CharacterSelect, RunType = RunType.Simulacrum };
+            var oldContext = new RoR2Context { SceneName = Scenes.SimulacrumMenu, RunType = RunType.Simulacrum };
+            var newContext = new RoR2Context { SceneName = Scenes.CharacterSelect, RunType = RunType.Simulacrum };
             var commands1 = rule.GetCommands(oldContext, newContext);
             var commands2 = rule.GetCommands(newContext, oldContext);
         }
@@ -44,8 +44,8 @@ namespace MusicModUnitTests
         public void TestMethod3()
         {
             var rule = MimicRule;
-            var oldContext = new Context { SceneName = Scenes.SplashScreen };
-            var newContext = new Context { SceneName = Scenes.IntroCutscene };
+            var oldContext = new RoR2Context { SceneName = Scenes.SplashScreen };
+            var newContext = new RoR2Context { SceneName = Scenes.IntroCutscene };
             var commands = rule.GetCommands(oldContext, newContext);
             Assert.IsFalse(commands.Any());
         }
@@ -54,8 +54,8 @@ namespace MusicModUnitTests
         public void TestMethod4()
         {
             var rule = MimicRule;
-            var oldContext = new Context { SceneName = Scenes.MainMenu };
-            var newContext = new Context { SceneName = Scenes.CharacterSelect };
+            var oldContext = new RoR2Context { SceneName = Scenes.MainMenu };
+            var newContext = new RoR2Context { SceneName = Scenes.CharacterSelect };
             var commands = rule.GetCommands(oldContext, newContext);
             Assert.IsFalse(commands.Any());
         }
@@ -64,8 +64,8 @@ namespace MusicModUnitTests
         public void TestMethod5()
         {
             var rule = MimicRule;
-            var oldContext = new Context { SceneName = Scenes.DistantRoost };
-            var newContext = new Context { SceneName = Scenes.BazaarBetweenTime };
+            var oldContext = new RoR2Context { SceneName = Scenes.DistantRoost };
+            var newContext = new RoR2Context { SceneName = Scenes.BazaarBetweenTime };
             var commands = rule.GetCommands(oldContext, newContext);
         }
 
@@ -85,7 +85,7 @@ namespace MusicModUnitTests
         [TestMethod]
         public void ThatNullableIntRuleXmlMatches()
         {
-            var newRule = new SwitchRule<int?>(nameof(Context.LoopIndex), C(new PauseCommand(), (int?)null), C<int?>(new ResumeCommand(), 1));
+            var newRule = new SwitchRule<int?>(nameof(RoR2Context.LoopIndex), C(new PauseCommand(), (int?)null), C<int?>(new ResumeCommand(), 1));
             var xml = newRule.ToXml();
             string originalXml = Path.Combine(Paths.AssemblyDirectory, "original.xml");
             xml.Save(originalXml);
@@ -93,8 +93,8 @@ namespace MusicModUnitTests
             string parsedXml = Path.Combine(Paths.AssemblyDirectory, "parsed.xml");
             customRule.ToXml().Save(parsedXml);
             Assert.AreEqual(File.ReadAllText(originalXml), File.ReadAllText(parsedXml));
-            var menu = new Context { SceneType = RoR2.SceneType.Menu, SceneName = Scenes.MainMenu };
-            var stage = new Context { SceneType = RoR2.SceneType.Stage, SceneName = Scenes.DistantRoost, LoopIndex = 1 };
+            var menu = new RoR2Context { SceneType = RoR2.SceneType.Menu, SceneName = Scenes.MainMenu };
+            var stage = new RoR2Context { SceneType = RoR2.SceneType.Stage, SceneName = Scenes.DistantRoost, LoopIndex = 1 };
             Debugger.Break();
         }
 

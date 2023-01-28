@@ -13,11 +13,7 @@ namespace WPFApp.ViewModels
 			CancelCommand = new(_ => action(false));
 		}
 
-		public ReadOnlyCollection<(Type, Type)> TypePairs { get; } = new(new[]
-		{
-			(typeof(MyRoR2.Context), typeof(string)),
-			(typeof(string), typeof(Spotify.Commands.ICommandList))
-		});
+		public ReadOnlyCollection<(Type, Type)> TypePairs { get; } = Info.TypePairs;
 
 		public (Type, Type)? SelectedTypePair
 		{

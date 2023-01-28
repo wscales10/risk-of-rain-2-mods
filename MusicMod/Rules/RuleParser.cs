@@ -25,7 +25,7 @@ namespace Rules
 		}
 
 		// TODO: move elsewhere
-		public static RuleParser<Context, string> RoR2ToString { get; } = new RuleParser<Context, string>(RoR2PatternParser.Instance, s => s);
+		public static RuleParser<RoR2Context, string> RoR2ToString { get; } = new RuleParser<RoR2Context, string>(RoR2PatternParser.Instance, s => s);
 
 		public static RuleParser<string, ICommandList> StringToSpotify { get; } = new RuleParser<string, ICommandList>(PatternParser.Instance, s =>
 		{

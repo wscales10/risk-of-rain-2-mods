@@ -66,16 +66,16 @@ namespace MusicModUnitTests
 			Server server = new Server(5007);
 			Client client = new Client(5007);
 			bool tested = false;
-			Context expectedContext = new Context { BossBodyName = Entities.Gup, IsBossEncounter = true, LoopIndex = 0, Survivor = Entities.Captain, SceneName = Scenes.SunderedGrove };
+			RoR2Context expectedContext = new RoR2Context { BossBodyName = Entities.Gup, IsBossEncounter = true, LoopIndex = 0, Survivor = Entities.Captain, SceneName = Scenes.SunderedGrove };
 			server.ReceivedRequest += arg =>
 			{
 				foreach (var message in arg)
 				{
 					if (message.Key == "context")
 					{
-						var receivedContext = Json.FromJson<Context>(arg.Single().Value);
+						var receivedContext = Json.FromJson<RoR2Context>(arg.Single().Value);
 
-						foreach (var property in typeof(Context).GetProperties())
+						foreach (var property in typeof(RoR2Context).GetProperties())
 						{
 							object expectedValue = property.GetValue(expectedContext);
 							object actualValue = property.GetValue(receivedContext);

@@ -238,7 +238,7 @@ namespace WPFApp
 
 		private static object GetExampleRule((Type, Type) ruleType)
 		{
-			if (ruleType == (typeof(MyRoR2.Context), typeof(string)))
+			if (ruleType == (typeof(MyRoR2.RoR2Context), typeof(string)))
 			{
 				return Rules.Examples.Ror2Rule.Instance;
 			}
