@@ -15,17 +15,19 @@ namespace Utils
 	{
 		private readonly Dictionary<string, List<(string, AsyncBoolCallback, bool)>> callbacks = new Dictionary<string, List<(string, AsyncBoolCallback, bool)>>();
 
-		private readonly HttpListener listener = new HttpListener();
-
 		private readonly Logger Log;
 
 		private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+		private readonly UriBuilder rootUri;
+
+		private HttpListener listener;
 
 		private bool runServer;
 
 		public HttpServer(Uri rootUri, Logger logger)
 		{
-			listener.Prefixes.Add((RootUri = rootUri).ToString());
+			this.rootUri = new UriBuilder(rootUri);
 			Log = logger;
 			callbacks["GET"] = new List<(string, AsyncBoolCallback, bool)>();
 			callbacks["POST"] = new List<(string, AsyncBoolCallback, bool)>();
@@ -41,7 +43,7 @@ namespace Utils
 
 		public Task ListenTask { get; private set; }
 
-		public Uri RootUri { get; }
+		public Uri RootUri => rootUri.Uri;
 
 		public static async Task MakeResponseAsync(HttpListenerResponse res, byte[] byteArray)
 		{
@@ -101,12 +103,48 @@ namespace Utils
 		protected override Task StartAsync()
 		{
 			// Create start listening for incoming connections
+
+			if (rootUri.Port == 0)
+			{
+				listener = BindListenerOnFreePort();
+			}
+
+			listener.Prefixes.Add(RootUri.ToString());
+
 			listener.Start();
 			Log($"Listening for connections on {RootUri}");
 
 			// Handle requests
 			ListenTask = HandleIncomingConnections();
 			return Task.CompletedTask;
+		}
+
+		private HttpListener BindListenerOnFreePort()
+		{
+			// IANA suggested range for dynamic or private ports
+			const int MinPort = 49215;
+			const int MaxPort = 65535;
+
+			Exception e1 = null;
+			HttpListener httpListener;
+
+			for (int port = MinPort; port < MaxPort; port++)
+			{
+				httpListener = new HttpListener();
+				rootUri.Port = port;
+
+				try
+				{
+					httpListener.Start();
+					return httpListener;
+				}
+				catch (Exception e2)
+				{
+					e1 = e2;
+				}
+			}
+
+			throw e1;
 		}
 
 		private async Task HandleIncomingConnections()
