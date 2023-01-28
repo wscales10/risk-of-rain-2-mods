@@ -17,6 +17,8 @@ namespace IPC.Http
 
 		public event Func<string, string> ReceivedRequest;
 
+		public int? Port => httpServer?.RootUri.Port;
+
 		public void Start(int port)
 		{
 			httpServer = new HttpServer(new Uri($"http://localhost:{port}/"), x => this.Log(x));

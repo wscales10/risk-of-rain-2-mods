@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
@@ -12,11 +11,12 @@ namespace IPC
 	{
 		private IClient sender;
 
+		private IServer receiver;
+
 		public Client(int serverPort)
 		{
 			ServerPort = serverPort;
 			Guid = Guid.NewGuid();
-			MyPort = null;
 		}
 
 		public event Action<IEnumerable<Message>> HandleConnResponse;
@@ -24,6 +24,8 @@ namespace IPC
 		public int ServerPort { get; }
 
 		public Guid Guid { get; }
+
+		public override int? MyPort { get => receiver.Port; protected set => throw new NotSupportedException(); }
 
 		protected override string GuidString => Guid.ToString();
 
@@ -74,30 +76,9 @@ namespace IPC
 		{
 			sender = Manager.CreateClient();
 			sender.Initialize(ServerPort);
-			Packet portResponse = null;
 
-			while (portResponse is null)
-			{
-				var response = SendToServerCatchSendException();
-
-				switch (response)
-				{
-					case Packet packet:
-						portResponse = packet;
-						break;
-
-					case Exception ex:
-						yield return new ProgressUpdate(this, ex);
-						break;
-
-					default:
-						throw new NotSupportedException();
-				}
-			}
-
-			MyPort = portResponse.Port.Value;
-			var receiver = Manager.CreateServer();
-			receiver.Start(MyPort.Value);
+			receiver = Manager.CreateServer();
+			receiver.Start(0);
 
 			this.Log("Connecting");
 			Packet connectionResponse = null;

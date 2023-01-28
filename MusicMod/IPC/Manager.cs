@@ -13,10 +13,5 @@ namespace IPC
 		{
 			return new HttpIpcServer();
 		}
-
-		public static int GetFreePort()
-		{
-			return ZetaIpc.Runtime.Helper.FreePortHelper.GetFreePort();
-		}
 	}
 }

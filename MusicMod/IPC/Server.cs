@@ -90,12 +90,16 @@ namespace IPC
 			{
 				if (packet.Port is int port)
 				{
-					portHelper.SetPort(packet.Guid, port);
+					if (!portHelper.SetPort(packet.Guid, port))
+					{
+						throw new Exception();
+					}
+
 					response.AddRange(AddClient(packet.Guid));
 				}
 				else
 				{
-					portHelper.SetPort(packet.Guid);
+					throw new FormatException();
 				}
 			}
 			else if (!clients.ContainsKey(packet.Guid))
@@ -184,19 +188,6 @@ namespace IPC
 			public int GetPort(string guid)
 			{
 				return ports[guid];
-			}
-
-			public void SetPort(string guid)
-			{
-				for (int i = 0; i < 5; i++)
-				{
-					if (SetPort(guid, Manager.GetFreePort()))
-					{
-						return;
-					}
-				}
-
-				throw new NotImplementedException("Failed to find valid port");
 			}
 
 			public bool SetPort(string guid, int port)

@@ -14,6 +14,15 @@ namespace IPC.Zeta
 
 		public event Func<string, string> ReceivedRequest;
 
+		public int? Port
+		{
+			get
+			{
+				var port = ipcServer.Port;
+				return port == 0 ? null : (int?)port;
+			}
+		}
+
 		public void Start(int port) => ipcServer.Start(port);
 
 		private void IpcServer_ReceivedRequest(object sender, ZetaIpc.Runtime.Server.ReceivedRequestEventArgs e)

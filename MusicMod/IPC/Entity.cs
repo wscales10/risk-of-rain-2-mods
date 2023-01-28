@@ -9,7 +9,7 @@ namespace IPC
 	{
 		public event Func<IEnumerable<Message>, IEnumerable<Message>> ReceivedRequest;
 
-		public int? MyPort { get; protected set; }
+		public virtual int? MyPort { get; protected set; }
 
 		protected abstract string GuidString { get; }
 
