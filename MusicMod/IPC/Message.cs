@@ -1,33 +1,29 @@
 ﻿using System;
-using Newtonsoft.Json;
+using Utils;
 
 namespace IPC
 {
 	public class Message
 	{
+		private readonly string key;
+
+		private readonly string value;
+
 		public Message(string key, string value = null)
 		{
-			if (key is null)
-			{
-				throw new ArgumentNullException(nameof(key));
-			}
-
-			Key = key;
-			Value = value;
+			this.key = key ?? throw new ArgumentNullException(nameof(key));
+			this.value = value;
 		}
 
-		public string Key { get; }
+		public string Key => key;
 
-		public string Value { get; }
+		public string Value => value;
 
-		public static Message ParseJson(string json)
-		{
-			return JsonConvert.DeserializeObject<Message>(json);
-		}
+		public static Message ParseJson(string json) => Json.FromJson<Message>(json);
 
 		public static Message ParseOneLineString(string s)
 		{
-			if (s is null)
+			if (s == null)
 			{
 				throw new ArgumentNullException(nameof(s));
 			}
@@ -61,6 +57,6 @@ namespace IPC
 			return Value is null ? Key : $"{Key} | {Value}";
 		}
 
-		public sealed override string ToString() => JsonConvert.SerializeObject(this);
+		public sealed override string ToString() => Json.ToJson(this);
 	}
 }

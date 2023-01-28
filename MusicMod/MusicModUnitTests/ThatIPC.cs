@@ -5,7 +5,6 @@ using System.Threading;
 using Utils;
 using System;
 using MyRoR2;
-using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Linq;
 
@@ -74,7 +73,7 @@ namespace MusicModUnitTests
 				{
 					if (message.Key == "context")
 					{
-						var receivedContext = JsonConvert.DeserializeObject<Context>(arg.Single().Value);
+						var receivedContext = Json.FromJson<Context>(arg.Single().Value);
 
 						foreach (var property in typeof(Context).GetProperties())
 						{
@@ -94,7 +93,7 @@ namespace MusicModUnitTests
 			};
 			Assert.IsTrue(server.TryStart.CreateRun().Run(u => !(u.Args is Exception)).Result.Success);
 			Assert.IsTrue(client.TryStart.CreateRun().Run(u => !(u.Args is Exception)).Result.Success);
-			client.SendToServerAwaitResponse(new Message("context", JsonConvert.SerializeObject(expectedContext)));
+			client.SendToServerAwaitResponse(new Message("context", Json.ToJson(expectedContext)));
 			Assert.IsTrue(tested);
 		}
 

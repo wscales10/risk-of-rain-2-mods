@@ -1,5 +1,4 @@
 ﻿using MyRoR2;
-using Newtonsoft.Json;
 using Rules;
 using Rules.Examples;
 using Rules.RuleTypes.Interfaces;
@@ -121,7 +120,7 @@ namespace SpotifyControlWinForms
 				switch (message.Key)
 				{
 					case nameof(Context):
-						unit1.Ingest(JsonConvert.DeserializeObject<Context>(message.Value));
+						unit1.Ingest(Json.FromJson<Context>(message.Value));
 						break;
 
 					case "pause":

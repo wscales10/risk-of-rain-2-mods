@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Utils;
@@ -21,10 +20,7 @@ namespace IPC
 
 		public IReadOnlyCollection<Message> Messages { get; }
 
-		public static Packet ParseJson(string json)
-		{
-			return JsonConvert.DeserializeObject<Packet>(json);
-		}
+		public static Packet ParseJson(string json) => Json.FromJson<Packet>(json);
 
 		public static Packet ParseOldString(string s)
 		{
@@ -65,7 +61,7 @@ namespace IPC
 			return new Packet(guidMessage.Value, portMessage?.Value is null ? (int?)null : int.Parse(portMessage.Value), messages);
 		}
 
-		public sealed override string ToString() => JsonConvert.SerializeObject(this);
+		public sealed override string ToString() => Json.ToJson(this);
 
 		public string AsString() => Methods.Join(new[] { new Message("guid", Guid), new Message("port", Port?.ToString()) }.Concat(Messages).Select(m => m.ToString()));
 	}

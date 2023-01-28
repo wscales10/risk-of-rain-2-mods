@@ -1,7 +1,6 @@
 ﻿using BepInEx;
 using MyRoR2;
 using Utils;
-using Newtonsoft.Json;
 
 namespace Ror2Mod2
 {
@@ -53,7 +52,7 @@ namespace Ror2Mod2
 
 		private void ContextHelper_NewContext(Context obj)
 		{
-			Server.Broadcast(new IPC.Message(nameof(Context), JsonConvert.SerializeObject(obj)));
+			Server.Broadcast(new IPC.Message(nameof(Context), Json.ToJson(obj)));
 		}
 
 		private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)
