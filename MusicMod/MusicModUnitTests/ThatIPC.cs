@@ -18,14 +18,7 @@ namespace MusicModUnitTests
 		{
 			var server = new Server(5008);
 			server.TryStart.CreateRun().RunToCompletion(true);
-
-			for (int i = 0; ; i++)
-			{
-				Thread.Sleep(5000);
-				server.Broadcast(new IPC.Message("pause"));
-				Thread.Sleep(5000);
-				server.Broadcast(new IPC.Message("resume"));
-			}
+			Thread.Sleep(TimeSpan.FromHours(2));
 		}
 
 		[TestMethod]

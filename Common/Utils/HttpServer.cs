@@ -21,7 +21,7 @@ namespace Utils
 
 		private readonly UriBuilder rootUri;
 
-		private HttpListener listener;
+		private readonly HttpListener listener = new HttpListener();
 
 		private bool runServer;
 
@@ -106,12 +106,14 @@ namespace Utils
 
 			if (rootUri.Port == 0)
 			{
-				listener = BindListenerOnFreePort();
+				BindListenerOnFreePort();
+			}
+			else
+			{
+				listener.Prefixes.Add(RootUri.ToString());
+				listener.Start();
 			}
 
-			listener.Prefixes.Add(RootUri.ToString());
-
-			listener.Start();
 			Log($"Listening for connections on {RootUri}");
 
 			// Handle requests
@@ -119,28 +121,34 @@ namespace Utils
 			return Task.CompletedTask;
 		}
 
-		private HttpListener BindListenerOnFreePort()
+		private void BindListenerOnFreePort()
 		{
 			// IANA suggested range for dynamic or private ports
 			const int MinPort = 49215;
 			const int MaxPort = 65535;
 
 			Exception e1 = null;
-			HttpListener httpListener;
+			string uri = null;
 
 			for (int port = MinPort; port < MaxPort; port++)
 			{
-				httpListener = new HttpListener();
 				rootUri.Port = port;
 
 				try
 				{
-					httpListener.Start();
-					return httpListener;
+					listener.Prefixes.Add(uri = RootUri.ToString());
+					listener.Start();
+					return;
 				}
 				catch (Exception e2)
 				{
+					Log(e2);
 					e1 = e2;
+					if (!(uri is null))
+					{
+						listener.Prefixes.Remove(uri);
+						uri = null;
+					}
 				}
 			}
 
