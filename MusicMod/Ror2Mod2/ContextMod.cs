@@ -1,5 +1,7 @@
 ﻿using BepInEx;
 using MyRoR2;
+using System.Collections.Generic;
+using System.Linq;
 using Utils;
 
 namespace Ror2Mod2
@@ -12,7 +14,7 @@ namespace Ror2Mod2
 	{
 		private readonly Configuration configuration;
 
-		private bool musicMuted;
+		private bool muteMusic;
 
 		private ContextHelper contextHelper;
 
@@ -25,7 +27,8 @@ namespace Ror2Mod2
 		public void Awake()
 		{
 			contextHelper = new ContextHelper(SafeLogger);
-			Server = new IPC.Server(5008);
+			Server = new IPC.Server(5008, nameof(ContextMod));
+			Server.ReceivedRequest += Server_ReceivedRequest;
 			Server.TryStart.CreateRun().RunToCompletion(true);
 			contextHelper.NewContext += ContextHelper_NewContext;
 
@@ -36,8 +39,7 @@ namespace Ror2Mod2
 
 		public void Update()
 		{
-			// TODO: allow running of context mod without this
-			if (!musicMuted && RoR2.Console.instance != null)
+			if (muteMusic && RoR2.Console.instance != null)
 			{
 				var convar = RoR2.Console.instance.FindConVar("volume_music");
 
@@ -45,9 +47,24 @@ namespace Ror2Mod2
 				if (convar != null)
 				{
 					convar.SetString("0");
-					musicMuted = true;
+					muteMusic = false;
 				}
 			}
+		}
+
+		private IEnumerable<IPC.Message> Server_ReceivedRequest(IEnumerable<IPC.Message> arg)
+		{
+			foreach (var message in arg)
+			{
+				switch (message.Key)
+				{
+					case "mute":
+						muteMusic = true;
+						break;
+				}
+			}
+
+			return Enumerable.Empty<IPC.Message>();
 		}
 
 		private void ContextHelper_NewContext(RoR2Context obj)

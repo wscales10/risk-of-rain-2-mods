@@ -56,6 +56,12 @@ namespace Rules.RuleTypes.Mutable
 
 		public TOut GetOutput(TContext newContext) => GetOutput(this, newContext);
 
+		public Rule<TContext, TOut> Named(string name)
+		{
+			Name = name;
+			return this;
+		}
+
 		internal static TOut GetOutput(IRule<TContext, TOut> rule, TContext newContext)
 		{
 			var newBucketResponse = rule.GetBucket(newContext);
@@ -80,12 +86,6 @@ namespace Rules.RuleTypes.Mutable
 				rule.Log($"{nameof(newBucket)} is not null");
 				return newBucket.Output;
 			}
-		}
-
-		internal Rule<TContext, TOut> Named(string name)
-		{
-			Name = name;
-			return this;
 		}
 	}
 }

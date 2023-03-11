@@ -2,7 +2,6 @@
 using RiskOfOptions;
 using RiskOfOptions.Options;
 using System;
-using UnityEngine.Events;
 
 namespace Ror2Mod2
 {

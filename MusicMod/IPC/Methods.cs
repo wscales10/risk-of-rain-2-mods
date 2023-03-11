@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Utils;
 
@@ -6,9 +7,9 @@ namespace IPC
 {
 	public static class Methods
 	{
-		public static Packet SendPacket(IClient sender, Packet packet)
+		public static Packet SendPacket(ISender sender, Packet packet)
 		{
-			string outgoing = packet.ToString();
+			string outgoing = packet.WithSenderDescription(sender.Description).ToString();
 			sender.Log("***");
 			sender.Log("Outgoing:");
 			sender.Log(outgoing);
@@ -20,9 +21,9 @@ namespace IPC
 			return Packet.ParseJson(incoming);
 		}
 
-		public static async Task<Packet> SendPacketAsync(IAsyncClient sender, Packet packet)
+		public static async Task<Packet> SendPacketAsync(IAsyncSender sender, Packet packet)
 		{
-			var outgoing = packet.ToString();
+			var outgoing = packet.WithSenderDescription(sender.Description).ToString();
 			sender.Log("***");
 			sender.Log("Outgoing:");
 			sender.Log(outgoing);

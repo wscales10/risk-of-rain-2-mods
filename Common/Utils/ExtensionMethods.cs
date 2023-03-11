@@ -140,6 +140,14 @@ namespace Utils
 
 		public static int MyHashCode<T>(this T item) => typeof(T).GetProperties().Aggregate(0, (i, p) => i ^ p.GetValue(item)?.GetHashCode() ?? 0);
 
+		public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+		{
+			foreach (var item in source)
+			{
+				action(item);
+			}
+		}
+
 		internal static bool SafeInvoke<T>(this Predicate<T> predicate, T obj) => predicate?.Invoke(obj) ?? true;
 	}
 }

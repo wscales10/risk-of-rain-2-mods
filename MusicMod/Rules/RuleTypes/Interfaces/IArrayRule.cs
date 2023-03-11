@@ -2,8 +2,10 @@
 
 namespace Rules.RuleTypes.Interfaces
 {
-    public interface IArrayRule<TContext, TOut> : IRule<TContext, TOut>
-    {
-        IEnumerable<IRule<TContext, TOut>> Rules { get; }
-    }
+	public interface IArrayRule<TContext, TOut> : IRule<TContext, TOut>
+	{
+		IEnumerable<IRule<TContext, TOut>> Rules { get; }
+
+		bool IsRandom { get; }
+	}
 }

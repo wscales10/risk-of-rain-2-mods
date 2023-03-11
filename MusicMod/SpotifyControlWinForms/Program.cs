@@ -12,7 +12,7 @@ namespace SpotifyControlWinForms
 			// see https://aka.ms/applicationconfiguration.
 			ApplicationConfiguration.Initialize();
 			SpotifyControl spotifyControl = new();
-			Form1 form = spotifyControl.Form;
+			var form = spotifyControl.Form;
 			Application.Run(form);
 		}
 	}

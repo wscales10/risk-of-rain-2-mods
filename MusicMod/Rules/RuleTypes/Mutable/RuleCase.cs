@@ -63,19 +63,28 @@ namespace Rules.RuleTypes.Mutable
 
 		public override string ToString()
 		{
-			if (!(Name is null))
-			{
-				return Name;
-			}
+			string output;
 
-			if (WherePattern is null)
+			if (Arr.Count == 1)
 			{
-				return base.ToString();
+				output = $"[{Arr[0]}]";
 			}
 			else
 			{
-				return $"{base.ToString()} with {WherePattern}";
+				if (!(Name is null))
+				{
+					return Name;
+				}
+
+				output = base.ToString();
 			}
+
+			if (!(WherePattern is null))
+			{
+				output += $" with {WherePattern}";
+			}
+
+			return output;
 		}
 
 		public ReadOnlyCase<TValue, TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser) => new ReadOnlyCase<TValue, TContext, TOut>(this, ruleParser);
@@ -85,7 +94,7 @@ namespace Rules.RuleTypes.Mutable
 			yield return this;
 		}
 
-		internal RuleCase<TValue, TContext, TOut> Named(string name)
+		public RuleCase<TValue, TContext, TOut> Named(string name)
 		{
 			Name = name;
 			return this;

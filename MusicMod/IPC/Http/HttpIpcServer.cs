@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -7,7 +8,7 @@ using Utils;
 
 namespace IPC.Http
 {
-	internal class HttpIpcServer : IServer
+	internal class HttpIpcServer : IReceiver
 	{
 		private HttpServer httpServer;
 
@@ -27,12 +28,29 @@ namespace IPC.Http
 			task.Wait();
 		}
 
+		[SuppressMessage("Style", "IDE0059:Unnecessary assignment of a value", Justification = "Exception viewing")]
 		private async Task HttpServer_ReceivedRequest(HttpListenerRequest request, HttpListenerResponse response)
 		{
 			var requestMessage = new StreamReader(request.InputStream).ReadToEnd();
-			var responseMessage = ReceivedRequest?.Invoke(requestMessage);
+			string responseMessage;
+			try
+			{
+				responseMessage = ReceivedRequest?.Invoke(requestMessage);
+			}
+			catch (DeliveryException)
+			{
+				HttpServer.MakeEmptyResponse(response, HttpStatusCode.Gone);
+				return;
+			}
+			catch (Exception ex)
+			{
+				// Return appropriate response
+				System.Diagnostics.Debugger.Break();
+				throw;
+			}
+
 			response.ContentType = "text/plain";
-			await HttpServer.MakeResponseAsync(response, Encoding.UTF8.GetBytes(responseMessage));
+			await HttpServer.MakeResponseAsync(response, responseMessage);
 		}
 	}
 }

@@ -54,6 +54,8 @@ namespace Ror2Mod2
 
 			Application.quitting += () => NewContext?.Invoke(default);
 
+			On.EntityStates.Missions.BrotherEncounter.PreEncounter.OnEnter += PreEncounter_OnEnter;
+
 			On.EntityStates.Missions.BrotherEncounter.Phase1.OnEnter += Phase1_OnEnter;
 			On.EntityStates.Missions.BrotherEncounter.BrotherEncounterPhaseBaseState.OnExit += BrotherEncounterPhaseBaseState_OnExit;
 			On.EntityStates.Missions.BrotherEncounter.EncounterFinished.OnEnter += EncounterFinished_OnEnter;
@@ -123,6 +125,11 @@ namespace Ror2Mod2
 				default:
 					return RunType.Normal;
 			}
+		}
+
+		private void PreEncounter_OnEnter(On.EntityStates.Missions.BrotherEncounter.PreEncounter.orig_OnEnter orig, EntityStates.Missions.BrotherEncounter.PreEncounter self)
+		{
+			scenePart = 1;
 		}
 
 		private void Run_onRunDestroyGlobal(Run obj)
@@ -212,14 +219,19 @@ namespace Ror2Mod2
 			scenePart = 0;
 			currentScene = newScene;
 			Log($"set currentScene to {SceneName}");
-			GetValueFromSceneName(out runType, SceneName,
+
+			if (GetValueFromSceneName(out var newRunType, SceneName,
 				F(RunType.Simulacrum, Scenes.SimulacrumMenu),
 				F(RunType.Eclipse, Scenes.EclipseMenu),
 				F(RunType.Normal, () => ScenePattern.Equals(Scenes.MainMenu).IsMatch(oldScene), Scenes.CharacterSelect),
 				F(RunType.None, Scenes.MainMenu)
-				);
+				))
+			{
+				this.runType = newRunType;
+			}
+
 			Log($"{nameof(oldScene)}: {oldScene?.Name}");
-			Log($"{nameof(runType)}: {runType}");
+			Log($"{nameof(newRunType)}: {newRunType}");
 		}
 	}
 }

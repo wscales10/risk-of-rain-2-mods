@@ -1,10 +1,5 @@
-﻿using System.Collections.ObjectModel;
-using Utils;
-
-namespace MyRoR2
+﻿namespace MyRoR2
 {
-	public delegate bool Try<T>(out T variable);
-
 	public static class Scenes
 	{
 		public static DefinedScene AbandonedAqueduct { get; } = (nameof(AbandonedAqueduct), "GOOLAKE");
@@ -72,18 +67,5 @@ namespace MyRoR2
 		public static DefinedScene VoidLocus { get; } = (nameof(VoidLocus), "VOIDSTAGE");
 
 		public static DefinedScene WetlandAspect { get; } = (nameof(WetlandAspect), "FOGGYSWAMP");
-	}
-
-	public class Fase<T>
-	{
-		public Fase(Try<T> @try, params DefinedScene[] candidates)
-		{
-			TrySet = @try;
-			Candidates = candidates.ToReadOnlyCollection();
-		}
-
-		public ReadOnlyCollection<DefinedScene> Candidates { get; }
-
-		public Try<T> TrySet { get; }
 	}
 }

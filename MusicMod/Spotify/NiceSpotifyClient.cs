@@ -19,8 +19,6 @@ namespace Spotify
 
 		private readonly AsyncJobQueue asyncJobQueue = new AsyncJobQueue(RunState.Off);
 
-		private string accessToken;
-
 		private bool isAuthorised;
 
 		protected NiceSpotifyClient(Logger logger, IPreferences preferences)
@@ -162,7 +160,7 @@ namespace Spotify
 		{
 			if (!(preferences.AccessToken is null))
 			{
-				Client = new SpotifyClient(accessToken = preferences.AccessToken);
+				Client = new SpotifyClient(preferences.AccessToken);
 				return IsAuthorised = true;
 			}
 

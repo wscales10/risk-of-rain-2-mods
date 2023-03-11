@@ -25,25 +25,12 @@ namespace SpotifyControlWinForms.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string Rule1Location {
+        public global::System.Collections.Specialized.StringCollection RuleLocations {
             get {
-                return ((string)(this["Rule1Location"]));
+                return ((global::System.Collections.Specialized.StringCollection)(this["RuleLocations"]));
             }
             set {
-                this["Rule1Location"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string Rule2Location {
-            get {
-                return ((string)(this["Rule2Location"]));
-            }
-            set {
-                this["Rule2Location"] = value;
+                this["RuleLocations"] = value;
             }
         }
     }

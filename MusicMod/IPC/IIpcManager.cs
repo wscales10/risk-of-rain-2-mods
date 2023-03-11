@@ -2,10 +2,8 @@
 {
 	public interface IIpcManager
 	{
-		IClient CreateClient();
+		ISender CreateSender();
 
-		IServer CreateServer();
-
-		int GetFreePort();
+		IReceiver CreateReceiver();
 	}
 }

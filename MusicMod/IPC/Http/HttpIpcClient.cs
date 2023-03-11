@@ -1,17 +1,25 @@
 ﻿using System;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace IPC.Http
 {
-	internal class HttpIpcClient : IAsyncClient
+	internal class HttpIpcClient : IAsyncSender
 	{
 		private readonly HttpClient httpClient = new HttpClient();
 
-		private int serverPort;
+		private int receiverPort;
 
-		public void Initialize(int serverPort) => this.serverPort = serverPort;
+		public HttpIpcClient(string description)
+		{
+			Description = description;
+		}
+
+		public string Description { get; }
+
+		public void Initialize(int receiverPort) => this.receiverPort = receiverPort;
 
 		public string Send(string message)
 		{
@@ -27,28 +35,50 @@ namespace IPC.Http
 			}
 
 			var response = task.Result;
-			var task2 = Task.Run(() => response.Content.ReadAsStringAsync());
-			task2.Wait();
-			return task2.Result;
+
+			if (response.IsSuccessStatusCode)
+			{
+				var task2 = Task.Run(() => response.Content.ReadAsStringAsync());
+				task2.Wait();
+				return task2.Result;
+			}
+			else
+			{
+				throw new SendException();
+			}
 		}
 
 		public async Task<string> SendAsync(string message)
 		{
 			var response = await PostMessageAsync(message);
-			return await response.Content.ReadAsStringAsync();
+			if (response.IsSuccessStatusCode)
+			{
+				return await response.Content.ReadAsStringAsync();
+			}
+			else
+			{
+				throw new SendException();
+			}
 		}
 
 		private async Task<HttpResponseMessage> PostMessageAsync(string message)
 		{
+			CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
 			try
 			{
-				return await httpClient.PostAsync($"http://localhost:{serverPort}/", new StringContent(message));
+				HttpResponseMessage httpResponseMessage = await httpClient.PostAsync($"http://localhost:{receiverPort}/", new StringContent(message), cancellationTokenSource.Token);
+				return httpResponseMessage;
 			}
 			catch (SocketException ex)
 			{
 				throw new SendException(ex);
 			}
 			catch (HttpRequestException ex)
+			{
+				throw new SendException(ex);
+			}
+			catch (TaskCanceledException ex) when (ex.CancellationToken == cancellationTokenSource.Token)
 			{
 				throw new SendException(ex);
 			}

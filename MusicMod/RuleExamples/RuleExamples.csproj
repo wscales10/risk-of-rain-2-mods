@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Minecraft\Minecraft.csproj" />
+    <ProjectReference Include="..\Rules\Rules.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MyRoR2">
+      <HintPath>..\..\Common\MyRoR2\bin\$(Configuration)\netstandard2.0\MyRoR2.dll</HintPath>
+    </Reference>
+    <Reference Include="Patterns">
+      <HintPath>..\..\Common\Patterns\bin\$(Configuration)\netstandard2.0\Patterns.dll</HintPath>
+    </Reference>
+    <Reference Include="Utils">
+      <HintPath>..\..\Common\Utils\bin\$(Configuration)\netstandard2.0\Utils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

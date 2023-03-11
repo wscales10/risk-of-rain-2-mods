@@ -7,12 +7,17 @@ namespace IPC
 {
 	public class Packet
 	{
-		public Packet(string guid, int? port, IEnumerable<Message> messages)
+		public Packet(string guid, int? port, int serverPort, IEnumerable<Message> messages)
 		{
 			Guid = guid;
 			Port = port;
+			ServerPort = serverPort;
 			Messages = messages.ToReadOnlyCollection();
 		}
+
+		public string SenderDescription { get; private set; }
+
+		public int? ServerPort { get; private set; }
 
 		public string Guid { get; }
 
@@ -58,7 +63,21 @@ namespace IPC
 				}
 			}).ToList();
 
-			return new Packet(guidMessage.Value, portMessage?.Value is null ? (int?)null : int.Parse(portMessage.Value), messages);
+			return new Packet(guidMessage.Value, portMessage?.Value is null ? (int?)null : int.Parse(portMessage.Value), 0, messages);
+		}
+
+		public Packet WithSenderDescription(string senderDescription)
+		{
+			if (SenderDescription is null)
+			{
+				SenderDescription = senderDescription;
+			}
+			else
+			{
+				throw new InvalidOperationException("Cannot set sender description multiple times");
+			}
+
+			return this;
 		}
 
 		public sealed override string ToString() => Json.ToJson(this);

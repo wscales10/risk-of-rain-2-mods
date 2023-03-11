@@ -1,27 +1,24 @@
 ﻿using Music;
-using Rules;
 using Spotify;
 using Spotify.Commands;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Utils;
 using Utils.Coroutines;
 
 namespace SpotifyControlWinForms
 {
-	public class SpotifyController<TContext> : MusicBase<TContext>
+	public class SpotifyController : MusicBase
 	{
-		private readonly AuthorisationClient authorisationClient = new AuthorisationClient();
+		private readonly AuthorisationClient authorisationClient = new();
 
-		private readonly IRulePicker<TContext, ICommandList> rulePicker;
-
-		public SpotifyController(IRulePicker<TContext, ICommandList> rulePicker, IEnumerable<Playlist> playlists, Logger logger) : base(logger)
+		public SpotifyController(IEnumerable<Playlist> playlists, Logger logger) : base(logger)
 		{
-			this.rulePicker = rulePicker;
 			Client = new SpotifyPlaybackClient(playlists, logger, authorisationClient.Preferences);
 			Client.OnAccessTokenRequested += authorisationClient.RequestNewAccessToken;
 			Client.OnError += e => Log(e);
 
-			ConnectionUpdateHandler += progressUpdate =>
+			ConnectionUpdated += progressUpdate =>
 			{
 				switch (progressUpdate.Sender)
 				{
@@ -58,23 +55,31 @@ namespace SpotifyControlWinForms
 			ConfigurationPageRequested += () => authorisationClient.RequestConfigurationPage();
 		}
 
-		public event Func<ProgressUpdate, bool> ConnectionUpdateHandler;
+		[SuppressMessage("Major Code Smell", "S3264:Events should be invoked", Justification = "Invoked Dynamically")]
+		[SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary")]
+		public event Func<ProgressUpdate, bool> ConnectionUpdated;
 
 		private event Action ConfigurationPageRequested;
 
 		protected SpotifyPlaybackClient Client { get; }
 
+		public bool CheckStatus()
+		{
+			return authorisationClient.PingServer();
+		}
+
+		[SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "To facilitate debugging")]
 		public bool TryInit()
 		{
 			var run = authorisationClient.TryStart.CreateRun();
 
 			foreach (var progressUpdate in run.GetProgressUpdates())
 			{
-				if (ConnectionUpdateHandler is not null)
+				if (ConnectionUpdated is not null)
 				{
-					foreach (var connectionUpdateHandler in ConnectionUpdateHandler.GetInvocationList())
+					foreach (var connectionUpdateHandler in ConnectionUpdated.GetInvocationList().Cast<Func<ProgressUpdate, bool>>())
 					{
-						var result = (bool)connectionUpdateHandler.DynamicInvoke(progressUpdate);
+						var result = connectionUpdateHandler(progressUpdate);
 
 						if (!result)
 						{
@@ -102,9 +107,9 @@ namespace SpotifyControlWinForms
 			ConfigurationPageRequested?.Invoke();
 		}
 
-		protected override async Task Play(object musicIdentifier)
+		protected override async Task PlayAsync(object musicIdentifier)
 		{
-			if (!(musicIdentifier is null))
+			if (musicIdentifier is not null)
 			{
 				switch (musicIdentifier)
 				{
@@ -120,17 +125,6 @@ namespace SpotifyControlWinForms
 						throw new ArgumentException($"Expected a {nameof(ICommandList)} but received a {musicIdentifier.GetType().Name} instead", nameof(musicIdentifier));
 				}
 			}
-		}
-
-		protected override object GetMusicIdentifier(TContext oldContext, TContext newContext)
-		{
-			if (newContext?.Equals(default) ?? true)
-			{
-				return new StopCommand();
-			}
-
-			var commands = rulePicker.Rule.GetOutput(newContext);
-			return commands;
 		}
 	}
 }

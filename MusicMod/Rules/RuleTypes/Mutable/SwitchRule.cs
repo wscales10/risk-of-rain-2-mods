@@ -1,9 +1,7 @@
-﻿using MyRoR2;
-using Patterns;
+﻿using Patterns;
 using Patterns.Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Readonly;
-using Spotify.Commands;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -19,18 +17,6 @@ namespace Rules.RuleTypes.Mutable
 
 	public static class StaticSwitchRule
 	{ }
-
-	public static class Switcher
-	{
-		public static Switcher<RoR2Context, string> RoR2ToString { get; } = Create(RuleParser.RoR2ToString);
-
-		public static Switcher<string, ICommandList> StringToSpotify { get; } = Create(RuleParser.StringToSpotify);
-
-		public static Switcher<TContext, TOut> Create<TContext, TOut>(RuleParser<TContext, TOut> ruleParser)
-		{
-			return new Switcher<TContext, TOut>(ruleParser);
-		}
-	}
 
 	public class Switcher<TContext, TOut>
 	{
@@ -150,12 +136,11 @@ namespace Rules.RuleTypes.Mutable
 
 			foreach (var @case in Cases)
 			{
-				if (@case.WherePattern?.IsMatch(c) != false)
+				bool matchesWherePattern = @case.WherePattern?.IsMatch(c) != false;
+				bool matchesCase = patternGenerator is null ? @case.Arr.Contains(seenValue) : @case.Arr.Any(allowedValue => patternGenerator(allowedValue).IsMatch(seenValue));
+				if (matchesWherePattern && matchesCase)
 				{
-					if (patternGenerator is null ? @case.Arr.Contains(seenValue) : @case.Arr.Any(allowedValue => patternGenerator(allowedValue).IsMatch(seenValue)))
-					{
-						yield return @case.Output;
-					}
+					yield return @case.Output;
 				}
 			}
 
@@ -166,7 +151,6 @@ namespace Rules.RuleTypes.Mutable
 
 		public override XElement ToXml()
 		{
-			// return ToStatic().ToXml();
 			throw new InvalidOperationException($"Use {nameof(StaticSwitchRule)}");
 		}
 
@@ -253,12 +237,11 @@ namespace Rules.RuleTypes.Mutable
 
 			foreach (var @case in Cases)
 			{
-				if (@case.WherePattern?.IsMatch(c) != false)
+				bool matchesWherePattern = @case.WherePattern?.IsMatch(c) != false;
+				bool matchesCase = @case.Arr.Any(pattern => pattern.IsMatch(seenValue));
+				if (matchesWherePattern && matchesCase)
 				{
-					if (@case.Arr.Any(pattern => pattern.IsMatch(seenValue)))
-					{
-						yield return @case.Output;
-					}
+					yield return @case.Output;
 				}
 			}
 

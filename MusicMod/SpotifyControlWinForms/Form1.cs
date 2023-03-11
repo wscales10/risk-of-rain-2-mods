@@ -8,19 +8,19 @@ namespace SpotifyControlWinForms
 		{
 			InitializeComponent();
 
-			_ = new Tab(gameToStringTab, () => Settings.Default.Rule1Location, s =>
-			{
-				Settings.Default.Rule1Location = s;
-				Settings.Default.Save();
-				Rule1LocationChanged?.Invoke(s);
-			});
+			/*			_ = new Tab(gameToStringTab, () => SpotifyControl.Rule1Type.GetLocation(), s =>
+						{
+							SpotifyControl.Rule1Type.SetLocation(s);
+							Settings.Default.Save();
+							Rule1LocationChanged?.Invoke(s);
+						});
 
-			_ = new Tab(stringToMusicTab, () => Settings.Default.Rule2Location, s =>
-			{
-				Settings.Default.Rule2Location = s;
-				Settings.Default.Save();
-				Rule2LocationChanged?.Invoke(s);
-			});
+						_ = new Tab(stringToMusicTab, () => SpotifyControl.Rule2Type.GetLocation(), s =>
+						{
+							SpotifyControl.Rule2Type.SetLocation(s);
+							Settings.Default.Save();
+							Rule2LocationChanged?.Invoke(s);
+						});*/
 
 			Resize += Form1_Resize;
 		}
@@ -30,20 +30,6 @@ namespace SpotifyControlWinForms
 		public event Action<string> Rule1LocationChanged;
 
 		public event Action<string> Rule2LocationChanged;
-
-		public void SetConnectionStatus(bool status)
-		{
-			if (status)
-			{
-				ConnectionButton.Text = "Connected";
-				ConnectionButton.Enabled = false;
-			}
-			else
-			{
-				ConnectionButton.Text = "Retry Connection";
-				ConnectionButton.Enabled = true;
-			}
-		}
 
 		private void Form1_Resize(object? sender, EventArgs e)
 		{
@@ -60,7 +46,7 @@ namespace SpotifyControlWinForms
 		{
 			private readonly Action<string> saveRuleLocation;
 
-			public Tab(TabPage tabPage, Func<string> getRuleLocation, Action<string> saveRuleLocation)
+			public Tab(TabPage tabPage, Func<string?> getRuleLocation, Action<string> saveRuleLocation)
 			{
 				TabPage = tabPage;
 				this.saveRuleLocation = saveRuleLocation;

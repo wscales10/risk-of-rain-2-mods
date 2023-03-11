@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace Utils
 
 		private readonly UriBuilder rootUri;
 
-		private readonly HttpListener listener = new HttpListener();
+		private HttpListener listener = new HttpListener();
 
 		private bool runServer;
 
@@ -45,18 +46,28 @@ namespace Utils
 
 		public Uri RootUri => rootUri.Uri;
 
+		public static async Task MakeResponseAsync(HttpListenerResponse res, string message)
+		{
+			await MakeResponseAsync(res, message is null ? null : Encoding.UTF8.GetBytes(message));
+		}
+
 		public static async Task MakeResponseAsync(HttpListenerResponse res, byte[] byteArray)
 		{
 			res.ContentLength64 = byteArray?.Length ?? 0;
 			if (!(byteArray is null))
 			{
 				await res.OutputStream.WriteAsync(byteArray, 0, byteArray.Length);
+				res.OutputStream.Close();
 			}
 			else
 			{
-				res.StatusCode = (int)HttpStatusCode.NoContent;
+				MakeEmptyResponse(res, HttpStatusCode.NoContent);
 			}
+		}
 
+		public static void MakeEmptyResponse(HttpListenerResponse res, HttpStatusCode statusCode)
+		{
+			res.StatusCode = (int)statusCode;
 			res.OutputStream.Close();
 		}
 
@@ -128,27 +139,23 @@ namespace Utils
 			const int MaxPort = 65535;
 
 			Exception e1 = null;
-			string uri = null;
 
 			for (int port = MinPort; port < MaxPort; port++)
 			{
 				rootUri.Port = port;
+				HttpListener httpListener = new HttpListener();
 
 				try
 				{
-					listener.Prefixes.Add(uri = RootUri.ToString());
-					listener.Start();
+					httpListener.Prefixes.Add(RootUri.ToString());
+					httpListener.Start();
+					listener = httpListener;
 					return;
 				}
 				catch (Exception e2)
 				{
 					Log(e2);
 					e1 = e2;
-					if (!(uri is null))
-					{
-						listener.Prefixes.Remove(uri);
-						uri = null;
-					}
 				}
 			}
 

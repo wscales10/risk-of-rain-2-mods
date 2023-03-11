@@ -1,11 +1,14 @@
 ﻿using Patterns;
 using Patterns.Patterns;
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text.RegularExpressions;
+using Utils;
 
 namespace MyRoR2
 {
+	public delegate bool Try<T>(out T variable);
+
 	public static class SceneNameHelpers
 	{
 		public static Fase<T> F<T>(Func<T> getter, params DefinedScene[] constants)
@@ -66,5 +69,18 @@ namespace MyRoR2
 			variable = default;
 			return false;
 		}
+	}
+
+	public class Fase<T>
+	{
+		public Fase(Try<T> @try, params DefinedScene[] candidates)
+		{
+			TrySet = @try;
+			Candidates = candidates.ToReadOnlyCollection();
+		}
+
+		public ReadOnlyCollection<DefinedScene> Candidates { get; }
+
+		public Try<T> TrySet { get; }
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Utils;
@@ -14,9 +15,9 @@ namespace IPC
 
 		private readonly PortHelper portHelper = new PortHelper();
 
-		private readonly Dictionary<string, IClient> clients = new Dictionary<string, IClient>();
+		private readonly Dictionary<string, ISender> clients = new Dictionary<string, ISender>();
 
-		public Server(int port)
+		public Server(int port, string description) : base(description)
 		{
 			MyPort = port;
 		}
@@ -29,7 +30,7 @@ namespace IPC
 		{
 			Info.ThrowIfNotRunning();
 
-			var client = Manager.CreateClient();
+			var client = Manager.CreateSender($"client of {Description ?? GetType().GetDisplayName()}");
 			clients[guid] = client;
 			strikes[guid] = 0;
 			client.Initialize(portHelper.GetPort(guid));
@@ -59,7 +60,7 @@ namespace IPC
 
 			var client = clients[guid];
 
-			if (client is IAsyncClient asyncClient)
+			if (client is IAsyncSender asyncClient)
 			{
 				await sendToClientAsync(asyncClient, guid, messages);
 			}
@@ -71,7 +72,7 @@ namespace IPC
 
 		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
-			var receiver = Manager.CreateServer();
+			var receiver = Manager.CreateReceiver();
 			receiver.Start(MyPort.Value);
 
 			receiver.ReceivedRequest += Receiver_ReceivedRequest;
@@ -90,9 +91,16 @@ namespace IPC
 			{
 				if (packet.Port is int port)
 				{
+					var toRemove = portHelper.GetGuidFromPort(port);
+
+					if (!(toRemove is null) && toRemove != packet.Guid)
+					{
+						RemoveClient(toRemove);
+					}
+
 					if (!portHelper.SetPort(packet.Guid, port))
 					{
-						throw new Exception();
+						throw new SocketException();
 					}
 
 					response.AddRange(AddClient(packet.Guid));
@@ -115,7 +123,7 @@ namespace IPC
 		{
 			var client = clients[guid];
 
-			if (client is IAsyncClient asyncClient)
+			if (client is IAsyncSender asyncClient)
 			{
 				_ = sendToClientAsync(asyncClient, guid, messages);
 			}
@@ -125,7 +133,7 @@ namespace IPC
 			}
 		}
 
-		private void sendToClient(IClient client, string guid, params Message[] messages)
+		private void sendToClient(ISender client, string guid, params Message[] messages)
 		{
 			try
 			{
@@ -138,12 +146,12 @@ namespace IPC
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debugger.Break();
+				this.Log(ex);
 				throw;
 			}
 		}
 
-		private async Task sendToClientAsync(IAsyncClient asyncClient, string guid, params Message[] messages)
+		private async Task sendToClientAsync(IAsyncSender asyncClient, string guid, params Message[] messages)
 		{
 			try
 			{
@@ -156,7 +164,7 @@ namespace IPC
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debugger.Break();
+				this.Log(ex);
 				throw;
 			}
 		}
@@ -165,15 +173,20 @@ namespace IPC
 		{
 			if (++strikes[guid] > 2)
 			{
-				clients.Remove(guid);
-				portHelper.Reset(guid);
-				strikes.Remove(guid);
+				RemoveClient(guid);
 			}
+		}
+
+		private void RemoveClient(string guid)
+		{
+			clients.Remove(guid);
+			portHelper.Reset(guid);
+			strikes.Remove(guid);
 		}
 
 		private Packet MakePacket(string guid, IEnumerable<Message> messages)
 		{
-			return new Packet(guid, portHelper.GetPort(guid), messages);
+			return new Packet(guid, portHelper.GetPort(guid), MyPort.Value, messages);
 		}
 
 		private sealed class PortHelper
@@ -187,7 +200,20 @@ namespace IPC
 
 			public int GetPort(string guid)
 			{
-				return ports[guid];
+				try
+				{
+					return ports[guid];
+				}
+				catch (Exception)
+				{
+					System.Diagnostics.Debugger.Break();
+					throw;
+				}
+			}
+
+			public string GetGuidFromPort(int port)
+			{
+				return ports.SingleOrDefault(pair => pair.Value == port).Key;
 			}
 
 			public bool SetPort(string guid, int port)

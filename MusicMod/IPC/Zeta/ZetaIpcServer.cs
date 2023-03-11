@@ -3,7 +3,7 @@ using IpcServer = ZetaIpc.Runtime.Server.IpcServer;
 
 namespace IPC.Zeta
 {
-	internal class ZetaIpcServer : IServer
+	internal class ZetaIpcServer : IReceiver
 	{
 		private readonly IpcServer ipcServer = new IpcServer();
 

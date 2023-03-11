@@ -9,7 +9,7 @@ namespace Spotify
 {
 	public class AuthorisationClient : CoroutineRunner
 	{
-		private readonly IPC.Client ipcClient = new IPC.Client(5007);
+		private readonly IPC.Client ipcClient = new IPC.Client(5007, nameof(AuthorisationClient));
 
 		public AuthorisationClient()
 		{
@@ -29,6 +29,8 @@ namespace Spotify
 			var response = ipcClient.SendToServerAwaitResponse(new IPC.Message("toke"));
 			HandleResponse(response.Messages);
 		}
+
+		public bool PingServer() => ipcClient.PingServer();
 
 		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
@@ -67,13 +69,13 @@ namespace Spotify
 						break;
 
 					default:
-						throw new NotSupportedException();
+						throw new NotSupportedException($"request key {request.Key} not supported");
 				}
 			}
 
 			this.Log("Request End");
 
-			yield break;
+			return Enumerable.Empty<IPC.Message>();
 		}
 
 		private void HandleResponse(IEnumerable<IPC.Message> obj)

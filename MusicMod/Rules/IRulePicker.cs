@@ -18,4 +18,11 @@ namespace Rules
 	{
 		public IRule<TContext, TOut> Rule { get; set; }
 	}
+
+	public class MutableRulePickerPicker<TContext, TOut> : IRulePicker<TContext, TOut>
+	{
+		public IRulePicker<TContext, TOut> RulePicker { get; set; }
+
+		public IRule<TContext, TOut> Rule => RulePicker.Rule;
+	}
 }

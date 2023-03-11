@@ -9,11 +9,11 @@ namespace IPC
 {
 	public class Client : Entity
 	{
-		private IClient sender;
+		private ISender sender;
 
-		private IServer receiver;
+		private IReceiver receiver;
 
-		public Client(int serverPort)
+		public Client(int serverPort, string description) : base(description)
 		{
 			ServerPort = serverPort;
 			Guid = Guid.NewGuid();
@@ -29,9 +29,30 @@ namespace IPC
 
 		protected override string GuidString => Guid.ToString();
 
+		public bool PingServer()
+		{
+			Info.ThrowIfNotRunning();
+			Packet connectionResponse;
+			try
+			{
+				connectionResponse = sendToServer(new Message("conn"));
+			}
+			catch (SendException)
+			{
+				return false;
+			}
+
+			this.Log(connectionResponse);
+
+			this.Log("Handling Connection Response");
+			HandleConnResponse?.Invoke(connectionResponse.Messages);
+			this.Log("Handled Connection Response");
+			return true;
+		}
+
 		public void SendToServer(params Message[] messages)
 		{
-			if (sender is IAsyncClient)
+			if (sender is IAsyncSender)
 			{
 				_ = sendToServerAsync(messages);
 			}
@@ -50,7 +71,7 @@ namespace IPC
 		public async Task<Packet> SendToServerAwaitResponseAsync(params Message[] messages)
 		{
 			Info.ThrowIfNotRunning();
-			if (sender is IAsyncClient)
+			if (sender is IAsyncSender)
 			{
 				return await sendToServerAsync(messages);
 			}
@@ -69,37 +90,41 @@ namespace IPC
 		protected override Packet HandleReceivedPacket(Packet packet)
 		{
 			Info.ThrowIfNotRunning();
+
+			if (packet.ServerPort != ServerPort)
+			{
+				throw new DeliveryException(packet.ServerPort.Value, ServerPort);
+			}
+
 			return MakePacket(HandleReceivedRequest(packet.Messages));
 		}
 
 		protected override IEnumerable<ProgressUpdate> Start(Reference reference)
 		{
-			sender = Manager.CreateClient();
+			sender = Manager.CreateSender($"client of {Description ?? GetType().GetDisplayName()}");
 			sender.Initialize(ServerPort);
 
-			receiver = Manager.CreateServer();
+			receiver = Manager.CreateReceiver();
 			receiver.Start(0);
+			this.Log($"receiver started on port {MyPort}: {Description}");
 
 			this.Log("Connecting");
 			Packet connectionResponse = null;
 
 			while (connectionResponse is null)
 			{
-				var response = SendToServerCatchSendException(new Message("conn"));
-
-				switch (response)
+				SendException sendException;
+				try
 				{
-					case Packet packet:
-						connectionResponse = packet;
-						break;
-
-					case Exception ex:
-						yield return new ProgressUpdate(this, ex);
-						break;
-
-					default:
-						throw new NotSupportedException();
+					connectionResponse = sendToServer(new Message("conn"));
+					break;
 				}
+				catch (SendException ex)
+				{
+					sendException = ex;
+				}
+
+				yield return new ProgressUpdate(this, sendException);
 			}
 
 			this.Log(connectionResponse);
@@ -116,7 +141,7 @@ namespace IPC
 
 		private async Task<Packet> sendToServerAsync(params Message[] messages)
 		{
-			if (sender is IAsyncClient asyncClient)
+			if (sender is IAsyncSender asyncClient)
 			{
 				return await Methods.SendPacketAsync(asyncClient, MakePacket(messages));
 			}
@@ -131,21 +156,9 @@ namespace IPC
 			return Methods.SendPacket(sender, MakePacket(messages));
 		}
 
-		private object SendToServerCatchSendException(params Message[] messages)
-		{
-			try
-			{
-				return sendToServer(messages);
-			}
-			catch (SendException ex)
-			{
-				return ex;
-			}
-		}
-
 		private Packet MakePacket(IEnumerable<Message> messages)
 		{
-			return new Packet(GuidString, MyPort, messages);
+			return new Packet(GuidString, MyPort, ServerPort, messages);
 		}
 	}
 }

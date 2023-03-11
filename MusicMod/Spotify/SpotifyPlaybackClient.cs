@@ -30,6 +30,8 @@ namespace Spotify
 
 		private readonly BasicTimer secondaryPlaylistTimer;
 
+		private readonly BasicTimer[] timers;
+
 		private readonly IEnumerable<Playlist> playlists;
 
 		private readonly int transferFix;
@@ -48,6 +50,7 @@ namespace Spotify
 		{
 			mainPlaylistTimer = new BasicTimer(() => _ = NextPlaylistItem());
 			secondaryPlaylistTimer = new BasicTimer(() => _ = PrepareNextTime());
+			timers = new[] { mainPlaylistTimer, secondaryPlaylistTimer };
 			this.playlists = playlists;
 			this.transferFix = transferFix;
 			preferences.PropertyChanged += (s) =>
@@ -135,11 +138,11 @@ namespace Spotify
 					{
 						int progressMs = info.ProgressMs ?? 0;
 						int mapped = Math.Max(0, transferCommand.Map(progressMs) + transferFix);
-						return await PlayItem(transferCommand.Item, mapped);
+						return await PlayItemAsync(transferCommand.Item, mapped);
 					}
 					else
 					{
-						return await PlayItem(transferCommand.Item, 0);
+						return await PlayItemAsync(transferCommand.Item, 0);
 					}
 
 				case SetPlaybackOptionsCommand optionsCommand:
@@ -238,12 +241,6 @@ namespace Spotify
 			return base.ClassifyException(e);
 		}
 
-		private void Timers(Action<BasicTimer> action)
-		{
-			action(mainPlaylistTimer);
-			action(secondaryPlaylistTimer);
-		}
-
 		private async Task<bool> ResumeInner()
 		{
 			Log($"Entering method {nameof(ResumeInner)}");
@@ -261,7 +258,7 @@ namespace Spotify
 				SetState(PlayerState.Playing);
 			}
 
-			Timers(t => t.Resume());
+			timers.ForEach(t => t.Resume());
 
 			Log($"Exiting method {nameof(ResumeInner)}");
 			return true;
@@ -269,7 +266,7 @@ namespace Spotify
 
 		private void ClearCurrentPlaylist()
 		{
-			Timers(t => t.Stop());
+			timers.ForEach(t => t.Stop());
 			currentPlaylist = null;
 			playlistIndex = -1;
 		}
@@ -280,7 +277,7 @@ namespace Spotify
 			switch (item)
 			{
 				case SpotifyItem spotifyItem:
-					return await PlayItem(spotifyItem, milliseconds, offset);
+					return await PlayItemAsync(spotifyItem, milliseconds, offset);
 
 				case PlaylistRef pRef:
 					return await PlayPlaylist(playlists.FirstOrDefault(p => p.Name == pRef.Name), milliseconds, offset);
@@ -292,7 +289,7 @@ namespace Spotify
 
 		private async Task<bool> StopInner()
 		{
-			Timers(t => t.Stop());
+			timers.ForEach(t => t.Stop());
 			if (await GetState() == PlayerState.Playing && !await PauseInner())
 			{
 				return false;
@@ -348,7 +345,7 @@ namespace Spotify
 		private async Task<bool> PauseInner()
 		{
 			Log($"Entered method {nameof(PauseInner)}");
-			Timers(t => t.Pause());
+			timers.ForEach(t => t.Pause());
 
 			Log("await pause playback");
 			if (await Client.Player.PausePlayback())
@@ -385,36 +382,26 @@ namespace Spotify
 			return (await Client.Player.GetCurrentPlayback()).ShuffleState;
 		}
 
-		private async Task<object> GetTrackAsync(SpotifyItem item, IOffset offset)
+		private Task<object> GetTrackAsync(SpotifyItem item, IOffset offset)
+		{
+			if (item.Type == SpotifyItemType.Track && !(offset is null))
+			{
+				throw new ArgumentOutOfRangeException(nameof(offset), offset, "Offset cannot be used with tracks");
+			}
+
+			return getTrackAsync(item, offset);
+		}
+
+		private async Task<object> getTrackAsync(SpotifyItem item, IOffset offset)
 		{
 			if (item.Type == SpotifyItemType.Track)
 			{
-				if (!(offset is null))
-				{
-					throw new ArgumentOutOfRangeException(nameof(offset), offset, "Offset cannot be used with tracks");
-				}
-
 				return await GetSpotifyItemInfoAsync<FullTrack>(item);
 			}
 
 			if (await GetShuffleStateAsync())
 			{
 				throw new InvalidOperationException();
-			}
-
-			switch (offset)
-			{
-				case null:
-					return (await GetSpotifyItemInfoAsync<FullAlbum>(item)).Tracks.Items[0];
-
-				case ItemOffset itemOffset:
-					return await GetSpotifyItemInfoAsync<FullTrack>(itemOffset.Item);
-
-				case IndexOffset indexOffset:
-					return (await GetSpotifyItemInfoAsync<FullAlbum>(item)).Tracks.Items[indexOffset.Position];
-
-				default:
-					throw new NotSupportedException();
 			}
 
 			switch (item.Type)
@@ -457,13 +444,18 @@ namespace Spotify
 			throw new NotSupportedException();
 		}
 
-		private async Task<bool> PlayItem(SpotifyItem item, int milliseconds, IOffset offset = null)
+		private Task<bool> PlayItemAsync(SpotifyItem item, int milliseconds, IOffset offset = null)
 		{
 			if (item is null)
 			{
 				throw new ArgumentNullException(nameof(item));
 			}
 
+			return playItemAsync(item, milliseconds, offset);
+		}
+
+		private async Task<bool> playItemAsync(SpotifyItem item, int milliseconds, IOffset offset = null)
+		{
 			var s = item?.GetUri().ToString();
 			var positionMs = await GetPositionAsync(milliseconds, item, offset);
 			PlayerResumePlaybackRequest request;
@@ -519,7 +511,7 @@ namespace Spotify
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debugger.Break();
+				this.Log(ex);
 				throw;
 			}
 
@@ -565,7 +557,7 @@ namespace Spotify
 
 			if (playlistIndex != -1)
 			{
-				bool result = await PlayItem(currentPlaylist[playlistIndex], milliseconds);
+				bool result = await PlayItemAsync(currentPlaylist[playlistIndex], milliseconds);
 				getTrackInfoTask = Async.Manager.RunSafely(() => Client.Tracks.Get(currentPlaylist[playlistIndex].Id));
 				Log(DateTime.UtcNow);
 				secondaryPlaylistTimer.Start(TimeSpan.FromSeconds(3));
@@ -640,7 +632,7 @@ namespace Spotify
 			return await Client.Player.GetCurrentlyPlaying(new PlayerCurrentlyPlayingRequest());
 		}
 
-		private async Task<T> GetSpotifyItemInfoAsync<T>(SpotifyItem item)
+		private Task<T> GetSpotifyItemInfoAsync<T>(SpotifyItem item)
 			where T : class
 		{
 			if (item is null)
@@ -653,6 +645,12 @@ namespace Spotify
 				throw new ArgumentOutOfRangeException(nameof(item), item, $"type mismatch with {typeof(T).Name}");
 			}
 
+			return getSpotifyItemInfoAsync<T>(item);
+		}
+
+		private async Task<T> getSpotifyItemInfoAsync<T>(SpotifyItem item)
+			where T : class
+		{
 			switch (item.Type)
 			{
 				case SpotifyItemType.Track:
@@ -699,21 +697,6 @@ namespace Spotify
 			}
 		}
 
-		private int GetDuration(object track)
-		{
-			switch (track)
-			{
-				case SimpleTrack simpleTrack:
-					return simpleTrack.DurationMs;
-
-				case FullTrack fullTrack:
-					return fullTrack.DurationMs;
-
-				default:
-					throw new ArgumentOutOfRangeException(nameof(track), track, $"Type {track.GetType()} not supported");
-			}
-		}
-
 		private async Task<int> GetPositionAsync(int milliseconds, Func<Task<int?>> getTrackDurationMs = null)
 		{
 			if (milliseconds < 0)
@@ -729,6 +712,21 @@ namespace Spotify
 			else
 			{
 				return milliseconds;
+			}
+		}
+
+		private int GetDuration(object track)
+		{
+			switch (track)
+			{
+				case SimpleTrack simpleTrack:
+					return simpleTrack.DurationMs;
+
+				case FullTrack fullTrack:
+					return fullTrack.DurationMs;
+
+				default:
+					throw new ArgumentOutOfRangeException(nameof(track), track, $"Type {track.GetType()} not supported");
 			}
 		}
 

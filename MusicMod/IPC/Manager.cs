@@ -4,12 +4,12 @@ namespace IPC
 {
 	internal static class Manager
 	{
-		public static IClient CreateClient()
+		public static ISender CreateSender(string description)
 		{
-			return new HttpIpcClient();
+			return new HttpIpcClient(description);
 		}
 
-		public static IServer CreateServer()
+		public static IReceiver CreateReceiver()
 		{
 			return new HttpIpcServer();
 		}
