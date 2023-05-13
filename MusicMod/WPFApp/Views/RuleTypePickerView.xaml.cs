@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Input;
 using WPFApp.ViewModels;
 
 namespace WPFApp.Views
@@ -26,9 +27,14 @@ namespace WPFApp.Views
 			Close();
 		}
 
-		private void Label_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		private void Label_MouseDoubleClick(object sender, MouseButtonEventArgs e) => ViewModel.OkCommand.Execute(null);
+
+		private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
-			ViewModel.OkCommand.Execute(null);
+			if (e.Key == Key.Enter && ViewModel?.SelectedTypePair is not null && !CancelButton.IsFocused)
+			{
+				ViewModel.OkCommand.Execute(null);
+			}
 		}
 	}
 }

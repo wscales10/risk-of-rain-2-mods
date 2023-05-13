@@ -10,9 +10,12 @@
         xmlns:viewmodels="clr-namespace:WPFApp.ViewModels" xmlns:converters="clr-namespace:WPFApp.Converters"
         mc:Ignorable="d"
         Title="ControlTestView" Height="450" Width="800">
-    <controls:Aligner Background="Black" Alignment="Left" MaxChildWidth="200" HorizontalAlignment="Stretch" MaxWidth="500">
-        <controls:Aligner.Child>
-            <Border Background="Green" />
-        </controls:Aligner.Child>
-    </controls:Aligner>
+    <Grid>
+        <TextBox x:Name="PinkTextBox"
+                 ToolTip="{Binding RelativeSource={RelativeSource Self}, Path=Text}"
+                 Background="HotPink"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center"
+                 Width="200" />
+    </Grid>
 </Window>

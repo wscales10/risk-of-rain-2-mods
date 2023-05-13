@@ -20,9 +20,16 @@ namespace Rules.RuleTypes.Mutable
 		TOut IBucket<TContext, TOut>.Output => Output;
 
 		//TODO: move these spotify-specific methods to RuleExamples?
-		public static Bucket<TContext, ICommandList> Play(string trackId, int milliseconds = 0)
+		public static Bucket<TContext, ICommandList> Play(string trackId, int? milliseconds = null)
 		{
-			return new Bucket<TContext, ICommandList>(new CommandList(new LoopCommand(SpotifyItemType.Track, trackId).AtMilliseconds(milliseconds)));
+			LoopCommand loopCommand = new LoopCommand(SpotifyItemType.Track, trackId);
+
+			if (milliseconds is int ms)
+			{
+				loopCommand = loopCommand.AtMilliseconds(ms);
+			}
+
+			return new Bucket<TContext, ICommandList>(new CommandList(loopCommand));
 		}
 
 		public static Bucket<TContext, ICommandList> Transfer(string trackId, string mapping, IPattern<string> fromTrackId = null)

@@ -42,7 +42,7 @@ namespace RuleExamples.RiskOfRain2
 			C(new CommandList(new StopCommand()), "Mithrix Death Animation"),
 			C(Play("7G349JbUH3PRdj5e7780Iz"), "Moon escape sequence"),
 			C(Play("5fdiSSxvIsrCJ7sVkuhxnD"), "Voidling Fight"),
-			C(Play("2pl3Mzh2LeeUyzFacnHyZc"), "The Planetarium (Idle)"));
+			C(Play("2pl3Mzh2LeeUyzFacnHyZc"), "The Planetarium (Idle)")).Named("Final Stages");
 
 		private static readonly Rule<string, ICommandList> BossRule = Switcher.StringToSpotify.Create(
 			M("0j6CuhzD0XQlA5iTiRkx5P", "Teleporter", Scenes.TitanicPlains, Scenes.DistantRoost, Scenes.AbandonedAqueduct),
@@ -50,11 +50,11 @@ namespace RuleExamples.RiskOfRain2
 			M("1XMfSk9yWjZdUNo1WuEIWF", "Teleporter", Scenes.RallypointDelta, Scenes.AbyssalDepths, Scenes.SunderedGrove),
 			M("0F5ZMhyD9Msd7mRSFSHgY5", "Teleporter", Scenes.SkyMeadow),
 			M("0G44J59yRCMqJp5k8JVYcz", "Teleporter", Scenes.SiphonedForest, Scenes.AphelianSanctuary),
-			M("6uwL79qmtMJZA3Cxxd94c7", "Teleporter", Scenes.SulfurPools));
+			M("6uwL79qmtMJZA3Cxxd94c7", "Teleporter", Scenes.SulfurPools)).Named("Teleporter Event");
 
 		private static readonly Rule<string, ICommandList> EnvironmentRule = Switcher.StringToSpotify.Create(
 			ArrayRule.Create(BossRule, SpecialRule, IdleRule),
-			C(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }), "Teleporter Charged"));
+			C(SeekToCommand.AtSeconds(-23).Then(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }), "Teleporter Charged")).Named("Environments");
 
 		private static readonly Rule<string, ICommandList> OtherRule = Switcher.StringToSpotify.Create(
 			C(Play("6H6LnqmjEcW8gl6D7dIRKJ"), "Splash and Intro"),
@@ -62,7 +62,7 @@ namespace RuleExamples.RiskOfRain2
 			C(Play("3tEnANZ8EeFj3FDBEYXQxG"), "Outro"),
 			C(Play("5cCjhYmgJwQwm5eEgttDxC", 42000), "Credits"),
 			MultiCase.Create(_ => Dehydrated(), "Logbook", "Normal Character Select", "Eclipse Menus", "Prismatic Trial Menus"),
-			C(Play("6umrQw3KWPFS6CQHN7J5BW"), "Simulacrum Menus"));
+			C(Play("6umrQw3KWPFS6CQHN7J5BW"), "Simulacrum Menus")).Named("Other");
 
 		public static IReadOnlyRule<string, ICommandList> Instance { get; } = ArrayRule.Create(
 			EnvironmentRule, OtherRule).ToReadOnly(RuleParsers.StringToSpotify);

@@ -24,7 +24,7 @@ namespace Rules.RuleTypes.Mutable
 			set;
 		}
 
-		public override string ToString() => Name ?? GetType().Name;
+		public override string ToString() => Name ?? GetType().GetDisplayName();
 
 		public virtual XElement ToXml()
 		{

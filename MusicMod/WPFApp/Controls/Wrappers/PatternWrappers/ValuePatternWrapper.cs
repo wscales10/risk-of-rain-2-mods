@@ -1,6 +1,8 @@
 ﻿using Patterns.Patterns.SmallPatterns;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
 using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers.PatternWrappers
@@ -17,6 +19,13 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 			TextBox.FontSize = 14;
 			TextBox.Margin = new Thickness(2);
 			TextBox.LostFocus += (s, e) => NotifyValueChanged();
+
+			ToolTip t = new() { DataContext = TextBox };
+			t.SetBinding(ContentControl.ContentProperty, nameof(TextBox.Text));
+			ToolTipService.SetToolTip(TextBox, t);
+
+			TextBox.PreviewMouseWheel += TextBox_PreviewMouseWheel;
+
 			Display();
 		}
 
@@ -59,6 +68,16 @@ namespace WPFApp.Controls.Wrappers.PatternWrappers
 		}
 
 		protected override void setStatus(bool status) => Outline(TextBox, status);
+
+		private void TextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+		{
+			if (Keyboard.IsKeyDown(Key.LeftShift))
+			{
+				var textBox = sender as TextBox;
+				textBox.ScrollToHorizontalOffset(textBox.HorizontalOffset - e.Delta / 15);
+				e.Handled = true;
+			}
+		}
 	}
 
 	internal class ValuePatternWrapper<TPattern> : ValuePatternWrapper<TPattern, TextBox>

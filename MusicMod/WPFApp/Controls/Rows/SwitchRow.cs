@@ -48,7 +48,7 @@ namespace WPFApp.Controls.Rows
 			this.propertyInfo = propertyInfo;
 		}
 
-		public override string Label => $"Other {propertyInfo}";
+		public override string Label => propertyInfo?.Name == "this" ? "Other" : $"Other {propertyInfo}";
 
 		protected override DefaultRow<TContext, TOut> deepClone() => new(NavigationContext, propertyInfo);
 	}

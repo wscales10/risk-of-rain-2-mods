@@ -59,7 +59,7 @@
                 <converters:ViewModelToControlConverter x:Key="Converter" />
             </Grid.Resources>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" MinWidth="15" MaxWidth="500" />
+                <ColumnDefinition Width="260" MinWidth="15" MaxWidth="500" />
                 <ColumnDefinition Width="1" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
