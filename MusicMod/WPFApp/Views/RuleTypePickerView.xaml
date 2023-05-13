@@ -3,17 +3,32 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WPFApp.Views" xmlns:viewmodels="clr-namespace:WPFApp.ViewModels"
+        xmlns:local="clr-namespace:WPFApp.Views" xmlns:viewmodels="clr-namespace:WPFApp.ViewModels" xmlns:converters="clr-namespace:WPFApp.Converters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewmodels:RuleTypePickerViewModel}"
         Title="Choose a rule type" Height="225" Width="400">
+    <Window.Resources>
+        <converters:TypePairToArrowStringConverter x:Key="TypePairToArrowStringConverter" />
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <ListBox ItemsSource="{Binding TypePairs}"
-                 SelectedItem="{Binding SelectedTypePair}" />
+                 SelectedItem="{Binding SelectedTypePair}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Label Content="{Binding Converter={StaticResource TypePairToArrowStringConverter}}"
+                           MouseDoubleClick="Label_MouseDoubleClick"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
         <StackPanel Grid.Row="1"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"

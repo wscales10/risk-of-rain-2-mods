@@ -25,5 +25,10 @@ namespace WPFApp.Views
 			DialogResult = result;
 			Close();
 		}
+
+		private void Label_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			ViewModel.OkCommand.Execute(null);
+		}
 	}
 }
