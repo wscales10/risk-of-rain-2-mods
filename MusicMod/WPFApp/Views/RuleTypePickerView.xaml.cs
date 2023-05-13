@@ -31,9 +31,15 @@ namespace WPFApp.Views
 
 		private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Enter && ViewModel?.SelectedTypePair is not null && !CancelButton.IsFocused)
+			switch (e.Key)
 			{
-				ViewModel.OkCommand.Execute(null);
+				case Key.Enter when ViewModel?.SelectedTypePair is not null && !CancelButton.IsFocused:
+					ViewModel.OkCommand.Execute(null);
+					break;
+
+				case Key.Escape:
+					ViewModel.CancelCommand.Execute(null);
+					break;
 			}
 		}
 	}
