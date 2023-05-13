@@ -1,17 +1,17 @@
 ﻿using IPC;
 using Utils;
 
-namespace SpotifyControlWinForms
+namespace SpotifyControlWinForms.Connections
 {
-	public abstract class GameConnection : ConnectionBase
+	public abstract class IpcConnection : ConnectionBase
 	{
-		private readonly IPC.Client client;
+		private readonly Client client;
 
-		protected GameConnection(Client client)
+		protected IpcConnection(Client client)
 		{
 			this.client = client;
 			client.ReceivedRequest += Client_ReceivedRequest;
-			MessageReceived += GameConnection_MessageReceived;
+			MessageReceived += IpcConnection_MessageReceived;
 		}
 
 		protected delegate void MessageHandler(object sender, MessageEventArgs args);
@@ -23,7 +23,7 @@ namespace SpotifyControlWinForms
 			return client.PingServer();
 		}
 
-		public void SendToGame(string key, string? value = null)
+		public void SendMessage(string key, string? value = null)
 		{
 			client.SendToServer(new IPC.Message(key, value));
 		}
@@ -37,9 +37,9 @@ namespace SpotifyControlWinForms
 			}).Result;
 		}
 
-		private void GameConnection_MessageReceived(object sender, MessageEventArgs args)
+		private void IpcConnection_MessageReceived(object sender, MessageEventArgs args)
 		{
-			this.Log($"[{DateTime.Now}] {nameof(GameConnection_MessageReceived)}");
+			this.Log($"[{DateTime.Now}] {nameof(IpcConnection_MessageReceived)}");
 			var message = args.Message;
 
 			switch (message.Key)

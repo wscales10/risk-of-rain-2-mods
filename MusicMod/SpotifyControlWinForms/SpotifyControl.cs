@@ -9,6 +9,7 @@ using Utils.Properties;
 using RuleExamples;
 using Spotify.Commands;
 using SpotifyControlWinForms.Units;
+using SpotifyControlWinForms.Connections;
 
 namespace SpotifyControlWinForms
 {
@@ -37,13 +38,15 @@ namespace SpotifyControlWinForms
 		{
 			var riskOfRain2MusicPicker = new MusicPicker<string>("RoR2MusicPicker", RuleExamples.RiskOfRain2.MimicRule.Instance, RuleParsers.StringToSpotify).Init(GetLocation);
 			var minecraftMusicPicker = new MusicPicker<string>("MinecraftMusicPicker", RuleExamples.Minecraft.MimicRule.Instance, RuleParsers.StringToSpotify).Init(GetLocation);
+			OverwatchMithrixHandler overwatchMithrixHandler = new("Overwatch Mithrix Handler");
 
 			units = new(u => u.Name)
 			{
 				RoR2Categoriser.Instance.Init(GetLocation),
 				MinecraftCategoriser.Instance.Init(GetLocation),
 				riskOfRain2MusicPicker,
-				minecraftMusicPicker
+				minecraftMusicPicker,
+				overwatchMithrixHandler
 			};
 
 			Units = new(units);
@@ -59,12 +62,16 @@ namespace SpotifyControlWinForms
 			var minecraftConnection = new MinecraftConnection(new IPC.Client(5009, nameof(MinecraftConnection)));
 			minecraftConnection.Output += MinecraftCategoriser.Instance.Ingest;
 			minecraftConnection.ConnectionAttempted += Connection_ConnectionAttempted;
-			Connections = new(new ConnectionBase[] { MusicConnection.Instance, riskOfRain2Connection, minecraftConnection });
+			var overwatchConnection = new OverwatchConnection(SelectWorkshopLogFolder, s => MessageBox.Show(s));
+			overwatchConnection.Output += overwatchMithrixHandler.Ingest;
+			overwatchConnection.ConnectionAttempted += Connection_ConnectionAttempted;
+			Connections = new(new ConnectionBase[] { MusicConnection.Instance, riskOfRain2Connection, minecraftConnection, overwatchConnection });
 
 			Form = new(this);
 
 			RoR2Categoriser.Instance.Trigger += Unit_Trigger;
 			MinecraftCategoriser.Instance.Trigger += Unit_Trigger;
+			overwatchMithrixHandler.Trigger += OverwatchMithrixHandler_Trigger;
 			activeMusicPicker.OnSet += ActiveMusicPicker_OnSet;
 
 			MinecraftCategoriser.Instance.SetIsEnabled(this, true);
@@ -116,7 +123,7 @@ namespace SpotifyControlWinForms
 			return null;
 		}
 
-		internal static void SetLocation(UnitBase unit, string? location)
+		internal static void SetLocation(IRuleUnit unit, string? location)
 		{
 			var locations = RuleLocations;
 
@@ -138,8 +145,38 @@ namespace SpotifyControlWinForms
 		{
 			if (result)
 			{
-				((GameConnection)sender).SendToGame("mute");
+				(sender as IpcConnection)?.SendMessage("mute");
 			}
+		}
+
+		private void OverwatchMithrixHandler_Trigger(UnitUpdateInfo<MyRoR2.RoR2Context?> obj)
+		{
+			if (obj.Output is not null)
+			{
+				RoR2Categoriser.Instance.Ingest(obj.Output.Value);
+			}
+		}
+
+		private ConditionalValue<string> SelectWorkshopLogFolder()
+		{
+			string settingValue = Settings.Default.WorkshopLogFolder;
+
+			if (string.IsNullOrWhiteSpace(settingValue) || !Directory.Exists(settingValue))
+			{
+				var dialog = new FolderBrowserDialog() { Description = "Select Workshop Folder", ShowNewFolderButton = false };
+				switch (dialog.ShowDialog())
+				{
+					case DialogResult.OK:
+						Settings.Default.WorkshopLogFolder = settingValue = dialog.SelectedPath;
+						Settings.Default.Save();
+						break;
+
+					default:
+						return new();
+				}
+			}
+
+			return new(settingValue);
 		}
 
 		private bool MusicPicker_CanToggleIsEnabledEvent(UnitBase arg1)

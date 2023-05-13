@@ -22,6 +22,9 @@ namespace SpotifyControlWinForms
 			};
 			unit.IsEnabledTogglabilityUpdated += Unit_IsEnabledTogglabilityUpdated;
 			Unit_IsEnabledTogglabilityUpdated();
+
+			locationLabel.Visible = unit is IRuleUnit;
+			browseButton.Visible = unit is IRuleUnit;
 		}
 
 		private void Unit_IsEnabledTogglabilityUpdated()
@@ -41,9 +44,16 @@ namespace SpotifyControlWinForms
 
 		private void SaveRuleLocation(string? location)
 		{
-			SpotifyControl.SetLocation(unit, location);
-			Settings.Default.Save();
-			unit.SetRule(location);
+			if (unit is IRuleUnit ruleUnit)
+			{
+				SpotifyControl.SetLocation(ruleUnit, location);
+				Settings.Default.Save();
+				ruleUnit.SetRule(location);
+			}
+			else
+			{
+				throw new InvalidOperationException();
+			}
 		}
 
 		private void checkBox_CheckedChanged(object sender, EventArgs e)

@@ -1,4 +1,5 @@
-﻿using Utils;
+﻿using SpotifyControlWinForms.Connections;
+using Utils;
 
 namespace SpotifyControlWinForms
 {

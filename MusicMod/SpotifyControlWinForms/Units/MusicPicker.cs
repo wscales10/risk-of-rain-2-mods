@@ -30,7 +30,7 @@ namespace SpotifyControlWinForms.Units
 
 		protected override void HandleInput(TCategory input, IList<string> changedPropertyNames)
 		{
-			if (!changedPropertyNames.All(name => namesOfPropertiesWhichDoNotTriggerAnUpdate.Contains(name)))
+			if (changedPropertyNames.Count == 0 || !changedPropertyNames.All(name => namesOfPropertiesWhichDoNotTriggerAnUpdate.Contains(name)))
 			{
 				base.HandleInput(input, changedPropertyNames);
 			}

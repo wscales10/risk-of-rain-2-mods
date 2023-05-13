@@ -1,6 +1,7 @@
 ﻿using Rules;
 using Spotify;
 using Spotify.Commands;
+using SpotifyControlWinForms.Connections;
 using System.Xml.Linq;
 using Utils;
 using Utils.Coroutines;

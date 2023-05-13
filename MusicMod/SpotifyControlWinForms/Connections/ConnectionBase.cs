@@ -1,4 +1,4 @@
-﻿namespace SpotifyControlWinForms
+﻿namespace SpotifyControlWinForms.Connections
 {
 	public delegate void ConnectionAttemptedEventHandler(ConnectionBase sender, bool result);
 

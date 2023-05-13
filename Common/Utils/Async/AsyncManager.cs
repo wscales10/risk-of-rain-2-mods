@@ -28,9 +28,14 @@ namespace Utils.Async
 				// TODO: Use TaskCompletionSource
 				await task;
 			}
-			catch (OperationCanceledException e) when (e.CancellationToken == cancellationToken)
+			catch (OperationCanceledException ex) when (ex.CancellationToken == cancellationToken)
 			{
 			}
+		}
+
+		public static async Task RunIgnoringMyTokenAsync(Func<Task> taskGetter, CancellationToken cancellationToken)
+		{
+			await WaitForAnyCompletionAsync(taskGetter(), cancellationToken);
 		}
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003:Avoid awaiting foreign Tasks", Justification = "Helper method")]
@@ -74,40 +79,31 @@ namespace Utils.Async
 			return tcs.Task;
 		}
 
-		public JoinableTask RunSafely(Func<Task> taskGetter, CancellationToken cancellationToken = default)
-		{
-			return joinableTaskFactory.RunAsync(async () =>
-			{
-				try
-				{
-					await taskGetter();
-				}
-				catch (OperationCanceledException ex)
-				{
-					if (ex.CancellationToken != cancellationToken)
-					{
-						throw;
-					}
-				}
-			});
-		}
+		public JoinableTask RunSafely(Func<Task> taskGetter, CancellationToken cancellationToken = default) => joinableTaskFactory.RunAsync(() => RunIgnoringMyTokenAsync(taskGetter, cancellationToken));
 
-		public JoinableTask<T> RunSafely<T>(Func<Task<T>> taskGetter)
-		{
-			return joinableTaskFactory.RunAsync(async () =>
-			{
-				try
-				{
-					return await taskGetter();
-				}
-				catch (OperationCanceledException ex)
-				{
-					System.Diagnostics.Debugger.Break();
-					throw;
-				}
-			});
-		}
+		public JoinableTask<T> RunSafely<T>(Func<Task<T>> taskGetter) => joinableTaskFactory.RunAsync(() => RunIgnoringMyTokenAsync(taskGetter));
+
+		public void RunSynchronously(Func<Task> taskGetter) => RunIgnoringMyToken(taskGetter, default);
+
+		public T RunSynchronously<T>(Func<Task<T>> taskGetter) => RunIgnoringMyToken(taskGetter);
+
+		public void RunIgnoringMyToken(Func<Task> taskGetter, CancellationToken cancellationToken) => joinableTaskFactory.Run(() => RunIgnoringMyTokenAsync(taskGetter, cancellationToken));
+
+		public T RunIgnoringMyToken<T>(Func<Task<T>> taskGetter) => joinableTaskFactory.Run(() => RunIgnoringMyTokenAsync(taskGetter));
 
 		public async Task SwitchToMainThreadAsync() => await joinableTaskFactory.SwitchToMainThreadAsync();
+
+		private static async Task<T> RunIgnoringMyTokenAsync<T>(Func<Task<T>> taskGetter)
+		{
+			try
+			{
+				return await taskGetter();
+			}
+			catch (OperationCanceledException ex)
+			{
+				System.Diagnostics.Debugger.Break();
+				throw;
+			}
+		}
 	}
 }

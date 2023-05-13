@@ -1,4 +1,4 @@
-﻿namespace SpotifyControlWinForms
+﻿namespace SpotifyControlWinForms.Connections
 {
 	public class Connection : ConnectionBase
 	{

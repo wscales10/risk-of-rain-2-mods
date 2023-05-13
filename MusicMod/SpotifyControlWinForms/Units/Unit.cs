@@ -20,7 +20,7 @@ namespace SpotifyControlWinForms.Units
 
 		public void Ingest(TIn input)
 		{
-			this.Log($"[{DateTime.Now}] {nameof(Ingest)}");
+			this.Log($"[{DateTime.Now}] {Name}: {nameof(Ingest)}");
 			var properties = typeof(TIn).GetProperties().Where(p => p.GetIndexParameters().Length == 0).ToList();
 			var relevantProperties = properties.Where(p =>
 			{
@@ -36,20 +36,13 @@ namespace SpotifyControlWinForms.Units
 			}
 		}
 
-		protected virtual void HandleInput(TIn input, IList<string> changedPropertyNames)
-		{
-			this.Log($"[{DateTime.Now}] {nameof(HandleInput)}");
-			var transformedInput = Transform(input);
-			HandleRuleOutput(transformedInput, changedPropertyNames);
-		}
+		protected virtual void HandleInput(TIn input, IList<string> changedPropertyNames) => Output(Transform(input), changedPropertyNames);
 
-		protected virtual void HandleRuleOutput(TOut ruleOutput, IList<string> changedPropertyNames) => Output(ruleOutput, changedPropertyNames);
-
-		protected abstract TOut Transform(TIn input);
+		protected virtual TOut Transform(TIn input) => throw new NotSupportedException();
 
 		protected void Output(TOut output, IList<string> changedPropertyNames)
 		{
-			this.Log($"[{DateTime.Now}] {nameof(Output)}");
+			this.Log($"[{DateTime.Now}] {Name}: {nameof(Output)}");
 			Trigger?.Invoke(new(output, changedPropertyNames));
 		}
 

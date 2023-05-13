@@ -1,9 +1,9 @@
 ﻿using Minecraft;
 using Utils;
 
-namespace SpotifyControlWinForms
+namespace SpotifyControlWinForms.Connections
 {
-	public class MinecraftConnection : GameConnection
+	public class MinecraftConnection : IpcConnection
 	{
 		public MinecraftConnection(IPC.Client client) : base(client)
 		{

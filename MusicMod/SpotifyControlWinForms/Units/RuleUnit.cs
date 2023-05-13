@@ -25,19 +25,26 @@ namespace SpotifyControlWinForms.Units
 			return this;
 		}
 
-		internal override void SetRule(string? location)
+		public override void SetRule(string? location)
 		{
 			SpotifyControl.SetRule(RulePicker, location, RuleParser, DefaultRule);
 		}
 
 		protected override void HandleRuleOutput(TOut ruleOutput, IList<string> changedPropertyNames)
 		{
-			this.Log($"[{DateTime.Now}] {nameof(HandleRuleOutput)}");
+			this.Log($"[{DateTime.Now}] {Name}: {nameof(HandleRuleOutput)}");
 
 			if (!Equals(cachedOutput, ruleOutput))
 			{
 				Output(cachedOutput = ruleOutput, changedPropertyNames);
 			}
+		}
+
+		protected override void HandleInput(TIn input, IList<string> changedPropertyNames)
+		{
+			this.Log($"[{DateTime.Now}] {Name}: {nameof(HandleInput)}");
+			var transformedInput = Transform(input);
+			HandleRuleOutput(transformedInput, changedPropertyNames);
 		}
 	}
 }

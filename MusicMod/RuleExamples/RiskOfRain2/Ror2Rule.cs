@@ -42,8 +42,12 @@ namespace RuleExamples.RiskOfRain2
 					C("Mithrix Phase 3", 3).Named("Phase 3"),
 					C("Mithrix Phase 4", 4).Named("Phase 4"),
 					C("Mithrix Death Animation", 5).Named("Death Animation")),
-				IfRule.Create<RoR2Context, string>(Query.Create(nameof(RoR2Context.ScenePart), IntPattern.x == 1), "Pre-encounter",
-				"Moon escape sequence")).Named("Commencement"), Scenes.Commencement),
+				Switcher.RoR2ToString.Create(
+					nameof(RoR2Context.ScenePart),
+					"Moon escape sequence",
+					C("Moon Stage Start", 0).Named("Stage Start"),
+					C("Mithrix Pre-encounter", 1).Named("Pre-encounter")
+				)).Named("Commencement"), Scenes.Commencement),
 			C<MyScene>(IfRule.Create<RoR2Context, string>(
 				Query.Create<bool>(nameof(RoR2Context.IsBossEncounter), BoolPattern.True),
 				"Voidling Fight",

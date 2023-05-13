@@ -33,12 +33,13 @@ namespace RuleExamples.RiskOfRain2
 			).Named("Other");
 
 		private static readonly Rule<string, ICommandList> SpecialRule = Switcher.StringToSpotify.Create(
-			C(new CommandList(new StopCommand()), "Pre-encounter"),
-			C(Play("3KE5ossIfDAnBqNJFF8LfF", 6280), "Mithrix Phase 1"),
-			C(Play("3KE5ossIfDAnBqNJFF8LfF", 85675), "Mithrix Phase 2"),
+			C(Play("7G349JbUH3PRdj5e7780Iz"), "Moon Stage Start"),
+			C(new CommandList(new StopCommand()), "Mithrix Pre-encounter"),
+			C(Play("3KE5ossIfDAnBqNJFF8LfF", 21900), "Mithrix Phase 1"),
+			C(Play("3KE5ossIfDAnBqNJFF8LfF", 85000), "Mithrix Phase 2"),
 			C(Play("3KE5ossIfDAnBqNJFF8LfF", 148045), "Mithrix Phase 3"),
 			C(Play("3KE5ossIfDAnBqNJFF8LfF", 259950), "Mithrix Phase 4"),
-			C(new CommandList(new SetPlaybackOptionsCommand { RepeatMode = RepeatMode.Off }), "Mithrix Death Animation"),
+			C(new CommandList(new StopCommand()), "Mithrix Death Animation"),
 			C(Play("7G349JbUH3PRdj5e7780Iz"), "Moon escape sequence"),
 			C(Play("5fdiSSxvIsrCJ7sVkuhxnD"), "Voidling Fight"),
 			C(Play("2pl3Mzh2LeeUyzFacnHyZc"), "The Planetarium (Idle)"));

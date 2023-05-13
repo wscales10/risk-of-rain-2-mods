@@ -43,22 +43,25 @@
       <HintPath>D:\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\HGCSharpUtils.dll</HintPath>
     </Reference>
     <Reference Include="IPC">
-      <HintPath>..\IPC\bin\Debug\netstandard2.0\IPC.dll</HintPath>
+      <HintPath>..\IPC\bin\$(Configuration)\netstandard2.0\IPC.dll</HintPath>
     </Reference>
     <Reference Include="MyRoR2">
-      <HintPath>..\..\Common\MyRoR2\bin\Debug\netstandard2.0\MyRoR2.dll</HintPath>
+      <HintPath>..\..\Common\MyRoR2\bin\$(Configuration)\netstandard2.0\MyRoR2.dll</HintPath>
     </Reference>
     <Reference Include="Patterns">
-      <HintPath>..\..\Common\Patterns\bin\Debug\netstandard2.0\Patterns.dll</HintPath>
+      <HintPath>..\..\Common\Patterns\bin\$(Configuration)\netstandard2.0\Patterns.dll</HintPath>
     </Reference>
     <Reference Include="RoR2">
       <HintPath>D:\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\RoR2.dll</HintPath>
     </Reference>
+    <Reference Include="RuleExamples">
+      <HintPath>..\RuleExamples\bin\$(Configuration)\net6.0\RuleExamples.dll</HintPath>
+    </Reference>
     <Reference Include="Rules">
-      <HintPath>..\Rules\bin\Debug\netstandard2.0\Rules.dll</HintPath>
+      <HintPath>..\Rules\bin\$(Configuration)\netstandard2.0\Rules.dll</HintPath>
     </Reference>
     <Reference Include="Spotify">
-      <HintPath>..\Spotify\bin\Debug\netstandard2.0\Spotify.dll</HintPath>
+      <HintPath>..\Spotify\bin\$(Configuration)\netstandard2.0\Spotify.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
@@ -67,7 +70,7 @@
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed\UnityEngine.SharedInternalsModule.dll</HintPath>
     </Reference>
     <Reference Include="Utils">
-      <HintPath>..\..\Common\Utils\bin\Debug\netstandard2.0\Utils.dll</HintPath>
+      <HintPath>..\..\Common\Utils\bin\$(Configuration)\netstandard2.0\Utils.dll</HintPath>
     </Reference>
   </ItemGroup>
 

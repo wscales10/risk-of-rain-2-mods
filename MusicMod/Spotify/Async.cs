@@ -4,6 +4,6 @@ namespace Spotify
 {
 	internal static class Async
 	{
-		internal static AsyncManager Manager = new AsyncManager();
+		internal static AsyncManager Manager { get; } = new AsyncManager();
 	}
 }

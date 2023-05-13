@@ -1,6 +1,6 @@
 ﻿namespace SpotifyControlWinForms.Units
 {
-	public abstract class UnitBase
+	public abstract class UnitBase : IUnit
 	{
 		private bool isEnabled;
 
@@ -30,7 +30,5 @@
 				IsEnabledChanged?.Invoke(source, value);
 			}
 		}
-
-		internal abstract void SetRule(string? location);
 	}
 }

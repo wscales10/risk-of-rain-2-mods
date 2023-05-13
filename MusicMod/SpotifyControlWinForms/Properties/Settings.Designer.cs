@@ -33,5 +33,17 @@ namespace SpotifyControlWinForms.Properties {
                 this["RuleLocations"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WorkshopLogFolder {
+            get {
+                return ((string)(this["WorkshopLogFolder"]));
+            }
+            set {
+                this["WorkshopLogFolder"] = value;
+            }
+        }
     }
 }

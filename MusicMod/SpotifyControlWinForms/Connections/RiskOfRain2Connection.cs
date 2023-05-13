@@ -1,9 +1,9 @@
 ﻿using MyRoR2;
 using Utils;
 
-namespace SpotifyControlWinForms
+namespace SpotifyControlWinForms.Connections
 {
-	public class RiskOfRain2Connection : GameConnection
+	public class RiskOfRain2Connection : IpcConnection
 	{
 		public RiskOfRain2Connection(IPC.Client client) : base(client)
 		{

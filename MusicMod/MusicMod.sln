@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minecraft", "Minecraft\Mine
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RuleExamples", "RuleExamples\RuleExamples.csproj", "{2C87BC65-F554-489C-91F5-8ACA4AED6868}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContextModUnitTests", "ContextModUnitTests\ContextModUnitTests.csproj", "{E45AB240-D2DE-46E9-BAAC-1F72A56EFB9A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ContextModUnitTests", "ContextModUnitTests\ContextModUnitTests.csproj", "{E45AB240-D2DE-46E9-BAAC-1F72A56EFB9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +69,10 @@ Global
 		{E45AB240-D2DE-46E9-BAAC-1F72A56EFB9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E45AB240-D2DE-46E9-BAAC-1F72A56EFB9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E45AB240-D2DE-46E9-BAAC-1F72A56EFB9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EC9A352-98CA-438D-B875-B22EC07DCD06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EC9A352-98CA-438D-B875-B22EC07DCD06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EC9A352-98CA-438D-B875-B22EC07DCD06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EC9A352-98CA-438D-B875-B22EC07DCD06}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

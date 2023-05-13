@@ -240,11 +240,11 @@ namespace WPFApp
 		{
 			if (ruleType == (typeof(MyRoR2.RoR2Context), typeof(string)))
 			{
-				return Rules.Examples.Ror2Rule.Instance;
+				return RuleExamples.RiskOfRain2.Ror2Rule.Instance;
 			}
 			else if (ruleType == (typeof(string), typeof(ICommandList)))
 			{
-				return Rules.Examples.MimicRule.Instance;
+				return RuleExamples.RiskOfRain2.MimicRule.Instance;
 			}
 			else
 			{

@@ -1,5 +1,6 @@
 ﻿using MyRoR2;
 using Patterns;
+using RuleExamples;
 using Rules;
 using Rules.RuleTypes.Mutable;
 using Spotify;
@@ -20,8 +21,8 @@ namespace WPFApp
 	internal static class Info
 	{
 		private static readonly ReadOnlyDictionary<(Type, Type), IRuleParser> ruleParsers = new(new Dictionary<(Type, Type), IRuleParser> {
-			{(typeof(RoR2Context), typeof(string)), RuleParser.RoR2ToString },
-			{(typeof(string), typeof(ICommandList)), RuleParser.StringToSpotify },
+			{(typeof(RoR2Context), typeof(string)), RuleParsers.RoR2ToString },
+			{(typeof(string), typeof(ICommandList)), RuleParsers.StringToSpotify },
 		});
 
 		private static readonly Dictionary<Type, Type> interfaceToTypeDictionary = new();
