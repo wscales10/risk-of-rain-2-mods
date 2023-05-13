@@ -21,10 +21,18 @@ namespace WPFApp
 			this.Log("Attempting to import file " + fileName);
 			FileInfo fileInfo = new(fileName);
 			var xml = XElement.Load(fileName);
-			AutosaveLocation = fileInfo;
 
-			// ImportXml(xml, false);
-			throw new NotImplementedException();
+			var typePair = Info.TypePairs.SingleOrDefault(p => p.Item1.FullName == xml.Attribute("TContext")?.Value && p.Item2.FullName == xml.Attribute("TOut")?.Value);
+
+			if (typePair == default)
+			{
+				MessageBox.Show("Import Error", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+				return;
+			}
+
+			typeof(App).GetMethod("ImportXml").MakeGenericMethod(typePair.Item1, typePair.Item2).Invoke(this, new object[] { xml, false });
+
+			AutosaveLocation = fileInfo;
 
 			var playlistsFile = fileInfo.Directory.GetFiles("playlists.xml").SingleOrDefault();
 

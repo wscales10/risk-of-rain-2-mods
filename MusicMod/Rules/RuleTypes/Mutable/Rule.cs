@@ -62,6 +62,16 @@ namespace Rules.RuleTypes.Mutable
 			return this;
 		}
 
+		public override XElement ToXml()
+		{
+			var element = base.ToXml();
+
+			element.SetAttributeValue(nameof(TContext), typeof(TContext).FullName);
+			element.SetAttributeValue(nameof(TOut), typeof(TOut).FullName);
+
+			return element;
+		}
+
 		internal static TOut GetOutput(IRule<TContext, TOut> rule, TContext newContext)
 		{
 			var newBucketResponse = rule.GetBucket(newContext);
