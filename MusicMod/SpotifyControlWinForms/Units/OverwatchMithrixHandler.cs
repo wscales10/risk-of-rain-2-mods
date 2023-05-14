@@ -11,9 +11,11 @@ namespace SpotifyControlWinForms.Units
 
 		private RoR2Context cachedOutput;
 
-		public OverwatchMithrixHandler(string name) : base(name)
+		private OverwatchMithrixHandler(string name) : base(name)
 		{
 		}
+
+		public static OverwatchMithrixHandler Instance { get; } = new("Overwatch Mithrix Handler");
 
 		protected override RoR2Context? Transform(OverwatchConnection.LogEntry input)
 		{

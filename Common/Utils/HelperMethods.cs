@@ -14,12 +14,40 @@ namespace Utils
 				var current = pascalCaseString[i];
 				var next = i == pascalCaseString.Length - 1 ? 'A' : pascalCaseString[i + 1];
 
-				if (char.IsUpper(current) && (char.IsLower(previous) || (char.IsUpper(previous) && char.IsLower(next))))
+				if (shouldAddSpace())
 				{
 					list.Add(' ');
 				}
 
 				list.Add(current);
+
+				bool shouldAddSpace()
+				{
+					// Add spaces before and after numbers
+					if (char.IsNumber(current) != char.IsNumber(previous))
+					{
+						return true;
+					}
+
+					// Not the start of a word
+					if (!char.IsUpper(current))
+					{
+						return false;
+					}
+
+					// The start of a word
+					if (char.IsLower(previous))
+					{
+						return true;
+					}
+
+					if (char.IsUpper(previous) && char.IsLower(next))
+					{
+						return true;
+					}
+
+					return false;
+				}
 			}
 
 			return string.Concat(list);

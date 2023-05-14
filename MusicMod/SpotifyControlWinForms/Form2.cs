@@ -5,8 +5,12 @@
 		public Form2(SpotifyControl spotifyControl)
 		{
 			InitializeComponent();
-
 			tabControl.TabPages.Remove(testPage);
+			Shown += (sender, e) => Init(spotifyControl);
+		}
+
+		internal void Init(SpotifyControl spotifyControl)
+		{
 			testPage1.SpotifyControl = spotifyControl;
 
 			foreach (var connection in spotifyControl.Connections)
@@ -19,6 +23,9 @@
 			{
 				unitsLayoutPanel.Controls.Add(new UnitControl(unit));
 			}
+
+			LoadingLabel.Visible = false;
+			tabControl.Visible = true;
 		}
 
 		private void Form2_KeyPress(object sender, KeyPressEventArgs e)

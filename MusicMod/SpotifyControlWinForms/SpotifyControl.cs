@@ -38,7 +38,6 @@ namespace SpotifyControlWinForms
 		{
 			var riskOfRain2MusicPicker = new MusicPicker<string>("RoR2MusicPicker", RuleExamples.RiskOfRain2.MimicRule.Instance, RuleParsers.StringToSpotify).Init(GetLocation);
 			var minecraftMusicPicker = new MusicPicker<string>("MinecraftMusicPicker", RuleExamples.Minecraft.MimicRule.Instance, RuleParsers.StringToSpotify).Init(GetLocation);
-			OverwatchMithrixHandler overwatchMithrixHandler = new("Overwatch Mithrix Handler");
 
 			units = new(u => u.Name)
 			{
@@ -46,7 +45,7 @@ namespace SpotifyControlWinForms
 				MinecraftCategoriser.Instance.Init(GetLocation),
 				riskOfRain2MusicPicker,
 				minecraftMusicPicker,
-				overwatchMithrixHandler
+				OverwatchMithrixHandler.Instance
 			};
 
 			Units = new(units);
@@ -63,24 +62,12 @@ namespace SpotifyControlWinForms
 			minecraftConnection.Output += MinecraftCategoriser.Instance.Ingest;
 			minecraftConnection.ConnectionAttempted += Connection_ConnectionAttempted;
 			var overwatchConnection = new OverwatchConnection(SelectWorkshopLogFolder, s => MessageBox.Show(s));
-			overwatchConnection.Output += overwatchMithrixHandler.Ingest;
+			overwatchConnection.Output += OverwatchMithrixHandler.Instance.Ingest;
 			overwatchConnection.ConnectionAttempted += Connection_ConnectionAttempted;
 			Connections = new(new ConnectionBase[] { MusicConnection.Instance, riskOfRain2Connection, minecraftConnection, overwatchConnection });
-
-			Form = new(this);
-
-			RoR2Categoriser.Instance.Trigger += Unit_Trigger;
-			MinecraftCategoriser.Instance.Trigger += Unit_Trigger;
-			overwatchMithrixHandler.Trigger += OverwatchMithrixHandler_Trigger;
-			activeMusicPicker.OnSet += ActiveMusicPicker_OnSet;
-
-			MinecraftCategoriser.Instance.SetIsEnabled(this, true);
-			minecraftMusicPicker.SetIsEnabled(this, true);
 		}
 
 		public ReadOnlyCollection<UnitBase> Units { get; }
-
-		public Form2 Form { get; }
 
 		public ReadOnlyCollection<ConnectionBase> Connections { get; }
 
@@ -138,6 +125,16 @@ namespace SpotifyControlWinForms
 
 			locations.Add(unit.Name);
 			locations.Add(location);
+		}
+
+		internal void Init()
+		{
+			RoR2Categoriser.Instance.Trigger += Unit_Trigger;
+			MinecraftCategoriser.Instance.Trigger += Unit_Trigger;
+			OverwatchMithrixHandler.Instance.Trigger += OverwatchMithrixHandler_Trigger;
+			activeMusicPicker.OnSet += ActiveMusicPicker_OnSet;
+
+			// TODO: set active / enabled
 		}
 
 		// TODO: this should depend on whether a music unit is connected for this game - will be tricky to implement!

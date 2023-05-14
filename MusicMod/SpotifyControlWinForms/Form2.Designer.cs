@@ -35,6 +35,7 @@
 			this.connectionsLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
 			this.testPage = new System.Windows.Forms.TabPage();
 			this.testPage1 = new SpotifyControlWinForms.TestPage();
+			this.LoadingLabel = new System.Windows.Forms.Label();
 			this.tabControl.SuspendLayout();
 			this.unitsPage.SuspendLayout();
 			this.connectionsPage.SuspendLayout();
@@ -51,6 +52,7 @@
 			this.tabControl.SelectedIndex = 0;
 			this.tabControl.Size = new System.Drawing.Size(440, 417);
 			this.tabControl.TabIndex = 0;
+			this.tabControl.Visible = false;
 			// 
 			// unitsPage
 			// 
@@ -108,11 +110,21 @@
 			this.testPage1.Size = new System.Drawing.Size(420, 377);
 			this.testPage1.TabIndex = 0;
 			// 
+			// LoadingLabel
+			// 
+			this.LoadingLabel.AutoSize = true;
+			this.LoadingLabel.Location = new System.Drawing.Point(201, 213);
+			this.LoadingLabel.Name = "LoadingLabel";
+			this.LoadingLabel.Size = new System.Drawing.Size(62, 15);
+			this.LoadingLabel.TabIndex = 1;
+			this.LoadingLabel.Text = "Loading ...";
+			// 
 			// Form2
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(464, 441);
+			this.Controls.Add(this.LoadingLabel);
 			this.Controls.Add(this.tabControl);
 			this.KeyPreview = true;
 			this.Name = "Form2";
@@ -123,6 +135,7 @@
 			this.connectionsPage.ResumeLayout(false);
 			this.testPage.ResumeLayout(false);
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 
@@ -135,5 +148,6 @@
 		private FlowLayoutPanel unitsLayoutPanel;
 		private TabPage testPage;
 		private TestPage testPage1;
+		private Label LoadingLabel;
 	}
 }

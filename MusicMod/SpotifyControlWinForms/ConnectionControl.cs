@@ -12,7 +12,7 @@ namespace SpotifyControlWinForms
 			InitializeComponent();
 			this.connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			connection.ConnectionAttempted += Connection_ConnectionAttempted;
-			nameLabel.Text = connection.GetType().GetDisplayName();
+			nameLabel.Text = HelperMethods.AddSpacesToPascalCaseString(connection.GetType().GetDisplayName());
 		}
 
 		private void Connection_ConnectionAttempted(ConnectionBase _, bool obj)
