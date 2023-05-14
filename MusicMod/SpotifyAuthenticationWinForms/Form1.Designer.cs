@@ -28,6 +28,8 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.label1 = new System.Windows.Forms.Label();
 			this.FlowStateLabel = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
@@ -36,6 +38,7 @@
 			this.ConfigureButton = new System.Windows.Forms.Button();
 			this.ResetAccessButton = new System.Windows.Forms.Button();
 			this.ResetRefreshButton = new System.Windows.Forms.Button();
+			this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
 			this.SuspendLayout();
 			// 
 			// label1
@@ -114,6 +117,13 @@
 			this.ResetRefreshButton.UseVisualStyleBackColor = true;
 			this.ResetRefreshButton.Click += new System.EventHandler(this.ResetRefreshButton_Click);
 			// 
+			// notifyIcon
+			// 
+			this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
+			this.notifyIcon.Text = "Spotify Authorisation Helper";
+			this.notifyIcon.Visible = true;
+			this.notifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon_MouseDoubleClick);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -129,6 +139,7 @@
 			this.Controls.Add(this.label1);
 			this.Name = "Form1";
 			this.Text = "Spotify Authorisation";
+			this.Resize += new System.EventHandler(this.Form1_Resize);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -144,5 +155,6 @@
 		private Button ConfigureButton;
 		private Button ResetAccessButton;
 		private Button ResetRefreshButton;
+		private NotifyIcon notifyIcon;
 	}
 }
