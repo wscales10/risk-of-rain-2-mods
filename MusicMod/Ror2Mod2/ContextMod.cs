@@ -6,8 +6,7 @@ using Utils;
 
 namespace Ror2Mod2
 {
-	[BepInDependency("com.bepis.r2api")]
-	[BepInPlugin("com.woodyscales.contextmod", "Context Reporting", "1.0.0")]
+	[BepInPlugin("com.woodyscales.contextmod", "Context Reporting", "0.0.1")]
 	[BepInDependency(R2API.R2API.PluginGUID)]
 	[BepInDependency("com.rune580.riskofoptions")]
 	public class ContextMod : BaseUnityPlugin

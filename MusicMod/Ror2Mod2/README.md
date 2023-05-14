@@ -1,3 +1,3 @@
-# Spotify Integration
+# Context Reporting Mod
 
-Spotify Integration for Risk of Rain 2
+Context Reporting mod for Risk of Rain 2
