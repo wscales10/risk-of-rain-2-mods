@@ -16,9 +16,7 @@ namespace WPFApp.Controls.Rows
 				RefreshOutputUi,
 				this,
 				new(
-					() => Output?.Name ?? "Untitled playlist",
-					new DependencyInformation(
-						ButtonOutputUi.OutputViewModel, nameof(PlaylistViewModel.Name))));
+					() => Output?.Name ?? "Untitled playlist"));
 		}
 
 		protected ButtonOutputUi<Playlist> ButtonOutputUi { get; }
