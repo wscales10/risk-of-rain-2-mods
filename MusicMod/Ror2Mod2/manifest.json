@@ -1,6 +1,6 @@
 {
 	"name": "Context_Reporting",
-	"description": "Context Reporting for Risk of Rain 2"
+	"description": "Context Reporting for Risk of Rain 2",
 	"version_number": "0.0.1",
 	"website_url": "https://github.com/wscales10/risk-of-rain-2-mods/tree/main/MusicMod/Ror2Mod2",
 	"dependencies": [
