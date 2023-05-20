@@ -44,7 +44,7 @@ namespace WPFApp
         {
         }
 
-        public override Navigation Reversed => new RemoveNavigation(ViewModels);
+        public override Navigation Reversed => new RemoveNavigation(ViewModels.Reverse());
     }
 
     public class RemoveNavigation : SingleDirectionNavigation
@@ -57,6 +57,6 @@ namespace WPFApp
         {
         }
 
-        public override Navigation Reversed => new AddNavigation(ViewModels);
+        public override Navigation Reversed => new AddNavigation(ViewModels.Reverse());
     }
 }
