@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Xml.Linq;
 using WPFApp.Controls.Rows;
@@ -9,6 +10,8 @@ namespace WPFApp
 	public interface INavigationContext : INotifyPropertyChanged
 	{
 		bool IsHome { get; }
+
+		string Path { get; }
 
 		void GoHome();
 
@@ -23,11 +26,19 @@ namespace WPFApp
 		bool NavigateTreeTo(IRuleRow ruleRow);
 
 		XElement GetClipboardItem();
+
+		string GetLabel(NavigationViewModelBase viewModel);
+
+		void Register(NavigationViewModelBase viewModel, IRuleRow ruleRow);
 	}
 
 	public class MutableNavigationContext : NotifyPropertyChangedBase, INavigationContext
 	{
+		private readonly Dictionary<NavigationViewModelBase, IRuleRow> register = new();
+
 		private bool isHome;
+
+		private string path;
 
 		public event Func<object, NavigationViewModelBase> OnGoInto;
 
@@ -48,6 +59,13 @@ namespace WPFApp
 			set => SetProperty(ref isHome, value);
 		}
 
+		public string Path
+		{
+			get => path;
+
+			set => SetProperty(ref path, value);
+		}
+
 		public void GoHome() => OnGoHome?.Invoke();
 
 		public NavigationViewModelBase GoInto(object obj) => OnGoInto?.Invoke(obj);
@@ -61,6 +79,28 @@ namespace WPFApp
 		public bool NavigateTreeTo(IRuleRow ruleRow) => TreeNavigationRequested?.Invoke(ruleRow) ?? false;
 
 		public XElement GetClipboardItem() => ClipboardItemRequested?.Invoke();
+
+		public string GetLabel(NavigationViewModelBase viewModel)
+		{
+			if (register.TryGetValue(viewModel, out var ruleRow))
+			{
+				return ruleRow?.Label;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		public void Register(NavigationViewModelBase viewModel, IRuleRow ruleRow)
+		{
+			if (viewModel is null)
+			{
+				throw new ArgumentNullException(nameof(viewModel));
+			}
+
+			register[viewModel] = ruleRow;
+		}
 	}
 
 	public class NavigationContext : NotifyPropertyChangedBase, INavigationContext
@@ -70,6 +110,8 @@ namespace WPFApp
 		public NavigationContext(MutableNavigationContext mutable) => SubscribeTo(this.mutable = mutable);
 
 		public bool IsHome => mutable.IsHome;
+
+		public string Path => mutable.Path;
 
 		public NavigationViewModelBase GoInto(object obj) => mutable.GoInto(obj);
 
@@ -84,5 +126,9 @@ namespace WPFApp
 		public bool NavigateTreeTo(IRuleRow ruleRow) => mutable.NavigateTreeTo(ruleRow);
 
 		public XElement GetClipboardItem() => ((INavigationContext)mutable).GetClipboardItem();
+
+		public string GetLabel(NavigationViewModelBase viewModel) => mutable.GetLabel(viewModel);
+
+		public void Register(NavigationViewModelBase viewModel, IRuleRow ruleRow) => mutable.Register(viewModel, ruleRow);
 	}
 }

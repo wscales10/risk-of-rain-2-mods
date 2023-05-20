@@ -2,14 +2,16 @@
 
 namespace WPFApp.ViewModels
 {
-    internal interface INameableViewModel
-    {
-        string Name { get; set; }
+	internal interface INameableViewModel
+	{
+		string Name { get; set; }
 
-        string NameWatermark { get; }
+		string NameWatermark { get; }
 
-        string Title { get; }
+		string Title { get; }
 
-        MutableSaveResultBase<string> NameResult { get; }
-    }
+		MutableSaveResultBase<string> NameResult { get; }
+
+		INavigationContext NavigationContext { get; }
+	}
 }

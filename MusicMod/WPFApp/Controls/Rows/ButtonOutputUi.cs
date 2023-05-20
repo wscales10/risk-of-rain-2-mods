@@ -9,6 +9,8 @@ namespace WPFApp.Controls.Rows
 	internal class ButtonOutputUi<TOut> : NotifyPropertyChangedBase
 		where TOut : class
 	{
+		private readonly NavigationContext navigationContext;
+
 		private readonly Action refresh;
 
 		private readonly IRow<TOut> parentRow;
@@ -19,6 +21,7 @@ namespace WPFApp.Controls.Rows
 
 		public ButtonOutputUi(NavigationContext navigationContext, Action refresh, IRow<TOut> parentRow, PropertyInformation<string> getButtonContent)
 		{
+			this.navigationContext = navigationContext;
 			this.refresh = refresh;
 			this.parentRow = parentRow;
 			this.getButtonContent = getButtonContent.GetValue;
@@ -45,6 +48,11 @@ namespace WPFApp.Controls.Rows
 
 			private set
 			{
+				if (value is not null)
+				{
+					navigationContext.Register(value, parentRow as IRuleRow);
+				}
+
 				var oldValue = OutputViewModel;
 
 				RemovePropertyDependency(nameof(ButtonContent), oldValue, nameof(NavigationViewModelBase.AsString));

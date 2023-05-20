@@ -340,6 +340,13 @@ namespace WPFApp
 
 			Render = () =>
 			{
+				navigationContext.Path = string.Join(" > ", ViewModelList.Skip(1).Select(vm =>
+				{
+					var output = navigationContext.GetLabel(vm);
+					output ??= (vm as IItemViewModel)?.ItemTypeName;
+					output ??= "?";
+					return output;
+				}));
 				navigationContext.IsHome = ViewModelList.Count < 2;
 				mainViewModel.BackCommand.CanExecute = history.CurrentIndex > 0;
 				mainViewModel.ForwardCommand.CanExecute = history.ReverseIndex > 0;

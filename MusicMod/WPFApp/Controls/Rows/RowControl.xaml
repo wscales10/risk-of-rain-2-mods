@@ -35,6 +35,7 @@
             Padding="3"
             Visibility="{Binding NameWatermark, Converter={StaticResource ValueConverterGroup}}"
             BorderBrush="{Binding NameResult.Status, Converter={StaticResource StatusToBrushConverter}}" />
+        <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="3" Text="{Binding NavigationContext.Path}" />
         <TextBlock Grid.Row="1" VerticalAlignment="Center" Margin="3" Text="{Binding Title}" />
         <Grid Grid.Column="1" Grid.Row="1">
             <Grid.ColumnDefinitions>
