@@ -1,7 +1,11 @@
 ﻿using BepInEx;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using R2API.Networking;
 using R2API.Networking.Interfaces;
 using RoR2;
+using RoR2.UI;
+using System;
 using UnityEngine.Networking;
 
 namespace MultiplayerMod
@@ -15,6 +19,21 @@ namespace MultiplayerMod
 			NetworkingAPI.RegisterMessageType<ResumeMessage>();
 			On.RoR2.PauseManager.CCTogglePause += PauseManager_CCTogglePause;
 			On.RoR2.UI.PauseScreenController.OnDisable += PauseScreenController_OnDisable;
+			IL.RoR2.UI.PauseScreenController.OnEnable += PauseScreenController_OnEnable;
+		}
+
+		private void PauseScreenController_OnEnable(ILContext il)
+		{
+			var c = new ILCursor(il);
+
+			c.GotoNext(x => x.MatchCall<NetworkServer>("get_dontListen"),
+				x => x.MatchStsfld<PauseScreenController>("paused"));
+			c.Remove();
+			c.EmitDelegate<Func<bool>>(() =>
+			{
+				_ = NetworkServer.dontListen;
+				return true;
+			});
 		}
 
 		private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)
