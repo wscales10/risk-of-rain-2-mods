@@ -1,5 +1,4 @@
 ﻿using BepInEx;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using R2API.Networking;
 using R2API.Networking.Interfaces;
@@ -11,6 +10,7 @@ using UnityEngine.Networking;
 namespace MultiplayerMod
 {
 	[BepInPlugin("com.woodyscales.multiplayermod", "Multiplayer Helper", "0.0.1")]
+	[BepInDependency(NetworkingAPI.PluginGUID)]
 	public class MultiplayerMod : BaseUnityPlugin
 	{
 		public void Awake()
