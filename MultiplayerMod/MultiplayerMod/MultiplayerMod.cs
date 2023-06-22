@@ -36,15 +36,22 @@ namespace MultiplayerMod
 			});
 		}
 
-		private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)
+		private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, PauseScreenController self)
 		{
-			new ResumeMessage().ForServer.Send(NetworkDestination.Server);
+			Logging.Record($"Entered method {nameof(PauseScreenController_OnDisable)}");
+			PauseMessageBase message = ResumeMessage.Create().ForServer;
+			Logging.Record("Sending message to server");
+			message.Send(NetworkDestination.Server);
+			Logging.Record($"Message {message.Guid} sent to server, calling orig");
 			orig(self);
 		}
 
 		private void PauseManager_CCTogglePause(On.RoR2.PauseManager.orig_CCTogglePause orig, ConCommandArgs args)
 		{
-			bool bypass = args.TryGetArgString(0) == "bypass";
+			string arg = args.TryGetArgString(0);
+			Logging.Record($"arg: '{arg}'");
+
+			bool bypass = arg?.EndsWith("bypass") ?? false;
 
 			if (bypass || !NetworkManager.singleton.isNetworkActive)
 			{
@@ -54,23 +61,31 @@ namespace MultiplayerMod
 
 			PauseMessageBase message;
 
-			if (PauseManager.isPaused)
+			bool shouldPause = (arg?.StartsWith("pause") ?? false) || (!(arg?.StartsWith("resume") ?? false) && !PauseManager.isPaused);
+
+			if (shouldPause)
 			{
-				message = new ResumeMessage();
+				Logging.Record($"Creating PauseMessage");
+				message = PauseMessage.Create();
 			}
 			else
 			{
-				message = new PauseMessage();
+				Logging.Record($"Creating ResumeMessage");
+				message = ResumeMessage.Create();
 			}
 
 			if (NetworkServer.active)
 			{
+				Logging.Record("Sending message to clients");
 				message.ForClient.Send(NetworkDestination.Clients);
+				Logging.Record($"Message {message.Guid} sent to clients, calling orig");
 				orig(args);
 			}
 			else
 			{
+				Logging.Record("Sending message to server");
 				message.ForServer.Send(NetworkDestination.Server);
+				Logging.Record($"Message {message.Guid} sent to server");
 			}
 		}
 	}

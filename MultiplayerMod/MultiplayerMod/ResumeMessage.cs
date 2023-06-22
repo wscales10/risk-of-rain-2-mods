@@ -5,26 +5,50 @@ namespace MultiplayerMod
 {
 	public class ResumeMessage : PauseMessageBase
 	{
-		public ResumeMessage() : this(true)
+		public ResumeMessage() : this(false)
 		{
 		}
 
-		public ResumeMessage(bool toServer) : base(toServer)
+		private ResumeMessage(string guid, bool toServer) : base(guid, toServer)
 		{
+		}
+
+		private ResumeMessage(bool withGuid, bool toServer = true) : base(withGuid, toServer)
+		{
+		}
+
+		public static ResumeMessage Create()
+		{
+			ResumeMessage output = new ResumeMessage(true);
+			Logging.Record($"Created a new {nameof(ResumeMessage)} with GUID {output.Guid}");
+			return output;
 		}
 
 		public override void OnReceived()
 		{
+			base.OnReceived();
+
 			if (ToServer)
 			{
-				Console.instance.SubmitCmd(null, "pause", false);
+				Console.instance.SubmitCmd(null, "pause resume", false);
+				return;
 			}
-			else if (PauseManager.isPaused && !NetworkServer.active)
+
+			if (!PauseManager.isPaused)
 			{
-				Console.instance.SubmitCmd(null, "pause bypass", false);
+				Logging.Record("PauseManager is not paused, so cannot resume");
+				return;
 			}
+
+			if (NetworkServer.active)
+			{
+				Logging.Record("Message for clients receieved by server, not processing");
+				return;
+			}
+
+			Console.instance.SubmitCmd(null, "pause resume-bypass", false);
 		}
 
-		protected override PauseMessageBase Instantiate(bool toServer) => new ResumeMessage(toServer);
+		protected override PauseMessageBase Instantiate(bool toServer) => new ResumeMessage(Guid, toServer);
 	}
 }
