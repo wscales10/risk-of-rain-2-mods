@@ -78,8 +78,16 @@ namespace MultiplayerMod
 			{
 				Logging.Record("Sending message to clients");
 				message.ForClient.Send(NetworkDestination.Clients);
-				Logging.Record($"Message {message.Guid} sent to clients, calling orig");
-				orig(args);
+
+				if (arg?.StartsWith("resume") ?? false)
+				{
+					Logging.Record($"Message {message.Guid} sent to clients");
+				}
+				else
+				{
+					Logging.Record($"Message {message.Guid} sent to clients, calling orig");
+					orig(args);
+				}
 			}
 			else
 			{
