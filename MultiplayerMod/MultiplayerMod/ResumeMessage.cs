@@ -34,15 +34,15 @@ namespace MultiplayerMod
 				return;
 			}
 
-			if (!PauseManager.isPaused)
-			{
-				Logging.Record("PauseManager is not paused, so cannot resume");
-				return;
-			}
-
 			if (NetworkServer.active)
 			{
 				Logging.Record("Message for clients receieved by server, not processing");
+				return;
+			}
+
+			if (!PauseManager.isPaused)
+			{
+				Logging.Record("PauseManager is not paused, so cannot resume");
 				return;
 			}
 

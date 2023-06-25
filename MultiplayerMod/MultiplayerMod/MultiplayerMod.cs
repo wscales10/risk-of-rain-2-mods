@@ -39,10 +39,21 @@ namespace MultiplayerMod
 		private void PauseScreenController_OnDisable(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, PauseScreenController self)
 		{
 			Logging.Record($"Entered method {nameof(PauseScreenController_OnDisable)}");
-			PauseMessageBase message = ResumeMessage.Create().ForServer;
-			Logging.Record("Sending message to server");
-			message.Send(NetworkDestination.Server);
-			Logging.Record($"Message {message.Guid} sent to server, calling orig");
+			PauseMessageBase message = ResumeMessage.Create();
+
+			if (NetworkServer.active)
+			{
+				Logging.Record("Sending message to clients");
+				message.ForClient.Send(NetworkDestination.Clients);
+				Logging.Record($"Message {message.Guid} sent to clients, calling orig");
+			}
+			else
+			{
+				Logging.Record("Sending message to server");
+				message.ForServer.Send(NetworkDestination.Server);
+				Logging.Record($"Message {message.Guid} sent to server, calling orig");
+			}
+
 			orig(self);
 		}
 
@@ -51,7 +62,7 @@ namespace MultiplayerMod
 			string arg = args.TryGetArgString(0);
 			Logging.Record($"arg: '{arg}'");
 
-			bool bypass = arg?.EndsWith("bypass") ?? false;
+			bool bypass = arg?.EndsWith("bypass") ?? PauseManager.isPaused;
 
 			if (bypass || !NetworkManager.singleton.isNetworkActive)
 			{
@@ -67,33 +78,47 @@ namespace MultiplayerMod
 			{
 				Logging.Record($"Creating PauseMessage");
 				message = PauseMessage.Create();
-			}
-			else
-			{
-				Logging.Record($"Creating ResumeMessage");
-				message = ResumeMessage.Create();
-			}
 
-			if (NetworkServer.active)
-			{
-				Logging.Record("Sending message to clients");
-				message.ForClient.Send(NetworkDestination.Clients);
-
-				if (arg?.StartsWith("resume") ?? false)
+				if (NetworkServer.active)
 				{
-					Logging.Record($"Message {message.Guid} sent to clients");
-				}
-				else
-				{
+					Logging.Record("Sending message to clients");
+					message.ForClient.Send(NetworkDestination.Clients);
 					Logging.Record($"Message {message.Guid} sent to clients, calling orig");
 					orig(args);
 				}
+				else
+				{
+					Logging.Record("Sending message to server");
+					message.ForServer.Send(NetworkDestination.Server);
+					Logging.Record($"Message {message.Guid} sent to server");
+				}
 			}
 			else
 			{
-				Logging.Record("Sending message to server");
-				message.ForServer.Send(NetworkDestination.Server);
-				Logging.Record($"Message {message.Guid} sent to server");
+				if (NetworkServer.active)
+				{
+					if (PauseManager.isPaused)
+					{
+						Logging.Record("Calling orig");
+						orig(args);
+					}
+					else
+					{
+						Logging.Record($"Creating ResumeMessage");
+						message = ResumeMessage.Create();
+						Logging.Record("Sending message to clients");
+						message.ForClient.Send(NetworkDestination.Clients);
+						Logging.Record($"Message {message.Guid} sent to clients");
+					}
+				}
+				else
+				{
+					Logging.Record($"Creating ResumeMessage");
+					message = ResumeMessage.Create();
+					Logging.Record("Sending message to server");
+					message.ForServer.Send(NetworkDestination.Server);
+					Logging.Record($"Message {message.Guid} sent to server");
+				}
 			}
 		}
 	}

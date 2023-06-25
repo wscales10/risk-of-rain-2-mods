@@ -34,6 +34,12 @@ namespace MultiplayerMod
 				return;
 			}
 
+			if (NetworkServer.active)
+			{
+				Logging.Record("Message for clients receieved by server, not processing");
+				return;
+			}
+
 			if (PauseManager.isPaused)
 			{
 				Logging.Record("PauseManager is paused, so cannot pause");
@@ -43,12 +49,6 @@ namespace MultiplayerMod
 			if (!NetworkManager.singleton.isNetworkActive)
 			{
 				Logging.Record("NetworkManager is not active, so custom pause logic not required");
-				return;
-			}
-
-			if (NetworkServer.active)
-			{
-				Logging.Record("Message for clients receieved by server, not processing");
 				return;
 			}
 
