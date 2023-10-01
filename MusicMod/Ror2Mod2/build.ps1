@@ -1,15 +1,18 @@
-﻿$workingDir = $Args[0]
+﻿param (
+    [string]$WorkingDir = ".", 
+    [string]$ProfileName = $(throw "ProfileName is required."),
+    [string]$ModName = $(throw "ModName is required.")
+)
 
-if(!$workingDir)
-{
-    $workingDir = "."
+$ErrorActionPreference = "Stop"
+
+$inputDir = Join-Path $WorkingDir "bin\Debug\netstandard2.0"
+$outputDir = $Env:appdata + "\r2modmanPlus-local\RiskOfRain2\profiles\"+$ProfileName+"\BepInEx\plugins\"+$ModName
+
+if (!(Test-Path $outputDir)) {
+    exit
 }
 
-$profileName = $Args[1]
-$modName = $Args[2]
-
-$inputDir = Join-Path $workingDir "bin\Debug\netstandard2.0"
-$outputDir = $Env:appdata + "\r2modmanPlus-local\RiskOfRain2\profiles\"+$profileName+"\BepInEx\plugins\"+$modName
 $pdbs = Get-ChildItem -Path $inputDir\* -Include *.pdb
 $mono = "D:\Program Files\Unity\2019.4.26f1\Editor\Data\MonoBleedingEdge\bin\mono"
 
