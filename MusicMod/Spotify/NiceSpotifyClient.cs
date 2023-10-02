@@ -108,7 +108,8 @@ namespace Spotify
 						case 1:
 							IsAuthorised = false;
 							OnAccessTokenRequested?.Invoke();
-							return await ExecuteAsync(commands, cancellationToken, errors);
+                            errors.Add(error);
+                            return await ExecuteAsync(commands, cancellationToken, errors);
 					}
 
 					IsAuthorised = false;
