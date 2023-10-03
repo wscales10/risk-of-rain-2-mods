@@ -10,7 +10,7 @@ $inputDir = Join-Path $WorkingDir "bin\Debug\netstandard2.0"
 $outputDir = $Env:appdata + "\r2modmanPlus-local\RiskOfRain2\profiles\"+$ProfileName+"\BepInEx\plugins\"+$ModName
 
 if (!(Test-Path $outputDir)) {
-    exit
+    throw "Output path does not exist: ${outputDir}"
 }
 
 $pdbs = Get-ChildItem -Path $inputDir\* -Include *.pdb
@@ -24,4 +24,4 @@ foreach ($pdb in $pdbs)
     & $mono ".\pdb2mdb.exe" $outputDir\$dll
 }
 
-#explorer $outputDir
+explorer $outputDir
