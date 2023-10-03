@@ -127,22 +127,9 @@ namespace Ror2Mod2
             }
         }
 
-        private void PreEncounter_OnEnter(On.EntityStates.Missions.BrotherEncounter.PreEncounter.orig_OnEnter orig, EntityStates.Missions.BrotherEncounter.PreEncounter self)
-        {
-            orig(self);
-            scenePart = 1;
-        }
-
         private void Run_onRunDestroyGlobal(Run obj)
         {
             runOutcome = null;
-            UpdateContext();
-        }
-
-        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
-        {
-            orig(self, gameEndingDef);
-            runOutcome = ConvertEndingToOutcome(gameEndingDef);
             UpdateContext();
         }
 
@@ -172,47 +159,10 @@ namespace Ror2Mod2
             UpdateContext();
         }
 
-        private void CombatSquad_AddMember(On.RoR2.CombatSquad.orig_AddMember orig, CombatSquad self, CharacterMaster memberMaster)
-        {
-            orig(self, memberMaster);
-            UpdateContext();
-        }
-
-        private void BossGroup_UpdateBossMemories(On.RoR2.BossGroup.orig_UpdateBossMemories orig, BossGroup self)
-        {
-            orig(self);
-            UpdateContext();
-        }
-
-        private void BossGroup_RememberBoss(On.RoR2.BossGroup.orig_RememberBoss orig, BossGroup self, CharacterMaster master)
-        {
-            orig(self, master);
-            UpdateContext();
-        }
-
         private Entity GetEntity(GameObject bodyPrefab)
         {
             var bodyPrefabString = bodyPrefab?.name?.ToUpper();
             return bodyPrefabString is null ? null : new Entity(bodyPrefabRegex.Replace(bodyPrefabString, string.Empty));
-        }
-
-        /// <summary>
-        /// Increment <see cref="scenePart"/> when
-        /// </summary>
-        /// <param name="orig"></param>
-        /// <param name="self"></param>
-        private void BrotherEncounterPhaseBaseState_OnExit(On.EntityStates.Missions.BrotherEncounter.BrotherEncounterPhaseBaseState.orig_OnExit orig, EntityStates.Missions.BrotherEncounter.BrotherEncounterPhaseBaseState self)
-        {
-            orig(self);
-            scenePart++;
-            UpdateContext();
-        }
-
-        private void CreditsController_OnEnable(On.RoR2.CreditsController.orig_OnEnable orig, CreditsController self)
-        {
-            orig(self);
-            scenePart++;
-            UpdateContext();
         }
 
         private void OnSceneChanged(Scene _, Scene newScene)
