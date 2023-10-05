@@ -4,36 +4,38 @@ using Utils;
 
 namespace Music
 {
-	public abstract class MusicBase
-	{
-		protected readonly Logger Log;
+    public abstract class MusicBase
+    {
+        protected readonly Logger Log;
 
-		private readonly AsyncSemaphore asyncSemaphore = new AsyncSemaphore(1);
+        private readonly AsyncSemaphore asyncSemaphore = new AsyncSemaphore(1);
 
-		protected MusicBase(Logger logger = null)
-		{
-			Log = logger;
-		}
+        protected MusicBase(Logger logger = null)
+        {
+            Log = logger;
+        }
 
-		public abstract void OpenConfigurationPage();
+        public VolumeController VolumeController { get; } = new VolumeController();
 
-		public abstract void Pause();
+        public abstract void OpenConfigurationPage();
 
-		public abstract void Resume();
+        public abstract void Pause();
 
-		public void Play(object musicIdentifier)
-		{
-			_ = PlayAsyncWrapper(musicIdentifier);
-		}
+        public abstract void Resume();
 
-		protected abstract Task PlayAsync(object musicIdentifier);
+        public void Play(object musicIdentifier)
+        {
+            _ = PlayAsyncWrapper(musicIdentifier);
+        }
 
-		private async Task PlayAsyncWrapper(object musicIdentifier)
-		{
-			using (await asyncSemaphore.EnterAsync())
-			{
-				await PlayAsync(musicIdentifier);
-			}
-		}
-	}
+        protected abstract Task PlayAsync(object musicIdentifier);
+
+        private async Task PlayAsyncWrapper(object musicIdentifier)
+        {
+            using (await asyncSemaphore.EnterAsync())
+            {
+                await PlayAsync(musicIdentifier);
+            }
+        }
+    }
 }

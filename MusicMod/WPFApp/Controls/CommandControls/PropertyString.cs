@@ -84,7 +84,7 @@ namespace WPFApp.Controls.CommandControls
             [typeof(ISpotifyItem)] = () => new SpotifyItemWrapper2(NavigationContext),
             [typeof(SpotifyItem)] = () => new SpotifyItemWrapper(),
             [typeof(bool)] = () => new BoolWrapper(),
-            [typeof(IOffset)] = () => new OffsetWrapper(NavigationContext)
+            [typeof(IOffset)] = () => new OffsetWrapper(NavigationContext),
         });
 
         public static PropertyString<T> Create<T>(bool required, params string[] chunks) => new(required, chunks);

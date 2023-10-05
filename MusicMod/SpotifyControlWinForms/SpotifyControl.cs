@@ -13,21 +13,6 @@ using SpotifyControlWinForms.Connections;
 
 namespace SpotifyControlWinForms
 {
-    public class ConcreteKeyedCollection<TKey, TItem> : KeyedCollection<TKey, TItem> where TKey : notnull
-    {
-        private readonly Func<TItem, TKey> getKeyForItem;
-
-        public ConcreteKeyedCollection(Func<TItem, TKey> getKeyForItem)
-        {
-            this.getKeyForItem = getKeyForItem ?? throw new ArgumentNullException(nameof(getKeyForItem));
-        }
-
-        protected override TKey GetKeyForItem(TItem item)
-        {
-            return getKeyForItem(item);
-        }
-    }
-
     public class SpotifyControl
     {
         private readonly ConcreteKeyedCollection<string, UnitBase> units;
