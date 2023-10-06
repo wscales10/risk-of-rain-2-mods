@@ -29,6 +29,7 @@ namespace SpotifyControlWinForms
                 RoR2Categoriser.Instance.Init(GetLocation),
                 MinecraftCategoriser.Instance.Init(GetLocation),
                 riskOfRain2MusicPicker,
+                RoR2VolumeController.Instance,
                 minecraftMusicPicker,
                 OverwatchMithrixHandler.Instance
             };
@@ -41,7 +42,13 @@ namespace SpotifyControlWinForms
             units.OfType<MusicPicker<string>>().ForEach(p => p.Trigger += MusicPicker_Trigger);
 
             var riskOfRain2Connection = new RiskOfRain2Connection(new IPC.Client(5008, nameof(RiskOfRain2Connection)));
-            riskOfRain2Connection.Output += RoR2Categoriser.Instance.Ingest;
+
+            riskOfRain2Connection.Output += (context) =>
+            {
+                RoR2Categoriser.Instance.Ingest(context);
+                RoR2VolumeController.Instance.Ingest(context);
+            };
+
             riskOfRain2Connection.ConnectionAttempted += Connection_ConnectionAttempted;
             var minecraftConnection = new MinecraftConnection(new IPC.Client(5009, nameof(MinecraftConnection)));
             minecraftConnection.Output += MinecraftCategoriser.Instance.Ingest;
@@ -115,6 +122,7 @@ namespace SpotifyControlWinForms
         internal void Init()
         {
             RoR2Categoriser.Instance.Trigger += Unit_Trigger;
+            RoR2VolumeController.Instance.Trigger += MusicPicker_Trigger;
             MinecraftCategoriser.Instance.Trigger += Unit_Trigger;
             OverwatchMithrixHandler.Instance.Trigger += OverwatchMithrixHandler_Trigger;
             activeMusicPicker.OnSet += ActiveMusicPicker_OnSet;

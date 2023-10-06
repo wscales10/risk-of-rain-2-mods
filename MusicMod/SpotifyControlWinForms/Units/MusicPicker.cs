@@ -5,35 +5,36 @@ using Utils;
 
 namespace SpotifyControlWinForms.Units
 {
-	internal class MusicPicker<TCategory> : RuleUnit<TCategory, ICommandList>
-	{
-		private readonly string[] namesOfPropertiesWhichDoNotTriggerAnUpdate;
+    internal class MusicPicker<TCategory> : RuleUnit<TCategory, ICommandList>
+    {
+        // TODO: explain this
+        private readonly string[] namesOfPropertiesWhichDoNotTriggerAnUpdate;
 
-		public MusicPicker(string name, IRule<TCategory, ICommandList>? defaultRule, RuleParser<TCategory, ICommandList> ruleParser, params string[] namesOfPropertiesWhichDoNotTriggerAnUpdate) : base(name, ruleParser)
-		{
-			DefaultRule = defaultRule;
-			this.namesOfPropertiesWhichDoNotTriggerAnUpdate = namesOfPropertiesWhichDoNotTriggerAnUpdate;
-		}
+        public MusicPicker(string name, IRule<TCategory, ICommandList>? defaultRule, RuleParser<TCategory, ICommandList> ruleParser, params string[] namesOfPropertiesWhichDoNotTriggerAnUpdate) : base(name, ruleParser)
+        {
+            DefaultRule = defaultRule;
+            this.namesOfPropertiesWhichDoNotTriggerAnUpdate = namesOfPropertiesWhichDoNotTriggerAnUpdate;
+        }
 
-		public override IRule<TCategory, ICommandList>? DefaultRule { get; }
+        public override IRule<TCategory, ICommandList>? DefaultRule { get; }
 
-		protected override ICommandList Transform(TCategory input)
-		{
-			this.Log($"[{DateTime.Now}] {nameof(Transform)}");
-			if (input?.Equals(default) ?? true)
-			{
-				return new CommandList(new StopCommand()).ToReadOnly();
-			}
+        protected override ICommandList Transform(TCategory input)
+        {
+            this.Log($"[{DateTime.Now}] {nameof(Transform)}");
+            if (input?.Equals(default) ?? true)
+            {
+                return new CommandList(new StopCommand()).ToReadOnly();
+            }
 
-			return base.Transform(input);
-		}
+            return base.Transform(input);
+        }
 
-		protected override void HandleInput(TCategory input, IList<string> changedPropertyNames)
-		{
-			if (changedPropertyNames.Count == 0 || !changedPropertyNames.All(name => namesOfPropertiesWhichDoNotTriggerAnUpdate.Contains(name)))
-			{
-				base.HandleInput(input, changedPropertyNames);
-			}
-		}
-	}
+        protected override void HandleInput(TCategory input, IList<string> changedPropertyNames)
+        {
+            if (changedPropertyNames.Count == 0 || !changedPropertyNames.All(name => namesOfPropertiesWhichDoNotTriggerAnUpdate.Contains(name)))
+            {
+                base.HandleInput(input, changedPropertyNames);
+            }
+        }
+    }
 }

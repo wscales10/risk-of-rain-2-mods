@@ -139,6 +139,7 @@ namespace Ror2Mod2
         private void ChargingState_FixedUpdate(On.RoR2.TeleporterInteraction.ChargingState.orig_FixedUpdate orig, EntityStates.BaseState self)
         {
             SetIsChargingTeleporter();
+            orig(self);
         }
     }
 }
