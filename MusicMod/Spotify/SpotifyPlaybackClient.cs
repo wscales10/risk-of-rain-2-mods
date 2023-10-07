@@ -62,8 +62,6 @@ namespace Spotify
             };
         }
 
-        public event Func<SetVolumeCommand, int> GetVolumePercent;
-
         private enum PlayerState
         {
             Stopped,
@@ -170,11 +168,10 @@ namespace Spotify
                     {
                         bool success = true;
                         var playback = await Client.Player.GetCurrentPlayback();
-                        var volumePercent = GetVolumePercent(volumeCommand);
 
-                        if (playback?.Device.VolumePercent != volumePercent)
+                        if (playback?.Device.VolumePercent != volumeCommand.VolumePercent)
                         {
-                            success &= await Client.Player.SetVolume(new PlayerVolumeRequest(volumePercent));
+                            success &= await Client.Player.SetVolume(new PlayerVolumeRequest(volumeCommand.VolumePercent));
                         }
 
                         return success;

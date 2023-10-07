@@ -1,58 +1,66 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
 using Utils;
 
 namespace Music
 {
-    public class VolumeController
+    public class VolumeController : IVolumeProvider
     {
-        private readonly ConcreteKeyedCollection<string, VolumeKnob> volumeKnobs = new ConcreteKeyedCollection<string, VolumeKnob>(knob => knob.Name);
+        private readonly ConcreteKeyedCollection<string, INamedVolumeProvider> volumeProviders = new ConcreteKeyedCollection<string, INamedVolumeProvider>(provider => provider.Name);
 
-        public double Volume => volumeKnobs.Select(k => k.Volume).Aggregate(1d, (v1, v2) => v1 * v2);
+        public double Volume => volumeProviders.Select(k => k.Volume).Aggregate(1d, (v1, v2) => v1 * v2);
+
+        public int VolumePercent => (int)Math.Ceiling(Volume * 100);
 
         public VolumeKnob GetOrAdd(string name)
         {
-            if (volumeKnobs.Contains(name))
+            if (volumeProviders.Contains(name))
             {
-                return volumeKnobs[name];
+                var provider = volumeProviders[name];
+
+                if (provider is VolumeKnob knob)
+                {
+                    return knob;
+                }
+
+                throw new ArgumentOutOfRangeException(nameof(name), name, "Not a name of a knob");
             }
             else
             {
                 var knob = new VolumeKnob(name, 1);
-                AddKnobs(knob);
+                AddProviders(knob);
                 return knob;
             }
         }
 
-        public VolumeController AddKnobs(params VolumeKnob[] volumeKnobs)
+        public VolumeController AddProviders(params INamedVolumeProvider[] providers)
         {
-            foreach (var knob in volumeKnobs)
+            foreach (var provider in providers)
             {
-                if (!this.volumeKnobs.TryGetValue(knob.Name, out var existingKnob))
+                if (!volumeProviders.TryGetValue(provider.Name, out var existingProvider))
                 {
-                    this.volumeKnobs.Add(knob);
+                    volumeProviders.Add(provider);
                 }
-                else if (existingKnob != knob)
+                else if (existingProvider != provider)
                 {
-                    throw new InvalidOperationException($"A knob with the name '{knob.Name}' already exists");
+                    throw new InvalidOperationException($"A knob with the name '{provider.Name}' already exists");
                 }
             }
 
             return this;
         }
 
-        public VolumeController RemoveKnobs(params VolumeKnob[] volumeKnobs)
+        public VolumeController RemoveProviders(params INamedVolumeProvider[] providers)
         {
-            foreach (var knob in volumeKnobs)
+            foreach (var provider in providers)
             {
-                if (this.volumeKnobs.TryGetValue(knob.Name, out var existingKnob) && existingKnob == knob)
+                if (volumeProviders.TryGetValue(provider.Name, out var existingProvider) && existingProvider == provider)
                 {
-                    this.volumeKnobs.Remove(knob);
+                    volumeProviders.Remove(provider);
                 }
                 else
                 {
-                    throw new InvalidOperationException("Knob is not on this controller");
+                    throw new InvalidOperationException($"'{provider.GetType().GetDisplayName()}' is not on this controller");
                 }
             }
 

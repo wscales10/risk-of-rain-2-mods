@@ -10,13 +10,13 @@ namespace SpotifyControlWinForms.Units
 
     public abstract class Unit<TIn, TOut> : UnitBase
     {
-        private TIn? cachedInput;
-
         protected Unit(string name) : base(name)
         {
         }
 
         public event Action<UnitUpdateInfo<TOut>>? Trigger;
+
+        protected TIn? CachedInput { get; private set; }
 
         public void Ingest(TIn input)
         {
@@ -24,16 +24,16 @@ namespace SpotifyControlWinForms.Units
             var properties = typeof(TIn).GetProperties().Where(p => p.GetIndexParameters().Length == 0).ToList();
             var relevantProperties = properties.Where(p =>
             {
-                return !Unit<TIn, TOut>.SpecialEquals(cachedInput is null ? null : p.GetValue(cachedInput), input is null ? null : p.GetValue(input), p.PropertyType);
+                return !Unit<TIn, TOut>.SpecialEquals(CachedInput is null ? null : p.GetValue(CachedInput), input is null ? null : p.GetValue(input), p.PropertyType);
             }).ToList();
             var changedPropertyNames = relevantProperties.Select(p => p.Name).ToList();
-
-            cachedInput = input;
 
             if (IsEnabled)
             {
                 HandleInput(input, changedPropertyNames);
             }
+
+            CachedInput = input;
         }
 
         protected virtual void HandleInput(TIn input, IList<string> changedPropertyNames) => Output(Transform(input), changedPropertyNames);

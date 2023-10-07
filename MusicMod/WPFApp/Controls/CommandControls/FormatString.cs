@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -133,6 +134,7 @@ namespace WPFApp.Controls.CommandControls
             }
         }
 
+        [SuppressMessage("Minor Code Smell", "S6603:The collection-specific \"TrueForAll\" method should be used instead of the \"All\" extension", Justification = "<Pending>")]
         internal SaveResult TryGetProperties(Command command, bool trySave)
         {
             var duplicate = Command.FromXml(command.ToXml());

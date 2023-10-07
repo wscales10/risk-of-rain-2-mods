@@ -48,21 +48,13 @@ namespace Spotify.Commands
         {
             var volumePercent = element.Attribute(nameof(VolumePercent)).Value;
             VolumePercent = int.Parse(volumePercent);
-            VolumeControlName = (element.Attribute(nameof(VolumeControlName))?.Value);
         }
 
         public int VolumePercent { get; set; }
 
-        public string VolumeControlName { get; set; }
-
         protected override void AddDetail(XElement element)
         {
             element.SetAttributeValue(nameof(VolumePercent), VolumePercent);
-
-            if (VolumeControlName != null)
-            {
-                element.SetAttributeValue(nameof(VolumeControlName), VolumeControlName);
-            }
         }
     }
 }

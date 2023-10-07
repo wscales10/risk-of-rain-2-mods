@@ -130,11 +130,6 @@ namespace WPFApp.Controls.Rows
                         PropertyString.Create<SetPlaybackOptionsCommand>(false, "Repeat Mode: ", nameof(SetPlaybackOptionsCommand.RepeatMode)),
                         PropertyString.Create<SetPlaybackOptionsCommand>(false, "Shuffle: ", nameof(SetPlaybackOptionsCommand.Shuffle)));
 
-                case SetVolumeCommand:
-                    return FormatString.Create(
-                        PropertyString.Create<SetVolumeCommand>(true, new IntWrapper(0, 100), "Volume %: ", nameof(SetVolumeCommand.VolumePercent)),
-                        PropertyString.Create<SetVolumeCommand>(false, new TextWrapper(new() { Width = 100 }).WithValidation(s => s.Trim().Length > 0), "Volume Control Name: ", nameof(SetVolumeCommand.VolumeControlName)));
-
                 case TransferCommand:
                     return FormatString.Create(
                         PropertyString.Create<TransferCommand>(true, "From ", nameof(TransferCommand.FromTrackId)),

@@ -27,9 +27,10 @@ namespace SpotifyControlWinForms
             units = new(u => u.Name)
             {
                 RoR2Categoriser.Instance.Init(GetLocation),
-                MinecraftCategoriser.Instance.Init(GetLocation),
-                riskOfRain2MusicPicker,
                 RoR2VolumeController.Instance,
+                MinecraftCategoriser.Instance.Init(GetLocation),
+                SpotifyVolumeController.Instance,
+                riskOfRain2MusicPicker,
                 minecraftMusicPicker,
                 OverwatchMithrixHandler.Instance
             };
@@ -40,6 +41,8 @@ namespace SpotifyControlWinForms
             units.OfType<MusicPicker<string>>().ForEach(p => p.IsEnabledChanged += MusicPicker_IsEnabledChanged);
             units.OfType<MusicPicker<string>>().ForEach(p => p.CanToggleIsEnabledEvent += MusicPicker_CanToggleIsEnabledEvent);
             units.OfType<MusicPicker<string>>().ForEach(p => p.Trigger += MusicPicker_Trigger);
+
+            SpotifyVolumeController.Instance.Trigger += MusicPicker_Trigger;
 
             var riskOfRain2Connection = new RiskOfRain2Connection(new IPC.Client(5008, nameof(RiskOfRain2Connection)));
 
@@ -122,7 +125,7 @@ namespace SpotifyControlWinForms
         internal void Init()
         {
             RoR2Categoriser.Instance.Trigger += Unit_Trigger;
-            RoR2VolumeController.Instance.Trigger += MusicPicker_Trigger;
+            RoR2VolumeController.Instance.Trigger += VolumeController_Trigger;
             MinecraftCategoriser.Instance.Trigger += Unit_Trigger;
             OverwatchMithrixHandler.Instance.Trigger += OverwatchMithrixHandler_Trigger;
             activeMusicPicker.OnSet += ActiveMusicPicker_OnSet;
@@ -137,6 +140,11 @@ namespace SpotifyControlWinForms
             {
                 (sender as IpcConnection)?.SendMessage("mute");
             }
+        }
+
+        private void VolumeController_Trigger(UnitUpdateInfo<int> obj)
+        {
+            SpotifyVolumeController.Instance.Ingest(obj.Output);
         }
 
         private void OverwatchMithrixHandler_Trigger(UnitUpdateInfo<MyRoR2.RoR2Context?> obj)

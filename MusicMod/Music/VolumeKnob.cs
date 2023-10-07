@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace Music
 {
-    public class VolumeKnob
+    public class VolumeKnob : INamedVolumeProvider
     {
         private double volume;
 
@@ -15,6 +14,9 @@ namespace Music
 
         public string Name { get; }
 
+        /// <summary>
+        /// Gets or sets a <see cref="double"/> value between 0 and 1 representing the volume.
+        /// </summary>
         public double Volume
         {
             get => volume;

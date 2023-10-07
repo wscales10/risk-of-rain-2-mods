@@ -15,7 +15,6 @@ namespace SpotifyControlWinForms
         public SpotifyController(IEnumerable<Playlist> playlists, Logger logger) : base(logger)
         {
             Client = new SpotifyPlaybackClient(playlists, logger, authorisationClient.Preferences);
-            Client.GetVolumePercent += Client_GetVolumePercent;
             Client.OnAccessTokenRequested += authorisationClient.RequestNewAccessToken;
             Client.OnError += e => Log(e);
 
@@ -126,17 +125,6 @@ namespace SpotifyControlWinForms
                         throw new ArgumentException($"Expected a {nameof(ICommandList)} but received a {musicIdentifier.GetType().Name} instead", nameof(musicIdentifier));
                 }
             }
-        }
-
-        private int Client_GetVolumePercent(SetVolumeCommand volumeCommand)
-        {
-            if (volumeCommand.VolumeControlName is null)
-            {
-                return volumeCommand.VolumePercent;
-            }
-
-            VolumeController.GetOrAdd(volumeCommand.VolumeControlName).Volume = volumeCommand.VolumePercent / 100d;
-            return (int)Math.Ceiling(VolumeController.Volume * 100);
         }
     }
 }

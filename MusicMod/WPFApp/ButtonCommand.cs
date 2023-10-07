@@ -34,7 +34,7 @@ namespace WPFApp
 
         public ButtonCommand(Action<object> action, params BindingPredicate[] bindingPredicates) : base(action)
         {
-            canExecute = bindingPredicates.All(bp => bp.Predicate(bp.BindingSource.GetPropertyValue(bp.PropertyName)));
+            canExecute = Array.TrueForAll(bindingPredicates, bp => bp.Predicate(bp.BindingSource.GetPropertyValue(bp.PropertyName)));
 
             foreach (BindingPredicate bp in bindingPredicates)
             {
