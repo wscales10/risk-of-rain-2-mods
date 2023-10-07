@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using MyRoR2;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Utils;
 

@@ -107,6 +107,7 @@ namespace Ror2Mod2
         private void ChargedState_OnEnter(On.RoR2.TeleporterInteraction.ChargedState.orig_OnEnter orig, EntityStates.BaseState self)
         {
             orig(self);
+            SetIsChargingTeleporter(false, suppressUpdate: true);
             UpdateContext();
         }
 
@@ -119,7 +120,26 @@ namespace Ror2Mod2
         private void ChargingState_OnEnter(On.RoR2.TeleporterInteraction.ChargingState.orig_OnEnter orig, EntityStates.BaseState self)
         {
             orig(self);
+            SetIsChargingTeleporter(suppressUpdate: true);
             UpdateContext();
+        }
+
+        private void PlayerCharacterMasterController_OnEnable(On.RoR2.PlayerCharacterMasterController.orig_OnEnable orig, PlayerCharacterMasterController self)
+        {
+            orig(self);
+            SetPlayerCharacterMaster();
+        }
+
+        private void PlayerCharacterMasterController_OnDisable(On.RoR2.PlayerCharacterMasterController.orig_OnDisable orig, PlayerCharacterMasterController self)
+        {
+            orig(self);
+            SetPlayerCharacterMaster();
+        }
+
+        private void ChargingState_FixedUpdate(On.RoR2.TeleporterInteraction.ChargingState.orig_FixedUpdate orig, EntityStates.BaseState self)
+        {
+            SetIsChargingTeleporter();
+            orig(self);
         }
     }
 }

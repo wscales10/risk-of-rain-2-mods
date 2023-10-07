@@ -19,6 +19,8 @@ namespace Ror2Mod2
 
         private readonly Logger Log;
 
+        private CharacterMaster playerCharacterMaster;
+
         private int scenePart;
 
         private bool isBossEncounter;
@@ -30,6 +32,8 @@ namespace Ror2Mod2
         private Scene? currentScene;
 
         private RunOutcome? runOutcome;
+
+        private bool isChargingTeleporter;
 
         public ContextHelper(Logger logger)
         {
@@ -51,6 +55,8 @@ namespace Ror2Mod2
             On.RoR2.TeleporterInteraction.IdleToChargingState.OnEnter += IdleToChargingState_OnEnter;
 
             On.RoR2.TeleporterInteraction.ChargedState.OnEnter += ChargedState_OnEnter;
+
+            On.RoR2.TeleporterInteraction.ChargingState.FixedUpdate += ChargingState_FixedUpdate;
 
             Application.quitting += () => NewContext?.Invoke(default);
 
@@ -74,6 +80,9 @@ namespace Ror2Mod2
             Run.onRunStartGlobal += Run_onRunStartGlobal;
             On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
             Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
+
+            On.RoR2.PlayerCharacterMasterController.OnEnable += PlayerCharacterMasterController_OnEnable;
+            On.RoR2.PlayerCharacterMasterController.OnDisable += PlayerCharacterMasterController_OnDisable;
         }
 
         public event Action<RoR2Context> NewContext;
@@ -86,7 +95,7 @@ namespace Ror2Mod2
         {
             Log("returning new Context");
             var bossGroup = TeleporterInteraction.instance?.GetComponent<BossGroup>() ?? InstanceTracker.GetInstancesList<BossGroup>().SingleOrDefault();
-            var playerBodyPrefab = PlayerCharacterMasterController.instances.FirstOrDefault()?.master?.bodyPrefab;
+            var playerBodyPrefab = playerCharacterMaster?.bodyPrefab;
 
             return new RoR2Context()
             {
@@ -98,6 +107,7 @@ namespace Ror2Mod2
                 BossBodyName = new Entity(bossGroup?.bestObservedName?.ToUpper()),
                 Bosses = (bossGroup?.combatSquad?.readOnlyMembersList?.Select(m => GetEntity(m?.bodyPrefab)) ?? Enumerable.Empty<Entity>()).ToReadOnlyCollection(),
                 TeleporterState = TeleporterInteraction.instance?.activationState.AsEnum<TeleporterState>(),
+                IsChargingTeleporter = isChargingTeleporter,
                 IsBossEncounter = isBossEncounter || !(bossGroup is null),
                 ScenePart = scenePart,
                 RunType = GetRunType(Run.instance) ?? runType,
@@ -124,6 +134,23 @@ namespace Ror2Mod2
 
                 default:
                     return RunType.Normal;
+            }
+        }
+
+        private void SetIsChargingTeleporter(bool? input = null, bool suppressUpdate = false)
+        {
+            bool value = input ?? TeleporterInteraction.instance.holdoutZoneController.IsBodyInChargingRadius(playerCharacterMaster.GetBody());
+
+            if (isChargingTeleporter == value)
+            {
+                return;
+            }
+
+            isChargingTeleporter = value;
+
+            if (!suppressUpdate)
+            {
+                UpdateContext();
             }
         }
 
@@ -157,6 +184,12 @@ namespace Ror2Mod2
         {
             runOutcome = RunOutcome.Undecided;
             UpdateContext();
+        }
+
+        private void SetPlayerCharacterMaster()
+        {
+            // TODO: check in mutiplayer
+            playerCharacterMaster = PlayerCharacterMasterController.instances.FirstOrDefault()?.master;
         }
 
         private Entity GetEntity(GameObject bodyPrefab)
