@@ -60,6 +60,25 @@ namespace SpotifyControlWinForms
             overwatchConnection.Output += OverwatchMithrixHandler.Instance.Ingest;
             overwatchConnection.ConnectionAttempted += Connection_ConnectionAttempted;
             Connections = new(new ConnectionBase[] { MusicConnection.Instance, riskOfRain2Connection, minecraftConnection, overwatchConnection });
+
+            foreach (var unit in units)
+            {
+                unit.SetIsEnabled(this, EnabledUnits.Contains(unit.Name));
+
+                unit.IsEnabledChanged += (source, newValue) =>
+                {
+                    if (newValue)
+                    {
+                        EnabledUnits.Add(unit.Name);
+                    }
+                    else
+                    {
+                        EnabledUnits.Remove(unit.Name);
+                    }
+
+                    Settings.Default.Save();
+                };
+            }
         }
 
         public ReadOnlyCollection<UnitBase> Units { get; }
@@ -67,6 +86,8 @@ namespace SpotifyControlWinForms
         public ReadOnlyCollection<ConnectionBase> Connections { get; }
 
         internal static StringCollection RuleLocations => Settings.Default.RuleLocations ??= new();
+
+        internal static StringCollection EnabledUnits => Settings.Default.EnabledUnits ??= new();
 
         internal static void SetRule<TIn, TOut>(MutableRulePicker<TIn, TOut> rulePicker, string? uri, RuleParser<TIn, TOut> ruleParser, IRule<TIn, TOut>? defaultRule = null)
         {

@@ -45,5 +45,16 @@ namespace SpotifyControlWinForms.Properties {
                 this["WorkshopLogFolder"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection EnabledUnits {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["EnabledUnits"]));
+            }
+            set {
+                this["EnabledUnits"] = value;
+            }
+        }
     }
 }
