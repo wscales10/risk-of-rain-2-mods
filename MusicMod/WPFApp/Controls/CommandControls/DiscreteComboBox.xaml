@@ -1,12 +1,15 @@
-﻿<UserControl x:Class="WPFApp.Controls.CommandControls.DiscreteComboBox"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:WPFApp.Controls.CommandControls" xmlns:converters="clr-namespace:WPFApp.Converters"
-             mc:Ignorable="d"
-             d:DesignHeight="200" d:DesignWidth="200">
-    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+﻿<UserControl
+    x:Class="WPFApp.Controls.CommandControls.DiscreteComboBox"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:WPFApp.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WPFApp.Controls.CommandControls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="200"
+    d:DesignWidth="200"
+    mc:Ignorable="d">
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="0" />
@@ -25,7 +28,10 @@
                 </Style>
             </local:AddButton.Style>
         </local:AddButton>
-        <Popup AllowsTransparency="True" Grid.Row="1" x:Name="popup">
+        <Popup
+            x:Name="popup"
+            Grid.Row="1"
+            AllowsTransparency="True">
             <Popup.Resources>
                 <converters:CenterPopupConverter x:Key="CenterPopupConverter" />
             </Popup.Resources>
@@ -39,8 +45,8 @@
                             <Setter Property="HorizontalOffset">
                                 <Setter.Value>
                                     <MultiBinding Converter="{StaticResource CenterPopupConverter}">
-                                        <Binding Path="ActualWidth" ElementName="button" />
-                                        <Binding Path="ActualWidth" ElementName="ListBox" />
+                                        <Binding ElementName="button" Path="ActualWidth" />
+                                        <Binding ElementName="ListBox" Path="ActualWidth" />
                                     </MultiBinding>
                                 </Setter.Value>
                             </Setter>
@@ -48,8 +54,15 @@
                     </Style.Triggers>
                 </Style>
             </Popup.Style>
-            <Border Background="White" BorderThickness="1" BorderBrush="DarkGray" CornerRadius="1">
-                <ListBox Background="Transparent" x:Name="ListBox" BorderThickness="0" />
+            <Border
+                Background="White"
+                BorderBrush="DarkGray"
+                BorderThickness="1"
+                CornerRadius="1">
+                <ListBox
+                    x:Name="ListBox"
+                    Background="Transparent"
+                    BorderThickness="0" />
             </Border>
         </Popup>
     </Grid>
