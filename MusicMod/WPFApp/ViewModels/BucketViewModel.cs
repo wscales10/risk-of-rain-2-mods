@@ -10,95 +10,99 @@ using Spotify.Commands;
 
 namespace WPFApp.ViewModels
 {
-	internal abstract class BucketViewModel<TContext, TOut> : RuleViewModelBase<Bucket<TContext, TOut>>
-	{
-		protected BucketViewModel(Bucket<TContext, TOut> rule, NavigationContext navigationContext) : base(rule, navigationContext)
-		{
-		}
+    internal abstract class BucketViewModel<TContext, TOut> : RuleViewModelBase<Bucket<TContext, TOut>>
+    {
+        protected BucketViewModel(Bucket<TContext, TOut> rule, NavigationContext navigationContext) : base(rule, navigationContext)
+        {
+        }
 
-		protected static Bucket<TContext, TOut> FillBucket(Bucket<TContext, TOut> bucket)
-		{
-			if (bucket.Output is null)
-			{
-				bucket.Output = Info.Instantiate<TOut>();
-			}
+        protected static Bucket<TContext, TOut> FillBucket(Bucket<TContext, TOut> bucket)
+        {
+            if (bucket.Output is null)
+            {
+                bucket.Output = Info.Instantiate<TOut>();
+            }
 
-			return bucket;
-		}
-	}
+            return bucket;
+        }
+    }
 
-	internal class CommandListBucketViewModel<TContext> : BucketViewModel<TContext, ICommandList>
-	{
-		public CommandListBucketViewModel(Bucket<TContext, ICommandList> item, NavigationContext navigationContext) : base(FillBucket(item), navigationContext)
-		{
-			((INotifyCollectionChanged)TypedRowManager.Items).CollectionChanged += BucketViewModel_CollectionChanged;
-			TypedRowManager.BindTo(Item.Output, AddCommand, r => r.Output);
+    internal class CommandListBucketViewModel<TContext> : BucketViewModel<TContext, ICommandList>
+    {
+        public CommandListBucketViewModel(Bucket<TContext, ICommandList> item, NavigationContext navigationContext, PlaylistsController playlistsController) : base(FillBucket(item), navigationContext)
+        {
+            ((INotifyCollectionChanged)TypedRowManager.Items).CollectionChanged += BucketViewModel_CollectionChanged;
+            TypedRowManager.BindTo(Item.Output, AddCommand, r => r.Output);
 
-			ExtraCommands = new[]
-			{
-				new ButtonContext { Label = "Add Command", Command = new ButtonCommand(_ => AddCommand()) }
-			};
+            ExtraCommands = new[]
+            {
+                new ButtonContext { Label = "Add Command", Command = new ButtonCommand(_ => AddCommand()) }
+            };
 
-			SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
-		}
+            SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
+            PlaylistsController = playlistsController;
+        }
 
-		public override string Title => "Execute in order:";
+        public override string Title => "Execute in order:";
 
-		public override IEnumerable<ButtonContext> ExtraCommands { get; }
+        public PlaylistsController PlaylistsController { get; }
 
-		public override string AsString
-		{
-			get
-			{
-				string output = base.AsString;
+        public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
-				if (output is not null)
-				{
-					return output;
-				}
+        public override string AsString
+        {
+            get
+            {
+                string output = base.AsString;
 
-				int count = TypedRowManager.Items.Count;
+                if (output is not null)
+                {
+                    return output;
+                }
 
-				if (count == 0)
-				{
-					return null;
-				}
+                int count = TypedRowManager.Items.Count;
 
-				output = TypedRowManager.Items[0].AsString;
+                if (count == 0)
+                {
+                    return null;
+                }
 
-				if (count > 1)
-				{
-					output += $" (+{count - 1})";
-				}
+                output = TypedRowManager.Items[0].AsString;
 
-				return output;
-			}
-		}
+                if (count > 1)
+                {
+                    output += $" (+{count - 1})";
+                }
 
-		protected override RowManager<CommandListRow> TypedRowManager { get; } = new();
+                return output;
+            }
+        }
 
-		private void BucketViewModel_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		{
-			if (CollectionChanged.GetChangedIndices<CommandListRow>(sender, e).Contains(0))
-			{
-				var oldValues = CollectionChanged.GetOldValues<CommandListRow>(sender, e);
+        protected override RowManager<CommandListRow> TypedRowManager { get; } = new();
 
-				if (oldValues.Count > 0)
-				{
-					RemovePropertyDependency(nameof(AsString), oldValues[0], nameof(CommandListRow.AsString));
-				}
+        private void BucketViewModel_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (CollectionChanged.GetChangedIndices<CommandListRow>(sender, e).Contains(0))
+            {
+                var oldValues = CollectionChanged.GetOldValues<CommandListRow>(sender, e);
 
-				if (TypedRowManager.Items.Count > 0)
-				{
-					SetPropertyDependency(nameof(AsString), TypedRowManager.Items[0], nameof(CommandListRow.AsString));
-				}
-			}
-		}
+                if (oldValues.Count > 0)
+                {
+                    RemovePropertyDependency(nameof(AsString), oldValues[0], nameof(CommandListRow.AsString));
+                }
 
-		private CommandListRow AddCommand(Command command = default)
-		{
-			PropertyString.NavigationContext = NavigationContext;
-			return TypedRowManager.Add(new CommandListRow() { Output = command });
-		}
-	}
+                if (TypedRowManager.Items.Count > 0)
+                {
+                    SetPropertyDependency(nameof(AsString), TypedRowManager.Items[0], nameof(CommandListRow.AsString));
+                }
+            }
+        }
+
+        private CommandListRow AddCommand(Command command = default)
+        {
+            PropertyString.NavigationContext = NavigationContext;
+            PropertyString.PlaylistsController = PlaylistsController;
+            return TypedRowManager.Add(new CommandListRow() { Output = command });
+        }
+    }
 }

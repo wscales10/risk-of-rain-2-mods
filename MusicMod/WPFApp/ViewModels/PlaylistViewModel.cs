@@ -8,55 +8,58 @@ using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.ViewModels
 {
-	internal class PlaylistViewModel : NamedViewModelBase<Playlist>
-	{
-		public PlaylistViewModel(Playlist playlist, NavigationContext navigationContext) : base(playlist, navigationContext)
-		{
-			Name = Item.Name;
+    internal class PlaylistViewModel : NamedViewModelBase<Playlist>
+    {
+        private readonly PlaylistsController playlistsController;
 
-			TypedRowManager.BindLooselyTo(Item, AddTrack, valuegetter);
+        public PlaylistViewModel(Playlist playlist, NavigationContext navigationContext, PlaylistsController playlistsController) : base(playlist, navigationContext)
+        {
+            Name = Item.Name;
 
-			ExtraCommands = new[]
-			{
-				new ButtonContext { Label = "Add Track", Command = new ButtonCommand(_ => AddTrack()) }
-			};
+            TypedRowManager.BindLooselyTo(Item, AddTrack, valuegetter);
 
-			SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
-		}
+            ExtraCommands = new[]
+            {
+                new ButtonContext { Label = "Add Track", Command = new ButtonCommand(_ => AddTrack()) }
+            };
 
-		public override string NameWatermark => "Untitled playlist";
+            SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
+            this.playlistsController = playlistsController;
+        }
 
-		public override string Title => "Tracks:";
+        public override string NameWatermark => "Untitled playlist";
 
-		public override IEnumerable<ButtonContext> ExtraCommands { get; }
+        public override string Title => "Tracks:";
 
-		protected override RowManager<SpotifyItemRow> TypedRowManager { get; } = new();
+        public override IEnumerable<ButtonContext> ExtraCommands { get; }
 
-		protected override bool ValidateName(string name) => name is not null && base.ValidateName(name) && !Info.Playlists.Any(p => !ReferenceEquals(p, Item) && p.Name == name);
+        protected override RowManager<SpotifyItemRow> TypedRowManager { get; } = new();
 
-		protected override SaveResult<Playlist> ShouldAllowExit()
-		{
-			NameResult.MaybeOutput(name =>
-			{
-				if (NameResult.IsSuccess)
-				{
-					Item.Name = name;
-					NotifyPropertyChanged(nameof(Name));
-					PlaylistWrapper.UpdatePlaylistName(Item);
-				}
-			});
+        protected override bool ValidateName(string name) => name is not null && base.ValidateName(name) && !playlistsController.Playlists.Any(p => !ReferenceEquals(p, Item) && p.Name == name);
 
-			return base.ShouldAllowExit() & NameResult;
-		}
+        protected override SaveResult<Playlist> ShouldAllowExit()
+        {
+            NameResult.MaybeOutput(name =>
+            {
+                if (NameResult.IsSuccess)
+                {
+                    Item.Name = name;
+                    NotifyPropertyChanged(nameof(Name));
+                    PlaylistWrapper.UpdatePlaylistName(Item);
+                }
+            });
 
-		private static SaveResult<SpotifyItem> valuegetter(SpotifyItemRow row)
-		{
-			return (SaveResult<SpotifyItem>)row.TrySaveChanges();
-		}
+            return base.ShouldAllowExit() & NameResult;
+        }
 
-		private SpotifyItemRow AddTrack(SpotifyItem track = null)
-		{
-			return TypedRowManager.Add(new SpotifyItemRow() { Output = track });
-		}
-	}
+        private static SaveResult<SpotifyItem> valuegetter(SpotifyItemRow row)
+        {
+            return (SaveResult<SpotifyItem>)row.TrySaveChanges();
+        }
+
+        private SpotifyItemRow AddTrack(SpotifyItem track = null)
+        {
+            return TypedRowManager.Add(new SpotifyItemRow() { Output = track });
+        }
+    }
 }

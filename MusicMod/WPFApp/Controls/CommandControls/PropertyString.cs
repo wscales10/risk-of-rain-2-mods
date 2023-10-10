@@ -78,10 +78,12 @@ namespace WPFApp.Controls.CommandControls
 
         internal static NavigationContext NavigationContext { get; set; }
 
+        internal static PlaylistsController PlaylistsController { get; set; }
+
         private static ReadOnlyDictionary<Type, Func<IControlWrapper>> Controls { get; } = new(new Dictionary<Type, Func<IControlWrapper>>
         {
             [typeof(TimeSpan)] = () => new TimeSpanWrapper(),
-            [typeof(ISpotifyItem)] = () => new SpotifyItemWrapper2(NavigationContext),
+            [typeof(ISpotifyItem)] = () => new SpotifyItemWrapper2(NavigationContext, PlaylistsController),
             [typeof(SpotifyItem)] = () => new SpotifyItemWrapper(),
             [typeof(bool)] = () => new BoolWrapper(),
             [typeof(IOffset)] = () => new OffsetWrapper(NavigationContext),

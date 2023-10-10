@@ -10,9 +10,12 @@ namespace WPFApp.Controls.Pickers
     {
         private static readonly List<TypeWrapper> allowedItemTypes = new() { typeof(SpotifyItem), typeof(PlaylistRef) };
 
-        public SpotifyItemPickerInfo(NavigationContext navigationContext)
+        private readonly PlaylistsController playlistsController;
+
+        public SpotifyItemPickerInfo(NavigationContext navigationContext, PlaylistsController playlistsController)
         {
             NavigationContext = navigationContext;
+            this.playlistsController = playlistsController;
         }
 
         public string DisplayMemberPath => nameof(TypeWrapper.DisplayName);
@@ -34,7 +37,7 @@ namespace WPFApp.Controls.Pickers
 
             if (type == typeof(PlaylistRef))
             {
-                return new PlaylistWrapper();
+                return new PlaylistWrapper(playlistsController);
             }
 
             return null;

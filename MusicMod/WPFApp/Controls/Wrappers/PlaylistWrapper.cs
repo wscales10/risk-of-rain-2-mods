@@ -8,10 +8,10 @@ namespace WPFApp.Controls.Wrappers
 {
     internal class PlaylistWrapper : ControlWrapper<PlaylistRef, MyComboBox>
     {
-        public PlaylistWrapper()
+        public PlaylistWrapper(PlaylistsController playlistsController)
         {
             PlaylistNameUpdated += PlaylistWrapper_PlaylistNameUpdated;
-            UIElement.ItemsSource = Info.Playlists;
+            UIElement.ItemsSource = playlistsController.Playlists;
             UIElement.DisplayMemberPath = nameof(PlaylistRef.Name);
         }
 
