@@ -16,7 +16,7 @@ namespace WPFApp.Controls.Pickers
 {
     public class PatternPickerInfo : IPickerInfo
     {
-        private readonly ObservableCollection<TypeWrapper> patternTypes = new();
+        private readonly ObservableCollection<Named<object>> patternTypes = new();
 
         private readonly PropertyWrapper<Type> valueType;
 
@@ -35,17 +35,42 @@ namespace WPFApp.Controls.Pickers
             RefreshPatternTypes();
         }
 
-        public string DisplayMemberPath => nameof(TypeWrapper.DisplayName);
+        public string DisplayMemberPath => nameof(Named<object>.Name);
 
-        public string SelectedValuePath => nameof(TypeWrapper.Type);
+        public string SelectedValuePath => nameof(Named<object>.Value);
 
         public NavigationContext NavigationContext { get; }
 
-        public IEnumerable GetItems() => new ReadOnlyObservableCollection<TypeWrapper>(patternTypes);
+        public IEnumerable GetItems() => new ReadOnlyObservableCollection<Named<object>>(patternTypes);
 
         public IReadableControlWrapper CreateWrapper(object selectedInfo)
         {
-            return PatternWrapper.Create((Type)selectedInfo, NavigationContext);
+            switch (selectedInfo)
+            {
+                case Type selectedType:
+                    return PatternWrapper.Create(selectedType, NavigationContext);
+
+                case "paste":
+                    var item = NavigationContext.GetClipboardItem();
+
+                    if (item is null)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            return PatternWrapper.Create(Info.PatternParser.Parse(valueType, item), NavigationContext);
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+                    }
+                default:
+                    throw new NotSupportedException();
+            }
         }
 
         private static List<TypeWrapper> GetAllowedPatternTypes(Type type)
@@ -100,7 +125,7 @@ namespace WPFApp.Controls.Pickers
 
         private void RefreshPatternTypes()
         {
-            patternTypes.ReplaceRange(0, GetAllowedPatternTypes(this.valueType), patternTypes.Count);
+            patternTypes.ReplaceRange(0, GetAllowedPatternTypes(valueType).Select(w => (Named<object>)w).With(new Named<object>("Paste...", "paste")), patternTypes.Count);
         }
     }
 }
