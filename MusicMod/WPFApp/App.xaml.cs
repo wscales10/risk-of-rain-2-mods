@@ -47,6 +47,8 @@ namespace WPFApp
 
         private readonly XmlClipboard clipboard = new();
 
+        private readonly PlaylistsController playlistsController = new();
+
         private readonly ClipboardWindow clipboardWindow;
 
         private readonly AuthorisationClient authorisationClient = new();
@@ -70,7 +72,7 @@ namespace WPFApp
             {
                 RuleBase rule => GetRuleViewModel(rule),
                 IPattern pattern => GetPatternViewModel(pattern),
-                Playlist playlist => new PlaylistViewModel(playlist, NavigationContext),
+                Playlist playlist => new PlaylistViewModel(playlist, NavigationContext, playlistsController),
                 ObservableCollection<Playlist> playlists => new PlaylistsViewModel(playlists, NavigationContext),
                 _ => null,
             });
@@ -89,7 +91,7 @@ namespace WPFApp
             history.ActionRequested += TryInner;
             MetadataClient = new SpotifyMetadataClient(x => MetadataClient.Log(x), authorisationClient.Preferences);
             MetadataClient.OnError += SpotifyClient_OnError;
-            PlaybackClient = new SpotifyPlaybackClient(Info.Playlists, x => PlaybackClient.Log(x), authorisationClient.Preferences);
+            PlaybackClient = new SpotifyPlaybackClient(playlistsController.Playlists, x => PlaybackClient.Log(x), authorisationClient.Preferences);
             PlaybackClient.OnError += SpotifyClient_OnError;
             Settings.Default.PropertyChanged += OnSettingChanged;
         }
@@ -194,7 +196,7 @@ namespace WPFApp
                 return;
             }
 
-            MainView mainView = new(NavigationContext);
+            MainView mainView = new(new(NavigationContext, playlistsController));
             Attach(mainView);
             RegisterRequestHandlers();
 
@@ -361,7 +363,7 @@ namespace WPFApp
             if (CurrentViewModel is IXmlViewModel viewModel)
             {
                 var xml = viewModel.GetContentXml();
-                clipboard.Items.Add(new(xml.ToString(SaveOptions.DisableFormatting), xml));
+                clipboard.NativeItems.Add(new(xml.ToString(SaveOptions.DisableFormatting), xml));
             }
         }
 
@@ -464,7 +466,7 @@ namespace WPFApp
             }
             else if (ruleType.IsGenericType(typeof(Bucket<,>)) && ruleType.GenericTypeArguments[1] == typeof(ICommandList))
             {
-                return (NavigationViewModelBase)typeof(CommandListBucketViewModel<>).MakeGenericType(ruleType.GenericTypeArguments[0]).Construct(rule, NavigationContext);
+                return (NavigationViewModelBase)typeof(CommandListBucketViewModel<>).MakeGenericType(ruleType.GenericTypeArguments[0]).Construct(rule, NavigationContext, playlistsController);
             }
             else
             {

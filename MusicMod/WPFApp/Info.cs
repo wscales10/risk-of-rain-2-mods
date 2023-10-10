@@ -32,8 +32,6 @@ namespace WPFApp
             RegisterTypePair<ICommandList, CommandList>();
         }
 
-        public static ObservableCollection<Playlist> Playlists { get; } = new();
-
         public static Cache<Type, ReadOnlyCollection<PropertyInfo>> ContextProperties { get; } = new(t => new(new[] { new PropertyInfo("this", t) }.Concat(GetProperties(t)).ToList()));
 
         public static ReadOnlyCollection<Type> SupportedRuleTypes { get; } = new(new Type[] { typeof(StaticSwitchRule<,>), typeof(ArrayRule<,>), typeof(IfRule<,>), typeof(Bucket<,>) });

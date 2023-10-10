@@ -16,7 +16,7 @@ namespace WPFApp.ViewModels
 
         private string title;
 
-        public MainViewModel(NavigationContext navigationContext)
+        public MainViewModel(NavigationContext navigationContext, PlaylistsController playlistsController)
         {
             NavigationContext = navigationContext;
             NavigateTreeCommand = new(NavigateTree);
@@ -33,17 +33,17 @@ namespace WPFApp.ViewModels
             });
             ExportCommand = new(_ =>
             {
-				if (TryGetExportLocation(out string fileName))
-				{
-					OnExportFile?.Invoke(fileName);
-				}
-			});
-			CopyCommand = new(_ => OnCopy?.Invoke());
-			NewCommand = new(_ =>
-			{
-				if (MessageBox.Show("Are you sure you want to close this?", "Are you sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
-				{
-					OnReset?.Invoke();
+                if (TryGetExportLocation(out string fileName))
+                {
+                    OnExportFile?.Invoke(fileName);
+                }
+            });
+            CopyCommand = new(_ => OnCopy?.Invoke());
+            NewCommand = new(_ =>
+            {
+                if (MessageBox.Show("Are you sure you want to close this?", "Are you sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
+                {
+                    OnReset?.Invoke();
                 }
             }, this, nameof(HasContent));
             LoadExampleCommand = new(_ =>
@@ -54,7 +54,7 @@ namespace WPFApp.ViewModels
             HomeCommand = new(_ => NavigationContext.GoHome(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
             UpCommand = new(_ => NavigationContext.GoUp(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
             ClearCacheCommand = new(_ => ClearCache());
-            GotoPlaylistsCommand = new(_ => NavigationContext.GoInto(Info.Playlists));
+            GotoPlaylistsCommand = new(_ => NavigationContext.GoInto(playlistsController.Playlists), playlistsController, nameof(PlaylistsController.IsEnabled));
         }
 
         public event Action OnExampleRequested;

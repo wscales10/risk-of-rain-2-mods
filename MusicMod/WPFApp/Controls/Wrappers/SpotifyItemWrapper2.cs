@@ -5,7 +5,7 @@ namespace WPFApp.Controls.Wrappers
 {
     internal class SpotifyItemWrapper2 : SinglePickerWrapper<ISpotifyItem>
     {
-        public SpotifyItemWrapper2(NavigationContext navigationContext) : base(new SpotifyItemPickerInfo(navigationContext))
+        public SpotifyItemWrapper2(NavigationContext navigationContext, PlaylistsController playlistsController) : base(new SpotifyItemPickerInfo(navigationContext, playlistsController))
         {
             UIElement.comboBox.SelectedItem = new TypeWrapper(typeof(SpotifyItem));
         }
