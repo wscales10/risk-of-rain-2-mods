@@ -1,46 +1,81 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Xml.Linq;
+using Utils;
 
 namespace WPFApp
 {
-	public class XmlClipboard : NotifyPropertyChangedBase
-	{
-		private Named<XElement> selectedItem;
+    public class XmlClipboard : NotifyPropertyChangedBase
+    {
+        private Named<XElement> selectedItem;
 
-		public XmlClipboard()
-		{
-			PasteCommand = new(_ => Choose(SelectedItem), this, nameof(SelectedItem), (x) => x is not null);
-		}
+        private Named<XElement> externalItem;
 
-		public event Action OnSelect;
+        public XmlClipboard()
+        {
+            PasteCommand = new(_ => Choose(SelectedItem), this, nameof(SelectedItem), (x) => x is not null);
+            SetPropertyDependency(nameof(Items), nameof(NativeItems), nameof(ExternalItem));
+        }
 
-		public ObservableCollection<Named<XElement>> Items { get; } = new();
+        public event Action OnSelect;
 
-		public XElement ChosenValue { get; private set; }
+        public IEnumerable<Named<XElement>> Items => ExternalItem is null ? NativeItems : new[] { ExternalItem }.Concat(NativeItems);
 
-		public ButtonCommand PasteCommand { get; }
+        public ObservableCollection<Named<XElement>> NativeItems { get; } = new();
 
-		public Named<XElement> SelectedItem { get => selectedItem; set => SetProperty(ref selectedItem, value); }
+        public XElement ChosenValue { get; private set; }
 
-		public void Choose(Named<XElement> item)
-		{
-			if (item is null)
-			{
-				ChosenValue = null;
-				return;
-			}
+        public Named<XElement> ExternalItem { get => externalItem; set => SetProperty(ref externalItem, value); }
 
-			if (Items.Remove(item))
-			{
-				ChosenValue = item.Value;
-			}
-			else
-			{
-				throw new ArgumentOutOfRangeException(nameof(item), item, "not in collection");
-			}
+        public ButtonCommand PasteCommand { get; }
 
-			OnSelect?.Invoke();
-		}
-	}
+        public Named<XElement> SelectedItem { get => selectedItem; set => SetProperty(ref selectedItem, value); }
+
+        public void SetExternalItem(string str)
+        {
+            ExternalItem = GetExternalItem();
+
+            Named<XElement> GetExternalItem()
+            {
+                if (!string.IsNullOrWhiteSpace(str))
+                {
+                    XElement xml;
+
+                    try
+                    {
+                        xml = XElement.Parse(str);
+                        return new(str, xml);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Log(ex.Message);
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        public void Choose(Named<XElement> item)
+        {
+            if (item is null)
+            {
+                ChosenValue = null;
+                return;
+            }
+
+            if (NativeItems.Remove(item) || ExternalItem == item)
+            {
+                ChosenValue = item.Value;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(item), item, "not in collection");
+            }
+
+            OnSelect?.Invoke();
+        }
+    }
 }
