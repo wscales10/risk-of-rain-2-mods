@@ -1,12 +1,16 @@
-﻿<Window x:Class="WPFApp.Views.ClipboardWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WPFApp.Views" xmlns:wpfapp="clr-namespace:WPFApp"
-        mc:Ignorable="d"
-        Title="Paste..." Height="450" Width="800"
-        d:DataContext="{d:DesignInstance wpfapp:XmlClipboard}">
+﻿<Window
+    x:Class="WPFApp.Views.ClipboardWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WPFApp.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:wpfapp="clr-namespace:WPFApp"
+    Title="Paste..."
+    Width="800"
+    Height="450"
+    d:DataContext="{d:DesignInstance wpfapp:XmlClipboard}"
+    mc:Ignorable="d">
     <Window.Resources>
         <DataTemplate x:Key="itemTemplate">
             <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
@@ -18,13 +22,15 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <ScrollViewer>
-            <ListBox x:Name="listBox"
-                     ItemsSource="{Binding Items}"
-                     ItemTemplate="{StaticResource itemTemplate}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     SelectedItem="{Binding SelectedItem}">
+            <ListBox
+                x:Name="listBox"
+                ItemTemplate="{StaticResource itemTemplate}"
+                ItemsSource="{Binding Items}"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                SelectedItem="{Binding SelectedItem}">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
+                        <EventSetter Event="MouseDoubleClick" Handler="ListBoxItem_MouseDoubleClick" />
                     </Style>
                 </ListBox.ItemContainerStyle>
             </ListBox>
@@ -35,8 +41,20 @@
                 <ColumnDefinition />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <Button Padding="10 5" HorizontalAlignment="Center" Margin="10 10 5 10">Remove</Button>
-            <Button Padding="10 5" HorizontalAlignment="Center" Margin="5 10" Grid.Column="1" Command="{Binding PasteCommand}">Paste</Button>
+            <Button
+                Margin="10,10,5,10"
+                Padding="10,5"
+                HorizontalAlignment="Center">
+                Remove
+            </Button>
+            <Button
+                Grid.Column="1"
+                Margin="5,10"
+                Padding="10,5"
+                HorizontalAlignment="Center"
+                Command="{Binding PasteCommand}">
+                Paste
+            </Button>
         </Grid>
     </Grid>
 </Window>
