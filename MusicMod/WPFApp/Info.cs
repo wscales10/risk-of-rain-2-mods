@@ -2,6 +2,7 @@
 using Patterns;
 using RuleExamples;
 using Rules;
+using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
 using Spotify;
 using Spotify.Commands;
@@ -79,6 +80,27 @@ namespace WPFApp
             else
             {
                 PatternParser = PatternParser.Instance;
+            }
+        }
+
+        internal static IReadOnlyRule<TContext, TOut> GetExampleRule<TContext, TOut>()
+        {
+            return (IReadOnlyRule<TContext, TOut>)GetExampleRule((typeof(TContext), typeof(TOut)));
+        }
+
+        internal static object GetExampleRule((Type, Type) ruleType)
+        {
+            if (ruleType == (typeof(MyRoR2.RoR2Context), typeof(string)))
+            {
+                return RuleExamples.RiskOfRain2.Ror2Rule.Instance;
+            }
+            else if (ruleType == (typeof(string), typeof(ICommandList)))
+            {
+                return RuleExamples.RiskOfRain2.MimicRule.Instance;
+            }
+            else
+            {
+                return null;
             }
         }
 

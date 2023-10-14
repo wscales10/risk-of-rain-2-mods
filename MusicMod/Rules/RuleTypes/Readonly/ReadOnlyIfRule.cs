@@ -1,6 +1,7 @@
 ﻿using Patterns;
 using Rules.RuleTypes.Interfaces;
 using Rules.RuleTypes.Mutable;
+using System.Collections.Generic;
 
 namespace Rules.RuleTypes.Readonly
 {
@@ -18,5 +19,7 @@ namespace Rules.RuleTypes.Readonly
         public IRule<TContext, TOut> ThenRule { get; }
 
         public IRule<TContext, TOut> ElseRule { get; }
+
+        public override IEnumerable<(string, IRule<TContext, TOut>)> Children => IfRule.GetChildren(this);
     }
 }

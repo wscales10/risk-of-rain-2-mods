@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System.Windows;
 using WPFApp.Controls.Rows;
 using System.ComponentModel;
+using Utils;
 
 namespace WPFApp.ViewModels
 {
@@ -51,6 +52,15 @@ namespace WPFApp.ViewModels
                 LoadExampleCommand.CanExecute = false;
                 OnExampleRequested?.Invoke();
             }, this, nameof(HasContent), o => !(bool)o);
+            TransformCommand = new(_ =>
+            {
+                var errorMessage = OnTransfornRequested?.Invoke();
+
+                if (errorMessage is not null)
+                {
+                    MessageBox.Show(errorMessage, "Transform error");
+                }
+            });
             HomeCommand = new(_ => NavigationContext.GoHome(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
             UpCommand = new(_ => NavigationContext.GoUp(), NavigationContext, nameof(NavigationContext.IsHome), b => !(bool)b);
             ClearCacheCommand = new(_ => ClearCache());
@@ -71,6 +81,8 @@ namespace WPFApp.ViewModels
 
         public event Action OnCopy;
 
+        public event Func<string> OnTransfornRequested;
+
         public ButtonCommand NavigateTreeCommand { get; }
 
         public ButtonCommand BackCommand { get; }
@@ -90,6 +102,8 @@ namespace WPFApp.ViewModels
         public ButtonCommand NewCommand { get; }
 
         public ButtonCommand LoadExampleCommand { get; }
+
+        public ButtonCommand TransformCommand { get; }
 
         public ButtonCommand ClearCacheCommand { get; }
 

@@ -16,7 +16,9 @@ namespace Rules.RuleTypes.Mutable
 #warning could have an issue with enums?
 
     public static class StaticSwitchRule
-    { }
+    {
+        internal static IEnumerable<(string, IRule<TContext, TOut>)> GetChildren<TContext, TOut>(ISwitchRule<TContext, TOut> staticSwitchRule) => staticSwitchRule.Cases.Select(c => (c.ToString(), c.Output)).With(($"Other {staticSwitchRule.PropertyInfo}", staticSwitchRule.DefaultRule));
+    }
 
     public class Switcher<TContext, TOut>
     {
@@ -181,7 +183,7 @@ namespace Rules.RuleTypes.Mutable
 
         IRule<TContext, TOut> ISwitchRule<TContext, TOut>.DefaultRule => DefaultRule;
 
-        public override IEnumerable<(string, Rule<TContext, TOut>)> Children => Cases.Select(c => (c.ToString(), c.Output)).With(($"Other {PropertyInfo}", DefaultRule));
+        public override IEnumerable<(string, IRule<TContext, TOut>)> Children => StaticSwitchRule.GetChildren(this);
 
         public static StaticSwitchRule<TContext, TOut> Parse(XElement element, RuleParser<TContext, TOut> ruleParser)
         {

@@ -56,7 +56,7 @@ namespace Rules.RuleTypes.Mutable
 			}
 			else
 			{
-				element.Value = Output.ToString();
+				element.Value = Output?.ToString() ?? string.Empty;
 			}
 
 			return element;

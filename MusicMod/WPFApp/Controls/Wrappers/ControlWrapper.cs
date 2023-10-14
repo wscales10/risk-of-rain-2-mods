@@ -52,6 +52,8 @@ namespace WPFApp.Controls.Wrappers
     public abstract class ControlWrapper<TValue, TControl> : ReadableControlWrapper<TValue, TControl>, IControlWrapper, IControlWrapper<TValue>
         where TControl : FrameworkElement
     {
+        private Func<TValue, bool> validator;
+
         public void SetValue(TValue value)
         {
             setValue(value);
@@ -70,6 +72,22 @@ namespace WPFApp.Controls.Wrappers
             SetValue(typed);
         }
 
+        public ControlWrapper<TValue, TControl> WithValidation(Func<TValue, bool> validator)
+        {
+            if (this.validator is not null)
+            {
+                throw new NotImplementedException();
+            }
+
+            this.validator = validator;
+            return this;
+        }
+
         protected abstract void setValue(TValue value);
+
+        protected override bool Validate(TValue value)
+        {
+            return validator is null ? base.Validate(value) : validator(value);
+        }
     }
 }

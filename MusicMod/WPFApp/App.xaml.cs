@@ -27,6 +27,7 @@ using Utils.Async;
 using System.Xml.Linq;
 using Utils.Reflection;
 using IPC;
+using MyRoR2;
 
 namespace WPFApp
 {
@@ -238,29 +239,13 @@ namespace WPFApp
             mainView.Show();
         }
 
-        private static object GetExampleRule((Type, Type) ruleType)
-        {
-            if (ruleType == (typeof(MyRoR2.RoR2Context), typeof(string)))
-            {
-                return RuleExamples.RiskOfRain2.Ror2Rule.Instance;
-            }
-            else if (ruleType == (typeof(string), typeof(ICommandList)))
-            {
-                return RuleExamples.RiskOfRain2.MimicRule.Instance;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         private void TryLoadExample()
         {
             var ruleType = GetRuleType();
 
             if (ruleType is (Type tContext, Type tOut))
             {
-                ImportRule(tContext, tOut, GetExampleRule(ruleType.Value));
+                ImportRule(tContext, tOut, Info.GetExampleRule(ruleType.Value));
             }
         }
 
@@ -335,6 +320,7 @@ namespace WPFApp
             mainViewModel.OnCopy += CopyCurrentItemToClipboard;
             mainViewModel.OnReset += () => Reset();
             mainViewModel.OnExampleRequested += TryLoadExample;
+            mainViewModel.OnTransfornRequested += TryTransform;
             mainView.OnTryEnableAutosave += TryEnableAutosave;
             mainView.OnTryClose += TryClose;
             mainView.Loaded += (s, e) => clipboardWindow.Owner = (Window)s;
@@ -356,6 +342,36 @@ namespace WPFApp
             };
 
             mainView.newRuleControl.TypesRequested += GetRuleType;
+        }
+
+        private string TryTransform()
+        {
+            object itemObject = (ViewModelList[0] as ItemViewModelBase)?.ItemObject;
+
+            if (itemObject is null)
+            {
+                return "No rule to transform";
+            }
+
+            if (itemObject is not Rule<RoR2Context, string> categoriser)
+            {
+                return $"Rules of type '{itemObject.GetType().GetDisplayName()}' cannot be transformed.";
+            }
+
+            Rule<string, ICommandList> transformed;
+
+            try
+            {
+                transformed = RuleExamples.Generate.FromCategoriser(categoriser, RuleExamples.Switcher.StringToSpotify, () => new CommandList());
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+
+            ImportRule(transformed);
+
+            return null;
         }
 
         private void CopyCurrentItemToClipboard()

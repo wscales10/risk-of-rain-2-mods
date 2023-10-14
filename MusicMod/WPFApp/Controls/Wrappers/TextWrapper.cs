@@ -1,35 +1,31 @@
-﻿using System;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using WPFApp.Controls.Wrappers.SaveResults;
 
 namespace WPFApp.Controls.Wrappers
 {
-    public class TextWrapper : ControlWrapper<string, TextBox>
+    public class EditableDropDownWrapper : ControlWrapper<string, ComboBox>
     {
-        private Func<string, bool> validator;
-
-        public TextWrapper(TextBox textBox) => UIElement = textBox;
-
-        public override TextBox UIElement { get; }
-
-        public TextWrapper WithValidation(Func<string, bool> validator)
+        public EditableDropDownWrapper(ComboBox comboBox)
         {
-            if (this.validator is not null)
-            {
-                throw new NotImplementedException();
-            }
-
-            this.validator = validator;
-            return this;
+            comboBox.IsEditable = true;
+            UIElement = comboBox;
         }
+
+        public override ComboBox UIElement { get; }
 
         protected override void setValue(string value) => UIElement.Text = value;
 
         protected override SaveResult<string> tryGetValue(GetValueRequest request) => new(UIElement.Text);
+    }
 
-        protected override bool Validate(string value)
-        {
-            return validator is null ? base.Validate(value) : validator(value);
-        }
+    public class TextWrapper : ControlWrapper<string, TextBox>
+    {
+        public TextWrapper(TextBox textBox) => UIElement = textBox;
+
+        public override TextBox UIElement { get; }
+
+        protected override void setValue(string value) => UIElement.Text = value;
+
+        protected override SaveResult<string> tryGetValue(GetValueRequest request) => new(UIElement.Text);
     }
 }

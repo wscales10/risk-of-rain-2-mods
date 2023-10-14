@@ -103,22 +103,22 @@ namespace WPFApp
             Export(element, new(Path.Combine(directoryInfo.FullName, name is null ? "playlists.xml" : $"{name}.playlists.xml")));
         }
 
-        private IXmlViewModel GetControlForExport()
+        private IXmlViewModel GetViewModelForExport()
         {
-            var masterXmlControl = ViewModelList[0] as IXmlViewModel;
+            var masterXmlViewModel = ViewModelList[0] as IXmlViewModel;
 
             if (ViewModelList.Count < 2)
             {
-                return masterXmlControl;
+                return masterXmlViewModel;
             }
 
-            if (CurrentViewModel is not IXmlViewModel currentXmlControl)
+            if (CurrentViewModel is not IXmlViewModel currentXmlViewModel)
             {
-                return masterXmlControl;
+                return masterXmlViewModel;
             }
 
             MessageBoxResult result = MessageBox.Show(
-                $"Export everything? (Select No to export only this {currentXmlControl.ItemTypeName} and its descendants)",
+                $"Export everything? (Select No to export only this {currentXmlViewModel.ItemTypeName} and its descendants)",
                 "Export All?",
                 MessageBoxButton.YesNoCancel,
                 MessageBoxImage.Question,
@@ -126,8 +126,8 @@ namespace WPFApp
 
             return result switch
             {
-                MessageBoxResult.Yes => masterXmlControl,
-                MessageBoxResult.No => currentXmlControl,
+                MessageBoxResult.Yes => masterXmlViewModel,
+                MessageBoxResult.No => currentXmlViewModel,
                 _ => null,
             };
         }
@@ -143,7 +143,7 @@ namespace WPFApp
                     AutosaveLocation = fileInfo;
                 }
 
-                ExportToFile(GetControlForExport(), fileInfo);
+                ExportToFile(GetViewModelForExport(), fileInfo);
             }
         }
     }

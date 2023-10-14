@@ -9,78 +9,86 @@ using WPFApp.Controls.Wrappers;
 
 namespace WPFApp.Controls.Pickers
 {
-	internal class RulePickerInfo<TContext, TOut> : IPickerInfo
-	{
-		private readonly Func<Button> buttonGetter;
+    internal class RulePickerInfo<TContext, TOut> : IPickerInfo
+    {
+        private readonly Func<Button> buttonGetter;
 
-		public RulePickerInfo(NavigationContext navigationContext, Func<Button> buttonGetter)
-		{
-			NavigationContext = navigationContext ?? throw new ArgumentNullException(nameof(navigationContext));
-			this.buttonGetter = buttonGetter;
-		}
+        public RulePickerInfo(NavigationContext navigationContext, Func<Button> buttonGetter)
+        {
+            NavigationContext = navigationContext ?? throw new ArgumentNullException(nameof(navigationContext));
+            this.buttonGetter = buttonGetter;
+        }
 
-		public string DisplayMemberPath => nameof(Named<object>.Name);
+        public string DisplayMemberPath => nameof(Named<object>.Name);
 
-		public string SelectedValuePath => nameof(Named<object>.Value);
+        public string SelectedValuePath => nameof(Named<object>.Value);
 
-		public NavigationContext NavigationContext { get; }
+        public NavigationContext NavigationContext { get; }
 
-		public IControlWrapper CreateWrapper(object selectedInfo)
-		{
-			IControlWrapper output;
-			Rule<TContext, TOut> rule;
+        public IControlWrapper CreateWrapper(object selectedInfo)
+        {
+            IControlWrapper output;
+            Rule<TContext, TOut> rule;
 
-			switch (selectedInfo)
-			{
-				case Type type:
-					rule = Rule<TContext, TOut>.Create(type);
-					break;
+            switch (selectedInfo)
+            {
+                case Type type:
+                    rule = Rule<TContext, TOut>.Create(type);
+                    break;
 
-				case "paste":
-					var item = NavigationContext.GetClipboardItem();
+                case "paste":
+                    var item = NavigationContext.GetClipboardItem();
 
-					if (item is null)
-					{
-						return null;
-					}
-					else
-					{
-						try
-						{
-							rule = Info.GetRuleParser<TContext, TOut>().Parse(item);
-						}
-						catch
-						{
-							return null;
-						}
-					}
+                    if (item is null)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            rule = Info.GetRuleParser<TContext, TOut>().Parse(item);
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+                    }
 
-					break;
+                    break;
 
-				case Rule<TContext, TOut> r:
-					rule = r;
-					break;
+                case Rule<TContext, TOut> r:
+                    rule = r;
+                    break;
 
-				default:
-					throw new NotSupportedException();
-			}
+                default:
+                    throw new NotSupportedException();
+            }
 
-			if (rule.GetType().IsGenericType(typeof(Bucket<,>)) && typeof(TOut) == typeof(string))
-			{
-				output = new BucketWrapper<TContext, string, TextBox>(new TextWrapper(new() { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, MinWidth = 150, TextAlignment = TextAlignment.Center }));
-			}
-			else
-			{
-				output = new ItemButtonWrapper<Rule<TContext, TOut>>(buttonGetter());
-			}
+            if (rule.GetType().IsGenericType(typeof(Bucket<,>)) && typeof(TOut) == typeof(string))
+            {
+                ComboBox comboBox = new() { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, MinWidth = 150 };
+                var example = Info.GetExampleRule<TContext, string>();
 
-			output.SetValue(rule);
+                foreach (var bucket in Rule.GetAllBuckets(example).OrderBy(b => b.Output))
+                {
+                    comboBox.Items.Add(bucket.Output);
+                }
 
-			return output;
-		}
+                output = new BucketWrapper<TContext, string, ComboBox>(new EditableDropDownWrapper(comboBox));
+            }
+            else
+            {
+                output = new ItemButtonWrapper<Rule<TContext, TOut>>(buttonGetter());
+            }
 
-		public IEnumerable GetItems() => Info.SupportedRuleTypes.Select(t => (Named<object>)new TypeWrapper(t)).With(new Named<object>("Paste...", "paste"));
+            output.SetValue(rule);
 
-		IReadableControlWrapper IPickerInfo.CreateWrapper(object selectedInfo) => CreateWrapper(selectedInfo);
-	}
+            return output;
+        }
+
+        public IEnumerable GetItems() => Info.SupportedRuleTypes.Select(t => (Named<object>)new TypeWrapper(t)).With(new Named<object>("Paste...", "paste"));
+
+        IReadableControlWrapper IPickerInfo.CreateWrapper(object selectedInfo) => CreateWrapper(selectedInfo);
+    }
 }

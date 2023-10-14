@@ -1,15 +1,16 @@
-﻿using Utils;
+﻿using System.Collections.Generic;
+using Utils;
 
 namespace Rules.RuleTypes.Interfaces
 {
-	public interface IRule<TContext, TOut> : IXmlExportable
-	{
-		string Name { get; }
+    public interface IRule<TContext, TOut> : IXmlExportable, ITreeItem<IRule<TContext, TOut>>
+    {
+        string Name { get; }
 
-		TrackedResponse<TContext, TOut> GetBucket(TContext c);
+        TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
-		TOut GetOutput(TContext newContext);
+        TOut GetOutput(TContext newContext);
 
-		IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
-	}
+        IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
+    }
 }

@@ -10,92 +10,116 @@ using Utils.Reflection;
 
 namespace Rules.RuleTypes.Mutable
 {
-	public delegate Pattern<T> PatternGenerator<T>(T input);
+    public delegate Pattern<T> PatternGenerator<T>(T input);
 
-	public static class Rule
-	{
-	}
+    public static class Rule
+    {
+        public static IEnumerable<IBucket<TContext, TOut>> GetAllBuckets<TContext, TOut>(IRule<TContext, TOut> rule)
+        {
+            foreach (var (key, child) in rule.Children)
+            {
+                switch (child)
+                {
+                    case null:
+                        continue;
+                    case Bucket<TContext, TOut> ruleAsBucket:
+                        yield return ruleAsBucket;
+                        break;
 
-	public abstract class RuleBase : IXmlExportable
-	{
-		public string Name
-		{
-			get;
-			set;
-		}
+                    default:
+                        foreach (var bucket in GetAllBuckets(child))
+                        {
+                            yield return bucket;
+                        }
 
-		public override string ToString() => Name ?? GetType().GetDisplayName();
+                        break;
+                }
+            }
+        }
 
-		public virtual XElement ToXml()
-		{
-			var element = new XElement(nameof(Rule));
-			element.SetAttributeValue("type", GetType().GetDisplayName(false));
+        internal static IEnumerable<(string, IRule<TContext, TOut>)> GetChildren<TContext, TOut>(IRule<TContext, TOut> rule) => Enumerable.Empty<(string, IRule<TContext, TOut>)>();
+    }
 
-			if (!(Name is null))
-			{
-				element.SetAttributeValue("name", Name);
-			}
+    public abstract class RuleBase : IXmlExportable
+    {
+        public string Name
+        {
+            get;
+            set;
+        }
 
-			return element;
-		}
-	}
+        public override string ToString() => Name ?? GetType().GetDisplayName();
 
-	public abstract class Rule<TContext, TOut> : RuleBase, IRule<TContext, TOut>, ITreeItem<Rule<TContext, TOut>>, ITreeItem
-	{
-		public virtual IEnumerable<(string, Rule<TContext, TOut>)> Children => Enumerable.Empty<(string, Rule<TContext, TOut>)>();
+        public virtual XElement ToXml()
+        {
+            var element = new XElement(nameof(Rule));
+            element.SetAttributeValue("type", GetType().GetDisplayName(false));
 
-		IEnumerable<(string, ITreeItem)> ITreeItem.Children => Children.Select(p => (p.Item1, (ITreeItem)p.Item2));
+            if (!(Name is null))
+            {
+                element.SetAttributeValue("name", Name);
+            }
 
-		public static implicit operator Rule<TContext, TOut>(TOut output) => new Bucket<TContext, TOut>(output);
+            return element;
+        }
+    }
 
-		public static Rule<TContext, TOut> Create(Type ruleType) => (Rule<TContext, TOut>)ruleType.MakeGenericType(typeof(TContext), typeof(TOut)).ConstructDefault();
+    public abstract class Rule<TContext, TOut> : RuleBase, IRule<TContext, TOut>, ITreeItem
+    {
+        public virtual IEnumerable<(string, IRule<TContext, TOut>)> Children => Rule.GetChildren(this);
 
-		public abstract TrackedResponse<TContext, TOut> GetBucket(TContext c);
+        IEnumerable<(string, ITreeItem)> ITreeItem.Children => Children.Select(p => (p.Item1, (ITreeItem)p.Item2));
 
-		public abstract IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
+        public static implicit operator Rule<TContext, TOut>(TOut output) => new Bucket<TContext, TOut>(output);
 
-		public TOut GetOutput(TContext newContext) => GetOutput(this, newContext);
+        public static Rule<TContext, TOut> Create(Type ruleType) => (Rule<TContext, TOut>)ruleType.MakeGenericType(typeof(TContext), typeof(TOut)).ConstructDefault();
 
-		public Rule<TContext, TOut> Named(string name)
-		{
-			Name = name;
-			return this;
-		}
+        public abstract TrackedResponse<TContext, TOut> GetBucket(TContext c);
 
-		public override XElement ToXml()
-		{
-			var element = base.ToXml();
+        public abstract IReadOnlyRule<TContext, TOut> ToReadOnly(RuleParser<TContext, TOut> ruleParser);
 
-			element.SetAttributeValue(nameof(TContext), typeof(TContext).FullName);
-			element.SetAttributeValue(nameof(TOut), typeof(TOut).FullName);
+        public TOut GetOutput(TContext newContext) => GetOutput(this, newContext);
 
-			return element;
-		}
+        public Rule<TContext, TOut> Named(string name)
+        {
+            Name = name;
+            return this;
+        }
 
-		internal static TOut GetOutput(IRule<TContext, TOut> rule, TContext newContext)
-		{
-			var newBucketResponse = rule.GetBucket(newContext);
-			var newBucket = newBucketResponse.Bucket;
-			newBucketResponse.LogRules();
+        public override XElement ToXml()
+        {
+            var element = base.ToXml();
 
-			if (newBucket is IEnumerable collection)
-			{
-				foreach (var item in collection)
-				{
-					rule.Log($"Item Type: {item?.GetType().GetDisplayName() ?? "null"}");
-				}
-			}
+            element.SetAttributeValue(nameof(TContext), typeof(TContext).FullName);
+            element.SetAttributeValue(nameof(TOut), typeof(TOut).FullName);
 
-			if (newBucket is null)
-			{
-				rule.Log($"{nameof(newBucket)} is null");
-				return default;
-			}
-			else
-			{
-				rule.Log($"{nameof(newBucket)} is not null");
-				return newBucket.Output;
-			}
-		}
-	}
+            return element;
+        }
+
+        internal static TOut GetOutput(IRule<TContext, TOut> rule, TContext newContext)
+        {
+            var newBucketResponse = rule.GetBucket(newContext);
+            var newBucket = newBucketResponse.Bucket;
+            newBucketResponse.LogRules();
+
+            if (newBucket is IEnumerable collection)
+            {
+                foreach (var item in collection)
+                {
+                    rule.Log($"Item Type: {item?.GetType().GetDisplayName() ?? "null"}");
+                }
+            }
+
+            if (newBucket is null)
+            {
+                rule.Log($"{nameof(newBucket)} is null");
+                return default;
+            }
+            else
+            {
+                rule.Log($"{nameof(newBucket)} is not null");
+                return newBucket.Output;
+            }
+        }
+    }
 }

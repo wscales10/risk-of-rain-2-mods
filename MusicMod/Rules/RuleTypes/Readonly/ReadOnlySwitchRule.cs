@@ -24,5 +24,7 @@ namespace Rules.RuleTypes.Readonly
         public IRule<TContext, TOut> DefaultRule { get; }
 
         IEnumerable<ICase<IPattern, TContext, TOut>> ISwitchRule<TContext, TOut>.Cases => Cases;
+
+        public override IEnumerable<(string, IRule<TContext, TOut>)> Children => StaticSwitchRule.GetChildren(this);
     }
 }
