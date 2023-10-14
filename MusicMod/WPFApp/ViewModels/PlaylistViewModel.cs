@@ -1,4 +1,5 @@
 ﻿using Spotify;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using WPFApp.Controls.GridManagers;
@@ -14,6 +15,7 @@ namespace WPFApp.ViewModels
 
         public PlaylistViewModel(Playlist playlist, NavigationContext navigationContext, PlaylistsController playlistsController) : base(playlist, navigationContext)
         {
+            this.playlistsController = playlistsController ?? throw new ArgumentNullException(nameof(playlistsController));
             Name = Item.Name;
 
             TypedRowManager.BindLooselyTo(Item, AddTrack, valuegetter);
@@ -24,7 +26,6 @@ namespace WPFApp.ViewModels
             };
 
             SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
-            this.playlistsController = playlistsController;
         }
 
         public override string NameWatermark => "Untitled playlist";
