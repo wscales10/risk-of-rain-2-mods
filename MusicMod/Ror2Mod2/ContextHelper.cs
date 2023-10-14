@@ -64,7 +64,6 @@ namespace Ror2Mod2
 
             On.EntityStates.Missions.BrotherEncounter.Phase1.OnEnter += Phase1_OnEnter;
             On.EntityStates.Missions.BrotherEncounter.BrotherEncounterPhaseBaseState.OnExit += BrotherEncounterPhaseBaseState_OnExit;
-            On.EntityStates.Missions.BrotherEncounter.EncounterFinished.OnEnter += EncounterFinished_OnEnter;
 
             On.RoR2.ArtifactTrialMissionController.CombatState.OnEnter += CombatState_OnEnter;
             On.RoR2.ArtifactTrialMissionController.WaitForRewardTaken.OnEnter += WaitForRewardTaken_OnEnter;
@@ -83,6 +82,8 @@ namespace Ror2Mod2
 
             On.RoR2.PlayerCharacterMasterController.OnEnable += PlayerCharacterMasterController_OnEnable;
             On.RoR2.PlayerCharacterMasterController.OnDisable += PlayerCharacterMasterController_OnDisable;
+
+            On.RoR2.EscapeSequenceController.BeginEscapeSequence += EscapeSequenceController_BeginEscapeSequence;
         }
 
         public event Action<RoR2Context> NewContext;

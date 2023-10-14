@@ -1,4 +1,6 @@
-﻿using RoR2;
+﻿using EntityStates.Missions.BrotherEncounter;
+using RoR2;
+using System;
 
 namespace Ror2Mod2
 {
@@ -50,7 +52,7 @@ namespace Ror2Mod2
             UpdateContext();
         }
 
-        private void EncounterFinished_OnEnter(On.EntityStates.Missions.BrotherEncounter.EncounterFinished.orig_OnEnter orig, EntityStates.Missions.BrotherEncounter.EncounterFinished self)
+        private void EscapeSequenceController_BeginEscapeSequence(On.RoR2.EscapeSequenceController.orig_BeginEscapeSequence orig, EscapeSequenceController self)
         {
             orig(self);
             isBossEncounter = false;
