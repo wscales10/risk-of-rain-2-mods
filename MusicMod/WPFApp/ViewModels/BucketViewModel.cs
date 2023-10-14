@@ -102,7 +102,7 @@ namespace WPFApp.ViewModels
         {
             PropertyString.NavigationContext = NavigationContext;
             PropertyString.PlaylistsController = PlaylistsController;
-            return TypedRowManager.Add(new CommandListRow() { Output = command });
+            return TypedRowManager.Add(new CommandListRow(NavigationContext) { Output = command });
         }
     }
 }

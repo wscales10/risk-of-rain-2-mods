@@ -24,9 +24,11 @@ namespace WPFApp.Controls.Rows
             HorizontalAlignment = HorizontalAlignment.Center
         };
 
+        private readonly NavigationContext navigationContext;
+
         private FormatString formatString;
 
-        internal CommandListRow() : base(true)
+        internal CommandListRow(NavigationContext navigationContext) : base(true)
         {
             previewButton.Click += (s, e) =>
             {
@@ -47,6 +49,7 @@ namespace WPFApp.Controls.Rows
             _ = previewButton.SetBinding(UIElement.IsEnabledProperty, binding);
 
             SetPropertyDependency(nameof(AsString), nameof(FormatString));
+            this.navigationContext = navigationContext;
         }
 
         public static event Func<Command, Task> OnCommandPreviewRequested;
@@ -79,7 +82,7 @@ namespace WPFApp.Controls.Rows
 
         protected override Command CloneOutput() => Command.FromXml(Output.ToXml());
 
-        protected override CommandListRow deepClone() => new();
+        protected override CommandListRow deepClone() => new(navigationContext);
 
         protected override SaveResult trySaveChanges() => (FormatString is null || Output is null) ? (new(false)) : FormatString.TryGetProperties(Output, true);
 
@@ -98,7 +101,34 @@ namespace WPFApp.Controls.Rows
                 HelperMethods.MakeCommandsComboBox(comboBox);
                 comboBox.SelectionChanged += (s, e) =>
                 {
-                    Output = (Command)((Type)comboBox.SelectedItem).Construct();
+                    switch (comboBox.SelectedValue)
+                    {
+                        case Type t:
+                            Output = (Command)t.Construct();
+                            break;
+
+                        case "paste":
+                            var item = navigationContext.GetClipboardItem();
+
+                            if (item is not null)
+                            {
+                                try
+                                {
+                                    Output = Command.FromXml(item);
+                                    break;
+                                }
+                                catch (Exception ex)
+                                {
+                                    comboBox.SelectedItem = null;
+                                }
+                            }
+                            else
+                            {
+                                comboBox.SelectedItem = null;
+                            }
+
+                            break;
+                    }
                 };
                 return comboBox;
             }
