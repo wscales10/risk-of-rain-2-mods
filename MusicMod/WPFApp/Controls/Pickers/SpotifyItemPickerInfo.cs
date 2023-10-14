@@ -15,7 +15,7 @@ namespace WPFApp.Controls.Pickers
         public SpotifyItemPickerInfo(NavigationContext navigationContext, PlaylistsController playlistsController)
         {
             NavigationContext = navigationContext;
-            this.playlistsController = playlistsController;
+            this.playlistsController = playlistsController ?? throw new ArgumentNullException(nameof(playlistsController));
         }
 
         public string DisplayMemberPath => nameof(TypeWrapper.DisplayName);

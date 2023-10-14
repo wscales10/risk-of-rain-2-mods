@@ -32,6 +32,7 @@ namespace WPFApp.ViewModels
         public CommandListBucketViewModel(Bucket<TContext, ICommandList> item, NavigationContext navigationContext, PlaylistsController playlistsController) : base(FillBucket(item), navigationContext)
         {
             ((INotifyCollectionChanged)TypedRowManager.Items).CollectionChanged += BucketViewModel_CollectionChanged;
+            PropertyString.PlaylistsController = PlaylistsController = playlistsController;
             TypedRowManager.BindTo(Item.Output, AddCommand, r => r.Output);
 
             ExtraCommands = new[]
@@ -40,7 +41,6 @@ namespace WPFApp.ViewModels
             };
 
             SetPropertyDependency(nameof(AsString), TypedRowManager, nameof(TypedRowManager.Items));
-            PlaylistsController = playlistsController;
         }
 
         public override string Title => "Execute in order:";
@@ -101,7 +101,6 @@ namespace WPFApp.ViewModels
         private CommandListRow AddCommand(Command command = default)
         {
             PropertyString.NavigationContext = NavigationContext;
-            PropertyString.PlaylistsController = PlaylistsController;
             return TypedRowManager.Add(new CommandListRow(NavigationContext) { Output = command });
         }
     }
