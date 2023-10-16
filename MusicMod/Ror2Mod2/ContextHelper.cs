@@ -158,7 +158,6 @@ namespace Ror2Mod2
         private void Run_onRunDestroyGlobal(Run obj)
         {
             runOutcome = null;
-            UpdateContext();
         }
 
         private RunOutcome ConvertEndingToOutcome(GameEndingDef ending)
