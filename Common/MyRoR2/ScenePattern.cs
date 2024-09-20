@@ -32,7 +32,7 @@ namespace MyRoR2
 
 		protected override bool isMatch(MyScene value)
 		{
-			return !(value?.Name is null) && Regex.IsMatch(value.Name, $"^(IT)?{RegexHelpers.Escape(scene.Name)}(SIMPLE)?2?$");
+			return !(value?.Name is null) && Regex.IsMatch(value.Name, $@"^(IT)?{RegexHelpers.Escape(scene.Name)}(SIMPLE)?\d*$");
 		}
 
 		protected override bool defineWith(string stringDefinition)

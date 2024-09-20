@@ -36,6 +36,12 @@
 
         public static DefinedEntity Bomber { get; } = (nameof(Bomber), "BOMBER");
 
+        public static DefinedEntity Chef { get; } = (nameof(Chef), "CHEF");
+
+        public static DefinedEntity Seeker { get; } = (nameof(Seeker), "SEEKER");
+
+        public static DefinedEntity FalseSon { get; } = (nameof(FalseSon), "FALSESON");
+
         public static DefinedEntity Beetle { get; } = (nameof(Beetle), "BEETLE");
 
         public static DefinedEntity BeetleGuard { get; } = (nameof(BeetleGuard), "BEETLEGUARD");
@@ -195,5 +201,17 @@
         public static DefinedEntity DelightedProbe { get; } = (nameof(DelightedProbe), "ROBOBALLGREENBUDDY");
 
         public static DefinedEntity HealingCore { get; } = (nameof(HealingCore), "AFFIXEARTH_HEALER");
+
+        public static DefinedEntity FalseSonBoss { get; } = ("False Son (Boss)", "FALSESONBOSS");
+
+        public static DefinedEntity LunarRain { get; } = (nameof(LunarRain), "CORRUPTIONSPIKE");
+
+        public static DefinedEntity ScorchWurm { get; } = (nameof(ScorchWurm), "SCORCHLING");
+
+        public static DefinedEntity Child { get; } = (nameof(Child), "CHILD");
+
+        public static DefinedEntity Halcyonite { get; } = (nameof(Halcyonite), "HALCYONITE");
+
+        public static DefinedEntity LunarRainShard { get; } = (nameof(LunarRainShard), "LUNARRAINSHARD");
     }
 }
