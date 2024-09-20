@@ -1,4 +1,5 @@
 ﻿using NCalc;
+using System;
 
 namespace Maths
 {
@@ -8,7 +9,7 @@ namespace Maths
         {
             var expression = new Expression(function);
             expression.Parameters[variable] = value;
-            return (double)expression.Evaluate();
+            return Convert.ToDouble(expression.Evaluate());
         }
     }
 }
