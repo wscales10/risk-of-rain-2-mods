@@ -24,7 +24,7 @@ namespace Patterns.Patterns
             return new NotPattern<T>(patternParser.Parse<T>(element.OnlyChild()));
         }
 
-        public override bool IsMatch(T value) => !IsMatch(value);
+        public override bool IsMatch(T value) => !Child.IsMatch(value);
 
         public override XElement ToXml() => new XElement("Not", Child.ToXml());
 
@@ -32,6 +32,11 @@ namespace Patterns.Patterns
 
         public override IPattern<T> Simplify()
         {
+            if (this.Child is null)
+            {
+                return this;
+            }
+
             var p = this.Child.Simplify();
 
             if (p is INotSimplifiable<T> ns)
