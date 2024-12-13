@@ -27,6 +27,7 @@ namespace UntitledMod
             On.RoR2.Inventory.RemoveItem_ItemIndex_int += this.Inventory_RemoveItem_ItemIndex_int;
             typeof(IL.RoR2.CostTypeCatalog).GetEvent("<Init>g__PayCostItems|5_1").AddHook(this, nameof(CostTypeCatalog_Init));
             IL.RoR2.LunarSunBehavior.FixedUpdate += this.LunarSunBehavior_FixedUpdate;
+            IL.RoR2.CharacterMaster.TryCloverVoidUpgrades += this.CharacterMaster_TryCloverVoidUpgrades;
             On.RoR2.PlayerCharacterMasterController.Awake += this.PlayerCharacterMasterController_Awake;
         }
 
@@ -71,6 +72,25 @@ namespace UntitledMod
             c.Emit(OpCodes.Call, takeItemsFromWeightedSelectionMethod);
         }
 
+        private void CharacterMaster_TryCloverVoidUpgrades(ILContext il)
+        {
+            this.logger.LogMethodCall();
+            var c = new ILCursor(il);
+
+            c.GotoNext(
+                x => x.MatchLdloc(2),
+                x => x.MatchLdarg(0),
+                x => x.Match(OpCodes.Ldfld),
+                x => x.MatchCall(typeof(Util), nameof(Util.ShuffleList))
+            );
+
+            c.Index += 4;
+
+            c.Emit(OpCodes.Ldloc_2);
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.DeprioritiseItemsInList);
+        }
+
         private void LunarSunBehavior_FixedUpdate(ILContext il)
         {
             this.logger.LogMethodCall();
@@ -88,23 +108,26 @@ namespace UntitledMod
 
             c.Emit(OpCodes.Dup);
             c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldfld, typeof(LunarSunBehavior).GetField(nameof(LunarSunBehavior.body)));
+            c.Emit<CharacterBody>(OpCodes.Callvirt, $"get_{nameof(CharacterBody.master)}");
+            c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.DeprioritiseItemsInList);
+        }
 
-            c.EmitDelegate<Action<List<ItemIndex>, LunarSunBehavior>>((list, behavior) =>
+        private void DeprioritiseItemsInList(List<ItemIndex> list, CharacterMaster master)
+        {
+            if (!this.TryGetInventoryManager(master, out var inventoryManager))
             {
-                if (!this.TryGetInventoryManager(behavior.body.master, out var inventoryManager))
-                {
-                    return;
-                }
+                return;
+            }
 
-                var deprioritisedItems = list.Where(inventoryManager.WantsToKeep).ToArray();
+            var deprioritisedItems = list.Where(inventoryManager.WantsToKeep).ToArray();
 
-                foreach (var item in deprioritisedItems)
-                {
-                    list.Remove(item);
-                }
+            foreach (var item in deprioritisedItems)
+            {
+                list.Remove(item);
+            }
 
-                list.AddRange(deprioritisedItems);
-            });
+            list.AddRange(deprioritisedItems);
         }
 
         private void ItemCatalog_Init(On.RoR2.ItemCatalog.orig_Init orig)
