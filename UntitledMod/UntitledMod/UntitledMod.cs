@@ -2,12 +2,15 @@
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
+using RoR2.Items;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace UntitledMod
 {
+    using static CostTypeCatalog.LunarItemOrEquipmentCostTypeHelper;
+
     public class UntitledMod
     {
         private readonly Dictionary<CharacterMaster, InventoryManager> inventoryManagers = new Dictionary<CharacterMaster, InventoryManager>();
@@ -26,6 +29,7 @@ namespace UntitledMod
             On.RoR2.Inventory.GiveItem_ItemIndex_int += this.Inventory_GiveItem_ItemIndex_int;
             On.RoR2.Inventory.RemoveItem_ItemIndex_int += this.Inventory_RemoveItem_ItemIndex_int;
             typeof(IL.RoR2.CostTypeCatalog).GetEvent("<Init>g__PayCostItems|5_1").AddHook(this, nameof(CostTypeCatalog_Init));
+            On.RoR2.CostTypeCatalog.LunarItemOrEquipmentCostTypeHelper.PayCost += this.LunarItemOrEquipmentCostTypeHelper_PayCost;
             IL.RoR2.LunarSunBehavior.FixedUpdate += this.LunarSunBehavior_FixedUpdate;
             IL.RoR2.CharacterMaster.TryCloverVoidUpgrades += this.CharacterMaster_TryCloverVoidUpgrades;
             On.RoR2.PlayerCharacterMasterController.Awake += this.PlayerCharacterMasterController_Awake;
@@ -70,6 +74,68 @@ namespace UntitledMod
             c.Emit(OpCodes.Ldloca_S, c.Body.Variables[0]);
             c.Emit(OpCodes.Ldloca_S, c.Body.Variables[2]);
             c.Emit(OpCodes.Call, takeItemsFromWeightedSelectionMethod);
+        }
+
+        private void LunarItemOrEquipmentCostTypeHelper_PayCost(On.RoR2.CostTypeCatalog.LunarItemOrEquipmentCostTypeHelper.orig_PayCost orig, CostTypeDef costTypeDef, CostTypeDef.PayCostContext context)
+        {
+            // Completely replace this method, as it's bugged for a cost of greater than one anyway
+
+            Inventory inventory = context.activator.GetComponent<CharacterBody>().inventory;
+            int cost = context.cost;
+
+            var list = new List<object>();
+
+            for (int i = 0; i < lunarItemIndices.Length; i++)
+            {
+                ItemIndex itemIndex = lunarItemIndices[i];
+                list.AddRange(Enumerable.Repeat(itemIndex, inventory.GetItemCount(itemIndex)).Cast<object>());
+            }
+
+            int equipmentSlotCount = inventory.GetEquipmentSlotCount();
+
+            for (uint j = 0; j < equipmentSlotCount; j++)
+            {
+                if (lunarEquipmentIndices.Contains(inventory.GetEquipment(j).equipmentIndex))
+                {
+                    list.Add(j);
+                }
+            }
+
+            Util.ShuffleList(list, context.rng);
+
+            if (!this.TryGetInventoryManager(context.activatorMaster, out var inventoryManager))
+            {
+                return;
+            }
+
+            var deprioritisedItems = list.OfType<ItemIndex>().Where(inventoryManager.WantsToKeep).ToArray();
+
+            foreach (var item in deprioritisedItems)
+            {
+                list.Remove(item);
+            }
+
+            list.AddRange(deprioritisedItems.Cast<object>());
+
+            for (int k = 0; k < cost; k++)
+            {
+                var itemOrSlot = list[k];
+
+                switch (itemOrSlot)
+                {
+                    case ItemIndex itemIndex:
+                        inventory.RemoveItem(itemIndex);
+                        context.results.itemsTaken.Add(itemIndex);
+                        break;
+                    case uint slot:
+                        var equipmentIndex = inventory.GetEquipment(slot).equipmentIndex;
+                        inventory.SetEquipment(EquipmentState.empty, slot);
+                        context.results.equipmentTaken.Add(equipmentIndex);
+                        break;
+                }
+            }
+
+            MultiShopCardUtils.OnNonMoneyPurchase(context);
         }
 
         private void CharacterMaster_TryCloverVoidUpgrades(ILContext il)
