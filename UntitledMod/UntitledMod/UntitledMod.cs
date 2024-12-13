@@ -1,10 +1,10 @@
-﻿using Mono.Cecil.Cil;
+﻿using Mono.Cecil;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Mono.Cecil;
 
 namespace UntitledMod
 {
@@ -26,6 +26,7 @@ namespace UntitledMod
             On.RoR2.Inventory.GiveItem_ItemIndex_int += this.Inventory_GiveItem_ItemIndex_int;
             On.RoR2.Inventory.RemoveItem_ItemIndex_int += this.Inventory_RemoveItem_ItemIndex_int;
             typeof(IL.RoR2.CostTypeCatalog).GetEvent("<Init>g__PayCostItems|5_1").AddHook(this, nameof(CostTypeCatalog_Init));
+            IL.RoR2.LunarSunBehavior.FixedUpdate += this.LunarSunBehavior_FixedUpdate;
             On.RoR2.PlayerCharacterMasterController.Awake += this.PlayerCharacterMasterController_Awake;
         }
 
@@ -68,6 +69,42 @@ namespace UntitledMod
             c.Emit(OpCodes.Ldloca_S, c.Body.Variables[0]);
             c.Emit(OpCodes.Ldloca_S, c.Body.Variables[2]);
             c.Emit(OpCodes.Call, takeItemsFromWeightedSelectionMethod);
+        }
+
+        private void LunarSunBehavior_FixedUpdate(ILContext il)
+        {
+            this.logger.LogMethodCall();
+            var c = new ILCursor(il);
+
+            // After shuffling the list, move deprioritised items after everything else
+            c.GotoNext(
+                x => x.MatchDup(),
+                x => x.MatchLdarg(0),
+                x => x.Match(OpCodes.Ldfld),
+                x => x.MatchCall(typeof(Util), nameof(Util.ShuffleList))
+            );
+
+            c.Index += 4;
+
+            c.Emit(OpCodes.Dup);
+            c.Emit(OpCodes.Ldarg_0);
+
+            c.EmitDelegate<Action<List<ItemIndex>, LunarSunBehavior>>((list, behavior) =>
+            {
+                if (!this.TryGetInventoryManager(behavior.body.master, out var inventoryManager))
+                {
+                    return;
+                }
+
+                var deprioritisedItems = list.Where(inventoryManager.WantsToKeep).ToArray();
+
+                foreach (var item in deprioritisedItems)
+                {
+                    list.Remove(item);
+                }
+
+                list.AddRange(deprioritisedItems);
+            });
         }
 
         private void ItemCatalog_Init(On.RoR2.ItemCatalog.orig_Init orig)
