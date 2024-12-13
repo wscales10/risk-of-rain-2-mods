@@ -9,7 +9,7 @@ namespace UntitledMod
 
         public void Awake()
         {
-            var customLogger = new CustomLogger(Logger);
+            var customLogger = new CustomLogger(this.Logger);
             this.Mod = new UntitledMod(customLogger, () => new InventoryManager(customLogger));
         }
     }

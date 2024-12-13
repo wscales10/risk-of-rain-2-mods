@@ -55,13 +55,13 @@ namespace UntitledMod
         public bool WantsToKeep(ItemIndex itemIndex)
         {
             this.logger.LogMethodCall();
-            return isSublistLocked && allowedVisibleDamageItems.Contains(itemIndex);
+            return this.isSublistLocked && this.allowedVisibleDamageItems.Contains(itemIndex);
         }
 
         internal void OnPickupItem(ItemIndex itemIndex)
         {
             this.logger.LogDebug($"Picking up '{ItemCatalog.GetItemDef(itemIndex).name}'");
-            if (isSublistLocked)
+            if (this.isSublistLocked)
             {
                 return;
             }
@@ -74,11 +74,21 @@ namespace UntitledMod
                 {
                     this.isSublistLocked = true;
 
-                    foreach (var i in allowedVisibleDamageItems)
+                    foreach (var i in this.allowedVisibleDamageItems)
                     {
                         Chat.SendBroadcastChat(new ColoredTokenChatMessage { baseToken = ItemCatalog.GetItemDef(i).nameToken });
                     }
                 }
+            }
+        }
+
+        internal void OnLoseItem(ItemIndex itemIndex)
+        {
+            this.logger.LogDebug($"Lost '{ItemCatalog.GetItemDef(itemIndex).name}'");
+            
+            if (!this.isSublistLocked)
+            {
+                this.allowedVisibleDamageItems.Remove(itemIndex);
             }
         }
     }

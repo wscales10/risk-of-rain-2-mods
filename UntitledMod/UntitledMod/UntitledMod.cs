@@ -21,11 +21,12 @@ namespace UntitledMod
             this.logger = logger;
             this.inventoryManagerFactory = inventoryManagerFactory;
 
-            On.RoR2.ItemCatalog.Init += ItemCatalog_Init;
-            On.RoR2.Run.Start += Run_Start;
-            On.RoR2.Inventory.GiveItem_ItemIndex_int += Inventory_GiveItem_ItemIndex_int;
+            On.RoR2.ItemCatalog.Init += this.ItemCatalog_Init;
+            On.RoR2.Run.Start += this.Run_Start;
+            On.RoR2.Inventory.GiveItem_ItemIndex_int += this.Inventory_GiveItem_ItemIndex_int;
+            On.RoR2.Inventory.RemoveItem_ItemIndex_int += this.Inventory_RemoveItem_ItemIndex_int;
             typeof(IL.RoR2.CostTypeCatalog).GetEvent("<Init>g__PayCostItems|5_1").AddHook(this, nameof(CostTypeCatalog_Init));
-            On.RoR2.PlayerCharacterMasterController.Awake += PlayerCharacterMasterController_Awake;
+            On.RoR2.PlayerCharacterMasterController.Awake += this.PlayerCharacterMasterController_Awake;
         }
 
         public void CostTypeCatalog_Init(ILContext il)
@@ -84,20 +85,39 @@ namespace UntitledMod
 
         private void Inventory_GiveItem_ItemIndex_int(On.RoR2.Inventory.orig_GiveItem_ItemIndex_int orig, Inventory self, ItemIndex itemIndex, int count)
         {
-            OnPickupItem(self, itemIndex);
+            this.OnPickupItem(self, itemIndex);
             orig(self, itemIndex, count);
+        }
+
+        private void Inventory_RemoveItem_ItemIndex_int(On.RoR2.Inventory.orig_RemoveItem_ItemIndex_int orig, Inventory self, ItemIndex itemIndex, int count)
+        {
+            try
+            {
+                orig(self, itemIndex, count);
+            }
+            finally
+            {
+                if (self.itemStacks[(int)itemIndex] == 0)
+                {
+                    this.OnLoseItem(self, itemIndex);
+                }
+            }
         }
 
         private void OnPickupItem(Inventory inventory, ItemIndex itemIndex)
         {
-            var characterMaster = inventoryManagers.Keys.SingleOrDefault(m => m.inventory == inventory);
-
-            if (!TryGetInventoryManager(characterMaster, out var inventoryManager))
+            if (this.TryGetInventoryManager(inventory, out var inventoryManager))
             {
-                return;
+                inventoryManager.OnPickupItem(itemIndex);
             }
+        }
 
-            inventoryManager.OnPickupItem(itemIndex);
+        private void OnLoseItem(Inventory inventory, ItemIndex itemIndex)
+        {
+            if (this.TryGetInventoryManager(inventory, out var inventoryManager))
+            {
+                inventoryManager.OnLoseItem(itemIndex);
+            }
         }
 
         private bool TryGetInventoryManager(CharacterMaster characterMaster, out InventoryManager inventoryManager)
@@ -109,13 +129,19 @@ namespace UntitledMod
                 return false;
             }
 
-            return inventoryManagers.TryGetValue(characterMaster, out inventoryManager);
+            return this.inventoryManagers.TryGetValue(characterMaster, out inventoryManager);
+        }
+
+        private bool TryGetInventoryManager(Inventory inventory, out InventoryManager inventoryManager)
+        {
+            var characterMaster = this.inventoryManagers.Keys.SingleOrDefault(m => m.inventory == inventory);
+            return this.TryGetInventoryManager(characterMaster, out inventoryManager);
         }
 
         private void Run_Start(On.RoR2.Run.orig_Start orig, Run self)
         {
             this.logger.LogMethodCall();
-            inventoryManagers.Clear();
+            this.inventoryManagers.Clear();
             orig(self);
         }
     }

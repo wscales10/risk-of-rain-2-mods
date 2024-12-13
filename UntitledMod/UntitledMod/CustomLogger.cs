@@ -14,12 +14,12 @@ namespace UntitledMod
 
         public void LogMethodCall([CallerFilePath]string callerFilePath = null, [CallerMemberName]string callerMemberName = null)
         {
-            logSource.LogDebug($"{callerMemberName} in {callerFilePath}");
+            this.logSource.LogDebug($"{callerMemberName} in {callerFilePath}");
         }
 
         public void LogDebug(object data)
         {
-            logSource.LogDebug(data);
+            this.logSource.LogDebug(data);
         }
     }
 }
