@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace UntitledMod
 {
-    internal class CustomLogger
+    public class CustomLogger
     {
         private readonly ManualLogSource logSource;
 

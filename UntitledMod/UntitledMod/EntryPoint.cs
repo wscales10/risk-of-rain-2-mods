@@ -1,4 +1,6 @@
 ﻿using BepInEx;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace UntitledMod
 {
@@ -9,8 +11,18 @@ namespace UntitledMod
 
         public void Awake()
         {
-            var customLogger = new CustomLogger(this.Logger);
-            this.Mod = new UntitledMod(customLogger, () => new InventoryManager(customLogger));
+            var services = new ServiceCollection();
+
+            services.AddSingleton(new CustomLogger(this.Logger));
+            services.AddFactory<IInventoryManager, InventoryManager>();
+            services.AddSingleton<ServerSide>();
+            services.AddSingleton<Writer>();
+            services.AddSingleton<InventoriesInfo>();
+            services.AddSingleton<Reader>();
+
+            services.AddSingleton<UntitledMod>();
+
+            this.Mod = services.BuildServiceProvider().GetRequiredService<UntitledMod>();
         }
     }
 }

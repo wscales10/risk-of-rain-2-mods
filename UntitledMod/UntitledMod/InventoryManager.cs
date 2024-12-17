@@ -5,7 +5,19 @@ using System.Linq;
 
 namespace UntitledMod
 {
-    public class InventoryManager
+    public interface IReadOnlyInventoryManager
+    {
+        bool WantsToKeep(ItemIndex itemIndex);
+    }
+
+    public interface IInventoryManager : IReadOnlyInventoryManager
+    {
+        void OnPickupItem(ItemIndex itemIndex);
+
+        void OnLoseItem(ItemIndex itemIndex);
+    }
+
+    public class InventoryManager : IInventoryManager
     {
         private static ItemIndex[] visibleDamageItems;
 
@@ -15,7 +27,7 @@ namespace UntitledMod
 
         private bool isSublistLocked = false;
 
-        internal InventoryManager(CustomLogger logger)
+        public InventoryManager(CustomLogger logger)
         {
             this.logger = logger;
         }
@@ -58,7 +70,7 @@ namespace UntitledMod
             return this.isSublistLocked && this.allowedVisibleDamageItems.Contains(itemIndex);
         }
 
-        internal void OnPickupItem(ItemIndex itemIndex)
+        public void OnPickupItem(ItemIndex itemIndex)
         {
             this.logger.LogDebug($"Picking up '{ItemCatalog.GetItemDef(itemIndex).name}'");
             if (this.isSublistLocked)
@@ -82,7 +94,7 @@ namespace UntitledMod
             }
         }
 
-        internal void OnLoseItem(ItemIndex itemIndex)
+        public void OnLoseItem(ItemIndex itemIndex)
         {
             this.logger.LogDebug($"Lost '{ItemCatalog.GetItemDef(itemIndex).name}'");
             
