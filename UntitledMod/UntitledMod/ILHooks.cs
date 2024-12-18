@@ -5,6 +5,7 @@ using RoR2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace UntitledMod
 {
@@ -92,19 +93,54 @@ namespace UntitledMod
             c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.DeprioritiseItemsInList);
         }
 
+        private void BossGroup_DropRewards(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            // Use weights while picking item from list
+            c.GotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld(typeof(BossGroup), "rng"),
+                x => x.MatchLdloc(7),
+                x => x.MatchCallvirt(typeof(Xoroshiro128Plus), nameof(Xoroshiro128Plus.NextElementUniform)),
+                x => x.MatchStloc(1)
+            );
+
+            c.Index += 3;
+
+            c.Remove();
+            c.EmitDelegate<Func<Xoroshiro128Plus, List<PickupIndex>, PickupIndex>>(this.SelectReward);
+
+            // Use weights while considering replacing with boss item
+            c.GotoNext(
+                x => x.MatchLdloc(9),
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld(typeof(BossGroup), "dropPosition"),
+                x => x.MatchCallvirt(typeof(Transform), "get_position"),
+                x => x.MatchLdloc(3),
+                x => x.MatchCall(typeof(PickupDropletController), nameof(PickupDropletController.CreatePickupDroplet))
+            );
+
+            c.Index++;
+
+            c.Emit(OpCodes.Ldloc_1);
+            c.Emit(OpCodes.Ldfld, typeof(BossGroup).GetPrivateInstanceField("rng"));
+            c.EmitDelegate<Func<PickupIndex, PickupIndex, Xoroshiro128Plus, PickupIndex>>(this.SelectReward);
+        }
+
         private void BasicPickupDropTable_Add(ILContext il)
         {
-            // Unused, it's tricky (though not impossible) to get it working
-            // so I'm replacing the whole method instead.
+            // Unused, it's tricky (though not impossible) to get it working so I'm replacing the
+            // whole method instead.
             var c = new ILCursor(il);
 
             c.GotoNext(
                 x => x.MatchLdloca(0),
-                x => x.MatchCall(typeof(List<PickupIndex>.Enumerator).GetMethod("MoveNext")),  
+                x => x.MatchCall(typeof(List<PickupIndex>.Enumerator).GetMethod("MoveNext")),
                 x => x.Match(OpCodes.Brtrue_S));
 
             var afterIfStatement = il.DefineLabel(c.Next);
-            
+
             c.Index = 0;
 
             c.GotoNext(

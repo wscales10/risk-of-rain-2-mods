@@ -27,6 +27,34 @@ namespace UntitledMod
             On.RoR2.BasicPickupDropTable.Add += this.BasicPickupDropTable_Add;
             On.RoR2.ArenaMonsterItemDropTable.Add += this.ArenaMonsterItemDropTable_Add;
             On.RoR2.FreeChestDropTable.Add += this.FreeChestDropTable_Add;
+            IL.RoR2.BossGroup.DropRewards += this.BossGroup_DropRewards;
+        }
+
+        private PickupIndex SelectReward(Xoroshiro128Plus rng, List<PickupIndex> list)
+        {
+            var weightedSelection = new WeightedSelection<PickupIndex>();
+
+            foreach (var pickupIndex in list)
+            {
+                var weight = this.inventoriesInfo.GetPickupWeightMultiplier(pickupIndex);
+
+                if (weight > 0)
+                {
+                    weightedSelection.AddChoice(pickupIndex, weight);
+                }
+            }
+
+            if (weightedSelection.Count > 0)
+            {
+                return weightedSelection.Evaluate(rng.nextNormalizedFloat);
+            }
+
+            return PickupIndex.none;
+        }
+
+        private PickupIndex SelectReward(PickupIndex bossItem, PickupIndex normalItem, Xoroshiro128Plus rng)
+        {
+            return rng.nextNormalizedFloat < this.inventoriesInfo.GetPickupWeightMultiplier(bossItem) ? bossItem : normalItem;
         }
 
         private void BasicPickupDropTable_Add(On.RoR2.BasicPickupDropTable.orig_Add orig, BasicPickupDropTable self, List<PickupIndex> sourceDropList, float chance)
