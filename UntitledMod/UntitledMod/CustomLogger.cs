@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace UntitledMod
 {
-    public class CustomLogger
+    internal class CustomLogger : ICustomLogger
     {
         private readonly ManualLogSource logSource;
 
@@ -12,7 +12,7 @@ namespace UntitledMod
             this.logSource = logSource;
         }
 
-        public void LogMethodCall([CallerFilePath]string callerFilePath = null, [CallerMemberName]string callerMemberName = null)
+        public void LogMethodCall([CallerFilePath] string callerFilePath = null, [CallerMemberName] string callerMemberName = null)
         {
             this.logSource.LogDebug($"{callerMemberName} in {callerFilePath}");
         }

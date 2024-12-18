@@ -1,99 +1,85 @@
 ﻿using RoR2;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace UntitledMod
 {
     public class Writer
     {
-        private readonly Dictionary<CharacterMaster, IInventoryManager> inventoryManagers = new Dictionary<CharacterMaster, IInventoryManager>();
+        private readonly IInventoryManagers inventoryManagers;
 
-        private readonly CustomLogger logger;
+        private readonly IPickupWeightMultipliers pickupWeightMultipliers;
 
-        private readonly Func<IInventoryManager> inventoryManagerFactory;
+        private readonly Func<ItemIndex, PickupIndex> findPickupIndex;
+
+        private readonly ICustomLogger logger;
 
         private readonly ServerSide serverSide;
 
-        public Writer(CustomLogger logger, Func<IInventoryManager> inventoryManagerFactory, ServerSide serverSide)
+        public Writer(ICustomLogger logger, IInventoryManagers inventoryManagers, ServerSide serverSide, IPickupWeightMultipliers pickupWeightMultipliers, Func<ItemIndex, PickupIndex> findPickupIndex)
         {
             this.logger = logger;
-            this.inventoryManagerFactory = inventoryManagerFactory;
+            this.inventoryManagers = inventoryManagers;
             this.serverSide = serverSide;
-
-            On.RoR2.Run.Start += this.Run_Start;
-            On.RoR2.PlayerCharacterMasterController.Awake += this.PlayerCharacterMasterController_Awake;
-            On.RoR2.Inventory.GiveItem_ItemIndex_int += this.Inventory_GiveItem_ItemIndex_int;
-            On.RoR2.Inventory.RemoveItem_ItemIndex_int += this.Inventory_RemoveItem_ItemIndex_int;
+            this.pickupWeightMultipliers = pickupWeightMultipliers;
+            this.findPickupIndex = findPickupIndex;
         }
 
-        internal bool TryGetInventoryManager(CharacterMaster characterMaster, out IInventoryManager inventoryManager)
+        public void TryAddInventoryManager(PlayerCharacterMasterController self)
         {
-            this.logger.LogMethodCall();
-            if (characterMaster is null)
+            this.serverSide.TryExecute(() => this.inventoryManagers.Add(self.master));
+        }
+
+        public void OnPickupItem(Inventory inventory, ItemIndex itemIndex)
+        {
+            this.serverSide.TryExecute(() =>
             {
-                inventoryManager = null;
-                return false;
-            }
-
-            return this.inventoryManagers.TryGetValue(characterMaster, out inventoryManager);
+                if (this.inventoryManagers.TryGetValue(inventory, out var inventoryManager))
+                {
+                    inventoryManager.OnPickupItem(itemIndex);
+                    this.RefreshItemWeightMultiplier(itemIndex);
+                }
+            });
         }
 
-        private bool TryGetInventoryManager(Inventory inventory, out IInventoryManager inventoryManager)
+        public void OnLoseItem(Inventory inventory, ItemIndex itemIndex)
         {
-            var characterMaster = this.inventoryManagers.Keys.SingleOrDefault(m => m.inventory == inventory);
-            return this.TryGetInventoryManager(characterMaster, out inventoryManager);
-        }
-
-        private void OnPickupItem(Inventory inventory, ItemIndex itemIndex)
-        {
-            if (this.TryGetInventoryManager(inventory, out var inventoryManager))
-            {
-                inventoryManager.OnPickupItem(itemIndex);
-            }
-        }
-
-        private void OnLoseItem(Inventory inventory, ItemIndex itemIndex)
-        {
-            if (this.TryGetInventoryManager(inventory, out var inventoryManager))
+            if (this.inventoryManagers.TryGetValue(inventory, out var inventoryManager))
             {
                 inventoryManager.OnLoseItem(itemIndex);
+                this.RefreshItemWeightMultiplier(itemIndex);
             }
         }
 
-        private void PlayerCharacterMasterController_Awake(On.RoR2.PlayerCharacterMasterController.orig_Awake orig, PlayerCharacterMasterController self)
+        public void Reset()
         {
-            this.logger.LogMethodCall();
-            orig(self);
-            this.serverSide.TryExecute(() => this.inventoryManagers.Add(self.master, this.inventoryManagerFactory()));
+            this.inventoryManagers.Reset();
+            this.pickupWeightMultipliers.Reset();
         }
 
-        private void Run_Start(On.RoR2.Run.orig_Start orig, Run self)
+        public void OnRemoveItem(Inventory inventory, ItemIndex itemIndex)
         {
-            this.logger.LogMethodCall();
-            this.inventoryManagers.Clear();
-            orig(self);
-        }
-
-        private void Inventory_GiveItem_ItemIndex_int(On.RoR2.Inventory.orig_GiveItem_ItemIndex_int orig, Inventory self, ItemIndex itemIndex, int count)
-        {
-            this.serverSide.TryExecute(() => this.OnPickupItem(self, itemIndex));
-            orig(self, itemIndex, count);
-        }
-
-        private void Inventory_RemoveItem_ItemIndex_int(On.RoR2.Inventory.orig_RemoveItem_ItemIndex_int orig, Inventory self, ItemIndex itemIndex, int count)
-        {
-            try
+            if (inventory.itemStacks[(int)itemIndex] == 0)
             {
-                orig(self, itemIndex, count);
+                this.serverSide.TryExecute(() => this.OnLoseItem(inventory, itemIndex));
             }
-            finally
+        }
+
+        public void RefreshItemWeightMultiplier(ItemIndex itemIndex)
+        {
+            var pickupIndex = this.findPickupIndex(itemIndex);
+            int bannedFor = this.inventoryManagers.Count(inventoryManager => !inventoryManager.IsAllowed(itemIndex));
+
+            if (bannedFor == 0)
             {
-                if (self.itemStacks[(int)itemIndex] == 0)
-                {
-                    this.serverSide.TryExecute(() => this.OnLoseItem(self, itemIndex));
-                }
+                this.pickupWeightMultipliers.SetValue(pickupIndex, null);
             }
+            else
+            {
+                this.pickupWeightMultipliers.SetValue(pickupIndex, Math.Clamp(1 - bannedFor / (float)this.inventoryManagers.Count(), 0, 1));
+            }
+
+            typeof(Run).RaiseStaticEvent(nameof(Run.onAvailablePickupsModified));
         }
     }
 }

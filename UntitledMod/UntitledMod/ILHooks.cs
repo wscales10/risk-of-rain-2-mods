@@ -1,9 +1,10 @@
-﻿using Mono.Cecil.Cil;
-using Mono.Cecil;
+﻿using Mono.Cecil;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UntitledMod
 {
@@ -89,6 +90,44 @@ namespace UntitledMod
             c.Emit(OpCodes.Ldfld, typeof(LunarSunBehavior).GetField(nameof(LunarSunBehavior.body)));
             c.Emit<CharacterBody>(OpCodes.Callvirt, $"get_{nameof(CharacterBody.master)}");
             c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.DeprioritiseItemsInList);
+        }
+
+        private void BasicPickupDropTable_Add(ILContext il)
+        {
+            // Unused, it's tricky (though not impossible) to get it working
+            // so I'm replacing the whole method instead.
+            var c = new ILCursor(il);
+
+            c.GotoNext(
+                x => x.MatchLdloca(0),
+                x => x.MatchCall(typeof(List<PickupIndex>.Enumerator).GetMethod("MoveNext")),  
+                x => x.Match(OpCodes.Brtrue_S));
+
+            var afterIfStatement = il.DefineLabel(c.Next);
+            
+            c.Index = 0;
+
+            c.GotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchCall(typeof(BasicPickupDropTable), nameof(BasicPickupDropTable.IsFilterRequired)),
+                x => x.Match(OpCodes.Brfalse_S));
+
+            var localChanceVariable = new VariableDefinition(c.Body.Method.Parameters.Last().ParameterType);
+            c.Body.Variables.Add(localChanceVariable);
+
+            c.Emit(OpCodes.Ldloc_1);
+            c.EmitDelegate<Func<PickupIndex, float>>(this.inventoriesInfo.GetPickupWeightMultiplier);
+            c.Emit(OpCodes.Ldarg_2);
+            c.Emit(OpCodes.Mul);
+            c.Emit(OpCodes.Stloc, localChanceVariable.Index);
+            c.Emit(OpCodes.Ldloc, localChanceVariable.Index);
+            c.Emit(OpCodes.Ldc_I4_0);
+            c.Emit(OpCodes.Ble_S, afterIfStatement);
+
+            c.GotoLabel(afterIfStatement);
+            c.GotoPrev(x => x.MatchLdarg(2));
+            c.Remove();
+            c.Emit(OpCodes.Ldloc, localChanceVariable.Index);
         }
     }
 }

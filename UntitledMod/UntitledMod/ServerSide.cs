@@ -4,7 +4,7 @@ namespace UntitledMod
 {
     public class ServerSide : ExecutionContext
     {
-        public ServerSide(CustomLogger logger) : base(logger)
+        public ServerSide(ICustomLogger logger) : base(logger)
         {
         }
 

@@ -4,16 +4,19 @@ namespace UntitledMod
 {
     public class InventoriesInfo
     {
-        private readonly Writer writer;
+        private readonly IInventoryManagers inventoryManagers;
 
-        public InventoriesInfo(Writer writer)
+        private readonly IPickupWeightMultipliers pickupWeightMultipliers;
+
+        public InventoriesInfo(IInventoryManagers inventoryManagers, IPickupWeightMultipliers pickupWeightMultipliers)
         {
-            this.writer = writer;
+            this.inventoryManagers = inventoryManagers;
+            this.pickupWeightMultipliers = pickupWeightMultipliers;
         }
 
         public bool Lookup(CharacterMaster characterMaster, out IReadOnlyInventoryManager inventoryManager)
         {
-            if(this.writer.TryGetInventoryManager(characterMaster, out var output))
+            if (this.inventoryManagers.TryGetValue(characterMaster, out var output))
             {
                 inventoryManager = output;
                 return true;
@@ -22,6 +25,18 @@ namespace UntitledMod
             {
                 inventoryManager = null;
                 return false;
+            }
+        }
+
+        public float GetPickupWeightMultiplier(PickupIndex pickupIndex)
+        {
+            if (this.pickupWeightMultipliers.TryGetValue(pickupIndex, out float multiplier))
+            {
+                return multiplier;
+            }
+            else
+            {
+                return 1;
             }
         }
     }

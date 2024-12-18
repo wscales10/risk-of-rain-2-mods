@@ -5,29 +5,17 @@ using System.Linq;
 
 namespace UntitledMod
 {
-    public interface IReadOnlyInventoryManager
-    {
-        bool WantsToKeep(ItemIndex itemIndex);
-    }
-
-    public interface IInventoryManager : IReadOnlyInventoryManager
-    {
-        void OnPickupItem(ItemIndex itemIndex);
-
-        void OnLoseItem(ItemIndex itemIndex);
-    }
-
     public class InventoryManager : IInventoryManager
     {
         private static ItemIndex[] visibleDamageItems;
 
         private readonly HashSet<ItemIndex> allowedVisibleDamageItems = new HashSet<ItemIndex>();
 
-        private readonly CustomLogger logger;
+        private readonly ICustomLogger logger;
 
         private bool isSublistLocked = false;
 
-        public InventoryManager(CustomLogger logger)
+        public InventoryManager(ICustomLogger logger)
         {
             this.logger = logger;
         }
@@ -70,6 +58,21 @@ namespace UntitledMod
             return this.isSublistLocked && this.allowedVisibleDamageItems.Contains(itemIndex);
         }
 
+        public bool IsAllowed(ItemIndex itemIndex)
+        {
+            if (!this.isSublistLocked)
+            {
+                return true;
+            }
+
+            if (!visibleDamageItems.Contains(itemIndex))
+            {
+                return true;
+            }
+
+            return this.allowedVisibleDamageItems.Contains(itemIndex);
+        }
+
         public void OnPickupItem(ItemIndex itemIndex)
         {
             this.logger.LogDebug($"Picking up '{ItemCatalog.GetItemDef(itemIndex).name}'");
@@ -97,7 +100,7 @@ namespace UntitledMod
         public void OnLoseItem(ItemIndex itemIndex)
         {
             this.logger.LogDebug($"Lost '{ItemCatalog.GetItemDef(itemIndex).name}'");
-            
+
             if (!this.isSublistLocked)
             {
                 this.allowedVisibleDamageItems.Remove(itemIndex);

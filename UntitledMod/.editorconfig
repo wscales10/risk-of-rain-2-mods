@@ -1,4 +1,7 @@
 ﻿[*.cs]
 
+# IDE0001: Simplify Name
+dotnet_diagnostic.IDE0001.severity = suggestion
+
 # IDE0002: Simplify Member Access
 dotnet_diagnostic.IDE0002.severity = suggestion

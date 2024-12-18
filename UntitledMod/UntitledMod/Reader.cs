@@ -10,11 +10,11 @@ namespace UntitledMod
 
     public partial class Reader
     {
-        private readonly CustomLogger logger;
+        private readonly ICustomLogger logger;
 
         private readonly InventoriesInfo inventoriesInfo;
 
-        public Reader(CustomLogger logger, InventoriesInfo inventoriesInfo)
+        public Reader(ICustomLogger logger, InventoriesInfo inventoriesInfo)
         {
             this.logger = logger;
             this.inventoriesInfo = inventoriesInfo;
@@ -23,6 +23,66 @@ namespace UntitledMod
             typeof(IL.RoR2.CostTypeCatalog).GetEvent("<Init>g__PayCostItems|5_1").AddHook(this, nameof(CostTypeCatalog_PayCostItems));
             IL.RoR2.LunarSunBehavior.FixedUpdate += this.LunarSunBehavior_FixedUpdate;
             IL.RoR2.CharacterMaster.TryCloverVoidUpgrades += this.CharacterMaster_TryCloverVoidUpgrades;
+
+            On.RoR2.BasicPickupDropTable.Add += this.BasicPickupDropTable_Add;
+            On.RoR2.ArenaMonsterItemDropTable.Add += this.ArenaMonsterItemDropTable_Add;
+            On.RoR2.FreeChestDropTable.Add += this.FreeChestDropTable_Add;
+        }
+
+        private void BasicPickupDropTable_Add(On.RoR2.BasicPickupDropTable.orig_Add orig, BasicPickupDropTable self, List<PickupIndex> sourceDropList, float chance)
+        {
+            if (chance <= 0f || sourceDropList.Count == 0)
+            {
+                return;
+            }
+
+            foreach (PickupIndex sourceDrop in sourceDropList)
+            {
+                var modifiedChance = chance * this.inventoriesInfo.GetPickupWeightMultiplier(sourceDrop);
+
+                if (modifiedChance > 0 && (!self.IsFilterRequired() || self.PassesFilter(sourceDrop)))
+                {
+                    self.selector.AddChoice(sourceDrop, modifiedChance);
+                }
+            }
+        }
+
+        private void ArenaMonsterItemDropTable_Add(On.RoR2.ArenaMonsterItemDropTable.orig_Add orig, ArenaMonsterItemDropTable self, List<PickupIndex> sourceDropList, float chance)
+        {
+            if (chance <= 0f || sourceDropList.Count == 0)
+            {
+                return;
+            }
+
+            foreach (PickupIndex sourceDrop in sourceDropList)
+            {
+                var modifiedChance = chance * this.inventoriesInfo.GetPickupWeightMultiplier(sourceDrop);
+
+                if (modifiedChance > 0 && self.PassesFilter(sourceDrop))
+                {
+                    self.selector.AddChoice(sourceDrop, modifiedChance);
+                }
+            }
+        }
+
+        private void FreeChestDropTable_Add(On.RoR2.FreeChestDropTable.orig_Add orig, FreeChestDropTable self, List<PickupIndex> sourceDropList, float listWeight)
+        {
+            if (listWeight <= 0 || sourceDropList.Count == 0)
+            {
+                return;
+            }
+
+            float weight = listWeight / sourceDropList.Count;
+
+            foreach (PickupIndex value in sourceDropList)
+            {
+                var modifiedWeight = this.inventoriesInfo.GetPickupWeightMultiplier(value) * weight;
+
+                if (modifiedWeight > 0)
+                {
+                    self.selector.AddChoice(value, modifiedWeight);
+                }
+            }
         }
 
         private void DeprioritiseItemsInList(List<ItemIndex> list, CharacterMaster master)

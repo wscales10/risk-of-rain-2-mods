@@ -27,11 +27,6 @@ namespace UntitledMod
             return e;
         }
 
-        public static TypeReference ToTypeReference(this Type type)
-        {
-            return AssemblyDefinition.ReadAssembly(type.Assembly.Location).MainModule.ImportReference(type);
-        }
-
         public static VariableDefinition GetVariable<T>(this ILContext il, int index)
         {
             var output = il.Body.Variables.Single(x => x.Index == index);

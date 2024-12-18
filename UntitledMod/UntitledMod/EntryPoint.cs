@@ -1,28 +1,19 @@
 ﻿using BepInEx;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+using UntitledMod.Tests;
 
 namespace UntitledMod
 {
     [BepInPlugin("com.woodyscales.untitledmod", "Untitled Mod", "0.0.1")]
+    [BepInDependency("com.bepis.r2api")]
     public class EntryPoint : BaseUnityPlugin
     {
         public UntitledMod Mod { get; private set; }
 
         public void Awake()
         {
-            var services = new ServiceCollection();
-
-            services.AddSingleton(new CustomLogger(this.Logger));
-            services.AddFactory<IInventoryManager, InventoryManager>();
-            services.AddSingleton<ServerSide>();
-            services.AddSingleton<Writer>();
-            services.AddSingleton<InventoriesInfo>();
-            services.AddSingleton<Reader>();
-
-            services.AddSingleton<UntitledMod>();
-
-            this.Mod = services.BuildServiceProvider().GetRequiredService<UntitledMod>();
+            var logger = new CustomLogger(this.Logger);
+            new TestsEntryPoint(logger).RunAllTests();
+            this.Mod = DependencyInjection.BuildMod(logger);
         }
     }
 }

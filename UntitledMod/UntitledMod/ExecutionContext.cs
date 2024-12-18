@@ -6,9 +6,9 @@ namespace UntitledMod
 {
     public abstract class ExecutionContext
     {
-        private readonly CustomLogger logger;
+        private readonly ICustomLogger logger;
 
-        protected ExecutionContext(CustomLogger logger)
+        protected ExecutionContext(ICustomLogger logger)
         {
             this.logger = logger;
         }
