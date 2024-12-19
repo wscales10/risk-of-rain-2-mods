@@ -1,11 +1,9 @@
 ﻿using RoR2;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace UntitledMod
 {
-    internal class WriterHooks
+    public class WriterHooks
     {
         private readonly ICustomLogger logger;
 
@@ -19,6 +17,13 @@ namespace UntitledMod
             On.RoR2.Inventory.RemoveItem_ItemIndex_int += this.Inventory_RemoveItem_ItemIndex_int;
             this.logger = logger;
             this.writer = writer;
+
+            this.writer.ItemWeightMultipliersUpdated += this.Writer_ItemWeightMultipliersUpdated;
+        }
+
+        private void Writer_ItemWeightMultipliersUpdated()
+        {
+            typeof(Run).GetPrivateStaticFieldValue<Action<Run>>("onAvailablePickupsModified")(Run.instance);
         }
 
         private void PlayerCharacterMasterController_Awake(On.RoR2.PlayerCharacterMasterController.orig_Awake orig, PlayerCharacterMasterController self)

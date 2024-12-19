@@ -11,15 +11,18 @@ namespace UntitledMod
             var services = new ServiceCollection();
 
             services.AddSingleton<UntitledMod>()
-                .AddSingleton<Writer>()
+                .AddSingleton<WriterHooks>()
                     .AddSingleton(logger)
-                    .AddSingleton<IInventoryManagers, InventoryManagers>()
-                        .AddFactory<IInventoryManager, InventoryManager>()
-                    .AddSingleton<IPickupWeightMultipliers, PickupWeightMultipliers>()
-                    .AddSingleton<ServerSide>()
-                    .AddSingleton<Func<ItemIndex, PickupIndex>>(PickupCatalog.FindPickupIndex)
-                .AddSingleton<Reader>()
-                    .AddSingleton<InventoriesInfo>();
+                    .AddSingleton<Writer>()
+                        .AddSingleton<IInventoryManagers, InventoryManagers>()
+                            .AddFactory<IInventoryManager, InventoryManager>()
+                        .AddSingleton<IPickupWeightMultipliers, PickupWeightMultipliers>()
+                        .AddSingleton<ServerSide>()
+                            .AddSingleton<IRoR2Context, RoR2Context>()
+                        .AddSingleton<Func<ItemIndex, PickupIndex>>(PickupCatalog.FindPickupIndex)
+                .AddSingleton<ReaderHooks>()
+                    .AddSingleton<Reader>()
+                        .AddSingleton<InventoriesInfo>();
 
             return services.BuildServiceProvider().GetRequiredService<UntitledMod>();
         }

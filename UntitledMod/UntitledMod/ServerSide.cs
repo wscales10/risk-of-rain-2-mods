@@ -4,13 +4,16 @@ namespace UntitledMod
 {
     public class ServerSide : ExecutionContext
     {
-        public ServerSide(ICustomLogger logger) : base(logger)
+        private readonly IRoR2Context gameContext;
+
+        public ServerSide(ICustomLogger logger, IRoR2Context gameContext) : base(logger)
         {
+            this.gameContext = gameContext;
         }
 
         protected override bool AllowExecution()
         {
-            return NetworkServer.active;
+            return this.gameContext.IsNetworkServerActive;
         }
 
         protected override string GetWarningMessage(int callerLineNumber, string callerFileName)

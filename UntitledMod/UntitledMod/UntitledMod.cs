@@ -2,16 +2,16 @@
 {
     public partial class UntitledMod
     {
-        public UntitledMod(Writer writer, Reader reader)
+        public UntitledMod(WriterHooks writer, ReaderHooks reader)
         {
             On.RoR2.ItemCatalog.Init += this.ItemCatalog_Init;
             this.Writer = writer;
             this.Reader = reader;
         }
 
-        internal Writer Writer { get; }
+        internal WriterHooks Writer { get; }
 
-        internal Reader Reader { get; }
+        internal ReaderHooks Reader { get; }
 
         private void ItemCatalog_Init(On.RoR2.ItemCatalog.orig_Init orig)
         {

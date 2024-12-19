@@ -13,6 +13,7 @@
 		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
 		<PackageReference Include="Moq" Version="4.20.72" />
+		<PackageReference Include="Moq.AutoMock" Version="3.5.0" />
 
 		<PackageReference Include="R2API.Items" Version="1.0.*" />
 		<PackageReference Include="R2API.Language" Version="1.0.*" />

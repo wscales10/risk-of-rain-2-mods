@@ -2,6 +2,7 @@
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 
@@ -39,9 +40,27 @@ namespace UntitledMod
             return output;
         }
 
+        public static ILCursor ReplaceWithDelegate<T>(this ILCursor c, T cb) where T : Delegate
+        {
+            c.Index++;
+            int originalIndex = c.Index;
+            c.EmitDelegate(cb);
+            var nextInstruction = c.Next;
+            c.Index = originalIndex;
+            c.Prev.OpCode = c.Next.OpCode;
+            c.Prev.Operand = c.Next.Operand;
+            c.Remove();
+            return c.Goto(nextInstruction);
+        }
+
         public static string GetModifiedIL(this ILContext il)
         {
             return string.Join("\r\n", il.Body.Instructions.Select(ConvertInstructionToString));
+        }
+
+        public static void LogModifiedIL(this ICustomLogger logger, ILContext il)
+        {
+            logger.LogDebug($"Modified IL: {Environment.NewLine}{il.GetModifiedIL()}");
         }
 
         private static string ConvertInstructionToString(Instruction instr, int index)

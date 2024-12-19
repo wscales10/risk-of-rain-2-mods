@@ -20,11 +20,11 @@ namespace UntitledMod.Tests
             foreach (var testClass in Assembly.GetAssembly(this.GetType()).GetTypes()
                 .Where(t => t.IsSubclassOf(typeof(TestClass))))
             {
-                var instance = testClass.GetConstructor(Array.Empty<Type>()).Invoke(Array.Empty<object>());
-                instance.SetPropertyValue(nameof(TestClass.Logger), this.logger);
-
                 foreach (var testMethod in testClass.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
                 {
+                    var instance = testClass.GetConstructor(Array.Empty<Type>()).Invoke(Array.Empty<object>());
+                    instance.SetPropertyValue(nameof(TestClass.Logger), this.logger);
+
                     tests++;
 
                     try
@@ -33,7 +33,7 @@ namespace UntitledMod.Tests
                     }
                     catch (Exception ex)
                     {
-                        this.logger.LogDebug(ex);
+                        this.logger.LogError(ex);
                         this.logger.LogDebug($"Test '{testClass.Name}_{testMethod.Name}' FAILED");
                         continue;
                     }

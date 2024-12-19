@@ -20,6 +20,11 @@ namespace UntitledMod
             return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
         }
 
+        public static T GetPrivateStaticFieldValue<T>(this Type type, string name)
+        {
+            return (T)GetPrivateStaticField(type, name).GetValue(null);
+        }
+
         public static FieldInfo GetPrivateInstanceField(this Type type, string name)
         {
             return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);

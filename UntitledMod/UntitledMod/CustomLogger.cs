@@ -19,6 +19,16 @@ namespace UntitledMod
 
         public void LogDebug(object data)
         {
+            this.logSource.LogInfo(data);
+        }
+
+        public void LogError(object data)
+        {
+            this.logSource.LogError(data);
+        }
+
+        public void LogVerbose(object data)
+        {
             this.logSource.LogDebug(data);
         }
     }

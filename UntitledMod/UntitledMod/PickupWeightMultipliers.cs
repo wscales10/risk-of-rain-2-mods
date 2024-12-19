@@ -22,8 +22,10 @@ namespace UntitledMod
             return this.dictionary.TryGetValue(pickupIndex, out multiplier);
         }
 
-        public void SetValue(PickupIndex pickupIndex, float? multiplier)
+        public bool SetValue(PickupIndex pickupIndex, float? multiplier)
         {
+            var previousValue = this.dictionary.TryGetValue(pickupIndex, out float f) ? f : (float?)null;
+
             if (multiplier.HasValue)
             {
                 this.dictionary[pickupIndex] = multiplier.Value;
@@ -32,6 +34,8 @@ namespace UntitledMod
             {
                 this.dictionary.Remove(pickupIndex);
             }
+
+            return previousValue != multiplier;
         }
     }
 }

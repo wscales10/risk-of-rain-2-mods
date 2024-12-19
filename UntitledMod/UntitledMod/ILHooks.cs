@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace UntitledMod
 {
-    public partial class Reader
+    public partial class ReaderHooks
     {
         public void CostTypeCatalog_PayCostItems(ILContext il)
         {
@@ -38,8 +38,9 @@ namespace UntitledMod
 
             c.GotoPrev(x => x.MatchLdloc(3), x => x.Match(OpCodes.Br_S));
             c.Emit(OpCodes.Ldarg_1);
+            c.Emit(OpCodes.Ldfld, typeof(CostTypeDef.PayCostContext).GetField(nameof(CostTypeDef.PayCostContext.activatorMaster)));
             c.Emit(OpCodes.Ldloc_S, il.GetVariable<ItemIndex>(9));
-            c.EmitDelegate<Func<CostTypeDef.PayCostContext, ItemIndex, bool>>((context, itemIndex) => this.inventoriesInfo.Lookup(context.activatorMaster, out var inventoryManager) && inventoryManager.WantsToKeep(itemIndex));
+            c.EmitDelegate<Func<CharacterMaster, ItemIndex, bool>>(this.reader.PlayerWantsToKeep);
             c.Emit(OpCodes.Brtrue_S, label);
 
             // Take items from new weighted selection
@@ -68,7 +69,7 @@ namespace UntitledMod
 
             c.Emit(OpCodes.Ldloc_2);
             c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.DeprioritiseItemsInList);
+            c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.reader.DeprioritiseItemsInList);
         }
 
         private void LunarSunBehavior_FixedUpdate(ILContext il)
@@ -90,7 +91,7 @@ namespace UntitledMod
             c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Ldfld, typeof(LunarSunBehavior).GetField(nameof(LunarSunBehavior.body)));
             c.Emit<CharacterBody>(OpCodes.Callvirt, $"get_{nameof(CharacterBody.master)}");
-            c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.DeprioritiseItemsInList);
+            c.EmitDelegate<Action<List<ItemIndex>, CharacterMaster>>(this.reader.DeprioritiseItemsInList);
         }
 
         private void BossGroup_DropRewards(ILContext il)
@@ -108,8 +109,7 @@ namespace UntitledMod
 
             c.Index += 3;
 
-            c.Remove();
-            c.EmitDelegate<Func<Xoroshiro128Plus, List<PickupIndex>, PickupIndex>>(this.SelectReward);
+            c.ReplaceWithDelegate<Func<Xoroshiro128Plus, List<PickupIndex>, PickupIndex>>(this.reader.SelectRewardFromList);
 
             // Use weights while considering replacing with boss item
             c.GotoNext(
@@ -124,8 +124,11 @@ namespace UntitledMod
             c.Index++;
 
             c.Emit(OpCodes.Ldloc_1);
+            c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Ldfld, typeof(BossGroup).GetPrivateInstanceField("rng"));
-            c.EmitDelegate<Func<PickupIndex, PickupIndex, Xoroshiro128Plus, PickupIndex>>(this.SelectReward);
+            c.EmitDelegate<Func<PickupIndex, PickupIndex, Xoroshiro128Plus, PickupIndex>>(this.reader.SelectReward);
+
+            this.logger.LogModifiedIL(il);
         }
 
         private void BasicPickupDropTable_Add(ILContext il)
@@ -152,7 +155,7 @@ namespace UntitledMod
             c.Body.Variables.Add(localChanceVariable);
 
             c.Emit(OpCodes.Ldloc_1);
-            c.EmitDelegate<Func<PickupIndex, float>>(this.inventoriesInfo.GetPickupWeightMultiplier);
+            c.EmitDelegate<Func<PickupIndex, float>>(this.reader.GetPickupWeightMultiplier);
             c.Emit(OpCodes.Ldarg_2);
             c.Emit(OpCodes.Mul);
             c.Emit(OpCodes.Stloc, localChanceVariable.Index);

@@ -18,20 +18,16 @@ namespace UntitledMod
         {
             this.logger = logger;
             this.inventoriesInfo = inventoriesInfo;
-
-            On.RoR2.CostTypeCatalog.LunarItemOrEquipmentCostTypeHelper.PayCost += this.LunarItemOrEquipmentCostTypeHelper_PayCost;
-            typeof(IL.RoR2.CostTypeCatalog).GetEvent("<Init>g__PayCostItems|5_1").AddHook(this, nameof(CostTypeCatalog_PayCostItems));
-            IL.RoR2.LunarSunBehavior.FixedUpdate += this.LunarSunBehavior_FixedUpdate;
-            IL.RoR2.CharacterMaster.TryCloverVoidUpgrades += this.CharacterMaster_TryCloverVoidUpgrades;
-
-            On.RoR2.BasicPickupDropTable.Add += this.BasicPickupDropTable_Add;
-            On.RoR2.ArenaMonsterItemDropTable.Add += this.ArenaMonsterItemDropTable_Add;
-            On.RoR2.FreeChestDropTable.Add += this.FreeChestDropTable_Add;
-            IL.RoR2.BossGroup.DropRewards += this.BossGroup_DropRewards;
         }
 
-        private PickupIndex SelectReward(Xoroshiro128Plus rng, List<PickupIndex> list)
+        public bool PlayerWantsToKeep(CharacterMaster characterMaster, ItemIndex itemIndex)
         {
+            return this.inventoriesInfo.Lookup(characterMaster, out var inventoryManager) && inventoryManager.WantsToKeep(itemIndex);
+        }
+
+        public PickupIndex SelectRewardFromList(Xoroshiro128Plus rng, List<PickupIndex> list)
+        {
+            this.logger.LogMethodCall();
             var weightedSelection = new WeightedSelection<PickupIndex>();
 
             foreach (var pickupIndex in list)
@@ -52,12 +48,29 @@ namespace UntitledMod
             return PickupIndex.none;
         }
 
-        private PickupIndex SelectReward(PickupIndex bossItem, PickupIndex normalItem, Xoroshiro128Plus rng)
+        public PickupIndex SelectReward(PickupIndex bossItem, PickupIndex normalItem, Xoroshiro128Plus rng)
         {
             return rng.nextNormalizedFloat < this.inventoriesInfo.GetPickupWeightMultiplier(bossItem) ? bossItem : normalItem;
         }
 
-        private void BasicPickupDropTable_Add(On.RoR2.BasicPickupDropTable.orig_Add orig, BasicPickupDropTable self, List<PickupIndex> sourceDropList, float chance)
+        public void DeprioritiseItemsInList(List<ItemIndex> list, CharacterMaster master)
+        {
+            if (!this.inventoriesInfo.Lookup(master, out var inventoryManager))
+            {
+                return;
+            }
+
+            var deprioritisedItems = list.Where(inventoryManager.WantsToKeep).ToArray();
+
+            foreach (var item in deprioritisedItems)
+            {
+                list.Remove(item);
+            }
+
+            list.AddRange(deprioritisedItems);
+        }
+
+        public void AddToPickupDropTable(BasicPickupDropTable self, List<PickupIndex> sourceDropList, float chance)
         {
             if (chance <= 0f || sourceDropList.Count == 0)
             {
@@ -75,7 +88,7 @@ namespace UntitledMod
             }
         }
 
-        private void ArenaMonsterItemDropTable_Add(On.RoR2.ArenaMonsterItemDropTable.orig_Add orig, ArenaMonsterItemDropTable self, List<PickupIndex> sourceDropList, float chance)
+        public void AddToPickupDropTable(ArenaMonsterItemDropTable self, List<PickupIndex> sourceDropList, float chance)
         {
             if (chance <= 0f || sourceDropList.Count == 0)
             {
@@ -93,7 +106,7 @@ namespace UntitledMod
             }
         }
 
-        private void FreeChestDropTable_Add(On.RoR2.FreeChestDropTable.orig_Add orig, FreeChestDropTable self, List<PickupIndex> sourceDropList, float listWeight)
+        public void AddToPickupDropTable(FreeChestDropTable self, List<PickupIndex> sourceDropList, float listWeight)
         {
             if (listWeight <= 0 || sourceDropList.Count == 0)
             {
@@ -113,27 +126,8 @@ namespace UntitledMod
             }
         }
 
-        private void DeprioritiseItemsInList(List<ItemIndex> list, CharacterMaster master)
+        public void PayLunarItemOrEquipment(CostTypeDef.PayCostContext context)
         {
-            if (!this.inventoriesInfo.Lookup(master, out var inventoryManager))
-            {
-                return;
-            }
-
-            var deprioritisedItems = list.Where(inventoryManager.WantsToKeep).ToArray();
-
-            foreach (var item in deprioritisedItems)
-            {
-                list.Remove(item);
-            }
-
-            list.AddRange(deprioritisedItems);
-        }
-
-        private void LunarItemOrEquipmentCostTypeHelper_PayCost(On.RoR2.CostTypeCatalog.LunarItemOrEquipmentCostTypeHelper.orig_PayCost orig, CostTypeDef costTypeDef, CostTypeDef.PayCostContext context)
-        {
-            // Completely replace this method, as it's bugged for a cost of greater than one anyway
-
             Inventory inventory = context.activator.GetComponent<CharacterBody>().inventory;
             int cost = context.cost;
 
@@ -189,6 +183,11 @@ namespace UntitledMod
             }
 
             MultiShopCardUtils.OnNonMoneyPurchase(context);
+        }
+
+        public float GetPickupWeightMultiplier(PickupIndex index)
+        {
+            return this.inventoriesInfo.GetPickupWeightMultiplier(index);
         }
     }
 }

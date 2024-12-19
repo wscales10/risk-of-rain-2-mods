@@ -5,7 +5,7 @@ namespace UntitledMod
 {
     public interface IInventoryManagers : IEnumerable<IInventoryManager>
     {
-        void Add(CharacterMaster characterMaster);
+        IInventoryManager Add(CharacterMaster characterMaster);
 
         void Reset();
 

@@ -1,12 +1,16 @@
 ﻿using RoR2;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
+using UnityEngine;
 
 namespace UntitledMod
 {
     public class InventoryManager : IInventoryManager
     {
+        private const int maxVisibleDamageItems = 5; // TODO: this number should be specified elsewhere
+
         private static ItemIndex[] visibleDamageItems;
 
         private readonly HashSet<ItemIndex> allowedVisibleDamageItems = new HashSet<ItemIndex>();
@@ -19,6 +23,8 @@ namespace UntitledMod
         {
             this.logger = logger;
         }
+
+        public event NotifyCollectionChangedEventHandler BannedItemsChanged;
 
         public static void Init()
         {
@@ -60,17 +66,7 @@ namespace UntitledMod
 
         public bool IsAllowed(ItemIndex itemIndex)
         {
-            if (!this.isSublistLocked)
-            {
-                return true;
-            }
-
-            if (!visibleDamageItems.Contains(itemIndex))
-            {
-                return true;
-            }
-
-            return this.allowedVisibleDamageItems.Contains(itemIndex);
+            return !this.GetBannedItems().Contains(itemIndex);
         }
 
         public void OnPickupItem(ItemIndex itemIndex)
@@ -83,16 +79,21 @@ namespace UntitledMod
 
             if (visibleDamageItems.Contains(itemIndex))
             {
-                this.allowedVisibleDamageItems.Add(itemIndex);
+                if (this.allowedVisibleDamageItems.Add(itemIndex))
+                {
+                    Chat.SendBroadcastChat(new ColoredTokenChatMessage
+                    {
+                        baseToken = "[{1} {2}]",
+                        paramTokens = new[] { "Acquired", ItemCatalog.GetItemDef(itemIndex).nameToken },
+                        paramColors = new[] { new Color32(255, 255, 255, 255), itemIndex.GetItemColor() }
+                    });
+                    Chat.SendBroadcastChat(new ColoredTokenChatMessage { baseToken = $"[{this.allowedVisibleDamageItems.Count}/{maxVisibleDamageItems} slots filled]" });
+                }
 
-                if (this.allowedVisibleDamageItems.Count > 4) // TODO: this number should be specified elsewhere
+                if (this.allowedVisibleDamageItems.Count >= maxVisibleDamageItems)
                 {
                     this.isSublistLocked = true;
-
-                    foreach (var i in this.allowedVisibleDamageItems)
-                    {
-                        Chat.SendBroadcastChat(new ColoredTokenChatMessage { baseToken = ItemCatalog.GetItemDef(i).nameToken });
-                    }
+                    this.BannedItemsChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this.GetBannedItems().ToArray()));
                 }
             }
         }
@@ -103,8 +104,27 @@ namespace UntitledMod
 
             if (!this.isSublistLocked)
             {
-                this.allowedVisibleDamageItems.Remove(itemIndex);
+                if (this.allowedVisibleDamageItems.Remove(itemIndex))
+                {
+                    Chat.SendBroadcastChat(new ColoredTokenChatMessage
+                    {
+                        baseToken = "[{1} {2}]",
+                        paramTokens = new[] { "Lost", ItemCatalog.GetItemDef(itemIndex).nameToken },
+                        paramColors = new[] { new Color32(255, 255, 255, 255), itemIndex.GetItemColor() }
+                    });
+                    Chat.SendBroadcastChat(new ColoredTokenChatMessage { baseToken = $"[{this.allowedVisibleDamageItems.Count}/{maxVisibleDamageItems} slots filled]" });
+                }
             }
+        }
+
+        private IEnumerable<ItemIndex> GetBannedItems()
+        {
+            if (!this.isSublistLocked)
+            {
+                return Enumerable.Empty<ItemIndex>();
+            }
+
+            return visibleDamageItems.Except(this.allowedVisibleDamageItems);
         }
     }
 }

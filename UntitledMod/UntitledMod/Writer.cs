@@ -1,5 +1,6 @@
 ﻿using RoR2;
 using System;
+using System.Collections.Specialized;
 using System.Linq;
 
 namespace UntitledMod
@@ -25,9 +26,11 @@ namespace UntitledMod
             this.findPickupIndex = findPickupIndex;
         }
 
+        public event Action ItemWeightMultipliersUpdated;
+
         public void TryAddInventoryManager(PlayerCharacterMasterController self)
         {
-            this.serverSide.TryExecute(() => this.inventoryManagers.Add(self.master));
+            this.serverSide.TryExecute(() => this.inventoryManagers.Add(self.master).BannedItemsChanged += this.Writer_BannedItemsChanged);
         }
 
         public void OnPickupItem(Inventory inventory, ItemIndex itemIndex)
@@ -37,7 +40,6 @@ namespace UntitledMod
                 if (this.inventoryManagers.TryGetValue(inventory, out var inventoryManager))
                 {
                     inventoryManager.OnPickupItem(itemIndex);
-                    this.RefreshItemWeightMultiplier(itemIndex);
                 }
             });
         }
@@ -47,7 +49,6 @@ namespace UntitledMod
             if (this.inventoryManagers.TryGetValue(inventory, out var inventoryManager))
             {
                 inventoryManager.OnLoseItem(itemIndex);
-                this.RefreshItemWeightMultiplier(itemIndex);
             }
         }
 
@@ -65,21 +66,47 @@ namespace UntitledMod
             }
         }
 
-        public void RefreshItemWeightMultiplier(ItemIndex itemIndex)
+        public void RefreshItemWeightMultipliers(params ItemIndex[] itemIndices)
+        {
+            bool wasUpdated = false;
+
+            foreach (var itemIndex in itemIndices)
+            {
+                wasUpdated |= this.RefreshItemWeightMultiplier(itemIndex);
+            }
+
+            if (wasUpdated)
+            {
+                this.ItemWeightMultipliersUpdated?.Invoke();
+            }
+        }
+
+        private void Writer_BannedItemsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+            {
+                this.RefreshItemWeightMultipliers(e.OldItems.Cast<ItemIndex>().ToArray());
+            }
+
+            if (e.NewItems != null)
+            {
+                this.RefreshItemWeightMultipliers(e.NewItems.Cast<ItemIndex>().ToArray());
+            }
+        }
+
+        private bool RefreshItemWeightMultiplier(ItemIndex itemIndex)
         {
             var pickupIndex = this.findPickupIndex(itemIndex);
             int bannedFor = this.inventoryManagers.Count(inventoryManager => !inventoryManager.IsAllowed(itemIndex));
 
             if (bannedFor == 0)
             {
-                this.pickupWeightMultipliers.SetValue(pickupIndex, null);
+                return this.pickupWeightMultipliers.SetValue(pickupIndex, null);
             }
             else
             {
-                this.pickupWeightMultipliers.SetValue(pickupIndex, Math.Clamp(1 - bannedFor / (float)this.inventoryManagers.Count(), 0, 1));
+                return this.pickupWeightMultipliers.SetValue(pickupIndex, Math.Clamp(1 - bannedFor / (float)this.inventoryManagers.Count(), 0, 1));
             }
-
-            typeof(Run).RaiseStaticEvent(nameof(Run.onAvailablePickupsModified));
         }
     }
 }

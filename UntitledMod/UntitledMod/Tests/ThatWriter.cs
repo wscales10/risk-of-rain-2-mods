@@ -1,49 +1,64 @@
-﻿using Moq;
+﻿using Castle.Core.Logging;
+using Moq;
+using Moq.AutoMock;
 using RoR2;
+using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 
 namespace UntitledMod.Tests
 {
     internal class ThatWriter : TestClass
     {
-        public void RefreshItemWeightMultiplier_RemovesAvailableItems()
+        protected override AutoMocker GetMocker()
         {
-            var inventoryManagerMock = new Mock<IInventoryManager>();
-            inventoryManagerMock.Setup(x => x.IsAllowed(It.IsAny<ItemIndex>())).Returns(true);
-
-            Mock<IInventoryManagers> inventoryManagersMock = new Mock<IInventoryManagers>();
-            IEnumerable<IInventoryManager> inventoryManagers = Enumerable.Repeat(inventoryManagerMock.Object, 5).ToArray();
-            inventoryManagersMock.Setup(x => x.GetEnumerator()).Returns(inventoryManagers.GetEnumerator());
-
-            var pickupWeightMultipliersMock = new Mock<IPickupWeightMultipliers>();
-            var writer = new Writer(this.Logger, inventoryManagersMock.Object, null, pickupWeightMultipliersMock.Object, this.FindPickupIndex);
-
-            var itemIndex = (ItemIndex)69;
-            writer.RefreshItemWeightMultiplier(itemIndex);
-
-            var pickupIndex = this.FindPickupIndex(itemIndex);
-            pickupWeightMultipliersMock.Verify(x => x.SetValue(It.Is<PickupIndex>(i => i == pickupIndex), It.Is<float?>(v => v == null)), Times.Once);
+            var mocker = base.GetMocker();
+            mocker.Use<Func<ItemIndex, PickupIndex>>(this.FindPickupIndex);
+            return mocker;
         }
 
-        public void RefreshItemWeightMultiplier_BansUnavailableItems()
+        public void RefreshItemWeightMultipliers_RemovesAvailableItems()
         {
-            var itemIndex = (ItemIndex)69;
-            var pickupIndex = this.FindPickupIndex(itemIndex);
+            var mocker = this.GetMocker();
+            mocker.Use((ServerSide)null);
 
-            var inventoryManagerMock = new Mock<IInventoryManager>();
-            inventoryManagerMock.Setup(x => x.IsAllowed(It.IsAny<ItemIndex>())).Returns<ItemIndex>(i => i != itemIndex);
+            var inventoryManagerMock = mocker.GetMock<IInventoryManager>();
+            inventoryManagerMock.Setup(x => x.IsAllowed(It.IsAny<ItemIndex>())).Returns(true);
 
-            Mock<IInventoryManagers> inventoryManagersMock = new Mock<IInventoryManagers>();
+            var inventoryManagersMock = mocker.GetMock<IInventoryManagers>();
             IEnumerable<IInventoryManager> inventoryManagers = Enumerable.Repeat(inventoryManagerMock.Object, 5).ToArray();
             inventoryManagersMock.Setup(x => x.GetEnumerator()).Returns(inventoryManagers.GetEnumerator());
 
-            var pickupWeightMultipliersMock = new Mock<IPickupWeightMultipliers>();
-            var writer = new Writer(this.Logger, inventoryManagersMock.Object, null, pickupWeightMultipliersMock.Object, this.FindPickupIndex);
+            var writer = mocker.CreateInstance<Writer>();
 
-            writer.RefreshItemWeightMultiplier(itemIndex);
+            var itemIndex = (ItemIndex)69;
+            writer.RefreshItemWeightMultipliers(itemIndex);
 
-            pickupWeightMultipliersMock.Verify(x => x.SetValue(It.Is<PickupIndex>(i => i == pickupIndex), It.Is<float?>(v => v == 0)), Times.Once);
+            var pickupIndex = this.FindPickupIndex(itemIndex);
+            mocker.GetMock<IPickupWeightMultipliers>().Verify(x => x.SetValue(It.Is<PickupIndex>(i => i == pickupIndex), It.Is<float?>(v => v == null)), Times.Once);
+        }
+
+        public void RefreshItemWeightMultipliers_BansUnavailableItems()
+        {
+            var mocker = this.GetMocker();
+            mocker.Use((ServerSide)null);
+
+            var itemIndex = (ItemIndex)69;
+            var pickupIndex = this.FindPickupIndex(itemIndex);
+
+            var inventoryManagerMock = mocker.GetMock<IInventoryManager>();
+            inventoryManagerMock.Setup(x => x.IsAllowed(It.IsAny<ItemIndex>())).Returns<ItemIndex>(i => i != itemIndex);
+
+            var inventoryManagersMock = mocker.GetMock<IInventoryManagers>();
+            IEnumerable<IInventoryManager> inventoryManagers = Enumerable.Repeat(inventoryManagerMock.Object, 5).ToArray();
+            inventoryManagersMock.Setup(x => x.GetEnumerator()).Returns(inventoryManagers.GetEnumerator());
+
+            var writer = mocker.CreateInstance<Writer>();
+
+            writer.RefreshItemWeightMultipliers(itemIndex);
+
+            mocker.GetMock<IPickupWeightMultipliers>().Verify(x => x.SetValue(It.Is<PickupIndex>(i => i == pickupIndex), It.Is<float?>(v => v == 0)), Times.Once);
         }
 
         private PickupIndex FindPickupIndex(ItemIndex index) => new PickupIndex((int)index);

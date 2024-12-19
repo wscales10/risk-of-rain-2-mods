@@ -42,7 +42,12 @@ namespace UntitledMod
             return this.TryGetValue(characterMaster, out inventoryManager);
         }
 
-        public void Add(CharacterMaster characterMaster) => this.dictionary.Add(characterMaster, this.inventoryManagerFactory());
+        public IInventoryManager Add(CharacterMaster characterMaster)
+        {
+            var output = this.inventoryManagerFactory();
+            this.dictionary.Add(characterMaster, output);
+            return output;
+        }
 
         public void Reset() => this.dictionary.Clear();
     }
