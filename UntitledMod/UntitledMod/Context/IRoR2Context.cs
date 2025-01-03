@@ -1,4 +1,4 @@
-﻿namespace UntitledMod
+﻿namespace UntitledMod.Context
 {
     public interface IRoR2Context
     {

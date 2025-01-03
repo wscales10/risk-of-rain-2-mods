@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Networking;
 
-namespace UntitledMod
+namespace UntitledMod.Context
 {
     public class ServerSide : ExecutionContext
     {
