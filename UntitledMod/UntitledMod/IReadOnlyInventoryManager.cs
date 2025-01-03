@@ -1,4 +1,5 @@
 ﻿using RoR2;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 
 namespace UntitledMod
@@ -10,5 +11,6 @@ namespace UntitledMod
         bool WantsToKeep(ItemIndex itemIndex);
 
         bool IsAllowed(ItemIndex itemIndex);
+        IEnumerable<ItemIndex> GetBannedItems();
     }
 }

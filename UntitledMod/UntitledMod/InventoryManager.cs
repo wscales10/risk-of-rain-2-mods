@@ -1,62 +1,51 @@
-﻿using RoR2;
+﻿using Newtonsoft.Json.Utilities;
+using RoR2;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 using UntitledMod.Context;
 
 namespace UntitledMod
 {
-    public class InventoryManager : IInventoryManager
+    public class InventoryManager : NetworkBehaviour, IInventoryManager
     {
         private const int maxVisibleDamageItems = 5; // TODO: this number should be specified elsewhere
 
-        private static ItemIndex[] visibleDamageItems;
-
         private readonly HashSet<ItemIndex> allowedVisibleDamageItems = new HashSet<ItemIndex>();
 
-        private readonly ICustomLogger logger;
+        private readonly HashSet<ItemIndex> bannedItems = new HashSet<ItemIndex>();
+
+        private ICustomLogger logger;
+
+        private IRoR2Context gameContext;
 
         private bool isSublistLocked = false;
 
-        public InventoryManager(ICustomLogger logger)
-        {
-            this.logger = logger;
-        }
+        private VisibleDamageItemsProvider visibleDamageItemsProvider;
 
         public event NotifyCollectionChangedEventHandler BannedItemsChanged;
 
-        public static void Init()
+        public InventoryManager Init(ICustomLogger logger, IRoR2Context context, VisibleDamageItemsProvider visibleDamageItemsProvider)
         {
-            ItemDef[] invisibleDamageItems = new[] // TODO: consider specifying this elsewhere and including non-damage items
-            {
-                RoR2Content.Items.BossDamageBonus,
-                RoR2Content.Items.WarCryOnMultiKill,
-                DLC2Content.Items.LowerHealthHigherDamage,
-                DLC2Content.Items.IncreaseDamageOnMultiKill,
-                RoR2Content.Items.Crowbar,
-                RoR2Content.Items.DeathMark,
-                DLC1Content.Items.FragileDamageBonus,
-                RoR2Content.Items.NearbyDamageBonus,
-                DLC1Content.Items.StrengthenBurn,
-                RoR2Content.Items.ShinyPearl,
-                DLC1Content.Items.CritDamage,
-                RoR2Content.Items.CritGlasses,
-                DLC2Content.Items.OnLevelUpFreeUnlock,
-                DLC1Content.Items.CritGlassesVoid,
-                DLC1Content.Items.AttackSpeedAndMoveSpeed,
-                RoR2Content.Items.ExecuteLowHealthElite,
-                DLC1Content.Items.MoreMissile,
-                RoR2Content.Items.AttackSpeedOnCrit,
-                RoR2Content.Items.LunarDagger,
-                RoR2Content.Items.ArmorReductionOnHit,
-                RoR2Content.Items.BoostAttackSpeed,
-                DLC1Content.Items.PermanentDebuffOnHit,
-                RoR2Content.Items.EnergizedOnEquipmentUse,
-            }.Where(d => !(d is null)).ToArray();
+            this.logger = logger;
+            this.gameContext = context;
+            this.visibleDamageItemsProvider = visibleDamageItemsProvider;
+            return this;
+        }
 
-            visibleDamageItems = ItemCatalog.GetItemsWithTag(ItemTag.Damage).Except(invisibleDamageItems.Select(d => d.itemIndex)).ToArray();
+        public void Reset()
+        {
+            if (!this.gameContext.IsNetworkServerActive)
+            {
+                return;
+            }
+
+            this.logger.LogMethodCall();
+            this.allowedVisibleDamageItems.Clear();
+            this.SetIsSublistLocked(false);
         }
 
         public bool WantsToKeep(ItemIndex itemIndex)
@@ -67,20 +56,28 @@ namespace UntitledMod
 
         public bool IsAllowed(ItemIndex itemIndex)
         {
-            return !this.GetBannedItems().Contains(itemIndex);
+            return !this.bannedItems.Contains(itemIndex);
         }
 
         public void OnPickupItem(ItemIndex itemIndex)
         {
+            this.gameContext.ThrowIfClient();
             this.logger.LogDebug($"Picking up '{ItemCatalog.GetItemDef(itemIndex).name}'");
             if (this.isSublistLocked)
             {
                 return;
             }
 
-            if (visibleDamageItems.Contains(itemIndex))
+            if (this.visibleDamageItemsProvider.GetItems().Contains(itemIndex))
             {
-                if (this.allowedVisibleDamageItems.Add(itemIndex))
+                bool wasAdded = this.allowedVisibleDamageItems.Add(itemIndex);
+
+                if (this.allowedVisibleDamageItems.Count >= maxVisibleDamageItems)
+                {
+                    this.SetIsSublistLocked(true);
+                }
+
+                if (wasAdded)
                 {
                     Chat.SendBroadcastChat(new ColoredTokenChatMessage
                     {
@@ -90,23 +87,19 @@ namespace UntitledMod
                     });
                     Chat.SendBroadcastChat(new ColoredTokenChatMessage { baseToken = $"[{this.allowedVisibleDamageItems.Count}/{maxVisibleDamageItems} slots filled]" });
                 }
-
-                if (this.allowedVisibleDamageItems.Count >= maxVisibleDamageItems)
-                {
-                    this.isSublistLocked = true;
-                    this.BannedItemsChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this.GetBannedItems().ToArray()));
-                }
             }
         }
 
         public void OnLoseItem(ItemIndex itemIndex)
         {
+            this.gameContext.ThrowIfClient();
             this.logger.LogDebug($"Lost '{ItemCatalog.GetItemDef(itemIndex).name}'");
 
             if (!this.isSublistLocked)
             {
                 if (this.allowedVisibleDamageItems.Remove(itemIndex))
                 {
+                    this.TargetUpdateClient(this.connectionToClient, this.allowedVisibleDamageItems.ToArray());
                     Chat.SendBroadcastChat(new ColoredTokenChatMessage
                     {
                         baseToken = "[{1} {2}]",
@@ -118,14 +111,64 @@ namespace UntitledMod
             }
         }
 
-        private IEnumerable<ItemIndex> GetBannedItems()
+        public IEnumerable<ItemIndex> GetBannedItems()
         {
-            if (!this.isSublistLocked)
+            foreach (var item in this.bannedItems)
             {
-                return Enumerable.Empty<ItemIndex>();
+                yield return item;
+            }
+        }
+
+        private void SetIsSublistLocked(bool value)
+        {
+            if (this.isSublistLocked != value)
+            {
+                this.isSublistLocked = value;
+
+                if (this.isSublistLocked)
+                {
+                    if (this.bannedItems.Count != 0)
+                    {
+                        throw new InvalidOperationException("Expected banned item count to be 0");
+                    }
+
+                    foreach (var item in this.visibleDamageItemsProvider.GetItems().Except(this.allowedVisibleDamageItems))
+                    {
+                        this.bannedItems.Add(item);
+                    }
+
+                    this.BannedItemsChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this.bannedItems.ToArray()));
+                }
+                else
+                {
+                    var unbannedItems = this.bannedItems.ToArray();
+                    this.bannedItems.Clear();
+                    this.BannedItemsChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset, unbannedItems));
+                }
             }
 
-            return visibleDamageItems.Except(this.allowedVisibleDamageItems);
+            if (this.connectionToClient != null)
+            {
+                this.TargetUpdateClient(this.connectionToClient, this.allowedVisibleDamageItems.ToArray(), this.isSublistLocked = value);
+            }
+        }
+
+        [TargetRpc]
+        private void TargetUpdateClient(NetworkConnection _, ItemIndex[] allowedVisibleDamageItems, bool? isSublistLocked = null)
+        {
+            this.gameContext.ThrowIfServer();
+
+            this.allowedVisibleDamageItems.Clear();
+
+            foreach (var item in allowedVisibleDamageItems)
+            {
+                this.allowedVisibleDamageItems.Add(item);
+            }
+
+            if (isSublistLocked.HasValue)
+            {
+                this.SetIsSublistLocked(isSublistLocked.Value);
+            }
         }
     }
 }

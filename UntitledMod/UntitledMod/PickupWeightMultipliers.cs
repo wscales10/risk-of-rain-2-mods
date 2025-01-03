@@ -18,7 +18,6 @@ namespace UntitledMod
 
         public bool TryGetValue(PickupIndex pickupIndex, out float multiplier)
         {
-            this.logger.LogMethodCall();
             return this.dictionary.TryGetValue(pickupIndex, out multiplier);
         }
 

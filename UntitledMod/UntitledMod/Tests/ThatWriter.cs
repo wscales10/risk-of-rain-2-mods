@@ -62,6 +62,30 @@ namespace UntitledMod.Tests
             mocker.GetMock<IPickupWeightMultipliers>().Verify(x => x.SetValue(It.Is<PickupIndex>(i => i == pickupIndex), It.Is<float?>(v => v == 0)), Times.Once);
         }
 
+        /*public void OnPickupItem_TriggersWeightMultiplierUpdate()
+        {
+            // Not finished yet. Need to make InventoryManager more testable.
+            var mocker = this.GetMocker();
+            var inventoryManagers = new InventoryManagers(mocker.Get<ICustomLogger>(), () =>
+            {
+                var inventoryManager = new InventoryManager(mocker.Get<ICustomLogger>());
+                inventoryManager.BannedItemsChanged += (object sender, NotifyCollectionChangedEventArgs e) =>
+                {
+                    throw new NotImplementedException();
+                };
+                return inventoryManager;
+            });
+            var characterMaster = new CharacterMaster();
+            inventoryManagers.Add(characterMaster);
+            mocker.Use<IInventoryManagers>(inventoryManagers);
+            mocker.Use(mocker.CreateInstance<ServerSide>());
+            mocker.GetMock<IRoR2Context>().SetupGet(c => c.IsNetworkServerActive).Returns(true);
+
+            var writer = mocker.CreateInstance<Writer>();
+
+            writer.OnPickupItem(characterMaster.inventory, (ItemIndex)69);
+        }*/
+
         private PickupIndex FindPickupIndex(ItemIndex index) => new PickupIndex((int)index);
     }
 }

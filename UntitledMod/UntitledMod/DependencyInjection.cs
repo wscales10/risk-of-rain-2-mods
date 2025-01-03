@@ -17,6 +17,7 @@ namespace UntitledMod
                     .AddSingleton<Writer>()
                         .AddSingleton<IInventoryManagers, InventoryManagers>()
                             .AddFactory<IInventoryManager, InventoryManager>()
+                                .AddSingleton<VisibleDamageItemsProvider>()
                         .AddSingleton<IPickupWeightMultipliers, PickupWeightMultipliers>()
                         .AddSingleton<ServerSide>()
                             .AddSingleton<IRoR2Context, RoR2Context>()
@@ -25,7 +26,9 @@ namespace UntitledMod
                     .AddSingleton<Reader>()
                         .AddSingleton<InventoriesInfo>();
 
-            return services.BuildServiceProvider().GetRequiredService<UntitledMod>();
+            var serviceProvider = services.BuildServiceProvider();
+            SyncPickupPickerPanelInfoMessage.Reader = serviceProvider.GetRequiredService<Reader>();
+            return serviceProvider.GetRequiredService<UntitledMod>();
         }
 
         internal static IServiceCollection AddFactory<TService, TImplementation>(this IServiceCollection services)

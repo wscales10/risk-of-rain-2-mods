@@ -1,5 +1,6 @@
 ﻿using RoR2;
 using RoR2.Items;
+using RoR2.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +15,13 @@ namespace UntitledMod
 
         private readonly InventoriesInfo inventoriesInfo;
 
-        public Reader(ICustomLogger logger, InventoriesInfo inventoriesInfo)
+        private readonly Func<ItemIndex, PickupIndex> findPickupIndex;
+
+        public Reader(ICustomLogger logger, InventoriesInfo inventoriesInfo, Func<ItemIndex, PickupIndex> findPickupIndex)
         {
             this.logger = logger;
             this.inventoriesInfo = inventoriesInfo;
+            this.findPickupIndex = findPickupIndex;
         }
 
         public bool PlayerWantsToKeep(CharacterMaster characterMaster, ItemIndex itemIndex)
@@ -188,6 +192,33 @@ namespace UntitledMod
         public float GetPickupWeightMultiplier(PickupIndex index)
         {
             return this.inventoriesInfo.GetPickupWeightMultiplier(index);
+        }
+
+        public LocalUser GetLocalUser()
+        {
+            return LocalUserManager.readOnlyLocalUsersList.SingleOrDefault();
+        }
+
+        internal bool[] GetPickupPanelInfo(PlayerCharacterMasterController playerCharacterMasterController, IEnumerable<PickupIndex> enumerable)
+        {
+            if (!this.inventoriesInfo.Lookup(playerCharacterMasterController.master, out var inventoryManager))
+            {
+                throw new InvalidOperationException();
+            }
+
+            var bannedPickups = inventoryManager.GetBannedItems().Select(this.findPickupIndex).ToArray();
+            return enumerable.Select(x => !bannedPickups.Contains(x)).ToArray();
+        }
+
+        internal void SetPickupPanelInfo(PickupPickerPanel panel, bool[] info)
+        {
+            for (int i = 0; i < info.Length; i++)
+            {
+                if (!info[i])
+                {
+                    panel.RemovePickupButtonAvailability(i);
+                }
+            }
         }
     }
 }

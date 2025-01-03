@@ -10,19 +10,19 @@ namespace UntitledMod
     {
         private readonly IInventoryManagers inventoryManagers;
 
+        private readonly IRoR2Context gameContext;
+
         private readonly IPickupWeightMultipliers pickupWeightMultipliers;
 
         private readonly Func<ItemIndex, PickupIndex> findPickupIndex;
 
         private readonly ICustomLogger logger;
 
-        private readonly ServerSide serverSide;
-
-        public Writer(ICustomLogger logger, IInventoryManagers inventoryManagers, ServerSide serverSide, IPickupWeightMultipliers pickupWeightMultipliers, Func<ItemIndex, PickupIndex> findPickupIndex)
+        public Writer(ICustomLogger logger, IInventoryManagers inventoryManagers, IRoR2Context gameContext, IPickupWeightMultipliers pickupWeightMultipliers, Func<ItemIndex, PickupIndex> findPickupIndex)
         {
             this.logger = logger;
             this.inventoryManagers = inventoryManagers;
-            this.serverSide = serverSide;
+            this.gameContext = gameContext;
             this.pickupWeightMultipliers = pickupWeightMultipliers;
             this.findPickupIndex = findPickupIndex;
         }
@@ -31,18 +31,16 @@ namespace UntitledMod
 
         public void TryAddInventoryManager(PlayerCharacterMasterController self)
         {
-            this.serverSide.TryExecute(() => this.inventoryManagers.Add(self.master).BannedItemsChanged += this.Writer_BannedItemsChanged);
+            this.inventoryManagers.Add(self).BannedItemsChanged += this.Writer_BannedItemsChanged;
         }
 
         public void OnPickupItem(Inventory inventory, ItemIndex itemIndex)
         {
-            this.serverSide.TryExecute(() =>
+            this.gameContext.ThrowIfClient();
+            if (this.inventoryManagers.TryGetValue(inventory, out var inventoryManager))
             {
-                if (this.inventoryManagers.TryGetValue(inventory, out var inventoryManager))
-                {
-                    inventoryManager.OnPickupItem(itemIndex);
-                }
-            });
+                inventoryManager.OnPickupItem(itemIndex);
+            }
         }
 
         public void OnLoseItem(Inventory inventory, ItemIndex itemIndex)
@@ -61,9 +59,10 @@ namespace UntitledMod
 
         public void OnRemoveItem(Inventory inventory, ItemIndex itemIndex)
         {
+            this.gameContext.ThrowIfClient();
             if (inventory.itemStacks[(int)itemIndex] == 0)
             {
-                this.serverSide.TryExecute(() => this.OnLoseItem(inventory, itemIndex));
+                this.OnLoseItem(inventory, itemIndex);
             }
         }
 
@@ -84,14 +83,17 @@ namespace UntitledMod
 
         private void Writer_BannedItemsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.OldItems != null)
+            if (this.gameContext.IsNetworkServerActive)
             {
-                this.RefreshItemWeightMultipliers(e.OldItems.Cast<ItemIndex>().ToArray());
-            }
+                if (e.OldItems != null)
+                {
+                    this.RefreshItemWeightMultipliers(e.OldItems.Cast<ItemIndex>().ToArray());
+                }
 
-            if (e.NewItems != null)
-            {
-                this.RefreshItemWeightMultipliers(e.NewItems.Cast<ItemIndex>().ToArray());
+                if (e.NewItems != null)
+                {
+                    this.RefreshItemWeightMultipliers(e.NewItems.Cast<ItemIndex>().ToArray());
+                }
             }
         }
 

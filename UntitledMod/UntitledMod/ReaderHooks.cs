@@ -1,11 +1,15 @@
-﻿using RoR2;
+﻿using R2API.Networking;
+using R2API.Networking.Interfaces;
+using RoR2;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UntitledMod
 {
     public partial class ReaderHooks
     {
         private readonly ICustomLogger logger;
+
         private readonly Reader reader;
 
         public ReaderHooks(ICustomLogger logger, Reader reader)
@@ -22,6 +26,23 @@ namespace UntitledMod
             On.RoR2.ArenaMonsterItemDropTable.Add += this.ArenaMonsterItemDropTable_Add;
             On.RoR2.FreeChestDropTable.Add += this.FreeChestDropTable_Add;
             IL.RoR2.BossGroup.DropRewards += this.BossGroup_DropRewards;
+
+            //On.RoR2.UI.PickupPickerPanel.Awake += this.PickupPickerPanel_Awake;
+            On.RoR2.PickupPickerController.OnDisplayBegin += this.PickupPickerController_OnDisplayBegin;
+        }
+
+        private void PickupPickerController_OnDisplayBegin(On.RoR2.PickupPickerController.orig_OnDisplayBegin orig, PickupPickerController self, NetworkUIPromptController networkUIPromptController, LocalUser localUser, CameraRigController cameraRigController)
+        {
+            orig(self, networkUIPromptController, localUser, cameraRigController);
+            // TODO: test if this works on remote client
+            this.reader.SetPickupPanelInfo(self.panelInstanceController, this.reader.GetPickupPanelInfo(localUser.cachedMasterController, self.options.Select(x => x.pickupIndex)));
+        }
+
+        private void PickupPickerPanel_Awake(On.RoR2.UI.PickupPickerPanel.orig_Awake orig, RoR2.UI.PickupPickerPanel self)
+        {
+            orig(self);
+            var message = new SyncPickupPickerPanelInfoMessage(this.reader.GetLocalUser().cachedMasterController.netId, self.pickerController.netId);
+            message.Send(NetworkDestination.Server);
         }
 
         private void BasicPickupDropTable_Add(On.RoR2.BasicPickupDropTable.orig_Add orig, BasicPickupDropTable self, List<PickupIndex> sourceDropList, float chance)

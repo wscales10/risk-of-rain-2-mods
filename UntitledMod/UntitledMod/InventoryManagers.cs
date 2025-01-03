@@ -1,5 +1,5 @@
-﻿using RoR2;
-using System;
+﻿using R2API.Utils;
+using RoR2;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,19 +9,20 @@ namespace UntitledMod
 {
     public class InventoryManagers : IInventoryManagers
     {
-        private readonly IDictionary<CharacterMaster, IInventoryManager> dictionary = new Dictionary<CharacterMaster, IInventoryManager>();
-
         private readonly ICustomLogger logger;
 
-        private readonly Func<IInventoryManager> inventoryManagerFactory;
+        private readonly IRoR2Context gameContext;
 
-        public InventoryManagers(ICustomLogger logger, Func<IInventoryManager> inventoryManagerFactory)
+        private readonly VisibleDamageItemsProvider visibleDamageItemsProvider;
+
+        public InventoryManagers(ICustomLogger logger, IRoR2Context gameContext, VisibleDamageItemsProvider visibleDamageItemsProvider)
         {
             this.logger = logger;
-            this.inventoryManagerFactory = inventoryManagerFactory;
+            this.gameContext = gameContext;
+            this.visibleDamageItemsProvider = visibleDamageItemsProvider;
         }
 
-        public IEnumerator<IInventoryManager> GetEnumerator() => this.dictionary.Values.GetEnumerator();
+        public IEnumerator<IInventoryManager> GetEnumerator() => PlayerCharacterMasterController.instances.Select(x => x.GetComponent<InventoryManager>()).Cast<IInventoryManager>().GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
@@ -34,22 +35,45 @@ namespace UntitledMod
                 return false;
             }
 
-            return this.dictionary.TryGetValue(characterMaster, out inventoryManager);
+            var playerCharacterMasterController = PlayerCharacterMasterController.instances.FirstOrDefault(x => x.master == characterMaster);
+
+            if (playerCharacterMasterController is null)
+            {
+                inventoryManager = null;
+                return false;
+            }
+
+            inventoryManager = playerCharacterMasterController.GetComponent<InventoryManager>();
+            return inventoryManager != null;
         }
 
         public bool TryGetValue(Inventory inventory, out IInventoryManager inventoryManager)
         {
-            var characterMaster = this.dictionary.Keys.SingleOrDefault(m => m.inventory == inventory);
-            return this.TryGetValue(characterMaster, out inventoryManager);
+            this.logger.LogMethodCall();
+            if (inventory is null)
+            {
+                inventoryManager = null;
+                return false;
+            }
+
+            var playerCharacterMasterController = PlayerCharacterMasterController.instances.FirstOrDefault(x => x.master?.inventory == inventory);
+
+            if (playerCharacterMasterController is null)
+            {
+                inventoryManager = null;
+                return false;
+            }
+
+            inventoryManager = playerCharacterMasterController.GetComponent<InventoryManager>();
+            return inventoryManager != null;
         }
 
-        public IInventoryManager Add(CharacterMaster characterMaster)
+        public IInventoryManager Add(PlayerCharacterMasterController player)
         {
-            var output = this.inventoryManagerFactory();
-            this.dictionary.Add(characterMaster, output);
-            return output;
+            // TODO: can this run on the client, for a different player?
+            return player.gameObject.AddComponent<InventoryManager>().Init(this.logger, this.gameContext, this.visibleDamageItemsProvider);
         }
 
-        public void Reset() => this.dictionary.Clear();
+        public void Reset() => PlayerCharacterMasterController.instances.ForEachTry(x => x.GetComponent<InventoryManager>()?.Reset());
     }
 }

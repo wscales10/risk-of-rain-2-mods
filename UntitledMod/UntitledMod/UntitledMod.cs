@@ -16,7 +16,7 @@
         private void ItemCatalog_Init(On.RoR2.ItemCatalog.orig_Init orig)
         {
             orig();
-            InventoryManager.Init();
+            VisibleDamageItemsProvider.Init();
         }
     }
 }
