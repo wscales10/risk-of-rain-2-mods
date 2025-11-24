@@ -1,0 +1,40 @@
+- Chest loot
+	* Small chest
+	* Small damage/utility/healing chest
+	* Common multishop terminal
+	* Large chest
+	* Large damage/utility/healing chest
+	* Uncommon multishop terminal
+	* Cloaked chest
+	* Adaptive chest
+	* Legendary chest
+	* Crashed multishop delivery (shipping request form)
+- Rusty lockbox
+- Lunar pods
+- Void cradle
+- Void potential orbs - needs checking
+	* Void potential shrine
+	* Encrusted cache
+	* Void cell in void fields
+	* Simulacrum rewards
+- Scav sack
+- Aurelionite fragment
+	* Halcyon shrine
+	* Prime meridian
+- 3D printer output
+- Eulogy zero (lunars replacing non-lunars) - tricky, also this should try not to replace WantToKeep items
+- Teleporter boss rewards
+- Special boss rewards (see if there's a way to do this that is forwards-compatible)
+- Trophy hunter's Tricorn - how?
+- Shrine of chance
+- Lunar buds in bazaar
+- cauldron output
+- Artifact of sacrifice
+- Sonorous Whispers - depends on dtSonorousEchoPath, which is probably a basic pickup drop table
+- Artifact of command - requires having a client side version of InventoryManager which syncs with the version on  the server, and disabling (on the client only) the items in a run which are not allowed by that inventory manager.
+- Artifact of delusion
+- Artifact of vengeance - DopplegangerDropTable.GenerateWeightedSelection
+
+
+I can use Run.onAvailablePickupsModified to regenerate all loot tables
+For all of these, consider whether they're explicitly player-specific or player-triggered and can therefore refer to a single InventoryManager.

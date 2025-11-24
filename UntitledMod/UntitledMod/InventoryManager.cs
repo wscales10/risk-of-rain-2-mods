@@ -24,7 +24,7 @@ namespace UntitledMod
 
         private bool isSublistLocked = false;
 
-        private VisibleDamageItemsProvider visibleDamageItemsProvider;
+        private VisibleDamageItemsProvider controlledItemsProvider;
 
         public event NotifyCollectionChangedEventHandler BannedItemsChanged;
 
@@ -32,7 +32,7 @@ namespace UntitledMod
         {
             this.logger = logger;
             this.gameContext = context;
-            this.visibleDamageItemsProvider = visibleDamageItemsProvider;
+            this.controlledItemsProvider = visibleDamageItemsProvider;
             return this;
         }
 
@@ -68,7 +68,7 @@ namespace UntitledMod
                 return;
             }
 
-            if (this.visibleDamageItemsProvider.GetItems().Contains(itemIndex))
+            if (this.controlledItemsProvider.GetItems().Contains(itemIndex))
             {
                 bool wasAdded = this.allowedVisibleDamageItems.Add(itemIndex);
 
@@ -132,7 +132,7 @@ namespace UntitledMod
                         throw new InvalidOperationException("Expected banned item count to be 0");
                     }
 
-                    foreach (var item in this.visibleDamageItemsProvider.GetItems().Except(this.allowedVisibleDamageItems))
+                    foreach (var item in this.controlledItemsProvider.GetItems().Except(this.allowedVisibleDamageItems))
                     {
                         this.bannedItems.Add(item);
                     }
