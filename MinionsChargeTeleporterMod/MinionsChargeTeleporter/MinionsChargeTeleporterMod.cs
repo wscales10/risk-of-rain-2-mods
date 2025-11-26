@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace MinionsChargeTeleporter
 {
-    [BepInPlugin("com.woodyscales.minionschargeteleporter", "Minions Charge Teleporter", "1.0.0")]
+    [BepInPlugin("com.woodyscales.minionschargeteleporter", "Minions Charge Teleporter", "1.0.1")]
     public class MinionsChargeTeleporterMod : BaseUnityPlugin
     {
         private readonly Dictionary<HoldoutZoneController, HashSet<CharacterBody>> bodiesInZones = new Dictionary<HoldoutZoneController, HashSet<CharacterBody>>();

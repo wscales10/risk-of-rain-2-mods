@@ -1,6 +1,6 @@
 ﻿{
 	"name": "Minions_Charge_Teleporter",
-	"version_number": "1.0.0",
+	"version_number": "1.0.1",
 	"website_url": "https://github.com/wscales10/risk-of-rain-2-mods/tree/main/MinionsChargeTeleporterMod",
 	"description": "Allows your minions to charge the teleporter for you",
 	"dependencies": [
