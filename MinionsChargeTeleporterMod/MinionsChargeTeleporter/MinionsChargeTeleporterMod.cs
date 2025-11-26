@@ -1,6 +1,4 @@
 ﻿using BepInEx;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using System;
@@ -8,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace RoR2Mod1
+namespace MinionsChargeTeleporter
 {
     [BepInPlugin("com.woodyscales.minionschargeteleporter", "Minions Charge Teleporter", "1.0.0")]
     public class MinionsChargeTeleporterMod : BaseUnityPlugin

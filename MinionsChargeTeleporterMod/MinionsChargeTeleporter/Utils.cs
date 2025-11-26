@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace RoR2Mod1
+namespace MinionsChargeTeleporter
 {
     internal static class Utils
     {

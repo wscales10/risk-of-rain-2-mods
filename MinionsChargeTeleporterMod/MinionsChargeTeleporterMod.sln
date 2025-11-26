@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32228.343
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoR2Mod1", "RoR2Mod1\RoR2Mod1.csproj", "{99F7D44B-21C4-4F19-BA77-A72984EA5B27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MinionsChargeTeleporter", "MinionsChargeTeleporter\MinionsChargeTeleporter.csproj", "{99F7D44B-21C4-4F19-BA77-A72984EA5B27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

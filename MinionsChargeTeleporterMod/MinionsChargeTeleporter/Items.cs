@@ -1,6 +1,6 @@
 ﻿using RoR2;
 
-namespace RoR2Mod1
+namespace MinionsChargeTeleporter
 {
 	public class Items
 	{
