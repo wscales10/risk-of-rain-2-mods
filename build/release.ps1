@@ -23,7 +23,7 @@ foreach ($File in Get-ChildItem "D:\Program Files (x86)\Steam\steamapps\common\R
     Delete-Files $File.Name
 }
 
-foreach ($Directory in Get-ChildItem .\bin\Release\netstandard2.0 -Directory)
+foreach ($Directory in Get-ChildItem .\bin\Release\netstandard2.1 -Directory)
 {
     Remove-Item $Directory.FullName -Recurse
 }
