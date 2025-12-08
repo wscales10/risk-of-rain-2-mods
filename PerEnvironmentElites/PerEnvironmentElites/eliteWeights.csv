@@ -1,0 +1,33 @@
+SceneName,SceneDisplayName,IceWeight,FireWeight,LightningWeight,EarthWeight,AurelioniteWeight,PoisonWeight,HauntedWeight,BeadWeight
+blackbeach,Distant Roost,1.5,,,1.5,,1.5,1.5,1.5
+golemplains,Titanic Plains,,0.5,0.5,1.5,,,,
+snowyforest,Siphoned Forest,2,0.05,,0.5,,,,
+lakes,Verdant Falls,,,,,,,,
+lakesnight,Viscous Falls,,0.5,,,0.5,1.5,1.5,1.5
+village,Shattered Abodes,,,0.5,,,,,
+villagenight,Disturbed Impact,,0.5,,,0.5,,,
+goolake,Abandoned Aqueduct,,1.5,,0.5,,,,
+foggyswamp,Wetland Aspect,,0.5,,,,,,
+ancientloft,Aphelian Sanctuary,,,,,2,,,
+lemuriantemple,Reformed Altar,,,,,,,,
+frozenwall,Rallypoint Delta,3,0.05,1.5,0.5,0.5,,,1.5
+wispgraveyard,Scorched Acres,0.5,,,,1.5,,,
+sulfurpools,Sulfur Pools,,,,0.5,2,2,,
+habitat,Treeborn Colony,,,,,,,,
+habitatfall,Golden Dieback,,,,,2,,,
+dampcavesimple,Abyssal Depths,0.5,2,,,1.5,,,
+shipgraveyard,Siren’s Call,1.5,0.5,1.5,1.5,,1.5,1.5,1.5
+rootjungle,Sundered Grove,1.5,,1.5,1.5,0.5,1.5,1.5,1.5
+skymeadow,Sky Meadow,,,1.5,,,,,1.5
+helminthroost,Helminth Hatchery,0,2,,0.5,1.5,,,
+moon,Commencement,,,,0.05,0.5,,,2
+meridian,Prime Meridian,,,,0.5,1.5,,,2
+arena,Void Fields,,,,0.5,0.05,,,
+voidstage,Void Locus,,,,0.05,0.05,,,
+voidraid,The Planetarium,,,,0.5,0.5,,,
+limbo,"A Moment, Whole",,,,0.05,,,,
+artifactworld,Bulwark’s Ambry,,,,,1.5,,,
+artifactworld01,Bulwark’s Ambry (Aphelian Research),,,,,1.5,,,
+artifactworld02,Bulwark’s Ambry (Tar Research),,,,,1.5,,,
+artifactworld03,Bulwark’s Ambry (Wisp Research),,,,,1.5,,,
+goldshores,Gilded Coast,,,,1.5,1.5,1.5,1.5,
