@@ -1,5 +1,8 @@
 ﻿using BepInEx;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using RoR2;
+using System;
 
 namespace BetterBossScaling
 {
@@ -19,11 +22,17 @@ namespace BetterBossScaling
             On.RoR2.BossGroup.OnMemberAddedServer += this.BossGroup_OnMemberAddedServer;
             On.RoR2.BossGroup.OnDefeatedServer += this.BossGroup_OnDefeatedServer;
 
+            IL.RoR2.HealthComponent.Heal += this.HealthComponent_Heal;
+
+            if (this.settings.DamageReducesBossMaxHealth.Value)
+            {
+                IL.RoR2.HealthComponent.TakeDamageProcess += this.HealthComponent_TakeDamageProcess;
+            }
         }
 
         private static int? GetCurrentStageNumber()
         {
-            int? stageClearCount = Run.instance.stageClearCount;
+            int? stageClearCount = Run.instance?.stageClearCount;
             return stageClearCount is null ? null : stageClearCount + 1;
         }
 
@@ -31,6 +40,57 @@ namespace BetterBossScaling
         {
             return obj is null ? nullString : obj.ToString();
         }
+
+        private void HealthComponent_TakeDamageProcess(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            c.GotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld(typeof(HealthComponent).FullName, nameof(HealthComponent.body)),
+                x => x.MatchCallvirt(typeof(CharacterBody).FullName, "get_teamComponent"),
+                x => x.MatchCallvirt(typeof(TeamComponent).FullName, "get_teamIndex"),
+                x => x.MatchLdcI4((int)TeamIndex.Player),
+                x => x.Match(OpCodes.Bne_Un_S));
+            c.FindNext(
+                out var cursors,
+                x => x.MatchLdloc(11),
+                x => x.MatchLdarg(0),
+                x => x.MatchCall(typeof(HealthComponent).FullName, "get_fullCombinedHealth"),
+                x => x.MatchDiv(),
+                x => x.MatchLdcR4(100f),
+                x => x.MatchMul());
+            var applyCurse = cursors[0].MarkLabel();
+            c.MoveAfterLabels();
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<HealthComponent, bool>>(this.IsTeleporterBossHealthComponent);
+            c.Emit(OpCodes.Brtrue_S, applyCurse);
+        }
+
+        private void HealthComponent_Heal(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            c.GotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld(typeof(HealthComponent).FullName, nameof(HealthComponent.body)),
+                x => x.MatchCallvirt(typeof(CharacterBody).FullName, "get_teamComponent"),
+                x => x.MatchCallvirt(typeof(TeamComponent).FullName, "get_teamIndex"),
+                x => x.MatchLdcI4((int)TeamIndex.Player),
+                x => x.Match(OpCodes.Bne_Un_S));
+            c.FindNext(
+                out var cursors,
+                x => x.MatchLdarg(1),
+                x => x.Match(OpCodes.Ldc_R4),
+                x => x.MatchDiv(),
+                x => x.Match(OpCodes.Starg_S));
+            var reduceHealing = cursors[0].MarkLabel();
+            c.MoveAfterLabels();
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<HealthComponent, bool>>(this.IsTeleporterBossHealthComponent);
+            c.Emit(OpCodes.Brtrue_S, reduceHealing);
+        }
+
         private bool IsTeleporterBossHealthComponent(HealthComponent hc)
         {
             var tp = TeleporterInteraction.instance;
@@ -115,7 +175,7 @@ namespace BetterBossScaling
             var damageDivisor = this.settings.DamageDivisor.Value;
 
             this.Logger.LogDebug($"Scaling boss '{memberMaster.name}'. Diff coef: {Run.instance.difficultyCoefficient}. HP divisor: {hpDivisor}. Damage divisor: {damageDivisor}.");
-            memberMaster.ScaleDifficultyAsBoss(hpDivisor, damageDivisor);
+            memberMaster.ScaleDifficultyAsBoss(hpDivisor, damageDivisor, false);
 
             if (difficulty < DifficultyIndex.Hard || !this.settings.EnableAdaptiveArmor.Value)
             {
