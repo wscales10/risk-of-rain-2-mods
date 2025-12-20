@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using MonoMod.Cil;
 using RoR2;
 using System;
@@ -13,15 +14,25 @@ namespace MinionsChargeTeleporter
     {
         private readonly Dictionary<HoldoutZoneController, HashSet<CharacterBody>> bodiesInZones = new Dictionary<HoldoutZoneController, HashSet<CharacterBody>>();
 
+        private ConfigEntry<bool> prioritisePlayersWhenTeleporterNotActive;
+
+        private bool prioritisePlayersWhenTeleporterNotActiveValue;
+
         public void Awake()
         {
+            this.prioritisePlayersWhenTeleporterNotActive = this.Config.Bind("General", "Prioritise Players When Teleporter Not Active", true, "If true, outside of teleporter events enemies will be more likely to spawn near players than minions.");
+
+            // Refresh setting value
+            On.RoR2.SceneCatalog.OnActiveSceneChanged += this.SceneCatalog_OnActiveSceneChanged;
+
             // Allow non-players to charge holdout zones
             On.RoR2.HoldoutZoneController.CountPlayersInRadius += this.HoldoutZoneController_CountPlayersInRadius;
 
             // Stop teleporter charging text from flashing if there are enough allies in the zone
             On.RoR2.HoldoutZoneController.ChargeHoldoutZoneObjectiveTracker.ShouldBeFlashing += ChargeHoldoutZoneObjectiveTracker_ShouldBeFlashing;
 
-            // Stop certain minions from teleporting out of the holdout zone, even if their master is far away
+            // Stop certain minions from teleporting out of the holdout zone, even if their master
+            // is far away
             IL.RoR2.Items.MinionLeashBodyBehavior.FixedUpdate += MinionLeashBodyBehavior_FixedUpdate;
 
             // Stop certain minions from following players out of the holdout zone
@@ -88,6 +99,12 @@ namespace MinionsChargeTeleporter
             c.EmitDelegate<Func<CharacterMaster, CharacterMaster>>(master => Utils.WantsToStayInZone(master) ? null : master);
         }
 
+        private void SceneCatalog_OnActiveSceneChanged(On.RoR2.SceneCatalog.orig_OnActiveSceneChanged orig, UnityEngine.SceneManagement.Scene oldScene, UnityEngine.SceneManagement.Scene newScene)
+        {
+            this.prioritisePlayersWhenTeleporterNotActiveValue = this.prioritisePlayersWhenTeleporterNotActive.Value;
+            orig(oldScene, newScene);
+        }
+
         private int HoldoutZoneController_CountPlayersInRadius(On.RoR2.HoldoutZoneController.orig_CountPlayersInRadius orig, HoldoutZoneController holdoutZoneController, Vector3 origin, float chargingRadiusSqr, TeamIndex teamIndex)
         {
             if (teamIndex != TeamIndex.Player)
@@ -138,6 +155,7 @@ namespace MinionsChargeTeleporter
             var instances = CharacterMaster.instancesList.Where(master => isEnemy(master.teamIndex) && master.hasBody);
             var list1 = new List<CharacterMaster>();
             var list2 = new List<CharacterMaster>();
+            var list3 = new List<CharacterMaster>();
 
             foreach (var master in instances)
             {
@@ -145,9 +163,13 @@ namespace MinionsChargeTeleporter
                 {
                     list1.Add(master);
                 }
-                else
+                else if (master.playerCharacterMasterController || Utils.IsAnyHoldoutZoneActive || !this.prioritisePlayersWhenTeleporterNotActiveValue)
                 {
                     list2.Add(master);
+                }
+                else
+                {
+                    list3.Add(master);
                 }
             }
 
@@ -158,6 +180,10 @@ namespace MinionsChargeTeleporter
             else if (list2.Count > 0)
             {
                 self.currentSpawnTarget = self.rng.NextElementUniform(list2).GetBodyObject();
+            }
+            else if (list3.Count > 0)
+            {
+                self.currentSpawnTarget = self.rng.NextElementUniform(list3).GetBodyObject();
             }
         }
     }

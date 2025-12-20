@@ -9,6 +9,8 @@ namespace MinionsChargeTeleporter
     {
         public static List<HoldoutZoneController> HoldoutZones { get; private set; }
 
+        public static bool IsAnyHoldoutZoneActive => !(HoldoutZones is null) && HoldoutZones.Count > 0;
+
         public static void SetHoldoutZones()
         {
             HoldoutZones = InstanceTracker.GetInstancesList<HoldoutZoneController>();
