@@ -4,7 +4,7 @@
 	"website_url": "https://github.com/wscales10/risk-of-rain-2-mods/tree/main/RetoolFixesForMulT",
 	"description": "Bugfix(es) for MUL-T's Retool skill",
 	"dependencies": [
-		"bbepis-	-5.4.2121",
+		"bbepis-BepInExPack-5.4.2121",
 		"RiskofThunder-HookGenPatcher-1.2.9"
 	]
 }
