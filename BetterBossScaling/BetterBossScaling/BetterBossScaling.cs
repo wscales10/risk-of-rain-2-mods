@@ -172,13 +172,13 @@ namespace BetterBossScaling
             }
 
             var hpDivisor = this.settings.HpDivisor.Value;
+            var damageDivisor = this.settings.DamageDivisor.Value;
 
             if (difficulty > DifficultyIndex.Normal)
             {
                 hpDivisor = (float)Math.Round(hpDivisor * 0.85f, 1);
-            } 
-
-            var damageDivisor = this.settings.DamageDivisor.Value;
+                damageDivisor = (float)Math.Round(damageDivisor * 0.875f);
+            }
 
             this.Logger.LogDebug($"Scaling boss '{memberMaster.name}'. Diff coef: {Run.instance.difficultyCoefficient}. HP divisor: {hpDivisor}. Damage divisor: {damageDivisor}.");
             memberMaster.ScaleDifficultyAsBoss(hpDivisor, damageDivisor, false);
