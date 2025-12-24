@@ -175,7 +175,7 @@ namespace BetterBossScaling
 
             if (difficulty > DifficultyIndex.Normal)
             {
-                hpDivisor = (float)Math.Round(hpDivisor * 0.87f, 1);
+                hpDivisor = (float)Math.Round(hpDivisor * 0.85f, 1);
             } 
 
             var damageDivisor = this.settings.DamageDivisor.Value;
