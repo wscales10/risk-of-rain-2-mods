@@ -17,6 +17,22 @@ namespace AssortedExperiments
         {
         }
 
+        public static void GlobalEventManager_OnCharacterHitGroundServer(ILContext il)
+        {
+            var c = new ILCursor(il);
+            c.GotoNext(
+                x => x.MatchLdloc(7),
+                x => x.MatchLdloc(6),
+                x => x.MatchLdarg(1),
+                x => x.MatchCallvirt<CharacterBody>($"get_{nameof(CharacterBody.maxHealth)}"),
+                x => x.MatchMul(),
+                x => x.MatchStfld<DamageInfo>(nameof(DamageInfo.damage)));
+            c.Index += 2;
+            c.RemoveRange(2);
+            c.Emit(OpCodes.Ldloc_S, (byte)5);
+            c.EmitDelegate<Func<HealthComponent, float>>(GetEffectiveMaxHealthForFallDamage);
+        }
+
         // TODO: consider doing this in the same way as the halcyonite shrine or vice versa
         public void SkyJumpDeathState_GiveColossusItem(ILContext il)
         {
@@ -224,11 +240,25 @@ namespace AssortedExperiments
             return damageReport.attackerMaster?.playerCharacterMasterController ?? damageReport.attackerOwnerMaster?.playerCharacterMasterController;
         }
 
+        private static float GetEffectiveMaxHealthForFallDamage(HealthComponent healthComponent)
+        {
+            // Deal fall damage as % of health + shield instead of just health
+            var output = healthComponent.fullCombinedHealth;
+
+            if (healthComponent.shield > 0f)
+            {
+                // Slight reduction if the character has any shield
+                output /= 1.04f;
+            }
+
+            return output;
+        }
+
         private Func<DamageReport, PlayerCharacterMasterController?> GetAttackingPlayerFromDamageReport([CallerMemberName] string? context = null) => damageReport =>
-                {
-                    this.logger.LogDebug($"Getting attacking player from damage report in context {context}");
-                    return GetAttackingPlayerFromDamageReportInternal(damageReport);
-                };
+        {
+            this.logger.LogDebug($"Getting attacking player from damage report in context {context}");
+            return GetAttackingPlayerFromDamageReportInternal(damageReport);
+        };
 
         private PickupIndex[] RandomlyTransformPickupIndexArray(PickupIndex[] array, CharacterBody owner)
         {
