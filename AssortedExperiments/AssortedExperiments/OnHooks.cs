@@ -156,7 +156,10 @@ namespace AssortedExperiments
                 self.onPopulateCreditMultiplier *= multiplier;
             }
 
-            this.waitingForScrapper.Add(self);
+            if (RunArtifactManager.instance?.IsArtifactEnabled(CU8Content.Artifacts.Devotion) != true)
+            {
+                this.waitingForScrapper.Add(self);
+            }
 
             try
             {

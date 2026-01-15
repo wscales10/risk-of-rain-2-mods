@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace AssortedExperiments
 {
@@ -158,8 +159,8 @@ namespace AssortedExperiments
                 return false;
             }
 
-            float newItemProbability = getUnownedItemProbability(matchingArray.Length, choicesForRarity.Count, adjustmentStrength);
-            newItemProbability = Math.Clamp(newItemProbability, 0, 1);
+            float newItemProbability = getUnownedItemProbability(matchingArray.Length, choicesForRarity.Count, Mathf.Clamp01(adjustmentStrength));
+            newItemProbability = Mathf.Clamp01(newItemProbability);
             var matchingWeightProportion = totalMatchingWeight / totalOriginalWeightForRarity;
             var commonFactor = 1 / (1 - newItemProbability * matchingWeightProportion);
 

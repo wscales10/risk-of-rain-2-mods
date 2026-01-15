@@ -32,7 +32,7 @@ namespace AssortedExperiments
             }
 
             var ownedProportion = ownedCount / (float)poolSize;
-            var output = (float)Math.Pow(19.1, -Math.Sqrt(ownedProportion));
+            var output = Mathf.Pow(19.1f, -Mathf.Sqrt(ownedProportion));
             return adjustmentStrength * output + (1 - adjustmentStrength) * (1 - ownedProportion);
         }
 
@@ -183,9 +183,16 @@ namespace AssortedExperiments
         {
             if (this.ShouldTryRollToSeeIfShouldStack())
             {
-                bool is3dPrinter = shopTerminal?.name?.Contains("Duplicator") ?? false;
+                string? shopTerminalName = shopTerminal?.name;
+                bool is3dPrinter = shopTerminalName?.Contains("Duplicator") ?? false;
+
+                if (shopTerminalName != null)
+                {
+                    this.logger.LogDebug($"'{shopTerminalName}' {(is3dPrinter ? "is" : "is not")} a 3D printer.");
+                }
+
                 this.logger.LogDebug($"Applying soft filter to drop table in context '{context}' ({(is3dPrinter ? "is" : "not")} a 3D printer).");
-                return SoftFilter(table, pickup => this.GetFilter(player)(PickupCatalog.GetPickupDef(pickup.pickupIndex)), GetUnownedItemProbability, is3dPrinter ? 0.4f : 1);
+                return SoftFilter(table, pickup => this.GetFilter(player)(PickupCatalog.GetPickupDef(pickup.pickupIndex)), GetUnownedItemProbability, is3dPrinter ? this.settings.AdjustmentStrengthFor3dPrinters : 1);
             }
 
             return table;
