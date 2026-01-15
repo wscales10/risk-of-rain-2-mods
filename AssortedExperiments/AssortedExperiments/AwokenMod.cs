@@ -17,6 +17,9 @@
             On.RoR2.BarrageOnBossBehaviour.UpdateBarrage += OnHooks.BarrageOnBossBehaviour_UpdateBarrage;
             On.RoR2.BarrageOnBossBehaviour.OnDisable += OnHooks.BarrageOnBossBehaviour_OnDisable;
 
+            // Scale Eccentric Vase speed with move speed
+            On.RoR2.ZiplineVehicle.OnPassengerEnter += on.ZiplineVehicle_OnPassengerEnter;
+
             IL.RoR2.GlobalEventManager.OnCharacterHitGroundServer += ILHooks.GlobalEventManager_OnCharacterHitGroundServer;
 
             // Don't regenerate scrap at the start of special environments.
