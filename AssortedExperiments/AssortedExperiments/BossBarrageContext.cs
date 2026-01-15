@@ -2,7 +2,7 @@
 
 namespace AssortedExperiments
 {
-    public class BossBarrageContext : Component
+    public class BossBarrageContext : MonoBehaviour
     {
         public Vector3? Position { get; set; }
 
