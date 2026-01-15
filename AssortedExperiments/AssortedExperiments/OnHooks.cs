@@ -1,7 +1,9 @@
 ﻿using BepInEx.Logging;
+using HG;
 using RoR2;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace AssortedExperiments
@@ -16,6 +18,73 @@ namespace AssortedExperiments
         {
             EntityStates.ScavBackpack.Opening.maxItemDropCount = 9;
             orig(self);
+        }
+
+        public static void BarrageOnBossBehaviour_OnDisable(On.RoR2.BarrageOnBossBehaviour.orig_OnDisable orig, BarrageOnBossBehaviour self)
+        {
+            orig(self);
+
+            if (self.TryGetComponent<BossBarrageContext>(out var context))
+            {
+                context.Position = null;
+            }
+        }
+
+        public static void BarrageOnBossBehaviour_UpdateBarrage(On.RoR2.BarrageOnBossBehaviour.orig_UpdateBarrage orig, BarrageOnBossBehaviour self)
+        {
+            orig(self);
+
+            if (self.bossmissileState == BarrageOnBossBehaviour.BossMissileState.None && self.TryGetComponent<BossBarrageContext>(out var context))
+            {
+                context.Position = null;
+            }
+        }
+
+        public Vector3 BarrageOnBossBehaviour_CalculateHitPosition(On.RoR2.BarrageOnBossBehaviour.orig_CalculateHitPosition orig, BarrageOnBossBehaviour self, GameObject target)
+        {
+            (Vector3, float) ResolveSpreadOriginAndRadius()
+            {
+                var context = self.EnsureComponent<BossBarrageContext>();
+
+                if (!target)
+                {
+                    if (context && context.Position.HasValue)
+                    {
+                        return (context.Position.Value, context.SpreadRadius);
+                    }
+                    else
+                    {
+                        target = self.gameObject;
+                    }
+                }
+
+                var spreadOrigin = self.MoveTargetToGround(target.transform.position);
+
+                this.logger.LogDebug($"Setting War Bonds origin position to {spreadOrigin}");
+                context.Position = spreadOrigin;
+
+                float spreadRadius;
+                if (self.isTargetBoss)
+                {
+                    spreadRadius = 1f;
+                }
+                else if (target == self.gameObject)
+                {
+                    spreadRadius = 10f;
+                }
+                else
+                {
+                    spreadRadius = 0f;
+                }
+
+                this.logger.LogDebug($"Setting War Bonds spread radius to {spreadRadius}");
+                context.SpreadRadius = spreadRadius;
+                return (spreadOrigin, spreadRadius);
+            }
+
+            var (spreadOrigin, spreadRadius) = ResolveSpreadOriginAndRadius();
+            Vector2 normalized = UnityEngine.Random.insideUnitCircle.normalized;
+            return spreadOrigin + new Vector3(normalized.x * self.BarrageRadius * spreadRadius, 0f, normalized.y * self.BarrageRadius * spreadRadius);
         }
 
         public WeightedSelection<DirectorCard> SceneDirector_GenerateInteractableCardSelection(On.RoR2.SceneDirector.orig_GenerateInteractableCardSelection orig, SceneDirector self)

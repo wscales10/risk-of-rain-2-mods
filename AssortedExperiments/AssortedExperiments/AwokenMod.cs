@@ -12,6 +12,11 @@
             IL.RoR2.SceneDirector.SelectCard += il.SceneDirector_SelectCard;
             On.RoR2.SceneDirector.SelectCard += on.SceneDirector_SelectCard;
 
+            IL.RoR2.BarrageOnBossBehaviour.FireMissile += ILHooks.BarrageOnBossBehaviour_FireMissile;
+            On.RoR2.BarrageOnBossBehaviour.CalculateHitPosition += on.BarrageOnBossBehaviour_CalculateHitPosition;
+            On.RoR2.BarrageOnBossBehaviour.UpdateBarrage += OnHooks.BarrageOnBossBehaviour_UpdateBarrage;
+            On.RoR2.BarrageOnBossBehaviour.OnDisable += OnHooks.BarrageOnBossBehaviour_OnDisable;
+
             IL.RoR2.GlobalEventManager.OnCharacterHitGroundServer += ILHooks.GlobalEventManager_OnCharacterHitGroundServer;
 
             // Don't regenerate scrap at the start of special environments.

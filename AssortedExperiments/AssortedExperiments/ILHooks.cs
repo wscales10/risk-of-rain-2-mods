@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace AssortedExperiments
 {
@@ -24,13 +25,40 @@ namespace AssortedExperiments
                 x => x.MatchLdloc(7),
                 x => x.MatchLdloc(6),
                 x => x.MatchLdarg(1),
-                x => x.MatchCallvirt<CharacterBody>($"get_{nameof(CharacterBody.maxHealth)}"),
+                x => x.MatchGetVirt<CharacterBody>(nameof(CharacterBody.maxHealth)),
                 x => x.MatchMul(),
                 x => x.MatchStfld<DamageInfo>(nameof(DamageInfo.damage)));
             c.Index += 2;
             c.RemoveRange(2);
             c.Emit(OpCodes.Ldloc_S, (byte)5);
             c.EmitDelegate<Func<HealthComponent, float>>(GetEffectiveMaxHealthForFallDamage);
+        }
+
+        public static void BarrageOnBossBehaviour_FireMissile(ILContext il)
+        {
+            var c = new ILCursor(il);
+
+            // Don't set the target to self if it's null
+            ILLabel? target = null;
+            c.GotoNext(
+                MoveType.AfterLabel,
+                x => x.MatchLdloc(0),
+                x => x.MatchCall<UnityEngine.Object>("op_Implicit"),
+                x => x.MatchBrtrue(out target));
+            c.RemoveRange(3);
+            c.Emit(OpCodes.Br_S, target);
+
+            while (c.TryGotoNext(
+                x => x.MatchLdarg(0), // this
+                x => x.MatchLdloc(0), // characterBody
+                x => x.MatchGetVirt<Component>(nameof(Component.gameObject)), // characterBody.gameObject
+                x => x.MatchCall<BarrageOnBossBehaviour>(nameof(BarrageOnBossBehaviour.CalculateHitPosition))) // this.CalculateHitPosition(characterBody.gameObject))
+                )
+            {
+                c.Index += 2;
+                c.Remove();
+                c.EmitDelegate<Func<CharacterBody?, GameObject?>>((characterBody) => characterBody ? characterBody!.gameObject : null);
+            }
         }
 
         // TODO: consider doing this in the same way as the halcyonite shrine or vice versa
@@ -162,7 +190,7 @@ namespace AssortedExperiments
 
             c.Index += 1;
             c.Emit(OpCodes.Ldarg_0);
-            c.Emit<EquipmentSlot>(OpCodes.Call, $"get_{nameof(EquipmentSlot.characterBody)}");
+            c.EmitGet<EquipmentSlot>(nameof(EquipmentSlot.characterBody));
             c.EmitDelegate<Func<PickupIndex[], CharacterBody, PickupIndex[]>>(this.RandomlyTransformPickupIndexArray);
         }
 
@@ -196,7 +224,7 @@ namespace AssortedExperiments
                 x => x.MatchLdarg(0),
                 x => x.MatchLdfld<ChestBehavior>(nameof(ChestBehavior.rng)),
                 x => x.MatchCallvirt<PickupDropTable>(nameof(PickupDropTable.GeneratePickup)),
-                x => x.MatchCall<ChestBehavior>($"set_{nameof(ChestBehavior.currentPickup)}"),
+                x => x.MatchSet<ChestBehavior>(nameof(ChestBehavior.currentPickup)),
                 x => x.MatchRet());
 
             c.Index += 3;
