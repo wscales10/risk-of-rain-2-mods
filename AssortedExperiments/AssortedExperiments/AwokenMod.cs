@@ -20,6 +20,10 @@
             // Scale Eccentric Vase speed with move speed
             On.RoR2.ZiplineVehicle.OnPassengerEnter += on.ZiplineVehicle_OnPassengerEnter;
 
+            // Fix bug with gilded elites, should probably be in another mod.
+            IL.RoR2.AffixAurelioniteBehavior.OnServerDamageDealt += ILHooks.AffixAurelioniteBehavior_OnServerDamageDealt;
+
+            // Nerf Transcendence
             IL.RoR2.GlobalEventManager.OnCharacterHitGroundServer += ILHooks.GlobalEventManager_OnCharacterHitGroundServer;
 
             // Don't regenerate scrap at the start of special environments.
