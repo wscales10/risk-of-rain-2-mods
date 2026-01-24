@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace AssortedExperiments
+namespace AssortedExperiments.ItemBias
 {
     internal class TemporaryPickupDropTable : PickupDropTable
     {

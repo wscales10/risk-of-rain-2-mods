@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace AssortedExperiments
+namespace AssortedExperiments.ItemAdjustments
 {
     public class BossBarrageContext : MonoBehaviour
     {
