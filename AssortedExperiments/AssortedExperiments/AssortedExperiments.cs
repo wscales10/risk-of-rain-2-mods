@@ -24,7 +24,8 @@ namespace AssortedExperiments
                 new ItemAdjustments.WarBonds(),
                 new ItemBias.ItemBias(),
                 new Items.AssortedItems(),
-                new StageFeatures.StageFeatures()
+                new StageFeatures.StageFeatures(),
+                new Events.BossSkillGhostsEvent(),
             };
 
             foreach (var module in this.modules)

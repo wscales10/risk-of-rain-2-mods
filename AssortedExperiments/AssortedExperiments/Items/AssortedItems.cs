@@ -216,7 +216,7 @@ namespace AssortedExperiments.Items
             });
             Content.Items.SummonGolems = AddItem(ItemTier.Boss, "SummonGolems");
             Content.Items.SummonGolemsConsumed = AddItem(ItemTier.NoTier, "SummonGolemsConsumed");
-
+            Content.Items.EphemeralGhost = AddItem(ItemTier.NoTier, "EphemeralGhost", item => item.canRemove = false);
             Content.Buffs.Slow1Stacking = AddStatusEffect(buffDef =>
             {
                 buffDef.name = "Slow1Buff";

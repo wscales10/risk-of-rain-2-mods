@@ -1,7 +1,7 @@
-﻿using BepInEx;
-using RoR2;
+﻿using RoR2;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -47,6 +47,45 @@ namespace AssortedExperiments
             {
                 return "??";
             }
+        }
+
+        public static void ServerFunctionCalledOnClient(this object self, [CallerMemberName] string? functionName = null)
+        {
+            Debug.LogWarning($"[Server] function '{self.GetType()}.{functionName}' called on client");
+        }
+
+        public static string GetBodyDisplayName(CharacterBody summonedBody)
+        {
+            try
+            {
+                return Language.GetString(summonedBody.baseNameToken);
+            }
+            catch
+            {
+                return "??";
+            }
+        }
+
+        public static bool Is(this CharacterBody? body, CharacterBody? other)
+        {
+            if (body)
+            {
+                return other && body!.bodyIndex == other!.bodyIndex;
+            }
+            else
+            {
+                return !other;
+            }
+        }
+
+        public static bool IsBossHealthBelowThreshold(BossGroup bossGroup, float normalizedPercent)
+        {
+            if (bossGroup == null || bossGroup.combatSquad.memberCount <= 0)
+            {
+                return false;
+            }
+
+            return bossGroup.totalObservedHealth / Mathf.Max(bossGroup.totalMaxObservedMaxHealth, 1f) <= normalizedPercent;
         }
     }
 }

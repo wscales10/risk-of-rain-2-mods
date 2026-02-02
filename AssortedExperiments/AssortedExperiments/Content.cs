@@ -1,6 +1,6 @@
 ﻿using RoR2;
 
-namespace AssortedExperiments.Items
+namespace AssortedExperiments
 {
     public static class Content
     {
@@ -23,6 +23,8 @@ namespace AssortedExperiments.Items
             public static ItemDef SummonGolems;
 
             public static ItemDef SummonGolemsConsumed;
+
+            public static ItemDef EphemeralGhost;
         }
 
         public static class Buffs
