@@ -7,7 +7,7 @@ using UnityEngine.AddressableAssets;
 
 namespace PactOfPunishment.Waves
 {
-    public partial class Worms : MainBossWaveDefinition<InfiniteTowerBossWaveController>
+    public partial class Summoner : MainBossWaveDefinition<InfiniteTowerBossWaveController>
     {
         protected override UpgradeWaveStrategy GetUpgradeStrategy()
         {
@@ -24,21 +24,21 @@ namespace PactOfPunishment.Waves
             wavePrefab.guaranteeInitialChampion = true;
 
             // TODO: boss wave start UI is not accurate? same for all bosses?
-            wavePrefab.gameObject.AddComponent<WormsBehavior>();
+            wavePrefab.gameObject.AddComponent<SummonerBehavior>();
         }
 
         private static void SetupStateMachinePrefab(EntityStateMachine x)
         {
-            x.customName = nameof(Worms);
-            x.initialStateType = new SerializableEntityStateType(typeof(WormStates.PreFight));
+            x.customName = nameof(Summoner);
+            x.initialStateType = new SerializableEntityStateType(typeof(SummonerStates.PreFight));
 
-            // x.mainStateType = new SerializableEntityStateType(typeof(WormStates.PreFight));
+            // x.mainStateType = new SerializableEntityStateType(typeof(SummonerStates.PreFight));
             x.commonComponents = new EntityStateMachine.CommonComponentCache(x.gameObject);
 
             // x.nextStateModifier = this.ModifyNextState;
         }
 
-        public static class WormStates
+        public static class SummonerStates
         {
             public struct References
             {
@@ -47,7 +47,7 @@ namespace PactOfPunishment.Waves
                 public int MainBossMonsterIndex;
             }
 
-            public abstract class WormsBaseState : EntityState
+            public abstract class SummonerBaseState : EntityState
             {
                 public References References;
 
@@ -63,9 +63,9 @@ namespace PactOfPunishment.Waves
                 {
                     base.ModifyNextState(nextState);
 
-                    if (nextState is WormsBaseState worms)
+                    if (nextState is SummonerBaseState summonerState)
                     {
-                        worms.References = this.References;
+                        summonerState.References = this.References;
                     }
                 }
 
@@ -81,7 +81,7 @@ namespace PactOfPunishment.Waves
                 }
             }
 
-            public class PreFight : WormsBaseState
+            public class PreFight : SummonerBaseState
             {
                 public override void OnEnter()
                 {
@@ -119,14 +119,14 @@ namespace PactOfPunishment.Waves
             {
                 public override float PhaseEndHealthThreshold => 2f / 3;
 
-                protected override WormsBaseState GetNextState() => new FirstInterlude();
+                protected override SummonerBaseState GetNextState() => new FirstInterlude();
             }
 
             public class Phase2 : PhaseState // TODO: upgrade boss in later phases
             {
                 public override float PhaseEndHealthThreshold => 1f / 3;
 
-                protected override WormsBaseState GetNextState() => new SecondInterlude();
+                protected override SummonerBaseState GetNextState() => new SecondInterlude();
             }
 
             public class Phase3 : PhaseState
@@ -139,7 +139,7 @@ namespace PactOfPunishment.Waves
                     MakeBodyMortal(this.References.MainBossBody);
                 }
 
-                protected override WormsBaseState GetNextState() => new Death();
+                protected override SummonerBaseState GetNextState() => new Death();
 
                 private static void MakeBodyMortal(CharacterBody? body)
                 {
@@ -152,7 +152,7 @@ namespace PactOfPunishment.Waves
                 }
             }
 
-            public class Death : WormsBaseState
+            public class Death : SummonerBaseState
             {
             }
 
@@ -166,7 +166,7 @@ namespace PactOfPunishment.Waves
                     base.OnEnter();
                 }
 
-                protected override WormsBaseState GetNextState() => new Phase2();
+                protected override SummonerBaseState GetNextState() => new Phase2();
             }
 
             public class SecondInterlude : InterludeState
@@ -179,7 +179,7 @@ namespace PactOfPunishment.Waves
                     base.OnEnter();
                 }
 
-                protected override WormsBaseState GetNextState() => new Phase3();
+                protected override SummonerBaseState GetNextState() => new Phase3();
             }
 
             public abstract class PhaseState : MainBossAliveState
@@ -301,9 +301,9 @@ namespace PactOfPunishment.Waves
                 }
             }
 
-            public abstract class MainBossAliveState : WormsBaseState
+            public abstract class MainBossAliveState : SummonerBaseState
             {
-                protected abstract WormsBaseState GetNextState();
+                protected abstract SummonerBaseState GetNextState();
             }
         }
 
@@ -313,14 +313,14 @@ namespace PactOfPunishment.Waves
 
             public void OnTakeDamageServer(DamageReport damageReport)
             {
-                if (this.stateMachine.state is WormStates.WormsBaseState wormsState)
+                if (this.stateMachine.state is SummonerStates.SummonerBaseState summonerState)
                 {
-                    wormsState.OnMainBossDamageTaken(damageReport.victim);
+                    summonerState.OnMainBossDamageTaken(damageReport.victim);
                 }
             }
         }
 
-        public class WormsBehavior : MonoBehaviour
+        public class SummonerBehavior : MonoBehaviour
         {
             private EntityStateMachine stateMachine;
 
@@ -354,7 +354,7 @@ namespace PactOfPunishment.Waves
 
                 if (body)
                 {
-                    (this.stateMachine.state as WormStates.WormsBaseState)?.OnBossSpawnedServer(result, body!);
+                    (this.stateMachine.state as SummonerStates.SummonerBaseState)?.OnBossSpawnedServer(result, body!);
                 }
             }
         }
