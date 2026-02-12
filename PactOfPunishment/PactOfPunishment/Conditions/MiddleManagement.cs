@@ -47,9 +47,9 @@ namespace PactOfPunishment.Conditions
                 return;
             }
 
-            if (wave.TryGetComponent<UpgradeWaveBehavior>(out var behavior) && behavior.strategy)
+            if (wave.TryGetComponent<UpgradeWaveBehavior>(out var behavior) && behavior.upgradeMiniBossStrategy)
             {
-                behavior.strategy!.UpgradeWave(wave);
+                behavior.upgradeMiniBossStrategy!.UpgradeWave(wave);
                 return;
             }
 
@@ -59,16 +59,16 @@ namespace PactOfPunishment.Conditions
                 return;
             }
 
-            wave.gameObject.AddComponent<MendingMiniMushrumWaveBehavior>().Init(wave);
+            ScriptableObject.CreateInstance<MendingMiniMushrumWaveBehavior>().UpgradeWave(wave);
         }
 
-        public class MendingMiniMushrumWaveBehavior : MonoBehaviour
+        public class MendingMiniMushrumWaveBehavior : UpgradeWaveStrategy
         {
             private CharacterSpawnCard miniMushrumSpawnCard;
 
             private bool isSpawningMushrum;
 
-            public void Init(InfiniteTowerWaveController wave)
+            public override void UpgradeWave(InfiniteTowerWaveController wave)
             {
                 this.miniMushrumSpawnCard ??= Addressables.LoadAssetAsync<CharacterSpawnCard>("RoR2/Base/MiniMushroom/cscMiniMushroom.asset").WaitForCompletion();
                 wave.combatDirector.onSpawnedWithDirectorServer.AddListener(this.OnSpawnedWithDirectorServer);

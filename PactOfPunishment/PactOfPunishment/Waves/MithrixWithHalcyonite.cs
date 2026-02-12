@@ -10,7 +10,7 @@ namespace PactOfPunishment.Waves
     {
         protected override string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBossBrother.prefab";
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeWaveStrategy GetUpgradeMainBossStrategy()
         {
             throw new NotImplementedException();
         }

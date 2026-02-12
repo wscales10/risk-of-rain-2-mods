@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using PactOfPunishment.Conditions;
+using RoR2;
 using System;
 using UnityEngine.AddressableAssets;
 
@@ -23,5 +24,7 @@ namespace PactOfPunishment.Waves
         {
             return GetBaseDropTable(run);
         }
+
+        protected override UpgradeWaveStrategy? GetUpgradeMainBossStrategy() => null;
     }
 }

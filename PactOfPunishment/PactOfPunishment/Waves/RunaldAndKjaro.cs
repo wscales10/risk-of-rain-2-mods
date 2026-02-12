@@ -49,7 +49,7 @@ namespace PactOfPunishment.Waves
             return dropTable; // TODO: consider maintaining rarity distribution
         }
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy() => ScriptableObject.CreateInstance<ReplaceWithFourEliteElders>();
+        protected override UpgradeWaveStrategy GetUpgradeMiniBossStrategy() => ScriptableObject.CreateInstance<ReplaceWithFourEliteElders>();
 
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
         {
@@ -59,30 +59,74 @@ namespace PactOfPunishment.Waves
                 new SpawnInfo
                 {
                     count = 1,
-                    eliteDef = RoR2Content.Elites.Ice,
                     spawnCard = elderLemurianSpawnCard.Value,
                 },
                 new SpawnInfo
                 {
                     count = 1,
-                    eliteDef = RoR2Content.Elites.Fire,
                     spawnCard = elderLemurianSpawnCard.Value,
                 },
             };
+            wavePrefab.gameObject.AddComponent<ElderLemuriansBehavior>().eliteEquipments = new EquipmentDef[] { RoR2Content.Equipment.AffixWhite, RoR2Content.Equipment.AffixRed };
+        }
+
+        public class ElderLemuriansBehavior : MonoBehaviour
+        {
+            public EquipmentDef[] eliteEquipments = Array.Empty<EquipmentDef>();
+
+            private int spawnIndex = 0;
+
+            public void Awake()
+            {
+                var combatDirector = this.GetComponent<CombatDirector>();
+                combatDirector.onSpawnedServer ??= new CombatDirector.OnSpawnedServer();
+                combatDirector.onSpawnedServer.AddListener(this.OnBossSpawnedServer);
+            }
+
+            private void OnBossSpawnedServer(GameObject spawnedEntity)
+            {
+                var body = Utils.GetCharacterBody(spawnedEntity);
+
+                if (body)
+                {
+                    body!.master.ScaleDifficultyAsBoss(0.77f, 6, true); // TODO: do something similar for other bosses
+
+                    if (this.eliteEquipments.Length > 0)
+                    {
+                        body.inventory.SetEquipmentIndex(this.eliteEquipments[this.spawnIndex].equipmentIndex, false);
+                        this.spawnIndex = (this.spawnIndex + 1) % this.eliteEquipments.Length;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("eliteEquipments.Length is 0");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("eliteEquipments.Length is 0");
+                }
+            }
         }
 
         public class ReplaceWithFourEliteElders : UpgradeWaveStrategy
         {
             public override void UpgradeWave(InfiniteTowerWaveController wave)
             {
-                var eliteDefs = Utils.GetEliteDefs(elderLemurianSpawnCard.Value).ToArray();
-                Util.ShuffleArray(eliteDefs, wave.rng);
-                ((InfiniteTowerExplicitSpawnWaveController)wave).spawnList = eliteDefs.Take(4).Select(x => new SpawnInfo
+                ((InfiniteTowerExplicitSpawnWaveController)wave).spawnList = Enumerable.Range(0, 4).Select(x => new SpawnInfo
                 {
                     count = 1,
-                    eliteDef = x,
                     spawnCard = elderLemurianSpawnCard.Value,
                 }).ToArray();
+
+                var eliteDefs = Utils.GetEliteDefs(elderLemurianSpawnCard.Value).Select(x => x.eliteEquipmentDef).Distinct().ToArray();
+                Util.ShuffleArray(eliteDefs, wave.rng);
+
+                foreach (var eliteDef in eliteDefs)
+                {
+                    Debug.Log($"Possible elite type for Elder Lemurian boss: '{eliteDef.name}'");
+                }
+
+                wave.GetComponent<ElderLemuriansBehavior>().eliteEquipments = eliteDefs.Take(4).ToArray();
             }
         }
     }

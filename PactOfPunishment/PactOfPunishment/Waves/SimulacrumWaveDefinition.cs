@@ -10,8 +10,9 @@ namespace PactOfPunishment.Waves
 {
     public abstract class SimulacrumWaveDefinition<TWaveController> where TWaveController : InfiniteTowerWaveController
     {
-        private readonly Lazy<GameObject> baseWavePrefab;
         protected static readonly Lazy<GameObject> defaultBossWavePrefab = new Lazy<GameObject>(Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBoss.prefab").WaitForCompletion);
+
+        private readonly Lazy<GameObject> baseWavePrefab;
 
         protected SimulacrumWaveDefinition()
         {
@@ -38,10 +39,13 @@ namespace PactOfPunishment.Waves
 
                 this.Setup(dir, squad, wavePrefab);
 
-                var upgradeStrategy = this.GetUpgradeStrategy();
-                if (upgradeStrategy)
+                var upgradeMiniBossStrategy = this.GetUpgradeMiniBossStrategy();
+                var upgradeMainBossStrategy = this.GetUpgradeMainBossStrategy();
+                if (upgradeMiniBossStrategy || upgradeMainBossStrategy)
                 {
-                    prefab.AddComponent<UpgradeWaveBehavior>().strategy = upgradeStrategy;
+                    var upgradeBehavior = prefab.EnsureComponent<UpgradeWaveBehavior>();
+                    upgradeBehavior.upgradeMiniBossStrategy = upgradeMiniBossStrategy;
+                    upgradeBehavior.upgradeMainBossStrategy = upgradeMainBossStrategy;
                 }
 
                 return prefab;
@@ -72,6 +76,8 @@ namespace PactOfPunishment.Waves
             wavePrefab.onAllEnemiesDefeatedSoundString = defaultBossWave.onAllEnemiesDefeatedSoundString;
         }
 
-        protected abstract UpgradeWaveStrategy GetUpgradeStrategy();
+        protected abstract UpgradeWaveStrategy? GetUpgradeMiniBossStrategy();
+
+        protected abstract UpgradeWaveStrategy? GetUpgradeMainBossStrategy();
     }
 }

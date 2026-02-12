@@ -106,5 +106,21 @@ namespace PactOfPunishment
 
             return null;
         }
+
+        public static void ApplyHealthMultiplier(CharacterBody body, float healthMultiplier) // TODO: also scale damage?
+        {
+            // We could use more combinations of boost and cut to get it more accurate, but I don't
+            // think it's worth it.
+            var requiredCutStacks = Mathf.CeilToInt(1 / healthMultiplier - 1);
+            body!.inventory.GiveItemPermanent(RoR2Content.Items.CutHp, requiredCutStacks);
+
+            var requiredBoostStacks = Mathf.FloorToInt(10 * (healthMultiplier * (requiredCutStacks + 1) - 1));
+            body!.inventory.GiveItemPermanent(RoR2Content.Items.BoostHp, requiredBoostStacks);
+        }
+
+        public static void MakeUnscaledElite(Inventory inventory, EliteDef eliteDef)
+        {
+            inventory.SetEquipmentIndex(eliteDef.eliteEquipmentDef.equipmentIndex, false);
+        }
     }
 }

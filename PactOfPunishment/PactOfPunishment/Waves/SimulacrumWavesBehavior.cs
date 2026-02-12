@@ -10,7 +10,7 @@ namespace PactOfPunishment.Waves
     {
         private InfiniteTowerRun run;
 
-        private GameObject? mithrix;
+        private GameObject? defaultMithrix;
 
         private GameObject? runaldAndKjaro;
 
@@ -22,22 +22,18 @@ namespace PactOfPunishment.Waves
 
         private GameObject? projectilers;
 
-        private GameObject? worms;
+        private GameObject? summoner;
 
         public bool TryOverrideWeightedSelection(InfiniteTowerWaveCategory self)
         {
             try
             {
-                /*if (self.name != "BossWaveCategory")
+                self.weightedSelection.Clear();
+                self.weightedSelection.AddChoice(this.wormAndDistributor, 1);
+
+                if (self.name != "BossWaveCategory")
                 {
                     return false;
-                }*/
-
-                if (true) // TODO: move to correct index (20)
-                {
-                    self.weightedSelection.Clear();
-                    self.weightedSelection.AddChoice(this.worms, 1);
-                    return true;
                 }
 
                 if (this.run.waveIndex == 5)
@@ -54,16 +50,23 @@ namespace PactOfPunishment.Waves
                     return true;
                 }
 
+                if (this.run.waveIndex == 20)
+                {
+                    self.weightedSelection.Clear();
+                    self.weightedSelection.AddChoice(this.summoner, 1);
+                    return true;
+                }
+
                 if (this.run.waveIndex == 25)
                 {
                     self.weightedSelection.Clear();
-                    self.weightedSelection.AddChoice(this.mithrix, 0.5f);
+                    self.weightedSelection.AddChoice(this.defaultMithrix, 0.5f);
 
                     // self.weightedSelection.AddChoice(this.beetleQueen, 0.5f);
                     return true;
                 }
 
-                self.weightedSelection.RemoveWhere(x => x == this.mithrix);
+                self.weightedSelection.RemoveWhere(x => x == this.defaultMithrix);
             }
             catch (Exception ex)
             {
@@ -86,10 +89,10 @@ namespace PactOfPunishment.Waves
             this.wormAndDistributor = new WormAndDistributor().MakeWavePrefab(this.run);
             this.projectilers = new Projectilers().MakeWavePrefab(this.run);
 
-            this.worms = new Worms().MakeWavePrefab(this.run);
+            this.summoner = new Summoner().MakeWavePrefab(this.run);
 
             // Stage 3
-            this.mithrix = this.run.waveCategories.Single(x => x.name == "BossWaveCategory").wavePrefabs.Select(x => x.wavePrefab).Single(x => x.name == "InfiniteTowerWaveBossBrother");
+            this.defaultMithrix = this.run.waveCategories.Single(x => x.name == "BossWaveCategory").wavePrefabs.Select(x => x.wavePrefab).Single(x => x.name == "InfiniteTowerWaveBossBrother");
         }
     }
 }

@@ -2,6 +2,8 @@
 using HG;
 using PactOfPunishment.Conditions;
 using RoR2;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -9,7 +11,7 @@ namespace PactOfPunishment.Waves
 {
     public partial class Summoner : MainBossWaveDefinition<InfiniteTowerBossWaveController>
     {
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeWaveStrategy GetUpgradeMainBossStrategy()
         {
             return new NullUpgradeStrategy(); // TODO: extreme measures
         }
@@ -68,17 +70,6 @@ namespace PactOfPunishment.Waves
                         summonerState.References = this.References;
                     }
                 }
-
-                protected static void ApplyHealthMultiplier(CharacterBody body, float healthMultiplier) // TODO: also scale damage?
-                {
-                    // We could use more combinations of boost and cut to get it more accurate, but
-                    // I don't think it's worth it.
-                    var requiredCutStacks = Mathf.CeilToInt(1 / healthMultiplier - 1);
-                    body!.inventory.GiveItemPermanent(RoR2Content.Items.CutHp, requiredCutStacks);
-
-                    var requiredBoostStacks = Mathf.FloorToInt(10 * (healthMultiplier * (requiredCutStacks + 1) - 1));
-                    body!.inventory.GiveItemPermanent(RoR2Content.Items.BoostHp, requiredBoostStacks);
-                }
             }
 
             public class PreFight : SummonerBaseState
@@ -98,7 +89,7 @@ namespace PactOfPunishment.Waves
                     base.OnBossSpawnedServer(result, body);
                     float healthMultiplier = 800f / result.spawnRequest.spawnCard.directorCreditCost; // TODO: is this correct?
                     Debug.Log($"Scaling health for {body.name} by {healthMultiplier}");
-                    ApplyHealthMultiplier(body, healthMultiplier);
+                    Utils.ApplyHealthMultiplier(body, healthMultiplier);
                     this.SetupBossHealthComponent(body.healthComponent);
                     this.References.MainBossBody = body; // TODO: what about swarms?
                     this.outer.SetState(new Phase1());
@@ -237,7 +228,8 @@ namespace PactOfPunishment.Waves
                 public override void OnBossSpawnedServer(SpawnCard.SpawnResult result, CharacterBody body)
                 {
                     base.OnBossSpawnedServer(result, body);
-                    float healthMultiplier = 120f / result.spawnRequest.spawnCard.directorCreditCost; // TODO: is this correct?
+                    int directorCreditCost = result.spawnRequest.spawnCard.directorCreditCost;
+                    float healthMultiplier = 120f / directorCreditCost; // TODO: is this correct?
                     float myMaxHealth = body.healthComponent.fullCombinedHealth;
                     float? bossMaxHealth = this.References.MainBossBody?.healthComponent.fullCombinedHealth;
 
@@ -247,7 +239,7 @@ namespace PactOfPunishment.Waves
                     }
 
                     Debug.Log($"Scaling health for {body.name} by {healthMultiplier}");
-                    ApplyHealthMultiplier(body, healthMultiplier);
+                    Utils.ApplyHealthMultiplier(body, healthMultiplier);
                     this.combatSquad!.AddMember(body.master);
                 }
 

@@ -18,7 +18,7 @@ namespace PactOfPunishment.Waves
             this.impOverlordSpawnCard = Addressables.LoadAssetAsync<CharacterSpawnCard>("RoR2/Base/ImpBoss/cscImpBoss.asset").WaitForCompletion();
         }
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy() => ScriptableObject.CreateInstance<PeriodicallySpawnGlacialJellyfish>();
+        protected override UpgradeWaveStrategy GetUpgradeMiniBossStrategy() => ScriptableObject.CreateInstance<PeriodicallySpawnGlacialJellyfish>();
 
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
         {
@@ -89,7 +89,7 @@ namespace PactOfPunishment.Waves
 
                     CharacterMaster minionMaster = minion.GetComponent<CharacterMaster>();
                     Inventory minionInventory = minion.GetComponent<Inventory>();
-                    minionInventory.SetEquipmentIndex(RoR2Content.Equipment.AffixWhite.equipmentIndex, false);
+                    Utils.MakeUnscaledElite(minionInventory, RoR2Content.Elites.Ice);
                     var deployable = minion.AddComponent<Deployable>();
                     deployable.onUndeploy = new UnityEvent();
                     deployable.onUndeploy.AddListener(new UnityAction(minionMaster.TrueKill));

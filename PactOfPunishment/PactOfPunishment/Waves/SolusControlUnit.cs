@@ -80,7 +80,7 @@ namespace PactOfPunishment.Waves
             return dropTable;
         }
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy() => ScriptableObject.CreateInstance<NullUpgradeStrategy>(); // TODO: add upgrade strategy
+        protected override UpgradeWaveStrategy GetUpgradeMiniBossStrategy() => ScriptableObject.CreateInstance<NullUpgradeStrategy>(); // TODO: add upgrade strategy
 
         public class SolusControlUnitBossBehavior : MonoBehaviour
         {
@@ -153,5 +153,5 @@ namespace PactOfPunishment.Waves
                 SimulacrumWaves.OnTakeNonZeroDamageGlobal += (victim, _) => OnTakeNonZeroDamageGlobal(victim, body);
             }
         }
-    }
+        }
 }

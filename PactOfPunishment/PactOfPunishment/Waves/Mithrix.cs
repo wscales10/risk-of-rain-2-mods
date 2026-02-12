@@ -2,8 +2,6 @@
 using PactOfPunishment.Conditions;
 using RoR2;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves
@@ -28,9 +26,14 @@ namespace PactOfPunishment.Waves
     {
         protected override string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBossBrother.prefab";
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeWaveStrategy GetUpgradeMainBossStrategy()
         {
             throw new NotImplementedException();
+        }
+
+        protected override UpgradeWaveStrategy? GetUpgradeMiniBossStrategy()
+        {
+            return null;
         }
 
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)

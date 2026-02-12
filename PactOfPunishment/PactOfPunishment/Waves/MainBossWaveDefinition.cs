@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using PactOfPunishment.Conditions;
+using RoR2;
 using System;
 using UnityEngine.AddressableAssets;
 
@@ -30,5 +31,7 @@ namespace PactOfPunishment.Waves
             wavePrefab.secondsBeforeSuddenDeath *= 5;
             wavePrefab.suddenDeathRadiusConstrictingPerSecond /= 5f;
         }
+
+        protected override UpgradeWaveStrategy? GetUpgradeMiniBossStrategy() => null;
     }
 }

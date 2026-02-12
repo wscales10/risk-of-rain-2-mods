@@ -12,7 +12,7 @@ namespace PactOfPunishment.Waves
 
         private static readonly Lazy<CharacterSpawnCard> distributorSpawnCard = GetLazySpawnCard("RoR2/DLC3/MinePod/cscMinePod.asset");
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeWaveStrategy GetUpgradeMiniBossStrategy()
         {
             return ScriptableObject.CreateInstance<EnableSecondarySkillsStrategy>();
         }
@@ -30,7 +30,6 @@ namespace PactOfPunishment.Waves
                 new SpawnInfo
                 {
                     count = 1,
-                    eliteDef = RoR2Content.Elites.Ice,
                     spawnCard = distributorSpawnCard.Value,
                 }
             };
@@ -57,8 +56,10 @@ namespace PactOfPunishment.Waves
                     return;
                 }
 
-                if (body!.bodyIndex == DLC2Content.BodyPrefabs.ScorchlingBody.bodyIndex)
+                if (body!.bodyIndex == DLC2Content.BodyPrefabs.ScorchlingBody.bodyIndex) // TODO: use elite equipment instead of elite def for distributor. The distributor should have nearly 2x the health of the worm, but should not do much damage.
                 {
+                    body.master.ScaleDifficultyAsBoss(0.68f, 2.2f);
+
                     if (this.disableSecondarySkills)
                     {
                         Utils.DisableSkill(body, x => x.secondary);
@@ -66,6 +67,9 @@ namespace PactOfPunishment.Waves
                 }
                 else if (body.bodyIndex == DLC3Content.BodyPrefabs.MinePodBody.bodyIndex)
                 {
+                    body.master.ScaleDifficultyAsBoss(0.2f, 100);
+                    Utils.MakeUnscaledElite(body.inventory, RoR2Content.Elites.Ice);
+
                     if (this.disableSecondarySkills)
                     {
                         Utils.DisableSkill(body, x => x.secondary);
