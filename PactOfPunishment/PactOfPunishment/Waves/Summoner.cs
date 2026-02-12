@@ -13,7 +13,7 @@ namespace PactOfPunishment.Waves
     {
         protected override UpgradeWaveStrategy GetUpgradeMainBossStrategy()
         {
-            return new NullUpgradeStrategy(); // TODO: extreme measures
+            return ScriptableObject.CreateInstance<SummonerUpgradeStrategy>();
         }
 
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerBossWaveController wavePrefab)
@@ -47,6 +47,10 @@ namespace PactOfPunishment.Waves
                 public CharacterBody? MainBossBody;
 
                 public int MainBossMonsterIndex;
+
+                public DirectorCard[] SupportMonsterDirectorCards;
+
+                public bool ExpandFirstInterludeSupportSelection;
             }
 
             public abstract class SummonerBaseState : EntityState
@@ -78,7 +82,7 @@ namespace PactOfPunishment.Waves
                 {
                     Debug.Log("Entering PreFight");
                     base.OnEnter();
-                    var combatDirector = this.outer.GetComponent<CombatDirector>();
+                    var combatDirector = this.GetComponent<CombatDirector>();
                     var selector = combatDirector.finalMonsterCardsSelection;
                     this.References.MainBossMonsterIndex = selector.EvaluateToChoiceIndex(combatDirector.rng.nextNormalizedFloat);
                     combatDirector.OverrideNextBossCard(selector.GetChoice(this.References.MainBossMonsterIndex).value, false);
@@ -92,7 +96,32 @@ namespace PactOfPunishment.Waves
                     Utils.ApplyHealthMultiplier(body, healthMultiplier);
                     this.SetupBossHealthComponent(body.healthComponent);
                     this.References.MainBossBody = body; // TODO: what about swarms?
+                    this.References.SupportMonsterDirectorCards = this.GetSupportMonsterDirectorCards(2);
+                    var summonerBehavior = this.GetComponent<SummonerBehavior>();
+                    this.References.ExpandFirstInterludeSupportSelection = summonerBehavior != null && summonerBehavior.ExpandFirstInterludeSupportSelection;
                     this.outer.SetState(new Phase1());
+                }
+
+                private static bool CanBeSupportMonster(WeightedSelection<DirectorCard>.ChoiceInfo choice)
+                { // TODO: check all bosses' interactions with artifact of kin
+                    return choice.value?.cost > 14 && choice.value?.spawnCard is CharacterSpawnCard characterSpawnCard && characterSpawnCard.prefab.GetComponent<CharacterMaster>()?.bodyPrefab?.GetComponent<CharacterBody>()?.isChampion == false;
+                }
+
+                private DirectorCard[] GetSupportMonsterDirectorCards(int count)
+                {
+                    var combatDirector = this.GetComponent<CombatDirector>();
+                    var selector = combatDirector.finalMonsterCardsSelection;
+                    var list = new List<DirectorCard>();
+                    var ignored = new int[] { this.References.MainBossMonsterIndex }.Union(Enumerable.Range(0, selector.Count).Where(x => !CanBeSupportMonster(selector.GetChoice(x)))).ToArray();
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        var choiceIndex = selector.EvaluateToChoiceIndex(combatDirector.rng.nextNormalizedFloat, ignored);
+                        list.Add(selector.GetChoice(choiceIndex).value);
+                        ArrayUtils.ArrayAppend(ref ignored, choiceIndex);
+                    }
+
+                    return list.ToArray();
                 }
 
                 private void SetupBossHealthComponent(HealthComponent healthComponent)
@@ -158,6 +187,18 @@ namespace PactOfPunishment.Waves
                 }
 
                 protected override SummonerBaseState GetNextState() => new Phase2();
+
+                protected override DirectorCard SelectSupportDirectorCard(CombatDirector combatDirector)
+                {
+                    if (this.References.ExpandFirstInterludeSupportSelection)
+                    {
+                        return combatDirector.rng.NextElementUniform(this.References.SupportMonsterDirectorCards);
+                    }
+                    else
+                    {
+                        return this.References.SupportMonsterDirectorCards[0];
+                    }
+                }
             }
 
             public class SecondInterlude : InterludeState
@@ -171,6 +212,11 @@ namespace PactOfPunishment.Waves
                 }
 
                 protected override SummonerBaseState GetNextState() => new Phase3();
+
+                protected override DirectorCard SelectSupportDirectorCard(CombatDirector combatDirector)
+                {
+                    return combatDirector.rng.NextElementUniform(this.References.SupportMonsterDirectorCards);
+                }
             }
 
             public abstract class PhaseState : MainBossAliveState
@@ -243,6 +289,8 @@ namespace PactOfPunishment.Waves
                     this.combatSquad!.AddMember(body.master);
                 }
 
+                protected abstract DirectorCard SelectSupportDirectorCard(CombatDirector combatDirector);
+
                 private static void DirectHeal(HealthComponent healthComponent, float healthFraction)
                 {
                     healthComponent.Networkhealth = healthComponent.fullCombinedHealth * Mathf.Clamp01(healthFraction); // TODO: Don't lower below current health?
@@ -264,10 +312,9 @@ namespace PactOfPunishment.Waves
                         return;
                     }
 
-                    var combatDirector = this.outer.GetComponent<CombatDirector>();
-                    var wave = this.outer.GetComponent<InfiniteTowerWaveController>();
-                    var selector = combatDirector.finalMonsterCardsSelection;
-                    DirectorCard directorCard = selector.GetChoice(selector.EvaluateToChoiceIndex(combatDirector.rng.nextNormalizedFloat, new int[] { this.References.MainBossMonsterIndex })).value;
+                    var combatDirector = this.GetComponent<CombatDirector>();
+                    var wave = this.GetComponent<InfiniteTowerWaveController>();
+                    DirectorCard directorCard = this.SelectSupportDirectorCard(combatDirector);
 
                     if (combatDirector.Spawn(directorCard.spawnCard, null, wave.spawnTarget.transform, directorCard.spawnDistance, directorCard.preventOverhead))
                     {
@@ -314,6 +361,8 @@ namespace PactOfPunishment.Waves
 
         public class SummonerBehavior : MonoBehaviour
         {
+            public bool ExpandFirstInterludeSupportSelection;
+
             private EntityStateMachine stateMachine;
 
             private CombatDirector? combatDirector;
@@ -347,6 +396,19 @@ namespace PactOfPunishment.Waves
                 if (body)
                 {
                     (this.stateMachine.state as SummonerStates.SummonerBaseState)?.OnBossSpawnedServer(result, body!);
+                }
+            }
+        }
+
+        public class SummonerUpgradeStrategy : UpgradeWaveStrategy
+        {
+            public override void UpgradeWave(InfiniteTowerWaveController wave)
+            {
+                var dir = wave.combatDirector;
+
+                if (dir.TryGetComponent<SummonerBehavior>(out var behavior))
+                {
+                    behavior.ExpandFirstInterludeSupportSelection = true;
                 }
             }
         }
