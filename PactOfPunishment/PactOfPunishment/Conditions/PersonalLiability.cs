@@ -19,7 +19,7 @@ namespace PactOfPunishment.Conditions
             var c = new ILCursor(il);
             c.GotoNext(x => x.MatchCall<CharacterBody>($"set_{nameof(CharacterBody.hasOneShotProtection)}"));
             c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate<Func<bool, CharacterBody, bool>>((value, self) => value && (this.GetRank(self) < 1 || self.teamComponent?.teamIndex != TeamIndex.Player));
+            c.EmitDelegate<Func<bool, CharacterBody, bool>>((value, self) => value && !(this.IsEnabled(self) && (self.teamComponent?.teamIndex) == TeamIndex.Player));
         }
     }
 }

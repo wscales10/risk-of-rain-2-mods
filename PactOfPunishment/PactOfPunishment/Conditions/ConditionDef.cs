@@ -16,7 +16,19 @@ namespace PactOfPunishment.Conditions
 
         public int GetRank(UnityEngine.Object context)
         {
-            return Run.instance.GetComponent<PactOfPunishmentBehavior>().GetRank(this);
+            var run = Run.instance;
+
+            if (run && run.TryGetComponent<PactOfPunishmentBehavior>(out var behavior))
+            {
+                return behavior.GetRank(this);
+            }
+
+            return 0;
+        }
+
+        public bool IsEnabled(UnityEngine.Object context)
+        {
+            return this.GetRank(context) > 0;
         }
     }
 }

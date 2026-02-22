@@ -16,7 +16,7 @@ namespace PactOfPunishment.Conditions
 
         private void InfiniteTowerWaveController_DropRewards(On.RoR2.InfiniteTowerWaveController.orig_DropRewards orig, RoR2.InfiniteTowerWaveController self)
         {
-            if (this.GetRank(self) > 0)
+            if (this.IsEnabled(self))
             {
                 this.Logger.LogDebug("Reducing reward option count...");
                 var behavior = self.EnsureComponent<ApprovalProcessBehavior>();

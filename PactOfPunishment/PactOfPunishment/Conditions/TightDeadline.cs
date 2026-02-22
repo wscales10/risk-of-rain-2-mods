@@ -23,7 +23,7 @@ namespace PactOfPunishment.Conditions
 
         private void InfiniteTowerRun_Start(On.RoR2.InfiniteTowerRun.orig_Start orig, InfiniteTowerRun self)
         {
-            if (this.GetRank(self) > 0)
+            if (this.IsEnabled(self))
             {
                 this.SetupBehavior(self.EnsureComponent<TightDeadlineBehavior>());
             }

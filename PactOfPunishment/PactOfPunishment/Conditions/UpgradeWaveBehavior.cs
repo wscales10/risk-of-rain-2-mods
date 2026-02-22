@@ -1,11 +1,17 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
+    public enum WaveUpgradeFilter
+    {
+        MiniBoss,
+
+        MainBoss,
+    }
+
     public class UpgradeWaveBehavior : MonoBehaviour
     {
-        public UpgradeWaveStrategy? upgradeMiniBossStrategy;
-
-        public UpgradeWaveStrategy? upgradeMainBossStrategy;
+        public UpgradeWaveStrategy? upgradeStrategy;
     }
 }

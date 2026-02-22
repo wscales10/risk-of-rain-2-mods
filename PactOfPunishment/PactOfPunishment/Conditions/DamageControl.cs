@@ -3,7 +3,6 @@ using MonoMod.Cil;
 using RoR2;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace PactOfPunishment.Conditions
 {
@@ -16,7 +15,7 @@ namespace PactOfPunishment.Conditions
             CharacterBody.onBodyStartGlobal += this.CharacterBody_onBodyStartGlobal;
             Content.Buffs.ShieldedHealth = Utils.AddStatusEffect(buffDef =>
             {
-                buffDef.iconSprite = Addressables.LoadAssetAsync<Sprite>("RoR2/DLC1/BearVoid/texBuffBearVoidReady.tif").WaitForCompletion();
+                Utils.OnLoad<Sprite>("RoR2/DLC1/BearVoid/texBuffBearVoidReady.tif", x => buffDef.iconSprite = x);
                 buffDef.buffColor = new Color(0.682f, 0.422f, 0.821f);
                 buffDef.canStack = true;
             });

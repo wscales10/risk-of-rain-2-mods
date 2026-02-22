@@ -9,6 +9,8 @@ namespace PactOfPunishment.Conditions
 
         public override int HeatPerRank => 3;
 
+        public bool ReduceEnemyCooldowns { get; set; } = true;
+
         public override void Init()
         {
             RecalculateStatsAPI.GetStatCoefficients += this.RecalculateStatsAPI_GetStatCoefficients;
@@ -21,6 +23,11 @@ namespace PactOfPunishment.Conditions
                 float multiplier = 1 + 0.2f * this.GetRank(sender);
                 args.moveSpeedTotalMult *= multiplier;
                 args.attackSpeedTotalMult *= multiplier;
+
+                if (this.ReduceEnemyCooldowns)
+                {
+                    args.allSkills.cooldownMultiplier /= multiplier;
+                }
             }
         }
     }

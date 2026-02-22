@@ -1,16 +1,18 @@
 ﻿using HG;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
 using System;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace PactOfPunishment.Conditions
 {
     public sealed class UnderworldCustoms : DefaultConditionDef
     {
-        private InteractableSpawnCard? scrapperCard;
+        private AssetPromise<InteractableSpawnCard> scrapperCard;
+
+        private AssetPromise<InteractableSpawnCard> greenPortalCard;
 
         public override int MaxRank => 1;
 
@@ -35,18 +37,9 @@ namespace PactOfPunishment.Conditions
 
         private void InfiniteTowerRun_Start(On.RoR2.InfiniteTowerRun.orig_Start orig, InfiniteTowerRun self)
         {
-            try
-            {
-                this.scrapperCard = Addressables.LoadAssetAsync<InteractableSpawnCard>("RoR2/Base/Scrapper/iscScrapper.asset").WaitForCompletion();
-            }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
-            finally
-            {
-                orig(self);
-            }
+            this.scrapperCard = Utils.BeginLoad<InteractableSpawnCard>("RoR2/Base/Scrapper/iscScrapper.asset", this.Logger);
+            this.greenPortalCard = Utils.BeginLoad<InteractableSpawnCard>("RoR2/DLC2/iscColossusPortal.asset", this.Logger);
+            orig(self);
         }
 
         private void InfiniteTowerRun_OnWaveAllEnemiesDefeatedServer1(ILContext il)
@@ -60,7 +53,13 @@ namespace PactOfPunishment.Conditions
             c.Emit(OpCodes.Ldarg_0);
             c.EmitDelegate<Action<GameObject, InfiniteTowerRun>>((portalObject, self) =>
             {
-                if (this.GetRank(self) < 1)
+                if (self.TryGetComponent<SimulacrumWavesBehavior>(out var simulacrumWavesBehavior)) // TODO: move to other class and disable fogDamageController on prime meridian. For now, instead of spawning a green portal after the false son boss fight (make this driven by a bool somewhere), just allow the player to offer up an item to end the run.
+                {
+                    simulacrumWavesBehavior.GreenPortalSpawner.spawnReferenceLocationOverride = self.safeWardController.transform;
+                    simulacrumWavesBehavior.GreenPortalSpawner.AttemptSpawnPortalServer();
+                }
+
+                if (!this.IsEnabled(self))
                 {
                     return;
                 }
@@ -72,7 +71,7 @@ namespace PactOfPunishment.Conditions
 
                 portalObject.GetComponent<GenericInteraction>().SetInteractabilityConditionsNotMet();
 
-                DirectorCore.instance.TrySpawnObject(new DirectorSpawnRequest(this.scrapperCard, new DirectorPlacementRule
+                DirectorCore.instance.TrySpawnObject(new DirectorSpawnRequest(this.scrapperCard.Value, new DirectorPlacementRule
                 {
                     minDistance = 0f,
                     maxDistance = self.stageTransitionPortalMaxDistance,

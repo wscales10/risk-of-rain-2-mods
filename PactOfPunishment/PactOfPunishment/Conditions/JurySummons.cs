@@ -14,6 +14,7 @@ namespace PactOfPunishment.Conditions
         {
             On.RoR2.InfiniteTowerRun.Start += this.InfiniteTowerRun_Start;
             On.RoR2.InfiniteTowerWaveController.OnEnable += InfiniteTowerWaveController_OnEnable;
+            ScaleMaxSquadCount.OnScaleMaxSquadCount += ScaleMaxSquadCountForJurySummons;
         }
 
         private static void InfiniteTowerWaveController_OnEnable(On.RoR2.InfiniteTowerWaveController.orig_OnEnable orig, InfiniteTowerWaveController self)
@@ -26,10 +27,18 @@ namespace PactOfPunishment.Conditions
             orig(self);
         }
 
+        private static void ScaleMaxSquadCountForJurySummons(CombatDirector combatDirector, ref uint maxSquadCount)
+        {
+            if (combatDirector.TryGetComponent<JurySummonsBehavior>(out var behavior))
+            {
+                maxSquadCount = (uint)Mathf.CeilToInt(maxSquadCount * (1 + behavior.spawnRateBonus));
+            }
+        }
+
         private void InfiniteTowerRun_Start(On.RoR2.InfiniteTowerRun.orig_Start orig, InfiniteTowerRun self)
         {
             var behavior = self.EnsureComponent<JurySummonsBehavior>();
-            behavior.enabled = this.GetRank(self) > 0;
+            behavior.enabled = this.IsEnabled(self);
             behavior.spawnRateBonus = this.GetRank(self) * 0.2f;
             orig(self);
         }
@@ -40,9 +49,9 @@ namespace PactOfPunishment.Conditions
 
             public float spawnRateBonus;
 
-            private bool isSpawningExtraCopies;
-
             private readonly HashSet<CombatDirector> combatDirectors = new HashSet<CombatDirector>();
+
+            private bool isSpawningExtraCopies;
 
             public void AbsorbCost(float cost)
             {
@@ -114,9 +123,7 @@ namespace PactOfPunishment.Conditions
 
             private void ScaleDeathRewards(DeathRewards deathRewards)
             {
-                deathRewards.spawnValue = (int)Mathf.Max(1f, deathRewards.spawnValue / (1f + this.spawnRateBonus));
-                deathRewards.expReward = (uint)Mathf.Ceil(deathRewards.expReward / (1f + this.spawnRateBonus)); // TODO: consider not changing exp reward
-                deathRewards.goldReward = (uint)Mathf.Ceil(deathRewards.goldReward / (1f + this.spawnRateBonus));
+                Utils.ScaleDeathRewards(deathRewards, 1 / (1f + this.spawnRateBonus));
             }
 
             private void TrySpawnExtraCopies(DirectorSpawnRequest spawnRequest, float cost)
