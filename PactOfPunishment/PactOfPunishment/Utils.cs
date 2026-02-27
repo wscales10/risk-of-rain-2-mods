@@ -412,5 +412,24 @@ namespace PactOfPunishment
                 body.master.ScaleDifficultyAsBoss(hpDivisor, damageDivisor, !wasSpawnedByCombatDirector);
             }
         }
+
+        public static EntityState? GetSafeWardState()
+        {
+            var run = Run.instance as InfiniteTowerRun;
+
+            if (!run)
+            {
+                return null;
+            }
+
+            var safeWardController = run!.safeWardController;
+
+            if (safeWardController && safeWardController.wardStateMachine)
+            {
+                return safeWardController.wardStateMachine.state;
+            }
+
+            return null;
+        }
     }
 }

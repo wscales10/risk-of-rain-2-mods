@@ -1,10 +1,14 @@
-﻿using Mono.Cecil.Cil;
+﻿using EntityStates.DefectiveUnit;
+using EntityStates.InfiniteTowerSafeWard;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using PactOfPunishment.Waves.Stage1;
 using PactOfPunishment.Waves.Stage1.Halcyonites;
 using PactOfPunishment.Waves.Stage2;
 using PactOfPunishment.Waves.Stage3;
 using RoR2;
+using RoR2.Projectile;
+using RoR2.WwiseUtils;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -33,6 +37,8 @@ namespace PactOfPunishment.Waves.Infrastructure
             On.RoR2.InfiniteTowerRun.MoveSafeWard += InfiniteTowerRun_MoveSafeWard;
             On.RoR2.InfiniteTowerBossWaveController.OnTimerExpire += InfiniteTowerBossWaveController_OnTimerExpire;
             On.RoR2.InfiniteTowerExplicitSpawnWaveController.OnTimerExpire += InfiniteTowerExplicitSpawnWaveController_OnTimerExpire;
+            IL.RoR2.MusicController.PickCurrentTrack += Utils.HookIL(MusicController_PickCurrentTrack);
+            On.RoR2.MusicController.UpdateTeleporterParameters += this.MusicController_UpdateTeleporterParameters;
 
             Content.Elites.NerfedPoison = Projectilers.AllMalachiteWaveStrategy.MakeEliteDef();
             Content.EliteTiers.NerfedPoisonTier = Projectilers.AllMalachiteWaveStrategy.MakeEliteTierDef();
@@ -142,6 +148,51 @@ namespace PactOfPunishment.Waves.Infrastructure
 
                 return wavePrefabs;
             });
+        }
+
+        private static bool? IsSimulacrumBossAlive()
+        {
+            if (!(Run.instance is InfiniteTowerRun run && run.waveController && run.waveController.isBossWave))
+            {
+                return null;
+            }
+
+            var safeWardState = Utils.GetSafeWardState();
+            if (!(safeWardState is Active || safeWardState is Unburrow || safeWardState is AwaitingPortalUse))
+            {
+                return null;
+            }
+
+            return !run.waveController.haveAllEnemiesBeenDefeated;
+        }
+
+        private void MusicController_UpdateTeleporterParameters(On.RoR2.MusicController.orig_UpdateTeleporterParameters orig, MusicController self, TeleporterInteraction teleporter, Transform cameraTransform, CharacterBody targetBody)
+        {
+            orig(self, teleporter, cameraTransform, targetBody);
+
+            if (IsSimulacrumBossAlive() == false)
+            {
+                self.stBossStatus.valueId = CommonWwiseIds.dead;
+            }
+        }
+
+        private void MusicController_PickCurrentTrack(ILCursor c)
+        {
+            c.GotoNext(MoveType.AfterLabel,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<MusicController>(nameof(MusicController.enableMusicSystem)),
+                x => x.MatchBrfalse(out _));
+            c.Emit(OpCodes.Ldloc_1);
+            c.EmitDelegate<Func<bool, bool>>(orig =>
+            {
+                if (orig)
+                {
+                    return true;
+                }
+
+                return IsSimulacrumBossAlive() != null; // TODO: use override behavior instead and choose boss tracks more carefully?
+            });
+            c.Emit(OpCodes.Stloc_1);
         }
     }
 }
