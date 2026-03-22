@@ -17,9 +17,14 @@ namespace PactOfPunishment
 
         private static void CombatDirector_FixedUpdate(On.RoR2.CombatDirector.orig_FixedUpdate orig, RoR2.CombatDirector self)
         {
-            if (self.GetComponent<DisableWhileSquadFullBehavior>() && (self.combatSquad && self.maxSquadCount != 0 && self.combatSquad.memberCount >= self.maxSquadCount))
+            if (self.GetComponent<DisableWhileSquadFullBehavior>())
             {
-                return;
+                var maxSquadCount = ScaleMaxSquadCount.GetMaxSquadCount(self);
+
+                if ((self.combatSquad && maxSquadCount != 0 && self.combatSquad.memberCount >= maxSquadCount))
+                {
+                    return;
+                }
             }
 
             orig(self);

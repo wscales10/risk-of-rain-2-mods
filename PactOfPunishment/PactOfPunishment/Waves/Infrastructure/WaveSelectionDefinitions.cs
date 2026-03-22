@@ -1,8 +1,11 @@
 ﻿using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Stage1;
-using PactOfPunishment.Waves.Stage1.Halcyonites;
+using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1;
+using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2;
+using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3;
 using PactOfPunishment.Waves.Stage2;
 using PactOfPunishment.Waves.Stage3;
+using PactOfPunishment.Waves.Stage4;
 using RoR2;
 using UnityEngine;
 using static PactOfPunishment.Conditions.MiddleManagement;
@@ -18,7 +21,7 @@ namespace PactOfPunishment.Waves.Infrastructure
 
     public class Wave10SelectionDefinition : ReplaceVanillaWaves
     {
-        public Wave10SelectionDefinition(SimulacrumWaveDefinitions cache) : base((cache.Get<Halcyonite1>(), 1))
+        public Wave10SelectionDefinition(SimulacrumWaveDefinitions cache) : base((cache.Get<Halcyonite1>(), 1), (cache.Get<Halcyonite2>(), 1), (cache.Get<Halcyonite3>(), 1))
         {
         }
     }
@@ -35,7 +38,7 @@ namespace PactOfPunishment.Waves.Infrastructure
             base.ModifyWeightedSelection(weightedSelection, cache);
         }
 
-        public override UpgradeWaveStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
+        public override UpgradeEncounterStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
         {
             return base.GetUpgradeWaveStrategy(wave) ?? ScriptableObject.CreateInstance<MendingMiniMushrumUpgradeStrategy>();
         }
@@ -64,7 +67,7 @@ namespace PactOfPunishment.Waves.Infrastructure
 
     public class Wave35SelectionDefinition : WaveSelectionDefinition
     {
-        public override UpgradeWaveStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
+        public override UpgradeEncounterStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
         {
             return null; // TODO: is this necessary?
         }
@@ -73,6 +76,13 @@ namespace PactOfPunishment.Waves.Infrastructure
         {
             weightedSelection.RemoveWhere(x => x?.GetComponent<InfiniteTowerWaveController>() is InfiniteTowerExplicitSpawnWaveController);
             base.ModifyWeightedSelection(weightedSelection, cache); // TODO: is this necessary?
+        }
+    }
+
+    public class Wave40SelectionDefinition : ReplaceVanillaWaves
+    {
+        public Wave40SelectionDefinition(SimulacrumWaveDefinitions cache) : base((cache.Get<Aurelionite>(), 1), (cache.Get<BlazingElderLemurian>(), 1), (cache.Get<Gup>(), 1), (cache.Get<Invalidator>(), 1))
+        {
         }
     }
 }

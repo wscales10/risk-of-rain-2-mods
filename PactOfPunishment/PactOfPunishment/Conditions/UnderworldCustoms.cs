@@ -1,7 +1,6 @@
 ﻿using HG;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
 using System;
 using UnityEngine;
@@ -11,8 +10,6 @@ namespace PactOfPunishment.Conditions
     public sealed class UnderworldCustoms : DefaultConditionDef
     {
         private AssetPromise<InteractableSpawnCard> scrapperCard;
-
-        private AssetPromise<InteractableSpawnCard> greenPortalCard;
 
         public override int MaxRank => 1;
 
@@ -38,7 +35,6 @@ namespace PactOfPunishment.Conditions
         private void InfiniteTowerRun_Start(On.RoR2.InfiniteTowerRun.orig_Start orig, InfiniteTowerRun self)
         {
             this.scrapperCard = Utils.BeginLoad<InteractableSpawnCard>("RoR2/Base/Scrapper/iscScrapper.asset", this.Logger);
-            this.greenPortalCard = Utils.BeginLoad<InteractableSpawnCard>("RoR2/DLC2/iscColossusPortal.asset", this.Logger);
             orig(self);
         }
 
@@ -53,11 +49,16 @@ namespace PactOfPunishment.Conditions
             c.Emit(OpCodes.Ldarg_0);
             c.EmitDelegate<Action<GameObject, InfiniteTowerRun>>((portalObject, self) =>
             {
-                if (self.TryGetComponent<SimulacrumWavesBehavior>(out var simulacrumWavesBehavior)) // TODO: move to other class and disable fogDamageController on prime meridian. For now, instead of spawning a green portal after the false son boss fight (make this driven by a bool somewhere), just allow the player to offer up an item to end the run.
+                DirectorCore.instance.TrySpawnObject(new DirectorSpawnRequest(this.scrapperCard.Value, new DirectorPlacementRule
                 {
-                    simulacrumWavesBehavior.GreenPortalSpawner.spawnReferenceLocationOverride = self.safeWardController.transform;
-                    simulacrumWavesBehavior.GreenPortalSpawner.AttemptSpawnPortalServer();
-                }
+                    minDistance = 0f,
+                    maxDistance = self.stageTransitionPortalMaxDistance,
+                    placementMode = DirectorPlacementRule.PlacementMode.Approximate,
+                    position = self.safeWardController.transform.position,
+                    spawnOnTarget = self.safeWardController.transform
+                }, self.safeWardRng));
+
+                this.TrySpawnGreenPortal(self);
 
                 if (!this.IsEnabled(self))
                 {
@@ -71,19 +72,23 @@ namespace PactOfPunishment.Conditions
 
                 portalObject.GetComponent<GenericInteraction>().SetInteractabilityConditionsNotMet();
 
-                DirectorCore.instance.TrySpawnObject(new DirectorSpawnRequest(this.scrapperCard.Value, new DirectorPlacementRule
-                {
-                    minDistance = 0f,
-                    maxDistance = self.stageTransitionPortalMaxDistance,
-                    placementMode = DirectorPlacementRule.PlacementMode.Approximate,
-                    position = self.safeWardController.transform.position,
-                    spawnOnTarget = self.safeWardController.transform
-                }, self.safeWardRng));
-
                 var behavior = Run.instance.EnsureComponent<UnderworldCustomsBehavior>();
                 behavior.itemsToScrap = this.GetRank(self);
                 behavior.onEnoughItemsScrapped = portalObject.GetComponent<GenericInteraction>().SetInteractabilityAvailable;
             });
+        }
+
+        private void TrySpawnGreenPortal(InfiniteTowerRun run)
+        {
+            if (run.TryGetComponent<PrimeMeridian.GreenPortalSpawnerBehavior>(out var behavior) && behavior.GreenPortalSpawner is PortalSpawner ps) // TODO: move to other class.
+            {
+                ps.spawnReferenceLocationOverride = run.safeWardController.transform;
+
+                if (!ps.AttemptSpawnPortalServer())
+                {
+                    this.Logger.LogWarning("Failed to spawn green portal");
+                }
+            }
         }
 
         public class UnderworldCustomsBehavior : MonoBehaviour

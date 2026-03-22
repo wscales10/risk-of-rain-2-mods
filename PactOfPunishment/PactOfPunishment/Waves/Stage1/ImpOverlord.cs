@@ -1,5 +1,4 @@
-﻿using HG;
-using PactOfPunishment.Conditions;
+﻿using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using RoR2;
 using UnityEngine;
@@ -8,46 +7,47 @@ using static RoR2.InfiniteTowerExplicitSpawnWaveController;
 
 namespace PactOfPunishment.Waves.Stage1
 {
-    public partial class ImpOverlord : MiniBossWaveDefinition<InfiniteTowerExplicitSpawnWaveController> // TODO: custom reward drop table
+    public class ImpOverlordBossFightBehavior : PortableMiniBossFightBehavior<ImpOverlordBossFightBehavior>
     {
-        private readonly AssetPromise<CharacterSpawnCard> impOverlordSpawnCard;
+    }
 
-        public ImpOverlord()
+    public partial class ImpOverlord : PortableMiniBossWaveDefinition<ImpOverlordBossFightBehavior>
+    {
+        public ImpOverlord() : base(new ImpOverlordMiniBossInfo())
         {
-            this.impOverlordSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/ImpBoss/cscImpBoss.asset");
         }
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy() => ScriptableObject.CreateInstance<PeriodicallySpawnGlacialJellyfish>();
+        protected override UpgradeEncounterStrategy GetUpgradeStrategy() => ScriptableObject.CreateInstance<PeriodicallySpawnGlacialJellyfish>();
 
-        protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
+        protected override PickupDropTable GetRewardDropTable(Run run) // TODO: keep an eye on this, it might be too good
         {
-            base.Setup(dir, squad, wavePrefab);
+            return BetterExplicitPickupDropTable.ReplaceTierWithSingleItem(GetBaseDropTable(run), RoR2Content.Items.BleedOnHitAndExplode);
+        }
 
-            wavePrefab.spawnList = new SpawnInfo[]
+        public class ImpOverlordMiniBossInfo : PortableMiniBossInfo<ImpOverlordBossFightBehavior>
+        {
+            private readonly AssetPromise<CharacterSpawnCard> impOverlordSpawnCard;
+
+            public ImpOverlordMiniBossInfo()
             {
-                new SpawnInfo
-                {
-                    count = 1,
-                    spawnCard = this.impOverlordSpawnCard.Value,
-                }
+                this.impOverlordSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/ImpBoss/cscImpBoss.asset");
+            }
+
+            public override SpawnInfo SpawnInfo => new SpawnInfo
+            {
+                count = 1,
+                spawnCard = this.impOverlordSpawnCard.Value,
             };
 
-            dir.EnsureComponent<ImpOverlordBossFightBehavior>();
-        }
-
-        public class ImpOverlordBossFightBehavior : BossFightBehavior
-        {
-            protected override void OnBossSpawnedServer(CharacterBody body)
+            public override void SetupBossBody(CharacterBody body, ImpOverlordBossFightBehavior bossFightBehavior)
             {
-                if (body.Is(RoR2Content.BodyPrefabs.ImpBossBody))
-                {
-                    body.ScaleDifficultyAsBoss(39, 31, true, false);
-                    body.OverrideCooldown(x => x.utility, 2);
-                }
+                body.ScaleMaxHealth(this, 0.4f);
+                body.ScaleDifficultyAsBoss(39, 31, true, false);
+                body.skillLocator.utility.cooldownOverride = 2;
             }
         }
 
-        public class PeriodicallySpawnGlacialJellyfish : UpgradeWaveStrategy
+        public class PeriodicallySpawnGlacialJellyfish : UpgradeEncounterStrategy
         {
             private readonly CharacterSpawnCard jellyfishSpawnCard;
 
@@ -58,13 +58,13 @@ namespace PactOfPunishment.Waves.Stage1
 
             public override WaveUpgradeFilter WaveUpgradeFilter => WaveUpgradeFilter.MiniBoss;
 
-            public override void PostInitialise(InfiniteTowerWaveController wave)
+            public override void PostInitialise(EncounterContext ctx)
             {
-                var behavior = wave.gameObject.AddComponent<DoSomethingAtFixedRate>();
+                var behavior = ctx.GameObject.AddComponent<DoSomethingAtFixedRate>();
                 behavior.interval = 4;
                 behavior.doSomething = () =>
                 {
-                    if (!wave.spawnTarget)
+                    if (!ctx.SpawnTarget)
                     {
                         return;
                     }
@@ -75,7 +75,7 @@ namespace PactOfPunishment.Waves.Stage1
                     {
                         minDistance = minDistance,
                         maxDistance = maxDistance,
-                        position = wave.spawnTarget.transform.position
+                        position = ctx.SpawnTarget.transform.position
                     }, RoR2Application.rng)
                     {
                         teamIndexOverride = TeamIndex.Monster,
@@ -88,13 +88,20 @@ namespace PactOfPunishment.Waves.Stage1
                         return;
                     }
 
-                    wave.combatSquad.AddMember(jellyfish.GetComponent<CharacterMaster>());
-                    Utils.ScaleDeathRewards(Utils.GetCharacterBody(jellyfish), 0);
-                    Inventory jellyfishInventory = jellyfish.GetComponent<Inventory>();
-                    Utils.MakeUnscaledElite(jellyfishInventory, RoR2Content.Elites.Ice);
+                    ctx.CombatSquad.AddMember(jellyfish.GetComponent<CharacterMaster>());
+
+                    if (Utils.TryGetCharacterBody(jellyfish, out var jellyfishBody))
+                    {
+                        Utils.ScaleDeathRewards(jellyfishBody, 0);
+                        Utils.MakeUnscaledEliteUsingEquipment(jellyfishBody, RoR2Content.Elites.Ice);
+                    }
                 };
 
-                wave.EliminateCombatSquadWhenLastMainMemberDies(wave.combatSquad, x => x.GetBody().Is(RoR2Content.BodyPrefabs.ImpBossBody), () => behavior.enabled = false);
+                var bossFightBehavior = ctx.GameObject.GetComponent<ImpOverlordBossFightBehavior>();
+                bossFightBehavior.OnSetEnabled += customEnabled => behavior.enabled = customEnabled;
+                bossFightBehavior.ApplyEnabledState();
+
+                ctx.GameObject.EliminateCombatSquadWhenLastMainMemberDies(ctx.CombatSquad, x => x.GetBody().Is(RoR2Content.BodyPrefabs.ImpBossBody), x => x.GetBody().Is(RoR2Content.BodyPrefabs.JellyfishBody), () => behavior.enabled = false);
             }
         }
     }

@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using PactOfPunishment.Waves.Common;
+using RoR2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,11 @@ namespace PactOfPunishment.Waves.Infrastructure
         public Instance ForRun(Run run)
         {
             return new Instance(this, run);
+        }
+
+        public IPortableMiniBossWaveDefinition[] GetPortableMiniBossWaveDefinitions()
+        {
+            return this.dictionary.Values.OfType<IPortableMiniBossWaveDefinition>().ToArray();
         }
 
         private ISimulacrumWaveDefinition Get(Type type)

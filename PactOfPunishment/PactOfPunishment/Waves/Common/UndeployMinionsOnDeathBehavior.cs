@@ -15,17 +15,24 @@ namespace PactOfPunishment.Waves.Common
 
         private void OnBodyDeath()
         {
-            if (this.GetCharacterMaster(out var master))
+            if (!this.GetCharacterMaster(out var master))
             {
-                var list = master.deployablesList;
+                return;
+            }
 
-                for (int num = list.Count - 1; num >= 0; num--)
-                {
-                    Deployable deployable = list[num].deployable;
-                    list.RemoveAt(num);
-                    deployable.ownerMaster = null;
-                    deployable.onUndeploy.Invoke();
-                }
+            var list = master.deployablesList;
+
+            if (list is null)
+            {
+                return;
+            }
+
+            for (int num = list.Count - 1; num >= 0; num--)
+            {
+                Deployable deployable = list[num].deployable;
+                list.RemoveAt(num);
+                deployable.ownerMaster = null;
+                deployable.onUndeploy.Invoke();
             }
         }
 

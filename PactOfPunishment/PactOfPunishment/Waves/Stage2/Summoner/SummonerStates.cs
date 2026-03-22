@@ -1,7 +1,9 @@
 ﻿using EntityStates;
+using HG;
 using PactOfPunishment.Waves.Common;
 using RoR2;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -12,6 +14,8 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
         public abstract class SummonerBaseState : EntityState
         {
             public SummonerReferences References;
+
+            protected abstract SummonerBossPowerLevel PowerLevel { get; }
 
             public virtual void OnBossSpawnedServer(SpawnCard.SpawnResult result, CharacterBody body)
             {
@@ -27,12 +31,26 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                 }
             }
 
+            public override void OnEnter()
+            {
+                base.OnEnter();
+                var summonerBossBodyBehavior = this.characterBody.GetComponent<SummonerBossBodyBehavior>();
+                summonerBossBodyBehavior.PowerLevel = this.PowerLevel;
+
+                foreach (var ghostBody in summonerBossBodyBehavior.ghostBodies.Where(x => x))
+                {
+                    ghostBody.GetComponent<SummonerBossBodyBehavior>().PowerLevel = this.PowerLevel;
+                }
+            }
+
             protected abstract SummonerBaseState? GetNextState();
         }
 
         public class Phase1 : PhaseState
         {
             public override float PhaseEndHealthThreshold => 2f / 3;
+
+            protected override SummonerBossPowerLevel PowerLevel => SummonerBossPowerLevel.Phase1;
 
             protected override SummonerBaseState? GetNextState() => new FirstInterlude();
         }
@@ -41,12 +59,16 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
         {
             public override float PhaseEndHealthThreshold => 1f / 3;
 
+            protected override SummonerBossPowerLevel PowerLevel => SummonerBossPowerLevel.Phase2;
+
             protected override SummonerBaseState? GetNextState() => new SecondInterlude();
         }
 
         public class Phase3 : PhaseState
         {
             public override float PhaseEndHealthThreshold => 0;
+
+            protected override SummonerBossPowerLevel PowerLevel => SummonerBossPowerLevel.Phase3;
 
             public override void OnEnter()
             {
@@ -59,6 +81,8 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
         public class FirstInterlude : InterludeState
         {
+            protected override SummonerBossPowerLevel PowerLevel => SummonerBossPowerLevel.FirstInterlude;
+
             public override void OnEnter()
             {
                 this.SupportToSpawn = 3;
@@ -70,6 +94,8 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
         public class SecondInterlude : InterludeState
         {
+            protected override SummonerBossPowerLevel PowerLevel => SummonerBossPowerLevel.SecondInterlude;
+
             public override void OnEnter()
             {
                 this.SupportToSpawn = 6;
@@ -149,20 +175,35 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             public override void OnBossSpawnedServer(SpawnCard.SpawnResult result, CharacterBody body)
             {
                 base.OnBossSpawnedServer(result, body);
-                int directorCreditCost = result.spawnRequest.spawnCard.directorCreditCost;
-                float healthMultiplier = this.References.GetComponent<InfiniteTowerWaveController>().totalWaveCredits * 0.15f / directorCreditCost;
-                float supportMonsterMaxHealth = body.healthComponent.fullCombinedHealth;
-                float? bossMaxHealth = this.healthComponent.fullCombinedHealth;
-
-                if (supportMonsterMaxHealth > 0 && bossMaxHealth != null)
-                {
-                    healthMultiplier = Mathf.Min(healthMultiplier, bossMaxHealth.Value * 0.15f / supportMonsterMaxHealth);
-                }
-
+                float healthMultiplier = GetHealthMultiplier();
                 Debug.Log($"Scaling health for {body.name} by {healthMultiplier}");
                 var summonerBehavior = this.References.GetComponent<SummonerBossFightBehavior>();
                 body.ScaleMaxHealth(summonerBehavior, healthMultiplier);
+                body.EnsureComponent<SummonerBossBodyBehavior>().PowerLevel = SummonerBossPowerLevel.Support;
                 this.combatSquad!.AddMember(body.master);
+                this.References.GetComponent<SummonerBossFightBehavior>().SpawnGhosts(body, SummonerBossPowerLevel.Support);
+
+                float GetHealthMultiplier()
+                {
+                    float totalWaveCredits = this.References.GetComponent<InfiniteTowerWaveController>().totalWaveCredits;
+                    int directorCreditCost = result.spawnRequest.spawnCard.directorCreditCost;
+
+                    List<float> healthMultipliers = new List<float> { totalWaveCredits * 0.15f / directorCreditCost };
+                    Debug.Log($"Health multiplier for {body.name} based on {totalWaveCredits} wave credits / {directorCreditCost} spawn cost: {healthMultipliers[0]}");
+
+                    float? bossMaxHealth = this.healthComponent.fullCombinedHealth;
+                    float supportMonsterMaxHealth = body.healthComponent.fullCombinedHealth;
+                    Debug.Log($"My max health: {supportMonsterMaxHealth}, summoner max health: {bossMaxHealth?.ToString() ?? "null"}");
+
+                    if (supportMonsterMaxHealth > 0 && bossMaxHealth != null)
+                    {
+                        float alternativeHealthMultiplier = bossMaxHealth.Value * 0.15f / supportMonsterMaxHealth;
+                        Debug.Log($"Alternative health multiplier for {body.name} based on summoner max health / my max health: {alternativeHealthMultiplier}");
+                        healthMultipliers.Add(alternativeHealthMultiplier);
+                    }
+
+                    return healthMultipliers.OrderBy(x => Mathf.Abs(x - 1)).First();
+                }
             }
 
             private DirectorCard SelectSupportDirectorCard(CombatDirector combatDirector)

@@ -10,8 +10,8 @@ namespace PactOfPunishment.Conditions
         MainBoss,
     }
 
-    public class UpgradeWaveBehavior : MonoBehaviour
+    public class UpgradeEncounterBehavior : MonoBehaviour
     {
-        public UpgradeWaveStrategy? upgradeStrategy;
+        public UpgradeEncounterStrategy? upgradeStrategy;
     }
 }

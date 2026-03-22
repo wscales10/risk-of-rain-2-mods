@@ -80,7 +80,7 @@ namespace PactOfPunishment.Conditions
 
             public void OnEnable()
             {
-                SpawnCard.onSpawnedServerGlobal += this.OnSpawnedServerGlobal;
+                SpawnCard.onSpawnedServerGlobal += this.OnSpawnedServerGlobal; // TODO: use InfiniteTowerWaveSpawnListener?
             }
 
             public void OnDisable()

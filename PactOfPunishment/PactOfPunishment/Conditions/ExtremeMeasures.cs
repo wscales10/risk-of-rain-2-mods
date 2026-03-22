@@ -1,4 +1,6 @@
-﻿using PactOfPunishment.Waves.Infrastructure;
+﻿using HG;
+using PactOfPunishment.Waves.FinalStage;
+using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
 
 namespace PactOfPunishment.Conditions
@@ -9,25 +11,30 @@ namespace PactOfPunishment.Conditions
 
         public static bool IsMainBossWave()
         {
-            return Run.instance is InfiniteTowerRun run && run.IsStageTransitionWave() && run.waveController.isBossWave; // TODO: this may be incorrect for stage 4+?
+            return Run.instance is InfiniteTowerRun run && run.waveController && run.IsStageTransitionWave() && run.waveController.isBossWave; // TODO: this may be incorrect for stage 4+?
         }
 
         public override int GetHeatForRank(int rank) => rank;
 
         public override void Init()
         {
-            WaveUpgradesModule.OnInitializeWave += this.TryUpgradeWave;
+            EncounterUpgradeModule.OnInitializeEncounter += this.TryUpgradeEncounter;
         }
 
-        private UpgradeWaveStrategy? TryUpgradeWave(InfiniteTowerWaveController wave, IWaveSelectionDefinition? waveSelectionDefinition)
+        private UpgradeEncounterStrategy? TryUpgradeEncounter(EncounterContext ctx, IWaveSelectionDefinition? waveSelectionDefinition)
         {
             // On stage 1, if the rank is greater than zero, apply the upgrade etc.
-            if (this.GetRank(wave) <= Run.instance.stageClearCount)
+            if (this.GetRank(ctx.Controller) <= Run.instance.stageClearCount)
             {
                 return null;
             }
 
-            if (waveSelectionDefinition != null)
+            if (ctx is FalseSonBossFightContext falseSonBossFightContext)
+            {
+                return ctx.Controller.EnsureComponent<FinalBossUpgradeStrategies>().GetUpgradeStrategy(falseSonBossFightContext);
+            }
+
+            if (waveSelectionDefinition != null && ctx.Controller is InfiniteTowerWaveController wave)
             {
                 var upgradeStrategy = waveSelectionDefinition.GetUpgradeWaveStrategy(wave);
 

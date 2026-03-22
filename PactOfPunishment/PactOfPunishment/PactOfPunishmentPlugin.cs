@@ -5,18 +5,18 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Infrastructure;
-using PactOfPunishment.Waves.Stage1.Halcyonites;
-using PactOfPunishment.Waves.Stage3;
 using RiskOfOptions;
 using RiskOfOptions.OptionConfigs;
 using RiskOfOptions.Options;
 using RoR2;
+using RoR2.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using UnityHotReloadNS;
 
 [assembly: HG.Reflection.SearchableAttribute.OptIn]
 
@@ -64,8 +64,28 @@ namespace PactOfPunishment
             On.RoR2.Run.Awake += this.Run_Awake;
             IL.RoR2.CombatDirector.AttemptSpawnOnTarget += Utils.HookIL(CombatDirector_AttemptSpawnOnTarget);
             IL.RoR2.InfiniteTowerWaveController.FixedUpdate += Utils.HookIL(this.InfiniteTowerWaveController_FixedUpdate);
-            Summoner2.Summoner2BossFightBehavior.eggSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Junk/Incubator/cscParentPod.asset"); // TODO: move to its own module?
-            Summoner2.Summoner2BossFightBehavior.parentSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/Parent/cscParent.asset"); // TODO: hook global spawn card event instead and get spawn card from spawn request
+            RoR2.Run.onServerGameOver += this.Run_onServerGameOver;
+
+            Content.StatDefs.Heat = StatDef.Register("heat", StatRecordType.Max, StatDataType.ULong, 0); // 0 as we don't want players getting points for it if they didn't win the game
+            Content.StatDefs.PerBodyHeatEasy = PerBodyStatDef.Register("heatEasy", StatRecordType.Max, StatDataType.ULong);
+            Content.StatDefs.PerBodyHeatEasy = PerBodyStatDef.Register("heatNormal", StatRecordType.Max, StatDataType.ULong);
+            Content.StatDefs.PerBodyHeatEasy = PerBodyStatDef.Register("heatHard", StatRecordType.Max, StatDataType.ULong);
+            On.RoR2.UI.GameEndReportPanelController.Awake += this.GameEndReportPanelController_Awake;
+            On.RoR2.UI.LanguageTextMeshController.UpdateLabel += this.LanguageTextMeshController_UpdateLabel;
+            On.RoR2.EntityStateMachine.SetState += this.EntityStateMachine_SetState;
+        }
+
+        public void Update()
+        {
+            if (Input.GetKeyUp(KeyCode.F2))
+            {
+                string dllFilePath = this.Config.Bind("Developer", "Hot Reload dll file path", string.Empty).Value;
+
+                if (!string.IsNullOrEmpty(dllFilePath))
+                {
+                    UnityHotReload.LoadNewAssemblyVersion(this.GetType().Assembly, dllFilePath);
+                }
+            }
         }
 
         private static void CombatDirector_AttemptSpawnOnTarget(ILCursor c)
@@ -161,6 +181,12 @@ namespace PactOfPunishment
             }
         }
 
+        private void EntityStateMachine_SetState(On.RoR2.EntityStateMachine.orig_SetState orig, EntityStateMachine self, EntityStates.EntityState newState)
+        {
+            this.Logger.LogDebug($"{self.gameObject} {self.customName} state changing from '{self.state?.GetType().Name}' to '{newState?.GetType().Name}'");
+            orig(self, newState);
+        }
+
         private IEnumerable<Module> GetModules(IEnumerable<Type> moduleTypes)
         {
             foreach (var moduleType in moduleTypes)
@@ -191,6 +217,48 @@ namespace PactOfPunishment
                 this.Logger.LogWarning($"Could not find a way to instantiate module of type {moduleType.FullName}. Ensure it has either a public static Instance property or a public parameterless constructor.");
             }
         }
+
+        private void LanguageTextMeshController_UpdateLabel(On.RoR2.UI.LanguageTextMeshController.orig_UpdateLabel orig, RoR2.UI.LanguageTextMeshController self)
+        {
+            if (self.TryGetComponent<OverrideLanguageTextMeshController>(out var @override) && @override?.TransformFunc is Func<string?, string> transformFunc)
+            {
+                if (self.textMeshPro)
+                {
+                    self.textMeshPro.text = transformFunc(self.resolvedString);
+                }
+            }
+            else
+            {
+                orig(self);
+            }
+        }
+
+        private void GameEndReportPanelController_Awake(On.RoR2.UI.GameEndReportPanelController.orig_Awake orig, RoR2.UI.GameEndReportPanelController self)
+        {
+            if (self.selectedDifficultyLabel && Run.instance && Run.instance.TryGetComponent<PactOfPunishmentBehavior>(out var behavior))
+            {
+                int totalHeat = behavior.TotalHeat;
+                self.selectedDifficultyLabel.EnsureComponent<OverrideLanguageTextMeshController>().TransformFunc = x => $"{x} ({Language.GetString("HEAT_WITH_COLON")} {totalHeat})";
+            }
+
+            orig(self);
+        }
+
+        private void Run_onServerGameOver(Run arg1, GameEndingDef arg2)
+        {
+            try
+            {
+                if (arg2.isWin && arg1 is InfiniteTowerRun && arg1.TryGetComponent<PactOfPunishmentBehavior>(out var pact))
+                {
+                    pact.OnRunVictory();
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Logger.LogError(ex);
+            }
+        }
+
         private void InfiniteTowerWaveController_FixedUpdate(ILCursor c)
         {
             while (c.TryGotoNext(MoveType.AfterLabel,
@@ -226,5 +294,10 @@ namespace PactOfPunishment
                 this.conditionDefs[conditionDef] = configEntry;
             }
         }
+    }
+
+    public class OverrideLanguageTextMeshController : MonoBehaviour
+    {
+        public Func<string?, string>? TransformFunc { get; set; }
     }
 }

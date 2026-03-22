@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace PactOfPunishment
+namespace PactOfPunishment.ProtectMonstersFromHazards
 {
     public class ImproveChildMonsterAI : Module
     {
@@ -36,19 +36,9 @@ namespace PactOfPunishment
                 x => x.MatchStloc(flagVariableNumber));
             c.Index++;
             c.Emit(OpCodes.Ldloc_S, (byte)vectorVariableNumber);
-            c.EmitDelegate<Func<float, float, Vector3, bool>>((distance, minDistance, destination) => distance > minDistance && IsSafeTeleportLocation(destination));
+            c.EmitDelegate<Func<float, float, Vector3, bool>>((distance, minDistance, destination) => distance > minDistance && Utils.IsSafeLocation(destination));
             c.Remove();
             c.Emit(OpCodes.Brtrue_S, setFlagToTrueLabel);
-        }
-
-        private static bool IsSafeTeleportLocation(Vector3 position)
-        {
-            if (Run.instance is InfiniteTowerRun run) // TODO: apply to other fog damage controllers too? to lava?
-            {
-                return run.fogDamageController.safeZones.Any(x => x.IsInBounds(position));
-            }
-
-            return true;
         }
 
         private void FrolicAway_TeleportAway(On.EntityStates.ChildMonster.FrolicAway.orig_TeleportAway orig, FrolicAway self)
@@ -72,7 +62,7 @@ namespace PactOfPunishment
                 {
                     nodeGraph.GetNodePosition(source[i], out position);
 
-                    if (IsSafeTeleportLocation(position))
+                    if (Utils.IsSafeLocation(position))
                     {
                         return true;
                     }

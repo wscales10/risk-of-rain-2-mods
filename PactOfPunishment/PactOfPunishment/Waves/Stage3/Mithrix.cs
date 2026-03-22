@@ -1,7 +1,10 @@
-﻿using HG;
+﻿using EntityStates;
+using HG;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
+using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
+using System.Linq;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage3
@@ -10,7 +13,7 @@ namespace PactOfPunishment.Waves.Stage3
     {
         protected override string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBossBrother.prefab";
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeEncounterStrategy GetUpgradeStrategy()
         {
             return ScriptableObject.CreateInstance<UpgradeMithrix>();
         }
@@ -23,42 +26,105 @@ namespace PactOfPunishment.Waves.Stage3
 
         public class MithrixMiniBossBehavior : BossFightBehavior
         {
+            public override void Awake()
+            {
+                base.Awake();
+                this.CombatDirector.combatSquad.onDefeatedServer += CombatSquad_onDefeatedServer;
+            }
+
             protected override void OnBossSpawnedServer(CharacterBody body)
             {
-                body.ScaleMaxHealth(this, 0.8f); // TODO: reduce phase 3 max health if encountered as mini-boss.
+                body.ScaleMaxHealth(this, 0.8f);
+                body.EnsureComponent<MithrixBodyBehavior>();
+            }
+
+            private static void CombatSquad_onDefeatedServer()
+            {
+                if (Run.instance.TryGetComponent<SimulacrumWavesBehavior>(out var behavior))
+                {
+                    behavior.WasMithrixDefeatedEarlierInRun = true;
+                }
             }
         }
 
-        public class UpgradeMithrix : UpgradeWaveStrategy
+        public class MithrixBodyBehavior : BossBodyBehavior
+        {
+            private FallRiskMitigator fallRiskMitigator;
+
+            private EntityStateMachine bodyStateMachine;
+
+            protected override void Awake()
+            {
+                base.Awake();
+                this.fallRiskMitigator = this.EnsureComponent<FallRiskMitigator>();
+                this.fallRiskMitigator.CurrentMode = FallRiskMitigator.Mode.Mithrix;
+                this.bodyStateMachine = EntityStateMachine.FindByCustomName(this.gameObject, "Body");
+                this.bodyStateMachine.mainStateType = new SerializableEntityStateType(typeof(EntityStates.Mage.MageCharacterMain));
+                var jetpackStateMachine = this.gameObject.AddComponent<EntityStateMachine>();
+                jetpackStateMachine.customName = "Jet";
+                jetpackStateMachine.initialStateType = new SerializableEntityStateType(typeof(Idle));
+                jetpackStateMachine.mainStateType = new SerializableEntityStateType(typeof(Idle));
+
+                foreach (var ai in this.Body.master.AiComponents.Where(x => x))
+                {
+                    ai.prioritizePlayers = true;
+                    ai.fullVision = true;
+                    ai.xrayVision = true;
+
+                    foreach (var skillDriver in ai.GetSkillDrivers("Leap to Center"))
+                    {
+                        skillDriver.maxUserHealthFraction = 0.5f;
+                    }
+                }
+            }
+
+            protected override void ManagedFixedUpdate(float deltaTime)
+            {
+                base.ManagedFixedUpdate(deltaTime);
+
+                if (!this.Body)
+                {
+                    this.fallRiskMitigator.DoUpdate(null);
+                    return;
+                }
+
+                this.fallRiskMitigator.DoUpdate(this.Body!.transform);
+
+                if (this.fallRiskMitigator.IsAboveGround == false && !(this.bodyStateMachine.state is EntityStates.Mage.FlyUpState))
+                {
+                    this.bodyStateMachine.SetInterruptState(EntityStateCatalog.InstantiateState(typeof(EntityStates.Mage.FlyUpState)), InterruptPriority.Skill);
+                }
+            }
+        }
+
+        public class UpgradeMithrix : UpgradeEncounterStrategy
         {
             public override WaveUpgradeFilter WaveUpgradeFilter => WaveUpgradeFilter.MainBoss;
 
-            public override void PostInitialise(InfiniteTowerWaveController wave)
+            public override void PostInitialise(EncounterContext ctx)
             {
-                wave.combatDirector.AddSpawnListener(OnBossSpawnedServer);
-                wave.EnsureComponent<PhaseCounter>().phase = 3;
+                ctx.CombatDirector.AddSpawnListener(OnBossSpawnedServer);
+                ctx.GameObject.EnsureComponent<PhaseCounter>().phase = 3;
             }
 
             private static void OnBossSpawnedServer(GameObject spawnedEntity)
             {
-                var body = Utils.GetCharacterBody(spawnedEntity);
-
-                if (body && body.name.Contains("Brother"))
+                if (Utils.TryGetCharacterBody(spawnedEntity, out var body) && body.name.Contains("Brother"))
                 {
                     body.EnsureComponent<UpgradeMithrixBodyBehavior>();
                 }
             }
         }
 
-        public class UpgradeMithrixBodyBehavior : MonoBehaviour
+        public class UpgradeMithrixBodyBehavior : BossBodyBehavior
         {
-            public void Awake()
+            protected override void Awake()
             {
-                var body = this.GetComponent<CharacterBody>();
-                body.ScaleMaxHealth(this, 8f / 7);
-                body.inventory.GiveItemPermanent(RoR2Content.Items.SprintBonus, 2);
-                body.inventory.GiveItemPermanent(RoR2Content.Items.SecondarySkillMagazine, 2);
-                body.inventory.GiveItemPermanent(RoR2Content.Items.BoostAttackSpeed, 40);
+                base.Awake();
+                
+                this.Body.ScaleMaxHealth(this, 8f / 7);
+                this.Body.inventory.GiveItemPermanent(RoR2Content.Items.SprintBonus, 2);
+                this.Body.inventory.GiveItemPermanent(RoR2Content.Items.SecondarySkillMagazine, 2);
             }
         }
     }

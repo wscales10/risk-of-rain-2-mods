@@ -1,0 +1,9 @@
+﻿{
+  "strings": {
+	"HEAT_WITH_COLON": "Heat:",
+    "STATNAME_HEAT": "Heat",
+	"STATNAME_HEATEASY": "Heat",
+	"STATNAME_HEATNORMAL": "Heat",
+	"STATNAME_HEATHARD": "Heat",
+  },
+}

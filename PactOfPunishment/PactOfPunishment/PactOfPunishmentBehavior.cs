@@ -1,5 +1,6 @@
 ﻿using PactOfPunishment.Conditions;
 using RoR2;
+using RoR2.Stats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,10 +26,51 @@ namespace PactOfPunishment
             }
         }
 
+        public void OnRunVictory()
+        {
+            var statValue = this.activeConditions.Sum(x => x.TotalHeat);
+
+            foreach (PlayerStatsComponent instance in PlayerStatsComponent.instancesList)
+            {
+                if (!instance.playerCharacterMasterController.isConnected)
+                {
+                    continue;
+                }
+
+                PerBodyStatDef? perBodyStatDef = null;
+                switch (Run.instance.selectedDifficulty)
+                {
+                    case DifficultyIndex.Easy:
+                        perBodyStatDef = Content.StatDefs.PerBodyHeatEasy;
+                        break;
+                    case DifficultyIndex.Normal:
+                        perBodyStatDef = Content.StatDefs.PerBodyHeatNormal;
+                        break;
+                    case DifficultyIndex.Hard:
+                        perBodyStatDef = Content.StatDefs.PerBodyHeatHard;
+                        break;
+                }
+                StatSheet currentStats = instance.currentStats;
+                currentStats.PushStatValue(Content.StatDefs.Heat, statValue);
+                if (perBodyStatDef != null)
+                {
+                    CharacterBody body = instance.characterMaster.GetBody();
+
+                    if (body)
+                    {
+                        string bodyName = BodyCatalog.GetBodyName(body.bodyIndex);
+                        currentStats.PushStatValue(perBodyStatDef.FindStatDef(bodyName ?? ""), statValue);
+                    }
+                }
+            }
+        }
+
         public int GetRank(IConditionDef conditionDef)
         {
             return this.rank.Get(conditionDef.GetType());
         }
+
+        public int TotalHeat => this.activeConditions.Sum(x => x.TotalHeat);
 
         private void Awake()
         {

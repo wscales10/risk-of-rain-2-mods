@@ -1,5 +1,4 @@
 ﻿using RoR2;
-using RoR2.ExpansionManagement;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -20,7 +19,7 @@ namespace PactOfPunishment.Waves.Infrastructure
 
         internal IWaveSelectionDefinition? LastSelectedWaveSelectionDefinition { get; private set; }
 
-        internal PortalSpawner GreenPortalSpawner { get; private set; }
+        internal bool WasMithrixDefeatedEarlierInRun { get; set; }
 
         public bool TryOverrideWeightedSelection(InfiniteTowerWaveCategory self)
         {
@@ -76,27 +75,6 @@ namespace PactOfPunishment.Waves.Infrastructure
 
             // Stage 3
             this.defaultMithrix = this.run.waveCategories.Single(x => x.name == "BossWaveCategory").wavePrefabs.Select(x => x.wavePrefab).Single(x => x.name == "InfiniteTowerWaveBossBrother");
-
-            this.GreenPortalSpawner = this.gameObject.AddComponent<PortalSpawner>();
-            Utils.OnLoad<InteractableSpawnCard>("RoR2/DLC2/iscColossusPortal.asset", isc =>
-            {
-                this.GreenPortalSpawner.portalSpawnCard = isc;
-                this.GreenPortalSpawner.spawnChance = 1;
-
-                // TODO: set spawnReferenceLocation?
-                this.GreenPortalSpawner.minSpawnDistance = 10;
-                this.GreenPortalSpawner.maxSpawnDistance = 30;
-
-                //this.greenPortalSpawner.spawnPreviewMessageToken = "PORTAL_STORM_WILL_OPEN";
-                this.GreenPortalSpawner.spawnMessageToken = "PORTAL_STORM_OPEN";
-
-                //this.greenPortalSpawner.modelChildLocator
-                //this.greenPortalSpawner.previewChildName
-                this.GreenPortalSpawner.requiredExpansion = ExpansionCatalog.expansionDefs.Single(x => x.nameToken == "DLC2_NAME");
-                this.GreenPortalSpawner.minStagesCleared = 3;
-
-                //this.greenPortalSpawner.bannedEventFlag
-            });
         }
     }
 }

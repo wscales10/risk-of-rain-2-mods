@@ -3,13 +3,17 @@ using EntityStates.BrotherMonster;
 using HG;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
+using PactOfPunishment.Waves.Halcyonites;
+using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
+using System;
+using System.Linq;
 using UnityEngine;
 using static RoR2.InfiniteTowerExplicitSpawnWaveController;
 
 namespace PactOfPunishment.Waves.Stage3
 {
-    public class MithrixWithHalcyonite : MainBossWaveDefinition<InfiniteTowerExplicitSpawnWaveController>
+    public partial class MithrixWithHalcyonite : MainBossWaveDefinition<InfiniteTowerExplicitSpawnWaveController>
     {
         private readonly AssetPromise<CharacterSpawnCard> mithrixSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/cscBrotherIT.asset");
 
@@ -17,13 +21,14 @@ namespace PactOfPunishment.Waves.Stage3
 
         protected override string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBossBrother.prefab";
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeEncounterStrategy GetUpgradeStrategy()
         {
             return ScriptableObject.CreateInstance<UpgradeMithrixAndHalcyonite>();
         }
 
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
         {
+            base.Setup(dir, squad, wavePrefab);
             wavePrefab.spawnList = new SpawnInfo[]
             {
                 new SpawnInfo
@@ -34,60 +39,77 @@ namespace PactOfPunishment.Waves.Stage3
                 new SpawnInfo
                 {
                     count = 1,
-                    eliteDef = DLC3Content.Elites.Collective,
                     spawnCard = this.halcyoniteSpawnCard.Value,
                 }
             };
             wavePrefab.EnsureComponent<MithrixWithHalcyoniteBehavior>();
         }
 
-        public class UpgradeMithrixAndHalcyonite : UpgradeWaveStrategy
+        public class MithrixWithHalcyoniteBehavior : HalcyoniteBossFightBehavior
+        {
+            public override void Awake()
+            {
+                base.Awake();
+                this.EnsureComponent<FistsController>();
+            }
+
+            protected override void OnBossSpawnedServer(CharacterBody body)
+            {
+                if (body.name.Contains("Brother"))
+                {
+                    body.ScaleDifficultyAsBoss(2.5f, 30, true, false);
+                    body.EnsureComponent<Mithrix.MithrixBodyBehavior>();
+
+                    // TODO: Mithrix is almost invisible in this fight - fix that
+                    if (body.TryGetComponent<CharacterDeathBehavior>(out var component))
+                    {
+                        component.deathState = new SerializableEntityStateType(typeof(TrueDeathState)); // TODO: ensure his corpse is not sprinting
+                    }
+
+                    body.master.onBodyStart += OnMithrixBodyStart;
+                }
+                else if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
+                {
+                    body.ScaleDifficultyAsBoss(2, 15, true, false);
+                    this.SetupBossAi(body);
+                    body.EnsureComponent<FinalHalcyoniteBodyBehavior>().DesiredState = FinalHalcyoniteBodyBehavior.State.Collective;
+                }
+            }
+
+            private static void OnMithrixBodyStart(CharacterBody body)
+            {
+                if (Run.instance.TryGetComponent<SimulacrumWavesBehavior>(out var behavior) && behavior.WasMithrixDefeatedEarlierInRun)
+                {
+                    HealthComponent healthComponent = body.healthComponent;
+
+                    if (healthComponent)
+                    {
+                        healthComponent.Networkhealth = healthComponent.fullHealth * 0.8f;
+                    }
+                }
+            }
+        }
+
+        public class UpgradeMithrixAndHalcyonite : UpgradeEncounterStrategy
         {
             public override WaveUpgradeFilter WaveUpgradeFilter => WaveUpgradeFilter.MainBoss;
 
-            public override void PostInitialise(InfiniteTowerWaveController wave)
+            public override void PostInitialise(EncounterContext ctx)
             {
-                wave.combatDirector.AddSpawnListener(OnBossSpawnedServer);
-                wave.EnsureComponent<PhaseCounter>().phase = 3;
+                ctx.CombatDirector.AddSpawnListener(this.OnBossSpawnedServer);
+                ctx.GameObject.EnsureComponent<PhaseCounter>().phase = 3;
             }
 
-            private static void OnBossSpawnedServer(GameObject spawnedEntity)
+            private void OnBossSpawnedServer(GameObject spawnedEntity)
             {
-                var body = Utils.GetCharacterBody(spawnedEntity);
-
-                if (body && body.name.Contains("Brother"))
+                if (Utils.TryGetCharacterBody(spawnedEntity, out var body) && body.name.Contains("Brother"))
                 {
                     body.EnsureComponent<Mithrix.UpgradeMithrixBodyBehavior>();
                 }
                 else
                 {
-                    body.EnsureComponent<UpgradeHalcyoniteBodyBehavior>();
-                }
-            }
-        }
-
-        public class UpgradeHalcyoniteBodyBehavior : MonoBehaviour
-        {
-            private void Awake()
-            {
-                // TODO
-            }
-        }
-
-        public class MithrixWithHalcyoniteBehavior : BossFightBehavior
-        {
-            protected override void OnBossSpawnedServer(CharacterBody body)
-            {
-                if (body.name.Contains("Brother"))
-                {
-                    if (body.TryGetComponent<CharacterDeathBehavior>(out var component))
-                    {
-                        component.deathState = new SerializableEntityStateType(typeof(TrueDeathState));
-                    }
-                }
-                else if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
-                {
-                    body.EnsureComponent<HalcyoniteBodyBehavior>();
+                    body.EnsureComponent<FinalHalcyoniteBodyBehavior>().DesiredState = FinalHalcyoniteBodyBehavior.State.Gilded;
+                    body.ScaleMaxHealth(this, 4f / 3);
                 }
             }
         }

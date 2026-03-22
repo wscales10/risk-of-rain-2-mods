@@ -64,18 +64,20 @@ namespace PactOfPunishment
             while (c.TryGotoNext(MoveType.AfterLabel, x => x.MatchLdfld<CombatDirector>(nameof(CombatDirector.maxSquadCount))))
             {
                 c.Remove();
-                c.EmitDelegate<Func<CombatDirector, uint>>((self) =>
-                {
-                    var maxSquadCount = self.maxSquadCount;
-
-                    if (self.teamIndex != TeamIndex.Player)
-                    {
-                        OnScaleMaxSquadCount?.Invoke(self, ref maxSquadCount);
-                    }
-
-                    return maxSquadCount;
-                });
+                c.EmitDelegate<Func<CombatDirector, uint>>(GetMaxSquadCount);
             }
+        }
+
+        public static uint GetMaxSquadCount(CombatDirector combatDirector)
+        {
+            var maxSquadCount = combatDirector.maxSquadCount;
+
+            if (combatDirector.teamIndex != TeamIndex.Player)
+            {
+                OnScaleMaxSquadCount?.Invoke(combatDirector, ref maxSquadCount);
+            }
+
+            return maxSquadCount;
         }
     }
 }

@@ -26,6 +26,25 @@ namespace PactOfPunishment.Waves.Common
 
         protected virtual string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBase.prefab";
 
+        protected void TryAddUpgradeBehavior(GameObject gameObject)
+        {
+            UpgradeEncounterStrategy? upgradeStrategy = null;
+
+            try
+            {
+                upgradeStrategy = this.GetUpgradeStrategy();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+
+            if (upgradeStrategy)
+            {
+                gameObject.EnsureComponent<UpgradeEncounterBehavior>().upgradeStrategy = upgradeStrategy;
+            }
+        }
+
         public GameObject? MakeWavePrefab(Run run)
         {
             try
@@ -39,23 +58,7 @@ namespace PactOfPunishment.Waves.Common
                 wavePrefab.rewardDisplayTier = this.RewardDisplayTier;
 
                 this.Setup(dir, squad, wavePrefab);
-
-                UpgradeWaveStrategy? upgradeStrategy = null;
-
-                try
-                {
-                    upgradeStrategy = this.GetUpgradeStrategy();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogException(ex);
-                }
-
-                if (upgradeStrategy)
-                {
-                    prefab.EnsureComponent<UpgradeWaveBehavior>().upgradeStrategy = upgradeStrategy;
-                }
-
+                this.TryAddUpgradeBehavior(prefab);
                 return prefab;
             }
             catch (Exception ex)
@@ -84,6 +87,6 @@ namespace PactOfPunishment.Waves.Common
             wavePrefab.onAllEnemiesDefeatedSoundString = defaultBossWave.onAllEnemiesDefeatedSoundString;
         }
 
-        protected abstract UpgradeWaveStrategy? GetUpgradeStrategy();
+        protected abstract UpgradeEncounterStrategy? GetUpgradeStrategy();
     }
 }

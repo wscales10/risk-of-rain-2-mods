@@ -1,5 +1,6 @@
 ﻿using HG;
 using PactOfPunishment.Conditions;
+using PactOfPunishment.Waves.Common;
 using RoR2;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,11 +8,15 @@ using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage2.Summoner
 {
-    public class SummonerBossFightBehavior : MonoBehaviour
+    public class SummonerBossFightBehavior : MonoBehaviour // TODO: should inherit from BossFightBehavior?
     {
         public const string StateMachineCustomName = "SummonerBossBody";
 
         public SummonerReferences References;
+
+        private readonly AssetPromise<CharacterSpawnCard> beetleGuardSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/BeetleGuard/cscBeetleGuard.asset");
+
+        private readonly AssetPromise<CharacterSpawnCard> solusProspectorSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/DLC3/WorkerUnit/cscWorkerUnit.asset");
 
         private CombatDirector? combatDirector;
 
@@ -29,17 +34,74 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
             var mainBossMonsterDirectorCard = selector.GetChoice(this.References.MainBossMonsterIndex).value;
             Debug.Log($"Selected summoner boss: '{mainBossMonsterDirectorCard?.spawnCard.prefab.name}'");
-            this.combatDirector.OverrideNextBossCard(mainBossMonsterDirectorCard, false); // TODO: can fail! Try on commencement?
+            this.combatDirector.OverrideNextBossCard(mainBossMonsterDirectorCard, false); // TODO: can fail! Try on commencement? also note that this implicitly calls ScaleDifficultyAsBoss.
+            this.gameObject.EliminateCombatSquadWhenLastMainMemberDies(this.combatDirector.combatSquad, x => EntityStateMachine.FindByCustomName(x.GetBodyObject(), StateMachineCustomName));
         }
 
         public void OnEnable()
         {
-            SpawnCard.onSpawnedServerGlobal += this.SpawnCard_onSpawnedServerGlobal;
+            this.combatDirector.EnsureComponent<InfiniteTowerWaveSpawnListener>().OnSpawnedServer += this.SummonerBossFightBehavior_OnSpawnedServer;
         }
 
         public void OnDisable()
         {
-            SpawnCard.onSpawnedServerGlobal -= this.SpawnCard_onSpawnedServerGlobal;
+            this.combatDirector.GetComponent<InfiniteTowerWaveSpawnListener>().OnSpawnedServer -= this.SummonerBossFightBehavior_OnSpawnedServer;
+        }
+
+        internal void SpawnGhosts(CharacterBody bossBody, SummonerBossPowerLevel powerLevel)
+        {
+            bossBody.EnsureComponent<UndeployMinionsOnDeathBehavior>();
+            DirectorCore.GetMonsterSpawnDistance(DirectorCore.MonsterSpawnDistance.Close, out var minimumDistance, out var maximumDistance);
+            bossBody.master.onBodyDeath.AddListener(() =>
+            {
+                var ghostBodies = bossBody.GetComponent<SummonerBossBodyBehavior>().ghostBodies;
+
+                for (int i = ghostBodies.Count - 1; i >= 0; i--)
+                {
+                    var ghostBody = ghostBodies[i];
+
+                    if (ghostBody)
+                    {
+                        ghostBody.master?.TrueKill(this.gameObject, this.gameObject, DamageType.VoidDeath);
+                    }
+
+                    ghostBodies.RemoveAt(i);
+                }
+            });
+
+            if (powerLevel != SummonerBossPowerLevel.Support)
+            {
+                SpawnGhost(this.beetleGuardSpawnCard.Value, SummonerBossType.SlammerGhost);
+            }
+
+            SpawnGhost(this.solusProspectorSpawnCard.Value, SummonerBossType.LungerGhost);
+
+            void SpawnGhost(CharacterSpawnCard spawnCard, SummonerBossType bossType)
+            {
+                var spawnedInstance = DirectorCore.instance.TrySpawnObject(new DirectorSpawnRequest(spawnCard, new DirectorPlacementRule
+                {
+                    minDistance = minimumDistance,
+                    maxDistance = maximumDistance,
+                    placementMode = DirectorPlacementRule.PlacementMode.Approximate,
+                    preventOverhead = false,
+                    rotation = Quaternion.identity,
+                    spawnOnTarget = bossBody.transform
+                }, this.combatDirector!.rng)
+                {
+                    teamIndexOverride = bossBody.teamComponent.teamIndex, // Do not set summonerBodyObject as we don't want the ghosts in the combat squad
+                    ignoreTeamMemberLimit = true,
+                });
+
+                if (Utils.TryGetCharacterBody(spawnedInstance, out var spawnedBody))
+                {
+                    (spawnedBody.inventory ??= spawnedBody.master.inventory).GiveItemPermanent(RoR2Content.Items.Ghost);
+                    var ghostBossBodyBehavior = spawnedBody.EnsureComponent<SummonerBossBodyBehavior>();
+                    ghostBossBodyBehavior.PowerLevel = powerLevel;
+                    ghostBossBodyBehavior.BossType = bossType;
+                    ghostBossBodyBehavior.BodyCost = spawnCard.directorCreditCost;
+                    bossBody.GetComponent<SummonerBossBodyBehavior>().ghostBodies.Add(spawnedBody);
+                }
+            }
         }
 
         private static bool CanBeSupportMonster(WeightedSelection<DirectorCard>.ChoiceInfo choice)
@@ -48,16 +110,9 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             return choice.value?.cost > 14 && choice.value?.spawnCard is CharacterSpawnCard characterSpawnCard && characterSpawnCard.prefab.GetComponent<CharacterMaster>()?.bodyPrefab?.GetComponent<CharacterBody>()?.isChampion == false;
         }
 
-        private void SpawnCard_onSpawnedServerGlobal(SpawnCard.SpawnResult result)
+        private void SummonerBossFightBehavior_OnSpawnedServer(SpawnCard.SpawnResult result)
         {
-            if (!result.success || !result.spawnedInstance || !result.spawnedInstance.TryGetComponent<MonsterTracker>(out var tracker) || tracker.combatDirector != this.combatDirector)
-            {
-                return;
-            }
-
-            var body = Utils.GetCharacterBody(result.spawnedInstance);
-
-            if (!body)
+            if (!Utils.TryGetCharacterBody(result.spawnedInstance, out var body))
             {
                 return;
             }
@@ -87,13 +142,15 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             body.ScaleMaxHealth(summonerBehavior, healthMultiplier);
             Utils.MakeBodySemiImmortal(body);
             body.DisableStunsEtc();
+            body.EnsureComponent<SummonerBossBodyBehavior>();
             EntityStateMachine bossBodyStateMachine = body.gameObject.AddComponent<EntityStateMachine>();
             bossBodyStateMachine.customName = StateMachineCustomName;
             body.healthComponent.ForwardBossDamageTo(bossBodyStateMachine);
+            this.SpawnGhosts(body, SummonerBossPowerLevel.Phase1);
             bossBodyStateMachine.SetState(new SummonerStates.Phase1 { References = this.References });
         }
 
-        private DirectorCard[] GetSupportMonsterDirectorCards(int count)
+        private DirectorCard[] GetSupportMonsterDirectorCards(int count) // TODO: if the main boss is a lunar chimera wisp, for some reason this can return wisp and golem rather than exploder and golem.
         {
             var selector = this.combatDirector!.finalMonsterCardsSelection;
             var list = new List<DirectorCard>();

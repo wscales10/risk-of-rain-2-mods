@@ -24,7 +24,7 @@ namespace PactOfPunishment.Conditions
 
             int rank = this.GetRank(self);
 
-            if (rank > 0) // TODO: somehow don't apply effects during boss waves?
+            if (rank > 0)
             {
                 this.Logger.LogDebug($"Adding {nameof(ExtraEliteBuffsBehavior)} to combat director...");
                 var behavior = self.EnsureComponent<ExtraEliteBuffsBehavior>();
@@ -44,7 +44,7 @@ namespace PactOfPunishment.Conditions
             public void ReRollExtraEliteDefs()
             {
                 this.extraEliteDefs.Clear();
-                var list = Utils.GetEliteBuffDefs().ToList();
+                var list = this.combatDirector.GetEliteBuffDefs().ToList();
                 Util.ShuffleList(list, this.combatDirector.rng);
                 this.extraEliteDefs.AddRange(list);
             }
@@ -52,24 +52,22 @@ namespace PactOfPunishment.Conditions
             public void Awake()
             {
                 this.combatDirector = this.GetComponent<CombatDirector>();
-                MonsterTracker.TrackCombatDirector(this.combatDirector);
+                MonsterTracker.TrackCombatDirector(this.combatDirector); // TODO: remove?
             }
 
             public void OnEnable()
             {
-                SpawnCard.onSpawnedServerGlobal += this.SpawnCard_onSpawnedServerGlobal; // TODO: check that this is late enough. Also, what about enemies spawned without the combat director?
+                this.combatDirector.EnsureComponent<InfiniteTowerWaveSpawnListener>().OnSpawnedServer += this.ExtraEliteBuffsBehavior_OnSpawnedServer; // TODO: check that this is late enough. Also, what about enemies spawned without the combat director?
             }
 
-            private void SpawnCard_onSpawnedServerGlobal(SpawnCard.SpawnResult result)
+            public void OnDisable()
             {
-                if(!MonsterTracker.Match(this.combatDirector, result))
-                {
-                    return;
-                }
+                this.combatDirector.GetComponent<InfiniteTowerWaveSpawnListener>().OnSpawnedServer -= this.ExtraEliteBuffsBehavior_OnSpawnedServer;
+            }
 
-                var characterBody = Utils.GetCharacterBody(result.spawnedInstance);
-
-                if (!characterBody || characterBody!.isBoss)
+            private void ExtraEliteBuffsBehavior_OnSpawnedServer(SpawnCard.SpawnResult result)
+            {
+                if (!Utils.TryGetCharacterBody(result.spawnedInstance, out var characterBody) || characterBody.isBoss)
                 {
                     return;
                 }
@@ -98,11 +96,6 @@ namespace PactOfPunishment.Conditions
                     characterBody.AddBuff(eliteBuff);
                     addedBuffs++;
                 }
-            }
-
-            public void OnDisable()
-            {
-                SpawnCard.onSpawnedServerGlobal -= this.SpawnCard_onSpawnedServerGlobal;
             }
         }
     }

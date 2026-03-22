@@ -3,25 +3,32 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace PactOfPunishment
 {
-    public class AssetPromise<T>
+    public interface IAssetPromise<out T>
     {
+        T Value { get; }
+
+        bool TryUse(Action<T> action);
+    }
+
+    public class AssetPromise<T> : IAssetPromise<T>
+    {
+        private readonly AsyncOperationHandle<T> asyncOperationHandle;
+
         public AssetPromise(AsyncOperationHandle<T> asyncOperationHandle)
         {
-            this.AsyncOperationHandle = asyncOperationHandle;
+            this.asyncOperationHandle = asyncOperationHandle;
         }
 
-        public AsyncOperationHandle<T> AsyncOperationHandle { get; }
-
-        public T Value => this.AsyncOperationHandle.WaitForCompletion();
+        public T Value => this.asyncOperationHandle.WaitForCompletion();
 
         public bool TryUse(Action<T> action)
         {
-            if (this.AsyncOperationHandle.Status != AsyncOperationStatus.Succeeded)
+            if (this.asyncOperationHandle.Status != AsyncOperationStatus.Succeeded)
             {
                 return false;
             }
 
-            action(this.AsyncOperationHandle.Result);
+            action(this.asyncOperationHandle.Result);
             return true;
         }
     }

@@ -13,6 +13,6 @@ namespace PactOfPunishment.Waves.Infrastructure
     {
         void ModifyWeightedSelection(WeightedSelection<GameObject?> weightedSelection, SimulacrumWaveDefinitions.Instance cache);
 
-        UpgradeWaveStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave);
+        UpgradeEncounterStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave);
     }
 }

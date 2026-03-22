@@ -10,7 +10,7 @@ namespace PactOfPunishment.Waves.Summoner
     {
         private static float mainBossCreditsFraction = 0.27f;
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeEncounterStrategy GetUpgradeStrategy()
         {
             return ScriptableObject.CreateInstance<SummonerUpgradeStrategy>();
         }
@@ -20,6 +20,7 @@ namespace PactOfPunishment.Waves.Summoner
             base.Setup(dir, squad, wavePrefab);
 
             dir.maxSquadCount = 1;
+            dir.increaseSpawnDistanceOnFailure = true;
             wavePrefab.baseCredits = defaultBossWavePrefab.Value.GetComponent<InfiniteTowerBossWaveController>().baseCredits * mainBossCreditsFraction;
             wavePrefab.immediateCreditsFraction = 1;
             wavePrefab.guaranteeInitialChampion = true;

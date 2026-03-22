@@ -18,7 +18,7 @@ namespace PactOfPunishment.Waves.Infrastructure
                 { 25, new Wave25SelectionDefinition(cache) },
                 { 30, new Wave30SelectionDefinition(cache) },
                 { 35, new Wave35SelectionDefinition() },
-              //{ 40, new Wave40SelectionDefinition(cache) },
+                { 40, new Wave40SelectionDefinition(cache) },
             };
         }
 

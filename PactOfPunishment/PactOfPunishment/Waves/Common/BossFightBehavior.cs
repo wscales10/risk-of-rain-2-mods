@@ -1,16 +1,52 @@
-﻿using RoR2;
+﻿using HG;
+using PactOfPunishment.Conditions;
+using RoR2;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves.Common
 {
+    [RequireComponent(typeof(CombatDirector))]
     public abstract class BossFightBehavior : MonoBehaviour
     {
+        private EncounterContext? encounterContext;
+
         protected CombatDirector CombatDirector { get; private set; }
+
+        protected EncounterContext EncounterContext
+        {
+            get
+            {
+                if (this.encounterContext is null)
+                {
+                    var encounterContextHolder = this.GetComponent<EncounterContextHolder>();
+
+                    if (!encounterContextHolder)
+                    {
+                        Debug.LogError($"{this} does not have an EncounterContextHolder");
+                    }
+
+                    this.encounterContext = encounterContextHolder.encounterContext;
+                }
+
+                return this.encounterContext;
+            }
+        }
 
         public virtual void Awake()
         {
             (this.CombatDirector = this.GetComponent<CombatDirector>()).AddSpawnListener(this.OnBossSpawnedServer);
             this.CombatDirector.combatSquad.onMemberDiscovered += this.OnCombatSquadMemberDiscovered;
+            MonsterTracker.TrackCombatDirector(this.CombatDirector);
+        }
+
+        public virtual void OnEnable()
+        {
+            this.CombatDirector.EnsureComponent<InfiniteTowerWaveSpawnListener>().OnSpawnedServer += this.OnBossSpawnedServer;
+        }
+
+        public virtual void OnDisable()
+        {
+            this.CombatDirector.EnsureComponent<InfiniteTowerWaveSpawnListener>().OnSpawnedServer -= this.OnBossSpawnedServer;
         }
 
         protected virtual void OnCombatSquadMemberDiscovered(CharacterMaster master)
@@ -27,11 +63,13 @@ namespace PactOfPunishment.Waves.Common
         {
         }
 
+        protected virtual void OnBossSpawnedServer(SpawnCard.SpawnResult result)
+        {
+        }
+
         protected virtual void OnBossSpawnedServer(GameObject spawnedInstance)
         {
-            var body = Utils.GetCharacterBody(spawnedInstance);
-
-            if (body)
+            if (Utils.TryGetCharacterBody(spawnedInstance, out var body))
             {
                 this.OnBossSpawnedServer(body!);
             }
@@ -41,6 +79,6 @@ namespace PactOfPunishment.Waves.Common
             }
         }
 
-        protected abstract void OnBossSpawnedServer(CharacterBody body); // TODO could be abstract, but idk
+        protected abstract void OnBossSpawnedServer(CharacterBody body);
     }
 }

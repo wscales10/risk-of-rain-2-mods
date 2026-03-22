@@ -14,7 +14,7 @@ namespace PactOfPunishment.Waves.Stage2
 
         protected override string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBoss.prefab";
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy()
+        protected override UpgradeEncounterStrategy GetUpgradeStrategy()
         {
             return ScriptableObject.CreateInstance<AllMalachiteWaveStrategy>();
         }
@@ -23,27 +23,20 @@ namespace PactOfPunishment.Waves.Stage2
         {
             base.Setup(dir, squad, wavePrefab);
 
-            var monsterCards = ScriptableObject.CreateInstance<DirectorCardCategorySelection>();
-            monsterCards.AddCategory("Projectilers", 1);
-
-            monsterCards.AddCard(0, new DirectorCard
-            {
-                selectionWeight = 1,
-                spawnCard = this.brassContraptionSpawnCard.Value,
-            });
-
-            dir.monsterCards = monsterCards;
+            dir.monsterCards = Utils.MakeDirectorCardCategorySelection(
+                ("Projectilers", new[] { this.brassContraptionSpawnCard })
+            );
 
             wavePrefab.wavePeriodSeconds = 2f; // TODO: test with drizzle, rainstorm and monsoon
         }
 
-        public class AllMalachiteWaveStrategy : UpgradeWaveStrategy
+        public class AllMalachiteWaveStrategy : UpgradeEncounterStrategy
         {
             public override WaveUpgradeFilter WaveUpgradeFilter => WaveUpgradeFilter.MiniBoss;
 
-            public override void PostInitialise(InfiniteTowerWaveController wave)
+            public override void PostInitialise(EncounterContext ctx)
             {
-                wave.combatDirector.EnsureComponent<OverrideEliteTiersBehavior>().eliteTiers = new CombatDirector.EliteTierDef[] { Content.EliteTiers.NerfedPoisonTier };
+                ctx.CombatDirector.EnsureComponent<OverrideEliteTiersBehavior>().eliteTiers = new CombatDirector.EliteTierDef[] { Content.EliteTiers.NerfedPoisonTier };
             }
 
             internal static CombatDirector.EliteTierDef MakeEliteTierDef()

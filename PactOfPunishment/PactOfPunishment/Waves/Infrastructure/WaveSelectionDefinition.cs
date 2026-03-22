@@ -17,9 +17,9 @@ namespace PactOfPunishment.Waves.Infrastructure
 
         protected virtual float WeightOfOriginalSelection => 1;
 
-        public virtual UpgradeWaveStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
+        public virtual UpgradeEncounterStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
         {
-            if (wave.TryGetComponent<UpgradeWaveBehavior>(out var behavior))
+            if (wave.TryGetComponent<UpgradeEncounterBehavior>(out var behavior))
             {
                 return behavior.upgradeStrategy;
             }
@@ -44,15 +44,15 @@ namespace PactOfPunishment.Waves.Infrastructure
     {
         private readonly ISimulacrumWaveDefinition customWaveDefinition;
 
-        private readonly Func<InfiniteTowerWaveController, UpgradeWaveStrategy?> getUpgradeWaveStrategy;
+        private readonly Func<InfiniteTowerWaveController, UpgradeEncounterStrategy?> getUpgradeWaveStrategy;
 
-        public SingleWaveSelectionDefinition(ISimulacrumWaveDefinition customWaveDefinition, Func<InfiniteTowerWaveController, UpgradeWaveStrategy?> getUpgradeWaveStrategy)
+        public SingleWaveSelectionDefinition(ISimulacrumWaveDefinition customWaveDefinition, Func<InfiniteTowerWaveController, UpgradeEncounterStrategy?> getUpgradeWaveStrategy)
         {
             this.customWaveDefinition = customWaveDefinition;
             this.getUpgradeWaveStrategy = getUpgradeWaveStrategy;
         }
 
-        public UpgradeWaveStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
+        public UpgradeEncounterStrategy? GetUpgradeWaveStrategy(InfiniteTowerWaveController wave)
         {
             return this.getUpgradeWaveStrategy(wave);
         }

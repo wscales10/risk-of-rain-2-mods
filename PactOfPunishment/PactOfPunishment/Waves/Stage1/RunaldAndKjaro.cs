@@ -49,7 +49,7 @@ namespace PactOfPunishment.Waves.Stage1
             return dropTable; // TODO: consider maintaining rarity distribution
         }
 
-        protected override UpgradeWaveStrategy GetUpgradeStrategy() => ScriptableObject.CreateInstance<ReplaceWithFourEliteElders>();
+        protected override UpgradeEncounterStrategy GetUpgradeStrategy() => ScriptableObject.CreateInstance<ReplaceWithFourEliteElders>();
 
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
         {
@@ -92,29 +92,29 @@ namespace PactOfPunishment.Waves.Stage1
             }
         }
 
-        public class ReplaceWithFourEliteElders : UpgradeWaveStrategy
+        public class ReplaceWithFourEliteElders : UpgradeEncounterStrategy
         {
-            private readonly AssetPromise<CharacterSpawnCard> elderLemurianSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/LemurianBruiser/cscLemurianBruiser.asset");
+            private readonly AssetPromise<CharacterSpawnCard> elderLemurianSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/LemurianBruiser/cscLemurianBruiser.asset"); // TODO: is this initialised early enough? same for other boss fight behaviors and upgrade strategies
 
             public override WaveUpgradeFilter WaveUpgradeFilter => WaveUpgradeFilter.MiniBoss;
 
-            public override void PostInitialise(InfiniteTowerWaveController wave)
+            public override void PostInitialise(EncounterContext ctx)
             {
-                ((InfiniteTowerExplicitSpawnWaveController)wave).spawnList = Enumerable.Range(0, 4).Select(x => new SpawnInfo
+                ((InfiniteTowerExplicitSpawnWaveController)ctx.Controller).spawnList = Enumerable.Range(0, 4).Select(x => new SpawnInfo
                 {
                     count = 1,
                     spawnCard = this.elderLemurianSpawnCard.Value,
                 }).ToArray();
 
-                var eliteDefs = Utils.GetEliteDefs(this.elderLemurianSpawnCard.Value).Select(x => x.eliteEquipmentDef).Distinct().ToArray();
-                Util.ShuffleArray(eliteDefs, wave.rng);
+                var eliteDefs = ctx.CombatDirector.GetEliteDefs(this.elderLemurianSpawnCard.Value).Select(x => x.eliteEquipmentDef).Distinct().ToArray();
+                Util.ShuffleArray(eliteDefs, ctx.CombatDirector.rng);
 
                 foreach (var eliteDef in eliteDefs)
                 {
                     Debug.Log($"Possible elite type for Elder Lemurian boss: '{eliteDef.name}'");
                 }
 
-                wave.GetComponent<ElderLemuriansBehavior>().eliteEquipments = eliteDefs.Take(4).ToArray();
+                ctx.GameObject.GetComponent<ElderLemuriansBehavior>().eliteEquipments = eliteDefs.Take(4).ToArray();
             }
         }
     }

@@ -2,10 +2,14 @@
 using EntityStates.InfiniteTowerSafeWard;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using PactOfPunishment.MonsterSpawnDistance;
 using PactOfPunishment.Waves.Stage1;
-using PactOfPunishment.Waves.Stage1.Halcyonites;
+using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1;
+using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2;
+using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3;
 using PactOfPunishment.Waves.Stage2;
 using PactOfPunishment.Waves.Stage3;
+using PactOfPunishment.Waves.Stage4;
 using RoR2;
 using RoR2.Projectile;
 using RoR2.WwiseUtils;
@@ -40,8 +44,18 @@ namespace PactOfPunishment.Waves.Infrastructure
             IL.RoR2.MusicController.PickCurrentTrack += Utils.HookIL(MusicController_PickCurrentTrack);
             On.RoR2.MusicController.UpdateTeleporterParameters += this.MusicController_UpdateTeleporterParameters;
 
+            On.EntityStates.Scorchling.ScorchlingBreach.OnEnter += this.ScorchlingBreach_OnEnter;
+
             Content.Elites.NerfedPoison = Projectilers.AllMalachiteWaveStrategy.MakeEliteDef();
             Content.EliteTiers.NerfedPoisonTier = Projectilers.AllMalachiteWaveStrategy.MakeEliteTierDef();
+            Content.MonsterSpawnDistances.WithinZone = MonsterSpawnDistanceApi.RegisterMonsterSpawnDistance(() => (8, 55)); // TODO: add ModdedMonsterSpawnDistance class and get distance based on (maximum) zone radius?
+
+            Summoner2BossFightBehavior.eggSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Junk/Incubator/cscParentPod.asset"); // TODO: move to its own module?
+            Summoner2BossFightBehavior.parentSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/Parent/cscParent.asset"); // TODO: hook global spawn card event instead and get spawn card from spawn request
+
+            Utils.OnLoad<GameObject>("RoR2/Base/Titan/TitanGoldPreFistProjectile.prefab", x => FistsController.zoneProjectilePrefab = x);
+
+            IL.EntityStates.DefectiveUnit.DenialProjectile.FireProjectile += Utils.HookIL(DenialProjectile_FireProjectile);
 
             // Stage 1
             this.Cache.Add<RunaldAndKjaro>();
@@ -49,6 +63,8 @@ namespace PactOfPunishment.Waves.Infrastructure
             this.Cache.Add<ImpOverlord>();
 
             this.Cache.Add<Halcyonite1>();
+            this.Cache.Add<Halcyonite2>();
+            this.Cache.Add<Halcyonite3>();
 
             // Stage 2
             this.Cache.Add<WormAndDistributor>();
@@ -61,6 +77,31 @@ namespace PactOfPunishment.Waves.Infrastructure
             this.Cache.Add<Summoner2>();
 
             this.Cache.Add<MithrixWithHalcyonite>();
+
+            // Stage 4
+            this.Cache.Add<Aurelionite>();
+            this.Cache.Add<BlazingElderLemurian>();
+            this.Cache.Add<Gup>();
+            this.Cache.Add<Invalidator>();
+        }
+
+        private static void DenialProjectile_FireProjectile(ILCursor c)
+        {
+            c.GotoLast(x => x.MatchCallvirt<ProjectileManager>(nameof(ProjectileManager.FireProjectile)));
+            c.Emit(OpCodes.Dup);
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Action<FireProjectileInfo, DenialProjectile>>((orig, self) =>
+            {
+                if (self.characterBody?.GetComponent<Stage4.Invalidator.BodyBehavior>())
+                {
+                    for (int i = 1; i < 6; i++)
+                    {
+                        var copy = orig;
+                        copy.rotation *= Quaternion.Euler(Vector3.up * 60 * i);
+                        ProjectileManager.instance.FireProjectile(copy);
+                    }
+                }
+            });
         }
 
         private static void InfiniteTowerExplicitSpawnWaveController_OnTimerExpire(On.RoR2.InfiniteTowerExplicitSpawnWaveController.orig_OnTimerExpire orig, InfiniteTowerExplicitSpawnWaveController self)
@@ -166,6 +207,17 @@ namespace PactOfPunishment.Waves.Infrastructure
             return !run.waveController.haveAllEnemiesBeenDefeated;
         }
 
+        private void ScorchlingBreach_OnEnter(On.EntityStates.Scorchling.ScorchlingBreach.orig_OnEnter orig, EntityStates.Scorchling.ScorchlingBreach self)
+        {
+            if (self.GetComponent<WormAndDistributor.WormMiniBossInfo.WormBossBodyBehavior>())
+            {
+                self.crackToBreachTime *= 0.75f;
+                self.breachToBurrow *= 0.5f;
+            }
+
+            orig(self);
+        }
+
         private void MusicController_UpdateTeleporterParameters(On.RoR2.MusicController.orig_UpdateTeleporterParameters orig, MusicController self, TeleporterInteraction teleporter, Transform cameraTransform, CharacterBody targetBody)
         {
             orig(self, teleporter, cameraTransform, targetBody);
@@ -176,7 +228,7 @@ namespace PactOfPunishment.Waves.Infrastructure
             }
         }
 
-        private void MusicController_PickCurrentTrack(ILCursor c)
+        private static void MusicController_PickCurrentTrack(ILCursor c)
         {
             c.GotoNext(MoveType.AfterLabel,
                 x => x.MatchLdarg(0),

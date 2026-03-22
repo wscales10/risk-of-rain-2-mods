@@ -15,14 +15,14 @@ namespace PactOfPunishment.Conditions
 
         public override void Init()
         {
-            WaveUpgradesModule.OnInitializeWave += this.WaveUpgradesModule_OnInitializeWave;
+            EncounterUpgradeModule.OnInitializeEncounter += this.EncounterUpgradeModule_OnInitializeEncounter;
             MendingMiniMushrumUpgradeStrategy.miniMushrumSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/MiniMushroom/cscMiniMushroom.asset", this.Logger);
             On.RoR2.HealNearbyController.Tick += HealNearbyController_Tick;
         }
 
         private static bool IsMiniBossWave()
         {
-            return Run.instance is InfiniteTowerRun run && !run.IsStageTransitionWave() && run.waveController.isBossWave; // TODO: this may change if I replace boss waves with separate stages sometimes
+            return Run.instance is InfiniteTowerRun run && run.waveController && !run.IsStageTransitionWave() && run.waveController.isBossWave; // TODO: this may change if I replace boss waves with separate stages sometimes
         }
 
         private static void HealNearbyController_Tick(On.RoR2.HealNearbyController.orig_Tick orig, HealNearbyController self)
@@ -36,11 +36,23 @@ namespace PactOfPunishment.Conditions
             orig(self);
         }
 
-        private UpgradeWaveStrategy? WaveUpgradesModule_OnInitializeWave(InfiniteTowerWaveController wave, IWaveSelectionDefinition? waveSelectionDefinition)
+        private UpgradeEncounterStrategy? EncounterUpgradeModule_OnInitializeEncounter(EncounterContext ctx, IWaveSelectionDefinition? waveSelectionDefinition)
         {
-            if (!this.IsEnabled(wave))
+            if (!this.IsEnabled(ctx.Controller))
             {
                 return null;
+            }
+
+            if (!(ctx.Controller is InfiniteTowerWaveController wave))
+            {
+                if (ctx.GameObject.TryGetComponent<UpgradeEncounterBehavior>(out var behavior))
+                {
+                    return behavior.upgradeStrategy;
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             if (waveSelectionDefinition != null)
@@ -74,7 +86,7 @@ namespace PactOfPunishment.Conditions
             public List<HealNearbyController> healNearbyControllers = new List<HealNearbyController>();
         }
 
-        public class MendingMiniMushrumUpgradeStrategy : UpgradeWaveStrategy
+        public class MendingMiniMushrumUpgradeStrategy : UpgradeEncounterStrategy
         {
             internal static AssetPromise<CharacterSpawnCard> miniMushrumSpawnCard;
 
@@ -84,9 +96,9 @@ namespace PactOfPunishment.Conditions
 
             public override WaveUpgradeFilter WaveUpgradeFilter => WaveUpgradeFilter.MiniBoss;
 
-            public override void PostInitialise(InfiniteTowerWaveController wave)
+            public override void PostInitialise(EncounterContext ctx)
             {
-                wave.combatDirector.onSpawnedWithDirectorServer.AddListener(this.OnSpawnedWithDirectorServer);
+                ctx.CombatDirector.onSpawnedWithDirectorServer.AddListener(this.OnSpawnedWithDirectorServer);
             }
 
             private void OnSpawnedWithDirectorServer(GameObject spawnedEntity, CombatDirector combatDirector)

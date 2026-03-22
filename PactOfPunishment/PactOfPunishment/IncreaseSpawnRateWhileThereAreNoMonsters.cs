@@ -25,10 +25,12 @@ namespace PactOfPunishment
             }
         }
 
-        private static bool CombatDirector_AttemptSpawnOnTarget(On.RoR2.CombatDirector.orig_AttemptSpawnOnTarget orig, RoR2.CombatDirector self, Transform spawnTarget, RoR2.DirectorPlacementRule.PlacementMode placementMode)
+        private bool CombatDirector_AttemptSpawnOnTarget(On.RoR2.CombatDirector.orig_AttemptSpawnOnTarget orig, RoR2.CombatDirector self, Transform spawnTarget, RoR2.DirectorPlacementRule.PlacementMode placementMode)
         {
             if (orig(self, spawnTarget, placementMode))
             {
+                this.Logger.LogDebug($"Successful Combat Director spawn attempt {Run.instance.GetRunStopwatch()}s into the run.");
+                
                 if (self.TryGetComponent<SimulacrumCombatDirectorSpawnRateMultiplier>(out var behavior))
                 {
                     behavior.SpawnRateMultiplier = 1;
@@ -38,11 +40,12 @@ namespace PactOfPunishment
             }
             else
             {
+                this.Logger.LogDebug($"Failed combat Director spawn attempt {Run.instance.GetRunStopwatch()}s into the run.");
                 return false;
             }
         }
 
-        private static void CombatDirector_Simulate(ILCursor c)
+        private void CombatDirector_Simulate(ILCursor c)
         {
             c.GotoNext(MoveType.After,
                 x => x.MatchLdarg(0),
@@ -64,10 +67,13 @@ namespace PactOfPunishment
                 {
                     var multiplier = Mathf.Max(1, rerollSpawnInterval / 0.5f);
                     behavior.SpawnRateMultiplier = multiplier;
-                    return rerollSpawnInterval / multiplier;
+                    float output = rerollSpawnInterval / multiplier;
+                    this.Logger.LogDebug($"Setting combat director reroll spawn interval to {rerollSpawnInterval} / {multiplier} = {output}");
+                    return output;
                 }
                 else
                 {
+                    this.Logger.LogDebug($"Setting combat director reroll spawn interval to {rerollSpawnInterval}");
                     return rerollSpawnInterval;
                 }
             });
