@@ -34,10 +34,15 @@ namespace PactOfPunishment.Waves.Stage2
             {
                 body.ScaleDifficultyAsBoss(0.68f, 2.2f, true, false);
 
-                foreach (var skillDriver in body.master.GetSkillDrivers("Breach"))
+                foreach (var ai in body.master.AiComponents)
                 {
-                    // Extend breach distance
-                    skillDriver.maxDistance = 5;
+                    ai.xrayVision = true;
+
+                    foreach (var skillDriver in ai.GetSkillDrivers("Breach"))
+                    {
+                        // Extend breach distance
+                        skillDriver.maxDistance = 5;
+                    }
                 }
 
                 if (bossFightBehavior.disableSecondarySkills)
