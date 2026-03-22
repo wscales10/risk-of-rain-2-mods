@@ -14,7 +14,9 @@ using RoR2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using UnityEngine;
 
 [assembly: HG.Reflection.SearchableAttribute.OptIn]
 
@@ -31,35 +33,14 @@ namespace PactOfPunishment
 
         public void Awake()
         {
-            var tempModules = new Module[]
-            {
-                new HardLabor(),
-                new LastingConsequences(),
-                new ConvenienceFee(),
-                new JurySummons(),
-                new ExtremeMeasures(),
-                new CalisthenicsProgram(),
-                new BenefitsPackage(),
-                new MiddleManagement(),
-                new UnderworldCustoms(),
-                new ForcedOvertime(),
-                new HeightenedSecurity(),
-                new RoutineInspection(),
-                new DamageControl(),
-                new ApprovalProcess(),
-                new TightDeadline(),
-                new PersonalLiability(),
-                SimulacrumWavesModule.Instance,
-                new IncreaseSpawnRateWhileThereAreNoMonsters(),
-                new WaveUpgradesModule(),
-                RecalculateStats.Instance,
-                new HalcyoniteModule(),
-                EliteTiers.Instance,
-                new MoveSafeWardFaster(),
-                new DisplayFullKillerNameInRunReport(),
-                new DisableCombatDirectorWhileSquadFull(),
-                new ImproveChildMonsterAI(),
-            };
+            // It's ok to use reflection here as Awake will only be called once when the plugin is loaded.
+            var moduleTypes = this.GetType().Assembly
+                .GetTypes()
+                .Where(t =>
+                    typeof(Module).IsAssignableFrom(t) &&
+                    t.IsClass &&
+                    !t.IsAbstract);
+            var tempModules = GetModules(moduleTypes).ToList();
 
             foreach (var module in tempModules)
             {
@@ -67,6 +48,7 @@ namespace PactOfPunishment
                 {
                     module.Logger = this.Logger;
                     module.Init();
+                    this.Logger.LogInfo($"Initialized module: {module.GetType().Name}");
                 }
                 catch (Exception ex)
                 {
@@ -179,6 +161,36 @@ namespace PactOfPunishment
             }
         }
 
+        private IEnumerable<Module> GetModules(IEnumerable<Type> moduleTypes)
+        {
+            foreach (var moduleType in moduleTypes)
+            {
+                // 1. Check for public static Instance property
+                var instanceProperty = moduleType.GetProperty(
+                    "Instance",
+                    BindingFlags.Public | BindingFlags.Static);
+
+                if (instanceProperty != null && moduleType.IsAssignableFrom(instanceProperty.PropertyType))
+                {
+                    var value = instanceProperty.GetValue(null);
+                    if (value != null)
+                    {
+                        yield return (Module)value;
+                        continue;
+                    }
+                }
+
+                // 2. Otherwise try public parameterless constructor
+                var ctor = moduleType.GetConstructor(Type.EmptyTypes);
+                if (ctor != null)
+                {
+                    yield return (Module)Activator.CreateInstance(moduleType);
+                    continue;
+                }
+
+                this.Logger.LogWarning($"Could not find a way to instantiate module of type {moduleType.FullName}. Ensure it has either a public static Instance property or a public parameterless constructor.");
+            }
+        }
         private void InfiniteTowerWaveController_FixedUpdate(ILCursor c)
         {
             while (c.TryGotoNext(MoveType.AfterLabel,
