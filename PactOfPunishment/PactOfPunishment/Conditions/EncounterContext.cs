@@ -7,12 +7,13 @@ namespace PactOfPunishment.Conditions
 {
     public abstract class EncounterContext
     {
-        protected EncounterContext()
+        protected EncounterContext(GameObject gameObject)
         {
+            this.GameObject = gameObject;
             this.GameObject.EnsureComponent<EncounterContextHolder>().encounterContext = this;
         }
 
-        public abstract GameObject GameObject { get; }
+        public GameObject GameObject { get; }
 
         public abstract GameObject SpawnTarget { get; }
 
@@ -32,12 +33,10 @@ namespace PactOfPunishment.Conditions
     {
         private readonly InfiniteTowerWaveController wave;
 
-        public InfiniteTowerWaveContext(InfiniteTowerWaveController wave)
+        public InfiniteTowerWaveContext(InfiniteTowerWaveController wave) : base(wave.gameObject)
         {
             this.wave = wave;
         }
-
-        public override GameObject GameObject => this.wave.gameObject;
 
         public override GameObject SpawnTarget => this.wave.spawnTarget;
 
@@ -52,12 +51,10 @@ namespace PactOfPunishment.Conditions
     {
         private readonly MeridianEventTriggerInteraction meridianEventTriggerInteraction;
 
-        public FalseSonMinionContext(MeridianEventTriggerInteraction meridianEventTriggerInteraction)
+        public FalseSonMinionContext(MeridianEventTriggerInteraction meridianEventTriggerInteraction) : base(meridianEventTriggerInteraction.phase2CombatDirector)
         {
             this.meridianEventTriggerInteraction = meridianEventTriggerInteraction;
         }
-
-        public override GameObject GameObject => this.meridianEventTriggerInteraction.phase2CombatDirector;
 
         public override GameObject SpawnTarget => this.meridianEventTriggerInteraction.arenaCenter.gameObject;
 
@@ -70,14 +67,12 @@ namespace PactOfPunishment.Conditions
 
     public class FalseSonBossFightContext : EncounterContext
     {
-        public FalseSonBossFightContext(FSBFPhaseBaseState phaseState)
+        public FalseSonBossFightContext(FSBFPhaseBaseState phaseState) : base(phaseState.outer.gameObject)
         {
             this.PhaseState = phaseState;
         }
 
         public FSBFPhaseBaseState PhaseState { get; }
-
-        public override GameObject GameObject => this.PhaseState.outer.gameObject;
 
         public override GameObject SpawnTarget => this.PhaseState.meridianEventTriggerInteraction.arenaCenter.gameObject;
 
