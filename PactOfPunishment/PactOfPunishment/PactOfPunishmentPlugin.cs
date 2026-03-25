@@ -72,7 +72,6 @@ namespace PactOfPunishment
             Content.StatDefs.PerBodyHeatEasy = PerBodyStatDef.Register("heatHard", StatRecordType.Max, StatDataType.ULong);
             On.RoR2.UI.GameEndReportPanelController.Awake += this.GameEndReportPanelController_Awake;
             On.RoR2.UI.LanguageTextMeshController.UpdateLabel += this.LanguageTextMeshController_UpdateLabel;
-            On.RoR2.EntityStateMachine.SetState += this.EntityStateMachine_SetState;
         }
 
         public void Update()
@@ -155,36 +154,6 @@ namespace PactOfPunishment
             }
 
             return output.ToString().Trim();
-        }
-
-        [ConCommand(commandName = "simulacrum_complete_wave", flags = ConVarFlags.ExecuteOnServer, helpText = "Completes the current simulacrum wave.")]
-        private static void CmdCompleteSimulacrumWave(ConCommandArgs args)
-        {
-            if (Run.instance is InfiniteTowerRun run && run.waveController is InfiniteTowerWaveController wave)
-            {
-                wave.Network_totalWaveCredits = wave.combatDirector.totalCreditsSpent;
-
-                var teamMembers = TeamComponent.GetTeamMembers(TeamIndex.Monster);
-                for (int k = teamMembers.Count - 1; k >= 0; k--)
-                {
-                    teamMembers[k].body.master?.TrueKill(wave.gameObject, wave.gameObject, DamageType.VoidDeath);
-                }
-            }
-        }
-
-        [ConCommand(commandName = "simulacrum_override_wave", flags = ConVarFlags.ExecuteOnServer, helpText = "Overrides the next simulacrum wave.")]
-        private static void CmdOverrideNextSimulacrumWave(ConCommandArgs args)
-        {
-            if (Run.instance is InfiniteTowerRun run && run.GetComponent<SimulacrumWavesBehavior>() is SimulacrumWavesBehavior behavior && args.Count > 0)
-            {
-                behavior.WaveOverrideName = args[0];
-            }
-        }
-
-        private void EntityStateMachine_SetState(On.RoR2.EntityStateMachine.orig_SetState orig, EntityStateMachine self, EntityStates.EntityState newState)
-        {
-            this.Logger.LogDebug($"{self.gameObject} {self.customName} state changing from '{self.state?.GetType().Name}' to '{newState?.GetType().Name}'");
-            orig(self, newState);
         }
 
         private IEnumerable<Module> GetModules(IEnumerable<Type> moduleTypes)
