@@ -13,6 +13,12 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
             return null; // TODO: Extreme measures 1
         }
 
+        protected override PickupDropTable GetRewardDropTable(Run run)
+        {
+            // TODO: weight in favour of SotS items?
+            return BossDropTables.Instance.GetRare(run);
+        }
+
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
         {
             base.Setup(dir, squad, wavePrefab);

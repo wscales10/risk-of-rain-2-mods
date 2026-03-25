@@ -1,10 +1,8 @@
 ﻿using HG;
 using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
-using System;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace PactOfPunishment.Waves.Common
 {
@@ -17,15 +15,12 @@ namespace PactOfPunishment.Waves.Common
 
     public abstract class MiniBossWaveDefinition<TWaveController> : SimulacrumWaveDefinition<TWaveController> where TWaveController : InfiniteTowerWaveController
     {
-        private static readonly Lazy<BasicPickupDropTable> baseDropTable = new Lazy<BasicPickupDropTable>(() => Addressables.LoadAssetAsync<BasicPickupDropTable>("RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/dtITBossWave.asset").WaitForCompletion());
 
         protected override ItemTier RewardDisplayTier => ItemTier.Tier2;
 
         protected static BasicPickupDropTable GetBaseDropTable(Run run)
         {
-            var output = baseDropTable.Value;
-            output.RegenerateDropTable(run);
-            return output;
+            return BossDropTables.Instance.GetRare(run);
         }
 
         protected override PickupDropTable GetRewardDropTable(Run run)

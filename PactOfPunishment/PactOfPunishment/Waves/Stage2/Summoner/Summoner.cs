@@ -10,6 +10,11 @@ namespace PactOfPunishment.Waves.Summoner
     {
         private static float mainBossCreditsFraction = 0.27f;
 
+        protected override PickupDropTable GetRewardDropTable(Run run)
+        {
+            return BossDropTables.Instance.GetRare(run);
+        }
+
         protected override UpgradeEncounterStrategy GetUpgradeStrategy()
         {
             return ScriptableObject.CreateInstance<SummonerUpgradeStrategy>();
