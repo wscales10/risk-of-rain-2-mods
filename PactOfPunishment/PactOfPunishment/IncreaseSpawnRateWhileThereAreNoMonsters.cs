@@ -21,8 +21,13 @@ namespace PactOfPunishment
             while (c.TryGotoNext(MoveType.After, x => x.MatchLdfld<InfiniteTowerWaveController>(nameof(InfiniteTowerWaveController.creditsPerSecond))))
             {
                 c.Emit(OpCodes.Ldarg_0);
-                c.EmitDelegate<Func<float, InfiniteTowerWaveController, float>>((value, self) => (self.combatDirector?.EnsureComponent<SimulacrumCombatDirectorSpawnRateMultiplier>().SpawnRateMultiplier ?? 1) * value);
+                c.EmitDelegate<Func<float, InfiniteTowerWaveController, float>>(AdjustSimulacrumWaveCreditsPerSecond);
             }
+        }
+
+        private static float AdjustSimulacrumWaveCreditsPerSecond(float value, InfiniteTowerWaveController self)
+        {
+            return (self.combatDirector?.EnsureComponent<SimulacrumCombatDirectorSpawnRateMultiplier>().CreditGainRateMultiplier ?? 1) * value;
         }
 
         private bool CombatDirector_AttemptSpawnOnTarget(On.RoR2.CombatDirector.orig_AttemptSpawnOnTarget orig, RoR2.CombatDirector self, Transform spawnTarget, RoR2.DirectorPlacementRule.PlacementMode placementMode)
@@ -30,10 +35,10 @@ namespace PactOfPunishment
             if (orig(self, spawnTarget, placementMode))
             {
                 this.Logger.LogDebug($"Successful Combat Director spawn attempt {Run.instance.GetRunStopwatch()}s into the run.");
-                
+
                 if (self.TryGetComponent<SimulacrumCombatDirectorSpawnRateMultiplier>(out var behavior))
                 {
-                    behavior.SpawnRateMultiplier = 1;
+                    behavior.CreditGainRateMultiplier = 1;
                 }
 
                 return true;
@@ -47,41 +52,61 @@ namespace PactOfPunishment
 
         private void CombatDirector_Simulate(ILCursor c)
         {
-            c.GotoNext(MoveType.After,
-                x => x.MatchLdarg(0),
-                x => x.MatchLdarg(0),
-                x => x.MatchCall<CombatDirector>($"get_{nameof(CombatDirector.monsterSpawnTimer)}"),
-                x => x.MatchLdarg(0),
-                x => x.MatchLdfld<CombatDirector>(nameof(CombatDirector.rng)),
-                x => x.MatchLdarg(0),
-                x => x.MatchLdfld<CombatDirector>(nameof(CombatDirector.minRerollSpawnInterval)),
-                x => x.MatchLdarg(0),
-                x => x.MatchLdfld<CombatDirector>(nameof(CombatDirector.maxRerollSpawnInterval)),
-                x => x.MatchCallvirt<Xoroshiro128Plus>(nameof(Xoroshiro128Plus.RangeFloat))
-            );
-
-            c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate<Func<float, CombatDirector, float>>((rerollSpawnInterval, self) =>
+            while (c.TryGotoNext(
+                x => x.MatchCallvirt<Xoroshiro128Plus>(nameof(Xoroshiro128Plus.RangeFloat)),
+                x => x.MatchAdd(),
+                x => x.MatchCall<CombatDirector>($"set_{nameof(CombatDirector.monsterSpawnTimer)}")))
             {
-                if (self.combatSquad && self.combatSquad.memberCount == 0 && self.TryGetComponent<SimulacrumCombatDirectorSpawnRateMultiplier>(out var behavior))
-                {
-                    var multiplier = Mathf.Max(1, rerollSpawnInterval / 0.5f);
-                    behavior.SpawnRateMultiplier = multiplier;
-                    float output = rerollSpawnInterval / multiplier;
-                    this.Logger.LogDebug($"Setting combat director reroll spawn interval to {rerollSpawnInterval} / {multiplier} = {output}");
-                    return output;
-                }
-                else
-                {
-                    this.Logger.LogDebug($"Setting combat director reroll spawn interval to {rerollSpawnInterval}");
-                    return rerollSpawnInterval;
-                }
-            });
+                c.Index++;
+                c.Emit(OpCodes.Ldarg_0);
+                c.EmitDelegate<Func<float, CombatDirector, float>>(this.AdjustSpawnInterval);
+            }
         }
 
+        private float AdjustSpawnInterval(float originalSpawnInterval, CombatDirector self)
+        {
+            if (!self.TryGetComponent<SimulacrumCombatDirectorSpawnRateMultiplier>(out var behavior))
+            {
+                this.Logger.LogDebug($"Setting combat director spawn attempt interval to {originalSpawnInterval}");
+                return originalSpawnInterval;
+            }
+
+            if (self.combatSquad && self.combatSquad.memberCount == 0)
+            {
+                behavior.CreditGainRateMultiplier = 1 / Mathf.Max(1, originalSpawnInterval / 0.5f);
+            }
+            else
+            {
+                behavior.CreditGainRateMultiplier = 1;
+            }
+
+            float multiplier = behavior.SpawnAttemptIntervalMultiplier;
+            float output = originalSpawnInterval * multiplier;
+
+            if (Mathf.Approximately(multiplier, 1))
+            {
+                this.Logger.LogDebug($"Setting combat director spawn attempt interval to {output}");
+            }
+            else
+            {
+                this.Logger.LogDebug($"Setting combat director spawn attempt interval to {originalSpawnInterval} / {1 / multiplier} = {output}");
+            }
+
+            return output;
+        }
+
+        [RequireComponent(typeof(CombatDirector))]
         public class SimulacrumCombatDirectorSpawnRateMultiplier : MonoBehaviour
         {
-            public float SpawnRateMultiplier = 1;
+            public float TotalWaveCreditsMultiplier = 1;
+
+            public float WavePeriodSecondsMultiplier = 1;
+
+            public float CreditsPerAttemptMultiplier = 1;
+
+            public float CreditGainRateMultiplier = 1;
+
+            public float SpawnAttemptIntervalMultiplier => this.CreditGainRateMultiplier * this.CreditsPerAttemptMultiplier * this.WavePeriodSecondsMultiplier / this.TotalWaveCreditsMultiplier;
         }
     }
 }
