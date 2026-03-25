@@ -28,7 +28,7 @@ namespace PactOfPunishment
 
         public void OnRunVictory()
         {
-            var statValue = this.activeConditions.Sum(x => x.TotalHeat);
+            var statValue = (ulong)this.activeConditions.Sum(x => x.TotalHeat);
 
             foreach (PlayerStatsComponent instance in PlayerStatsComponent.instancesList)
             {
