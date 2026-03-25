@@ -93,7 +93,7 @@ namespace PactOfPunishment.Waves.Stage1
 
     public sealed class SolusControlUnit : PortableMiniBossWaveDefinition<SolusControlUnitBossFightBehavior>
     {
-        public SolusControlUnit() : base(new SolusControlUnitMiniBossInfo())
+        public SolusControlUnit() : base(ScriptableObject.CreateInstance<SolusControlUnitMiniBossInfo>())
         {
         }
 

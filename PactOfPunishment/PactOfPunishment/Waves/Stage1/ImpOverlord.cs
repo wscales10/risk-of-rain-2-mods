@@ -13,7 +13,7 @@ namespace PactOfPunishment.Waves.Stage1
 
     public partial class ImpOverlord : PortableMiniBossWaveDefinition<ImpOverlordBossFightBehavior>
     {
-        public ImpOverlord() : base(new ImpOverlordMiniBossInfo())
+        public ImpOverlord() : base(ScriptableObject.CreateInstance<ImpOverlordMiniBossInfo>())
         {
         }
 

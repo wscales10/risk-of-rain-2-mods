@@ -11,7 +11,7 @@ namespace PactOfPunishment.Waves.Stage2
 {
     public class WormAndDistributor : PortableMiniBossWaveDefinition<WormAndDistributorBossFightBehavior>
     {
-        public WormAndDistributor() : base(new WormMiniBossInfo(), new DistributorMiniBossInfo())
+        public WormAndDistributor() : base(ScriptableObject.CreateInstance<WormMiniBossInfo>(), ScriptableObject.CreateInstance<DistributorMiniBossInfo>())
         {
         }
 

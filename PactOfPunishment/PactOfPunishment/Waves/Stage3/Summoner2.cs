@@ -8,7 +8,7 @@ namespace PactOfPunishment.Waves.Stage3
 {
     public class Summoner2 : PortableMiniBossWaveDefinition<Summoner2BossFightBehavior>
     {
-        public Summoner2() : base(new ChildMiniBossInfo())
+        public Summoner2() : base(ScriptableObject.CreateInstance<ChildMiniBossInfo>())
         {
         }
 
