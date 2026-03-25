@@ -38,8 +38,8 @@ namespace PactOfPunishment.Waves.FinalStage
             c.Emit(OpCodes.Ldarg_0);
             c.EmitDelegate<Action<GameObject, LunarRain>>((orig, self) =>
             {
-                orig.GetComponent<DestroyOnTimer>().duration *= self.attackSpeedStat;
-                orig.GetComponent<KillOnTimer>().duration *= self.attackSpeedStat;
+                orig.GetComponent<DestroyOnTimer>().duration /= self.attackSpeedStat;
+                orig.GetComponent<KillOnTimer>().duration /= self.attackSpeedStat;
 
                 if (self.characterBody.TryGetComponent<FinalBossUpgradeStrategies.BodyBehavior>(out var behavior))
                 {

@@ -24,7 +24,6 @@ namespace PactOfPunishment.Waves.FinalStage
             {
                 if (Input.GetKeyUp(KeyCode.F3))
                 {
-                    Console.CheatsConVar.instance.boolValue = true;
                     if (SceneCatalog.GetSceneDefForCurrentScene()?.cachedName == "meridian")
                     {
                         this.TeleportPlayerToBossArena();
