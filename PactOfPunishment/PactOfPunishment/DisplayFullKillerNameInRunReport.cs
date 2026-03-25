@@ -89,7 +89,8 @@ namespace PactOfPunishment
             c.Emit(OpCodes.Ldloca_S, (byte)killerBodyNameVariableNumber);
             c.EmitDelegate<ResolveKillerBodyNameDelegate>((RunReport.PlayerInfo playerInfo, ref string killerBodyName) =>
             {
-                if (this.characterMasterToKillerBodyName.TryGetValue(playerInfo.master, out string foundKillerBodyName))
+                // TODO: dictionary is probably empty or unreliable for reports viewed in logbook
+                if (playerInfo.master && this.characterMasterToKillerBodyName.TryGetValue(playerInfo.master, out string foundKillerBodyName))
                 {
                     killerBodyName = foundKillerBodyName;
                     this.Logger.LogDebug($"Found killer body name for player '{playerInfo.name}': '{foundKillerBodyName}'");
