@@ -23,21 +23,27 @@ namespace PactOfPunishment.Waves.Stage3
             dir.maxSquadCount = 6; // TODO: make max squad count calculation more intelligent
         }
 
-        public class Summoner2BossBodyBehavior : MonoBehaviour
+        public class Summoner2BossBodyBehavior : BossBodyBehavior
         {
             public void OnEnable()
             {
-                RecalculateStats.Add(this.GetComponent<CharacterBody>(), OnRecalculateStats);
+                RecalculateStats.Add(this.Body, OnRecalculateStats);
             }
 
             public void OnDisable()
             {
-                RecalculateStats.Remove(this.GetComponent<CharacterBody>(), OnRecalculateStats);
+                RecalculateStats.Remove(this.Body, OnRecalculateStats);
             }
 
             private static void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)
             {
                 args.moveSpeedTotalMult = 0;
+            }
+
+            protected override void ManagedFixedUpdate(float deltaTime)
+            {
+                base.ManagedFixedUpdate(deltaTime);
+                this.Body.characterMotor.velocity = Vector3.zero;
             }
         }
 
