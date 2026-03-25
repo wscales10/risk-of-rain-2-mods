@@ -78,7 +78,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
 
         private bool canUseNewSkill;
 
-        private bool haveUsedLaserSinceLastUsingNewSkill;
+        private bool haveUsedWhirlWindSinceLastUsingNewSkill;
 
         public bool CanUseNewSkill
         {
@@ -161,12 +161,12 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         {
             if (skill == this.defaultUtilitySkill)
             {
-                this.haveUsedLaserSinceLastUsingNewSkill = true;
+                this.haveUsedWhirlWindSinceLastUsingNewSkill = true;
                 this.SelectUtilitySkill();
             }
             else if (skill == this.newSkill)
             {
-                this.haveUsedLaserSinceLastUsingNewSkill = false;
+                this.haveUsedWhirlWindSinceLastUsingNewSkill = false;
                 this.SelectUtilitySkill();
             }
         }
@@ -175,7 +175,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         {
             // Always enable the new skill while powered up - the AISkillDriver will not use it
             // above 75%
-            this.SetNewSkillActive(this.powerMeter.IsPoweredUp || (this.haveUsedLaserSinceLastUsingNewSkill && this.CanUseNewSkill));
+            this.SetNewSkillActive(this.powerMeter.IsPoweredUp || (this.haveUsedWhirlWindSinceLastUsingNewSkill && this.CanUseNewSkill));
         }
 
         private void SetNewSkillActive(bool active)
@@ -194,16 +194,22 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         {
             if (this.powerMeter.IsPoweredUp)
             {
+                // Disable laser while powered up
+                this.DisableSkill(this.Body, SkillSlot.Secondary);
+
                 this.Body.MakeUnscaledEliteUsingEquipment(RoR2Content.Elites.Fire);
 
-                if (this.WeaponStateMachine?.state is TriLaser)
+                var weaponState = this.WeaponStateMachine?.state;
+
+                if (weaponState is TriLaser || weaponState is ChargeTriLaser)
                 {
-                    this.WeaponStateMachine.SetNextStateToMain();
+                    this.WeaponStateMachine!.SetNextStateToMain();
                 }
             }
             else
             {
                 this.Body.inventory.SetEquipmentIndex(EquipmentIndex.None, true);
+                this.EnableSkill(this.Body, SkillSlot.Secondary);
             }
 
             this.SelectUtilitySkill();
