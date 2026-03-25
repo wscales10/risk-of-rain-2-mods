@@ -175,18 +175,25 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             public override void OnBossSpawnedServer(SpawnCard.SpawnResult result, CharacterBody body)
             {
                 base.OnBossSpawnedServer(result, body);
-                float healthMultiplier = GetHealthMultiplier();
-                Debug.Log($"Scaling health for {body.name} by {healthMultiplier}");
-                var summonerBehavior = this.References.GetComponent<SummonerBossFightBehavior>();
-                body.ScaleMaxHealth(summonerBehavior, healthMultiplier);
+
                 body.EnsureComponent<SummonerBossBodyBehavior>().PowerLevel = SummonerBossPowerLevel.Support;
                 this.combatSquad!.AddMember(body.master);
                 this.References.GetComponent<SummonerBossFightBehavior>().SpawnGhosts(body, SummonerBossPowerLevel.Support);
 
+                body.master.onBodyStart += this.OnSupportBodyStart;
+            }
+
+            private void OnSupportBodyStart(CharacterBody body)
+            {
+                float healthMultiplier = GetHealthMultiplier();
+                Debug.Log($"Scaling health for {body.name} by {healthMultiplier}");
+                var summonerBehavior = this.References.GetComponent<SummonerBossFightBehavior>();
+                body.ScaleMaxHealth(summonerBehavior, healthMultiplier);
+
                 float GetHealthMultiplier()
                 {
                     float totalWaveCredits = this.References.GetComponent<InfiniteTowerWaveController>().totalWaveCredits;
-                    int directorCreditCost = result.spawnRequest.spawnCard.directorCreditCost;
+                    var directorCreditCost = body.cost;
 
                     List<float> healthMultipliers = new List<float> { totalWaveCredits * 0.15f / directorCreditCost };
                     Debug.Log($"Health multiplier for {body.name} based on {totalWaveCredits} wave credits / {directorCreditCost} spawn cost: {healthMultipliers[0]}");
