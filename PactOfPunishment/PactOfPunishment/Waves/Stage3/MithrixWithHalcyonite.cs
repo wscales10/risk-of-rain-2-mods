@@ -6,8 +6,6 @@ using PactOfPunishment.Waves.Common;
 using PactOfPunishment.Waves.Halcyonites;
 using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
-using System;
-using System.Linq;
 using UnityEngine;
 using static RoR2.InfiniteTowerExplicitSpawnWaveController;
 
@@ -76,6 +74,7 @@ namespace PactOfPunishment.Waves.Stage3
                 else if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
                 {
                     body.ScaleDifficultyAsBoss(2, 15, true, false);
+                    body.inventory.GiveItemPermanent(RoR2Content.Items.AdaptiveArmor);
                     this.SetupBossAi(body);
                     body.EnsureComponent<FinalHalcyoniteBodyBehavior>().DesiredState = FinalHalcyoniteBodyBehavior.State.Collective;
                 }

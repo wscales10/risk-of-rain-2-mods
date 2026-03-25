@@ -35,10 +35,10 @@ namespace PactOfPunishment.Waves.Stage3
 
             if (body.Is(RoR2Content.BodyPrefabs.ParentBody))
             {
-                body.ScaleDifficultyAsBoss(158, 158, false, false); // TODO: scale more?
+                body.ScaleDifficultyAsBoss(158, 158, false, false); // TODO: scale more? I think they die real quick on wave 25
                 Utils.MakeScaledElite(body, this.CombatDirector.rng.NextElementUniform(this.eliteDefs));
 
-                // TODO: drop egg on death?
+                // TODO: drop egg on death, for sure
             }
         }
 

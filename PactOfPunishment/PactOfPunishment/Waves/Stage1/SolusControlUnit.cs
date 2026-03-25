@@ -77,11 +77,11 @@ namespace PactOfPunishment.Waves.Stage1
             SimulacrumWavesModule.OnTakeNonZeroDamageGlobal += (victim, _) => OnTakeNonZeroDamageGlobal(victim, body);
         }
 
-        private static void OnTakeNonZeroDamageGlobal(HealthComponent victim, CharacterBody body)
+        private static void OnTakeNonZeroDamageGlobal(HealthComponent victim, CharacterBody solusControlUnitBody)
         {
-            if (victim == body.healthComponent)
+            if (victim == solusControlUnitBody.healthComponent)
             {
-                body.GetComponent<RateLimiter>().TryDoThing();
+                solusControlUnitBody.GetComponent<RateLimiter>().TryDoThing();
             }
         }
     }
