@@ -8,6 +8,8 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
     {
         private readonly AssetPromise<CharacterSpawnCard> halcyoniteSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/DLC2/Halcyonite/cscHalcyonite.asset");
 
+        protected override ItemTier RewardDisplayTier => ItemTier.Tier2;
+
         protected override UpgradeEncounterStrategy? GetUpgradeStrategy()
         {
             return null; // TODO: Extreme measures 1

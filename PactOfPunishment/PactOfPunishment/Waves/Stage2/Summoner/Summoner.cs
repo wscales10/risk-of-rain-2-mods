@@ -10,6 +10,8 @@ namespace PactOfPunishment.Waves.Summoner
     {
         private static float mainBossCreditsFraction = 0.27f;
 
+        protected override ItemTier RewardDisplayTier => ItemTier.Tier2;
+
         protected override PickupDropTable GetRewardDropTable(Run run)
         {
             return BossDropTables.Instance.GetRare(run);

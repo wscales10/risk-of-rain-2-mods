@@ -19,6 +19,8 @@ namespace PactOfPunishment.Waves.Stage3
 
         protected override string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBossBrother.prefab";
 
+        protected override ItemTier RewardDisplayTier => ItemTier.Tier3;
+
         protected override PickupDropTable GetRewardDropTable(Run run)
         {
             return BossDropTables.Instance.GetLegendary(run);
