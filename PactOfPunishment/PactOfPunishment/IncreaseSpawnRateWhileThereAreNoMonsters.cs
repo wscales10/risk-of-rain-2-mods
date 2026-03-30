@@ -48,7 +48,11 @@ namespace PactOfPunishment
             }
             else
             {
-                this.Logger.LogDebug($"Failed combat Director spawn attempt {Run.instance.GetRunStopwatch()}s into the run.");
+                if (CombatDirector.cvDirectorCombatEnableInternalLogs.value)
+                {
+                    this.Logger.LogDebug($"Failed combat Director spawn attempt {Run.instance.GetRunStopwatch()}s into the run.");
+                }
+
                 return false;
             }
         }
