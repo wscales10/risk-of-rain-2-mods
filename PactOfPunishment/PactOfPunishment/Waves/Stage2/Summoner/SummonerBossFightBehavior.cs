@@ -26,13 +26,11 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             this.combatDirector.EnsureComponent<UseMinimumEliteTierBehavior>();
             MonsterTracker.TrackCombatDirector(this.combatDirector);
 
-            var selector = this.combatDirector.finalMonsterCardsSelection;
-
             this.References = this.EnsureComponent<SummonerReferences>();
-            this.References.MainBossMonsterIndex = selector.EvaluateToChoiceIndex(this.combatDirector.rng.nextNormalizedFloat);
+            this.References.MainBossMonsterIndex = this.GetMainBossMonsterIndex();
             this.References.SupportMonsterDirectorCards = this.GetSupportMonsterDirectorCards(2);
 
-            var mainBossMonsterDirectorCard = selector.GetChoice(this.References.MainBossMonsterIndex).value;
+            var mainBossMonsterDirectorCard = this.combatDirector.finalMonsterCardsSelection.GetChoice(this.References.MainBossMonsterIndex).value;
             Debug.Log($"Selected summoner boss: '{mainBossMonsterDirectorCard?.spawnCard.prefab.name}'");
             this.combatDirector.OverrideNextBossCard(mainBossMonsterDirectorCard, false); // TODO: can fail! Try on commencement? also note that this implicitly calls ScaleDifficultyAsBoss.
             this.gameObject.EliminateCombatSquadWhenLastMainMemberDies(this.combatDirector.combatSquad, x => EntityStateMachine.FindByCustomName(x.GetBodyObject(), StateMachineCustomName));
@@ -110,6 +108,11 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             return choice.value?.cost > 14 && choice.value?.spawnCard is CharacterSpawnCard characterSpawnCard && characterSpawnCard.prefab.GetComponent<CharacterMaster>()?.bodyPrefab?.GetComponent<CharacterBody>()?.isChampion == false;
         }
 
+        private static bool CanBeMainBossMonster(WeightedSelection<DirectorCard>.ChoiceInfo choice)
+        {
+            return choice.value.cost > 10;
+        }
+
         private void SummonerBossFightBehavior_OnSpawnedServer(SpawnCard.SpawnResult result)
         {
             if (!Utils.TryGetCharacterBody(result.spawnedInstance, out var body))
@@ -136,7 +139,21 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
         {
             var wave = this.GetComponent<InfiniteTowerWaveController>();
             this.GetComponent<CombatDirector>().totalCreditsSpent = wave.totalWaveCredits;
-            float healthMultiplier = wave.totalWaveCredits / result.spawnRequest.spawnCard.directorCreditCost;
+            float cost = body.cost;
+
+            if (cost <= 0)
+            {
+                Debug.LogWarning("CharacterBody.cost is not set for the boss! Defaulting to spawn card cost for health scaling, but this may cause issues if the spawn card cost is not representative of the boss's strength.");
+                cost = result.spawnRequest.spawnCard.directorCreditCost;
+            }
+
+            float healthMultiplier = wave.totalWaveCredits / cost;
+
+            if (healthMultiplier > 1)
+            {
+                healthMultiplier = 2800 / (body.baseMaxHealth + body.baseMaxShield);
+            }
+
             Debug.Log($"Scaling health for {body.name} by {healthMultiplier}");
             var summonerBehavior = this.GetComponent<SummonerBossFightBehavior>();
             body.ScaleMaxHealth(summonerBehavior, healthMultiplier);
@@ -164,6 +181,13 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             }
 
             return list.ToArray();
+        }
+
+        private int GetMainBossMonsterIndex()
+        {
+            var selector = this.combatDirector!.finalMonsterCardsSelection;
+            var ignored = Enumerable.Range(0, selector.Count).Where(x => !CanBeMainBossMonster(selector.GetChoice(x))).ToArray();
+            return selector.EvaluateToChoiceIndex(this.combatDirector.rng.nextNormalizedFloat, ignored);
         }
     }
 }

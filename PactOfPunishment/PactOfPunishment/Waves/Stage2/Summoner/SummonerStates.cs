@@ -195,21 +195,21 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                     float totalWaveCredits = this.References.GetComponent<InfiniteTowerWaveController>().totalWaveCredits;
                     var directorCreditCost = body.cost;
 
-                    List<float> healthMultipliers = new List<float> { totalWaveCredits * 0.15f / directorCreditCost };
-                    Debug.Log($"Health multiplier for {body.name} based on {totalWaveCredits} wave credits / {directorCreditCost} spawn cost: {healthMultipliers[0]}");
+                    float healthMultiplier = totalWaveCredits * 0.15f / directorCreditCost;
+                    Debug.Log($"Health multiplier for {body.name} based on {totalWaveCredits} wave credits / {directorCreditCost} spawn cost: {healthMultiplier}");
 
                     float? bossMaxHealth = this.healthComponent.fullCombinedHealth;
                     float supportMonsterMaxHealth = body.healthComponent.fullCombinedHealth;
                     Debug.Log($"My max health: {supportMonsterMaxHealth}, summoner max health: {bossMaxHealth?.ToString() ?? "null"}");
 
-                    if (supportMonsterMaxHealth > 0 && bossMaxHealth != null)
+                    if (directorCreditCost > 40 && supportMonsterMaxHealth > 0 && bossMaxHealth != null)
                     {
                         float alternativeHealthMultiplier = bossMaxHealth.Value * 0.15f / supportMonsterMaxHealth;
-                        Debug.Log($"Alternative health multiplier for {body.name} based on summoner max health / my max health: {alternativeHealthMultiplier}");
-                        healthMultipliers.Add(alternativeHealthMultiplier);
+                        Debug.Log($"Alternative health multiplier for {body.name} based on summoner max health / my max health: {alternativeHealthMultiplier} (if greater than 1, will be reduced to 1)");
+                        healthMultiplier = Mathf.Min(1, alternativeHealthMultiplier);
                     }
 
-                    return healthMultipliers.OrderBy(x => Mathf.Abs(x - 1)).First();
+                    return healthMultiplier;
                 }
             }
 

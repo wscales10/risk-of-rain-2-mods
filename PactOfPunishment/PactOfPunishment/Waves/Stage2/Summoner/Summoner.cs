@@ -28,6 +28,7 @@ namespace PactOfPunishment.Waves.Summoner
 
             dir.maxSquadCount = 1;
             dir.increaseSpawnDistanceOnFailure = true;
+            dir.skipSpawnIfTooCheap = false;
             wavePrefab.baseCredits = defaultBossWavePrefab.Value.GetComponent<InfiniteTowerBossWaveController>().baseCredits * mainBossCreditsFraction;
             wavePrefab.immediateCreditsFraction = 1;
             wavePrefab.guaranteeInitialChampion = true;
