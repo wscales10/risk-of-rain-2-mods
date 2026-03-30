@@ -48,6 +48,11 @@ namespace PactOfPunishment.Waves.Common
 
         protected abstract float GetNextInterval();
 
+        protected virtual void OnEnable()
+        {
+            this.timer = 0;
+        }
+
         private void Update()
         {
             if (NetworkServer.active)

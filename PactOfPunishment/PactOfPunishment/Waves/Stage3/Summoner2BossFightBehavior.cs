@@ -1,7 +1,7 @@
-﻿using PactOfPunishment.Conditions;
+﻿using HG;
 using PactOfPunishment.Waves.Common;
 using RoR2;
-using System.Linq;
+using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage3
 {
@@ -13,20 +13,34 @@ namespace PactOfPunishment.Waves.Stage3
 
         internal static AssetPromise<CharacterSpawnCard> parentSpawnCard;
 
+        private CharacterBody eggBodyPrefab;
+
         private DoSomethingAtFixedRate? eggSpawner;
 
-        private EliteDef[] eliteDefs;
+        private WeightedSelection<EliteDef> eliteDefs;
+
+        private float eggSpawnerStartTimer;
+
+        private bool? isEggSpawnerEnabled;
 
         public override void Awake()
         {
             base.Awake();
 
-            this.eliteDefs = this.CombatDirector.GetEliteDefs(parentSpawnCard.Value).ToArray(); // TODO: this should be more sophisticated
+            this.eliteDefs = this.CombatDirector.GetEliteDefSelector(parentSpawnCard.Value);
+
+            this.eggBodyPrefab = eggSpawnCard.Value.prefab.GetComponent<CharacterMaster>().bodyPrefab.GetComponent<CharacterBody>();
 
             this.eggSpawner = this.gameObject.AddComponent<DoSomethingAtFixedRate>();
             this.eggSpawner.interval = 3;
             this.eggSpawner.doSomething = this.SpawnEgg;
+
             this.ApplyEnabledState();
+        }
+
+        public void Update()
+        {
+            this.ManagedUpdate(Time.deltaTime);
         }
 
         protected override void OnCombatSquadMemberDiscovered(CharacterBody body)
@@ -35,20 +49,63 @@ namespace PactOfPunishment.Waves.Stage3
 
             if (body.Is(RoR2Content.BodyPrefabs.ParentBody))
             {
-                body.ScaleDifficultyAsBoss(158, 158, false, false); // TODO: scale more? I think they die real quick on wave 25
-                Utils.MakeScaledElite(body, this.CombatDirector.rng.NextElementUniform(this.eliteDefs));
-
-                // TODO: drop egg on death, for sure
+                body.EnsureHasItem(RoR2Content.Items.UseAmbientLevel);
+                body.ScaleDifficultyAsBoss(158, 158, false, false);
+                body.EnsureComponent<ParentBehavior>().onDeathStart = this.OnParentDeath;
+            }
+            else if (body.Is(this.eggBodyPrefab))
+            {
+                body.ScaleMaxHealth(this, 1 / 3f);
             }
         }
 
-        public override void ApplyEnabledState()
+        private void ManagedUpdate(float deltaTime)
         {
-            base.ApplyEnabledState();
-            if (this.eggSpawner)
+            if (this.CustomEnabled)
             {
-                this.eggSpawner!.enabled = this.CustomEnabled;
+                switch (this.isEggSpawnerEnabled)
+                {
+                    case true:
+                        break;
+
+                    case false:
+                        this.eggSpawnerStartTimer += deltaTime;
+
+                        if (this.eggSpawnerStartTimer > 3)
+                        {
+                            this.eggSpawner!.enabled = true;
+                            this.isEggSpawnerEnabled = true;
+                        }
+                        break;
+
+                    default:
+                        this.eggSpawnerStartTimer = 0;
+                        this.isEggSpawnerEnabled = false;
+                        break;
+                }
             }
+            else
+            {
+                if (this.isEggSpawnerEnabled != null)
+                {
+                    this.eggSpawner!.enabled = false;
+                    this.isEggSpawnerEnabled = null;
+                }
+            }
+        }
+
+        private void OnParentDeath(ParentBehavior behavior)
+        {
+            BodySplitter bodySplitter = new BodySplitter
+            {
+                body = behavior.GetComponent<CharacterBody>(),
+                count = 1,
+                splinterInitialVelocityLocal = Vector3.zero,
+                minSpawnCircleRadius = 0,
+                moneyMultiplier = 1
+            };
+            bodySplitter.masterSummon.masterPrefab = eggSpawnCard.Value.prefab;
+            bodySplitter.Perform();
         }
 
         private void SpawnEgg()
@@ -65,7 +122,7 @@ namespace PactOfPunishment.Waves.Stage3
                 return;
             }
 
-            this.CombatDirector.Spawn(eggSpawnCard.Value, null, spawnTarget.transform, DirectorCore.MonsterSpawnDistance.Standard, false);
+            this.CombatDirector.Spawn(eggSpawnCard.Value, this.eliteDefs.Evaluate(this.CombatDirector.rng.nextNormalizedFloat), spawnTarget.transform, DirectorCore.MonsterSpawnDistance.Standard, false);
         }
     }
 }

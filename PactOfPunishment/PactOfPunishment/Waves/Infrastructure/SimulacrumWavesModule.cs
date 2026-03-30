@@ -17,6 +17,7 @@ using RoR2.WwiseUtils;
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Networking;
 using static RoR2.InfiniteTowerWaveCategory;
 
@@ -59,6 +60,7 @@ namespace PactOfPunishment.Waves.Infrastructure
 
             Summoner2BossFightBehavior.eggSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Junk/Incubator/cscParentPod.asset"); // TODO: move to its own module?
             Summoner2BossFightBehavior.parentSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/Parent/cscParent.asset"); // TODO: hook global spawn card event instead and get spawn card from spawn request
+            IL.RoR2.HealNearbyController.Tick += Utils.HookIL(HealNearbyController_Tick);
 
             Utils.OnLoad<GameObject>("RoR2/Base/Titan/TitanGoldPreFistProjectile.prefab", x => FistsController.zoneProjectilePrefab = x);
 
@@ -117,6 +119,26 @@ namespace PactOfPunishment.Waves.Infrastructure
             }
 
             return customItem.ItemDef!;
+        }
+
+        private static void HealNearbyController_Tick(ILCursor c)
+        {
+            // TODO: is this enough? what about the death explosions or items?
+            int localVariableNumber = -1;
+            ILLabel? label = null;
+
+            c.GotoNext(MoveType.After,
+                x => x.MatchLdloc(out localVariableNumber),
+                x => x.MatchLdfld<HurtBox>(nameof(HurtBox.healthComponent)),
+                x => x.MatchLdfld<HealthComponent>(nameof(HealthComponent.body)),
+                x => x.MatchLdsfld(typeof(DLC1Content.Buffs), nameof(DLC1Content.Buffs.EliteEarth)),
+                x => x.MatchCallvirt<CharacterBody>(nameof(CharacterBody.HasBuff)),
+                x => x.MatchBrtrue(out label)
+            );
+
+            c.Emit(OpCodes.Ldloc_S, (byte)localVariableNumber);
+            c.EmitDelegate<Func<HurtBox, bool>>(hurtBox => hurtBox.healthComponent.body.GetComponent<Summoner2.Summoner2BossBodyBehavior>());
+            c.Emit(OpCodes.Brtrue_S, label);
         }
 
         private static void DenialProjectile_FireProjectile(ILCursor c)

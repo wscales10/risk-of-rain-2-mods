@@ -92,6 +92,18 @@ namespace PactOfPunishment
             };
         }
 
+        public static WeightedSelection<EliteDef> GetEliteDefSelector(this CombatDirector combatDirector, SpawnCard spawnCard)
+        {
+            var selector = new WeightedSelection<EliteDef>();
+
+            foreach (var choice in EliteTiers.Instance.GetEliteTiers(combatDirector).Where(tier => tier.CanSelect(spawnCard.eliteRules)).SelectMany(tier => tier.eliteTypes.Where(elite => elite && elite.IsAvailable()).Select(elite => (elite, tier.costMultiplier))))
+            {
+                selector.AddChoice(choice.elite, 1 / Mathf.Max(0.5f, choice.costMultiplier));
+            }
+
+            return selector;
+        }
+
         public static IEnumerable<EliteDef> GetEliteDefs(this CombatDirector combatDirector, SpawnCard spawnCard)
         {
             return EliteTiers.Instance.GetEliteTiers(combatDirector).Where(tier => tier.CanSelect(spawnCard.eliteRules)).SelectMany(tier => tier.eliteTypes.Where(elite => elite && elite.IsAvailable()));
@@ -288,7 +300,7 @@ namespace PactOfPunishment
 
             var damageModifier = body!.healthComponent.EnsureComponent<SourceBasedDamageModifier>();
             damageModifier.sourceMask = DamageSource.SkillMask | DamageSource.Equipment;
-            damageModifier.damageCoeficient = 0.75f;
+            damageModifier.damageCoeficient = 0.5f;
             damageModifier.enabled = true;
             body.healthComponent.AddOnIncomingDamageServerReceiver(damageModifier);
         }

@@ -14,6 +14,7 @@ namespace PactOfPunishment.Waves.Stage3
         {
             count = 1,
             spawnCard = this.childSpawnCard.Value,
+            spawnDistance = DirectorCore.MonsterSpawnDistance.Close
         };
 
         public override void SetupBossBody(CharacterBody body, Summoner2BossFightBehavior bossFightBehavior)
