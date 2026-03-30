@@ -21,7 +21,7 @@ namespace PactOfPunishment.Conditions
         {
             var run = Run.instance;
 
-            if (run.TryGetComponent<TightDeadlineBehavior>(out var behavior))
+            if (run && run.TryGetComponent<TightDeadlineBehavior>(out var behavior))
             {
                 behavior.Pause();
             }
@@ -31,7 +31,7 @@ namespace PactOfPunishment.Conditions
         {
             var run = Run.instance;
 
-            if (run.TryGetComponent<TightDeadlineBehavior>(out var behavior))
+            if (run && run.TryGetComponent<TightDeadlineBehavior>(out var behavior))
             {
                 behavior.Resume();
             }
