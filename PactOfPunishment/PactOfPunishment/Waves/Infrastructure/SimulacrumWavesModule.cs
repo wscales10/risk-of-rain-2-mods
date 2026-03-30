@@ -1,5 +1,6 @@
 ﻿using EntityStates.DefectiveUnit;
 using EntityStates.InfiniteTowerSafeWard;
+using EntityStates.RoboBallBoss.Weapon;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using PactOfPunishment.MonsterSpawnDistance;
@@ -45,6 +46,8 @@ namespace PactOfPunishment.Waves.Infrastructure
             On.RoR2.InfiniteTowerExplicitSpawnWaveController.OnTimerExpire += InfiniteTowerExplicitSpawnWaveController_OnTimerExpire;
             IL.RoR2.MusicController.PickCurrentTrack += Utils.HookIL(MusicController_PickCurrentTrack);
             On.RoR2.MusicController.UpdateTeleporterParameters += this.MusicController_UpdateTeleporterParameters;
+
+            IL.EntityStates.RoboBallBoss.Weapon.DeployMinions.SummonMinion += Utils.HookIL(DeployMinions_SummonMinion);
 
             On.EntityStates.Scorchling.ScorchlingBreach.OnEnter += this.ScorchlingBreach_OnEnter;
 
@@ -92,6 +95,27 @@ namespace PactOfPunishment.Waves.Infrastructure
             this.Cache.Add<BlazingElderLemurian>();
             this.Cache.Add<Gup>();
             this.Cache.Add<Invalidator>();
+        }
+
+        private static void DeployMinions_SummonMinion(ILCursor c)
+        {
+            int variableNumber = -1;
+            c.GotoNext(MoveType.AfterLabel,
+                x => x.MatchLdloc(out variableNumber),
+                x => x.MatchCallvirt<GameObject>(nameof(GameObject.AddComponent)),
+                x => x.MatchStloc(out _),
+                x => x.MatchLdloc(out _),
+                x => x.MatchNewobj<UnityEvent>(),
+                x => x.MatchStfld<Deployable>(nameof(Deployable.onUndeploy)));
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc_S, (byte)variableNumber);
+            c.EmitDelegate<Action<DeployMinions, GameObject>>((self, gameObject) =>
+            {
+                if (self.characterBody.TryGetComponent<SolusControlUnitMiniBossInfo.SolusControlUnitBodyBehavior>(out var behavior))
+                {
+                    behavior.TrySetupProbe(gameObject);
+                }
+            });
         }
 
         private static ItemDef AddItem(ItemTier tier, string name, Action<ItemDef>? setup = null)
