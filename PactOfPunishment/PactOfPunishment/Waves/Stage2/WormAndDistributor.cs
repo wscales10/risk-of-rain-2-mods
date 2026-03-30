@@ -3,7 +3,6 @@ using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using R2API;
 using RoR2;
-using System;
 using UnityEngine;
 using static RoR2.InfiniteTowerExplicitSpawnWaveController;
 
@@ -42,6 +41,12 @@ namespace PactOfPunishment.Waves.Stage2
                     {
                         // Extend breach distance
                         skillDriver.maxDistance = 5;
+                    }
+
+                    foreach (var skillDriver in ai.GetSkillDrivers("ChaseOffNodegraph"))
+                    {
+                        // Sprint more
+                        skillDriver.shouldSprint = true;
                     }
                 }
 
