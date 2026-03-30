@@ -34,7 +34,10 @@ namespace PactOfPunishment
         {
             if (orig(self, spawnTarget, placementMode))
             {
-                this.Logger.LogDebug($"Successful Combat Director spawn attempt {Run.instance.GetRunStopwatch()}s into the run.");
+                if (CombatDirector.cvDirectorCombatEnableInternalLogs.value)
+                {
+                    this.Logger.LogDebug($"Successful Combat Director spawn attempt {Run.instance.GetRunStopwatch()}s into the run.");
+                }
 
                 if (self.TryGetComponent<SimulacrumCombatDirectorSpawnRateMultiplier>(out var behavior))
                 {

@@ -12,11 +12,11 @@ namespace PactOfPunishment.Waves.Common
         [SerializeField]
         private PortableMiniBossInfo[]? miniBosses;
 
-        public void SetMiniBosses(PortableMiniBossInfo<T>[]? value) => this.miniBosses = value;
-
         public event Action<bool>? OnSetEnabled;
 
         protected bool CustomEnabled { get; private set; }
+
+        public void SetMiniBosses(PortableMiniBossInfo<T>[]? value) => this.miniBosses = value;
 
         public override void Awake()
         {

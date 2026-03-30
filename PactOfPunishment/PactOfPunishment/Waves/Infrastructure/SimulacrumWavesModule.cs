@@ -287,6 +287,25 @@ namespace PactOfPunishment.Waves.Infrastructure
             return !run.waveController.haveAllEnemiesBeenDefeated;
         }
 
+        private static void MusicController_PickCurrentTrack(ILCursor c)
+        {
+            c.GotoNext(MoveType.AfterLabel,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<MusicController>(nameof(MusicController.enableMusicSystem)),
+                x => x.MatchBrfalse(out _));
+            c.Emit(OpCodes.Ldloc_1);
+            c.EmitDelegate<Func<bool, bool>>(orig =>
+            {
+                if (orig)
+                {
+                    return true;
+                }
+
+                return IsSimulacrumBossAlive() != null; // TODO: use override behavior instead and choose boss tracks more carefully?
+            });
+            c.Emit(OpCodes.Stloc_1);
+        }
+
         private void ScorchlingBreach_OnEnter(On.EntityStates.Scorchling.ScorchlingBreach.orig_OnEnter orig, EntityStates.Scorchling.ScorchlingBreach self)
         {
             if (self.GetComponent<WormAndDistributor.WormMiniBossInfo.WormBossBodyBehavior>())
@@ -306,25 +325,6 @@ namespace PactOfPunishment.Waves.Infrastructure
             {
                 self.stBossStatus.valueId = CommonWwiseIds.dead;
             }
-        }
-
-        private static void MusicController_PickCurrentTrack(ILCursor c)
-        {
-            c.GotoNext(MoveType.AfterLabel,
-                x => x.MatchLdarg(0),
-                x => x.MatchLdfld<MusicController>(nameof(MusicController.enableMusicSystem)),
-                x => x.MatchBrfalse(out _));
-            c.Emit(OpCodes.Ldloc_1);
-            c.EmitDelegate<Func<bool, bool>>(orig =>
-            {
-                if (orig)
-                {
-                    return true;
-                }
-
-                return IsSimulacrumBossAlive() != null; // TODO: use override behavior instead and choose boss tracks more carefully?
-            });
-            c.Emit(OpCodes.Stloc_1);
         }
     }
 }

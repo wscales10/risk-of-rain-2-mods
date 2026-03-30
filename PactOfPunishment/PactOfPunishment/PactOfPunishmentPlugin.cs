@@ -72,6 +72,8 @@ namespace PactOfPunishment
             Content.StatDefs.PerBodyHeatEasy = PerBodyStatDef.Register("heatHard", StatRecordType.Max, StatDataType.ULong);
             On.RoR2.UI.GameEndReportPanelController.Awake += this.GameEndReportPanelController_Awake;
             On.RoR2.UI.LanguageTextMeshController.UpdateLabel += this.LanguageTextMeshController_UpdateLabel;
+
+            Utils.OnLoad<GameObject>("RoR2/DLC3/Tanker/TankerBody.prefab", gameObject => gameObject.GetComponent<CharacterBody>().baseMoveSpeed = 13);
         }
 
         public void Update()

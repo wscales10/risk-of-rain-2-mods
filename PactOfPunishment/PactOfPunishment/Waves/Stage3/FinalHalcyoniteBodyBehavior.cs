@@ -9,11 +9,13 @@ using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage3
 {
-    public class FinalHalcyoniteBodyBehavior : HalcyoniteBodyBehavior
+    public class FinalHalcyoniteBodyBehavior : HalcyoniteBodyBehavior, ILifeBehavior
     {
         private static AssetPromise<SkillDef> upgradedLaserSkillDef;
 
         private TriLaserModule.TriLaserStats triLaserModifier;
+
+        private EntityStateMachine stateMachine;
 
         public enum State
         {
@@ -58,6 +60,11 @@ namespace PactOfPunishment.Waves.Stage3
             RecalculateStats.Remove(this.Body, this.OnRecalculateStats);
         }
 
+        public void OnDeathStart()
+        {
+            Debug.Log($"Final Halcyonite body dying in state '{this.stateMachine?.state?.GetType().Name}'");
+        }
+
         internal static void SetupSkillDef()
         {
             upgradedLaserSkillDef = Utils.BeginLoadAndTransform<SkillDef, SkillDef>("RoR2/DLC2/Halcyonite/HalcyoniteMonsterTriLaser.asset", x =>
@@ -76,11 +83,10 @@ namespace PactOfPunishment.Waves.Stage3
             this.Body.DisableStunsEtc();
             this.triLaserModifier = this.EnsureComponent<TriLaserModule.StateModifier>().Stats;
 
-            var stateMachine = this.gameObject.AddComponent<EntityStateMachine>();
-            stateMachine.customName = "BossBody";
-            this.Body?.healthComponent.ForwardBossDamageTo(stateMachine);
-            stateMachine.SetState(new FinalHalcyoniteStates.Phase1());
-            // TODO: Finish implementing this class
+            this.stateMachine = this.gameObject.AddComponent<EntityStateMachine>();
+            this.stateMachine.customName = "BossBody";
+            this.Body?.healthComponent.ForwardBossDamageTo(this.stateMachine);
+            this.stateMachine.SetState(new FinalHalcyoniteStates.Phase1());
         }
 
         private void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)

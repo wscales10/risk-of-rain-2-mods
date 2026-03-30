@@ -18,7 +18,7 @@
 		<PackageReference Include="R2API.Items" Version="1.0.8" />
 		<PackageReference Include="R2API.Language" Version="1.1.0" />
 		<PackageReference Include="R2API.Prefab" Version="1.1.1" />
-		<PackageReference Include="R2API.RecalculateStats" Version="1.6.5" />
+		<PackageReference Include="R2API.RecalculateStats" Version="1.6.6" />
 		<PackageReference Include="RiskOfRain2.GameLibs" Version="1.4.1-r.0" />
 	</ItemGroup>
 
