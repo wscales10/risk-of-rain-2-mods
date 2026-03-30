@@ -10,6 +10,7 @@ using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3;
 using PactOfPunishment.Waves.Stage2;
 using PactOfPunishment.Waves.Stage3;
 using PactOfPunishment.Waves.Stage4;
+using R2API;
 using RoR2;
 using RoR2.Projectile;
 using RoR2.WwiseUtils;
@@ -49,6 +50,12 @@ namespace PactOfPunishment.Waves.Infrastructure
             Content.Elites.NerfedPoison = Projectilers.AllMalachiteWaveStrategy.MakeEliteDef();
             Content.EliteTiers.NerfedPoisonTier = Projectilers.AllMalachiteWaveStrategy.MakeEliteTierDef();
             Content.MonsterSpawnDistances.WithinZone = MonsterSpawnDistanceApi.RegisterMonsterSpawnDistance(() => (8, 55)); // TODO: add ModdedMonsterSpawnDistance class and get distance based on (maximum) zone radius?
+            Content.Items.ChiefBossMarker = AddItem(ItemTier.NoTier, nameof(Content.Items.ChiefBossMarker), item =>
+            {
+                item.hidden = true;
+                item.canRemove = false;
+                item.tags = new ItemTag[] { ItemTag.CannotSteal, ItemTag.HiddenForDroneBuffIcon };
+            });
 
             Summoner2BossFightBehavior.eggSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Junk/Incubator/cscParentPod.asset"); // TODO: move to its own module?
             Summoner2BossFightBehavior.parentSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/Parent/cscParent.asset"); // TODO: hook global spawn card event instead and get spawn card from spawn request
@@ -83,6 +90,33 @@ namespace PactOfPunishment.Waves.Infrastructure
             this.Cache.Add<BlazingElderLemurian>();
             this.Cache.Add<Gup>();
             this.Cache.Add<Invalidator>();
+        }
+
+        private static ItemDef AddItem(ItemTier tier, string name, Action<ItemDef>? setup = null)
+        {
+            var customItem = new CustomItem(
+                name,
+                $"ITEM_{name.ToUpperInvariant()}_NAME",
+                $"ITEM_{name.ToUpperInvariant()}_DESC",
+                $"ITEM_{name.ToUpperInvariant()}_LORE",
+                $"ITEM_{name.ToUpperInvariant()}_PICKUP",
+                null,
+                null,
+                Array.Empty<ItemTag>(),
+                tier,
+                false,
+                true,
+                null,
+                null);
+            customItem.ItemDef.deprecatedTier = tier; // Have to set this for untiered items, and seems sensible to set it for all. I guess I could fix the bug that causes it to be required...
+            setup?.Invoke(customItem.ItemDef!);
+
+            if (!ItemAPI.Add(customItem))
+            {
+                throw new InvalidOperationException();
+            }
+
+            return customItem.ItemDef!;
         }
 
         private static void DenialProjectile_FireProjectile(ILCursor c)

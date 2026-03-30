@@ -53,7 +53,7 @@ namespace PactOfPunishment.Waves.Common
 
             if (!(miniBossInfo is null))
             {
-                body.EnsureComponent<ChiefBossMarker>();
+                body.EnsureHasItem(Content.Items.ChiefBossMarker);
                 miniBossInfo?.SetupBossBody(body, this);
                 this.Enable();
             }

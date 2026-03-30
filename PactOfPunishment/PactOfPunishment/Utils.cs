@@ -715,6 +715,16 @@ namespace PactOfPunishment
             dir.EnsureComponent<DisableWhileSquadFullBehavior>();
         }
 
+        public static void EnsureHasItem(this CharacterBody body, ItemDef itemDef)
+        {
+            int count = (body.inventory ??= body.master.inventory).GetItemCountPermanent(itemDef);
+
+            if (count < 1)
+            {
+                body.inventory.GiveItemPermanent(itemDef, 1 - count);
+            }
+        }
+
         private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this CharacterMaster master, Func<AISkillDriver, bool> predicate)
         {
             return master?.AiComponents?.SelectMany(x => x.GetSkillDriversInternal(predicate)) ?? Enumerable.Empty<AISkillDriver>();

@@ -23,9 +23,7 @@ namespace PactOfPunishment.Waves.Stage4
         public override void Awake()
         {
             base.Awake();
-
-            // TODO: what about geeps and gips spawned from gups?
-            Utils.DoSomethingWhenLastMainSquadMemberDies(this.CombatDirector.combatSquad, x => x.GetBody()?.GetComponent<ChiefBossMarker>(), callback: (_, __) => this.CombatDirector.enabled = false);
+            Utils.DoSomethingWhenLastMainSquadMemberDies(this.CombatDirector.combatSquad, x => x.GetBody()?.inventory?.GetItemCountPermanent(Content.Items.ChiefBossMarker) > 0, callback: (_, __) => this.CombatDirector.enabled = false);
         }
 
         protected override void OnBossSpawnedServer(CharacterBody body)
@@ -47,7 +45,7 @@ namespace PactOfPunishment.Waves.Stage4
 
         private void OnMainBossSpawnedServer(CharacterBody body)
         {
-            body.EnsureComponent<ChiefBossMarker>();
+            body.EnsureHasItem(Content.Items.ChiefBossMarker);
             body.master.ScaleDifficultyAsBoss();
             body.DisableStunsEtc();
             body.ResistNonTargetedDamage();

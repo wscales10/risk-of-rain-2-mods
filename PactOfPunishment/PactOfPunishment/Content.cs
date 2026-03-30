@@ -45,5 +45,10 @@ namespace PactOfPunishment
         {
             public static DirectorCore.MonsterSpawnDistance WithinZone;
         }
+
+        public static class Items
+        {
+            public static ItemDef ChiefBossMarker;
+        }
     }
 }
