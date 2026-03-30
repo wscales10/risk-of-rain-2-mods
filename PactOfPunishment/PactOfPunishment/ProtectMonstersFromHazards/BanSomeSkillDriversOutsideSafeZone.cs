@@ -6,7 +6,7 @@ namespace PactOfPunishment.ProtectMonstersFromHazards
     {
         public override void Init()
         {
-            // On.RoR2.CharacterAI.BaseAI.EvaluateSingleSkillDriver += this.BaseAI_EvaluateSingleSkillDriver;
+            On.RoR2.CharacterAI.BaseAI.EvaluateSingleSkillDriver += this.BaseAI_EvaluateSingleSkillDriver;
         }
 
         private BaseAI.SkillDriverEvaluation? BaseAI_EvaluateSingleSkillDriver(On.RoR2.CharacterAI.BaseAI.orig_EvaluateSingleSkillDriver orig, BaseAI self, ref BaseAI.SkillDriverEvaluation currentSkillDriverEvaluation, AISkillDriver aiSkillDriver, float myHealthFraction)
