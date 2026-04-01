@@ -80,7 +80,7 @@ namespace PactOfPunishment
 
             if (self.combatSquad && self.combatSquad.memberCount == 0)
             {
-                behavior.CreditGainRateMultiplier = 1 / Mathf.Max(1, originalSpawnInterval / 0.5f);
+                behavior.CreditGainRateMultiplier = Mathf.Max(1, originalSpawnInterval / 0.5f);
             }
             else
             {
@@ -113,7 +113,7 @@ namespace PactOfPunishment
 
             public float CreditGainRateMultiplier = 1;
 
-            public float SpawnAttemptIntervalMultiplier => this.CreditGainRateMultiplier * this.CreditsPerAttemptMultiplier * this.WavePeriodSecondsMultiplier / this.TotalWaveCreditsMultiplier;
+            public float SpawnAttemptIntervalMultiplier => this.CreditsPerAttemptMultiplier * this.WavePeriodSecondsMultiplier / (this.TotalWaveCreditsMultiplier * this.CreditGainRateMultiplier);
         }
     }
 }
