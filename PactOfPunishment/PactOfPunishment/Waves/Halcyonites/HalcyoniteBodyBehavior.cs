@@ -3,6 +3,7 @@ using HG;
 using PactOfPunishment.Waves.Common;
 using RoR2;
 using RoR2.CharacterAI;
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -14,14 +15,20 @@ namespace PactOfPunishment.Waves.Halcyonites
 
         public EntityStateMachine? WeaponStateMachine { get; private set; }
 
+        public EntityStateMachine BossStateMachine { get; private set; }
+
         protected override void Awake()
         {
             base.Awake();
             this.fallRiskMitigator = this.EnsureComponent<FallRiskMitigator>();
             this.fallRiskMitigator.CurrentMode = FallRiskMitigator.Mode.Halcyonite;
             this.WeaponStateMachine = EntityStateMachine.FindByCustomName(this.gameObject, "Weapon");
-            this.EnsureComponent<WhirlWindModule.UseAirNodes>();
+            this.EnsureComponent<WhirlWindModule.UseAirNodesController>();
             this.EnsureComponent<WhirlWindModule.OverrideGetTarget>();
+            this.SetupBossAi();
+            this.BossStateMachine = this.gameObject.AddComponent<EntityStateMachine>();
+            this.BossStateMachine.customName = "BossBody";
+            this.Body.healthComponent.ForwardBossDamageTo(this.BossStateMachine);
         }
 
         protected override void ManagedFixedUpdate(float deltaTime)
@@ -46,15 +53,69 @@ namespace PactOfPunishment.Waves.Halcyonites
                         break;
 
                     default:
-                        utilitySkill.stock = utilitySkill.skillDef.requiredStock;
+                        this.WeaponStateMachine?.SetInterruptState(Utils.InstantiateState<WhirlwindWarmUp>(), EntityStates.InterruptPriority.PrioritySkill);
+                        /*utilitySkill.stock = utilitySkill.skillDef.requiredStock;
 
                         foreach (var ai in this.Body?.master?.AiComponents ?? Enumerable.Empty<BaseAI>())
                         {
                             ai.skillDriverUpdateTimer = Mathf.Min(ai.skillDriverUpdateTimer, 0.15f);
-                        }
+                        }*/
 
                         break;
                 }
+            }
+        }
+
+        protected virtual void SetupThrustSkillDriver(AISkillDriver skillDriver)
+        {
+        }
+
+        protected virtual void SetupLaserSkillDriver(AISkillDriver skillDriver)
+        {
+        }
+
+        protected virtual void SetupWhirlWindSkillDriver(AISkillDriver whirlwindSkillDriver)
+        {
+            // Increase max activation distance of whirlwind, so the Halcyonite doesn't get stuck if
+            // far from the NodeGraph.
+            whirlwindSkillDriver.maxDistance = float.MaxValue;
+            whirlwindSkillDriver.activationRequiresAimConfirmation = false;
+            whirlwindSkillDriver.selectionRequiresTargetLoS = false;
+            whirlwindSkillDriver.activationRequiresTargetLoS = false;
+
+            // Disable this behavior if new skill is active
+            whirlwindSkillDriver.requiredSkill = HalcyoniteModule.WhirlwindSkillDef; // TODO: check this, maybe loading asset is not the correct way.
+        }
+
+        protected virtual void SetupBossAi(BaseAI ai)
+        {
+            ai.prioritizePlayers = true;
+            ai.fullVision = true;
+            ai.xrayVision = true;
+
+            foreach (var skillDriver in ai.GetSkillDrivers("Golden Swipe"))
+            {
+                this.SetupThrustSkillDriver(skillDriver);
+            }
+
+            foreach (var skillDriver in ai.GetSkillDrivers("TriLaser"))
+            {
+                this.SetupLaserSkillDriver(skillDriver);
+            }
+
+            int index = Array.FindIndex(ai.skillDrivers, x => x.customName == "WhirlwindRush");
+
+            if (index != -1)
+            {
+                this.SetupWhirlWindSkillDriver(ai.skillDrivers[index]);
+            }
+        }
+
+        protected void SetupBossAi()
+        {
+            foreach (var ai in this.Body.master.AiComponents.Where(x => x))
+            {
+                this.SetupBossAi(ai);
             }
         }
     }

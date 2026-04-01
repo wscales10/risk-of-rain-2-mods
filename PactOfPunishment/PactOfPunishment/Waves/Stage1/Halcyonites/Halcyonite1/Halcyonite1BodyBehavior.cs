@@ -1,13 +1,14 @@
 ﻿using EntityStates;
 using HG;
-using PactOfPunishment.Waves.Halcyonites;
 using R2API;
 using RoR2;
+using RoR2.CharacterAI;
+using System;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
 {
-    public class Halcyonite1BodyBehavior : HalcyoniteBodyBehavior, IModifyOverlapAttack // TODO: do these classes this live on both client and server, or just server? Should there be checks for NetworkServer.active? Is using properties instead of fields okay? Should it be a NetworkBehavior? Same question applies to many of my behaviors.
+    public class Halcyonite1BodyBehavior : Stage1HalcyoniteBodyBehavior, IModifyOverlapAttack // TODO: do these classes this live on both client and server, or just server? Should there be checks for NetworkServer.active? Is using properties instead of fields okay? Should it be a NetworkBehavior? Same question applies to many of my behaviors.
     {
         public bool laserFirst;
 
@@ -17,6 +18,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
 
         public static void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)
         {
+            args.secondarySkill.bonusStockAdd += 2;
             args.attackSpeedTotalMult *= 0.5f;
             args.primarySkill.cooldownMultiplier *= 0.5f;
             args.specialSkill.cooldownMultiplier *= 4 / 3f;
@@ -48,11 +50,23 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
         protected override void Awake()
         {
             base.Awake();
+            this.Body.ScaleDifficultyAsBoss(0.65f, 65f, true, false); // TODO: rethink the way I'm scaling enemies, I need one or more helper methods which easily allow me to correctly scale enemy health, damage and most importantly, rewards. Also note that the combat squads scale enemy health for multiplayer by default, so at the moment I'm overscaling.
             this.EnsureComponent<HalcyoniteThrustBehavior>().getDesiredDistance = () => 16;
-            var stateMachine = this.gameObject.AddComponent<EntityStateMachine>();
-            stateMachine.customName = "BossBody";
-            this.Body?.healthComponent.ForwardBossDamageTo(stateMachine);
-            stateMachine.SetState(new Halcyonite1States.Phase1());
+            this.Body.DisableStunsEtc();
+        }
+
+        protected override void SetupBossAi(BaseAI ai)
+        {
+            base.SetupBossAi(ai);
+
+            ai.aimVectorMaxSpeed = 720f; // Turn twice as fast
+
+            int index = Array.FindIndex(ai.skillDrivers, x => x.customName == "WhirlwindRush");
+
+            if (index != -1)
+            {
+                CustomWeaponStates.CrossedFistsSkillState.customSkill.InsertSkillDriver(ai, index);
+            }
         }
     }
 }

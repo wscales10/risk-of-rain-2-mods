@@ -4,14 +4,14 @@ using HG;
 using PactOfPunishment.Waves.Halcyonites;
 using R2API;
 using RoR2;
+using RoR2.CharacterAI;
+using System;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3
 {
-    public class Halcyonite3BodyBehavior : HalcyoniteBodyBehavior, IModifyOverlapAttack
+    public class Halcyonite3BodyBehavior : Stage1HalcyoniteBodyBehavior, IModifyOverlapAttack
     {
-        public GameObject? DustCenterPrefab;
-
         public Xoroshiro128Plus? rng;
 
         public bool isBurstLaserEnabled;
@@ -89,23 +89,6 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3
             }
         }
 
-        protected override void Awake()
-        {
-            base.Awake();
-            this.Body.skillLocator.primary.cooldownOverride = 12;
-            RecalculateStats.SetMinimumInterruptPriorityOverride(this.WeaponStateMachine, typeof(GoldenSwipe), _ => InterruptPriority.PrioritySkill);
-            RecalculateStats.SetMinimumInterruptPriorityOverride(this.WeaponStateMachine, typeof(GoldenSlash), _ => InterruptPriority.PrioritySkill);
-            RecalculateStats.SetMinimumInterruptPriorityOverride(this.WeaponStateMachine, typeof(EntityStates.ImpBossMonster.BlinkState), _ => InterruptPriority.Death);
-            this.EnsureComponent<HalcyoniteThrustBehavior>();
-            this.laserModifier = this.Body.EnsureComponent<TriLaserModule.StateModifier>().Stats;
-            this.laserModifier.BaseTotalTimesToFire = 1;
-
-            var stateMachine = this.gameObject.AddComponent<EntityStateMachine>();
-            stateMachine.customName = "BossBody";
-            this.Body?.healthComponent.ForwardBossDamageTo(stateMachine);
-            stateMachine.SetState(new Halcyonite3States.Phase1());
-        }
-
         public void OnEnable()
         {
             this.Body.onSkillActivatedAuthority += this.Body_onSkillActivatedAuthority;
@@ -128,6 +111,41 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3
                 state.overlapAttack.forceVector = Vector3.up * state.overlapAttack.forceVector.y;
                 state.overlapAttack.pushAwayForce *= meleeAttackPushAwayForceMultiplier;
             }
+        }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            this.Body.ScaleDifficultyAsBoss(0.54f, 65f, true, false); // TODO: rethink the way I'm scaling enemies, I need one or more helper methods which easily allow me to correctly scale enemy health, damage and most importantly, rewards. Also note that the combat squads scale enemy health for multiplayer by default, so at the moment I'm overscaling.
+            this.Body.MakeUnscaledEliteUsingEquipment(DLC1Content.Elites.Earth);
+            this.Body.DisableStunsEtc();
+            this.Body.skillLocator.primary.cooldownOverride = 12;
+            RecalculateStats.SetMinimumInterruptPriorityOverride(this.WeaponStateMachine, typeof(GoldenSwipe), _ => InterruptPriority.PrioritySkill);
+            RecalculateStats.SetMinimumInterruptPriorityOverride(this.WeaponStateMachine, typeof(GoldenSlash), _ => InterruptPriority.PrioritySkill);
+            RecalculateStats.SetMinimumInterruptPriorityOverride(this.WeaponStateMachine, typeof(EntityStates.ImpBossMonster.BlinkState), _ => InterruptPriority.Death);
+            this.EnsureComponent<HalcyoniteThrustBehavior>();
+            this.laserModifier = this.Body.EnsureComponent<TriLaserModule.StateModifier>().Stats;
+            this.laserModifier.BaseTotalTimesToFire = 1;
+        }
+
+        protected override void SetupBossAi(BaseAI ai)
+        {
+            base.SetupBossAi(ai);
+
+            ai.RemoveSkillDriversWhere(x => x.customName == "Golden Slash");
+
+            int index = Array.FindIndex(ai.skillDrivers, x => x.customName == "WhirlwindRush");
+
+            if (index != -1)
+            {
+                CustomWeaponStates.LineOfFistsSkillState.customSkill.InsertSkillDriver(ai, index);
+            }
+        }
+
+        protected override void SetupThrustSkillDriver(AISkillDriver skillDriver)
+        {
+            base.SetupThrustSkillDriver(skillDriver);
+            skillDriver.minDistance = 0;
         }
 
         // Executes before the state changes

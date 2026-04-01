@@ -271,6 +271,11 @@ namespace PactOfPunishment
             body.EnsureComponent<MultiplyDamageBehavior>().Multipliers[source] = multiplier;
         }
 
+        public static void ScaleCooldowns(this CharacterBody body, object source, float multiplier)
+        {
+            body.EnsureComponent<MultiplySkillCooldownsBehavior>().Multipliers[source] = multiplier;
+        }
+
         public static void MakeBodySemiImmortal(CharacterBody? body)
         {
             if (!body)
@@ -707,14 +712,22 @@ namespace PactOfPunishment
             }
         }
 
-        public static void SetupCombatDirectorPrefabForAddsSpawning(this CombatDirector dir, DirectorCardCategorySelection monsterCards, uint maxSquadCount, float spawnFrequency, float spawnFrequencyVariation, float expectedDifficultyCoefficient)
+        public static void SetupCombatDirectorPrefabForAddsSpawning(this CombatDirector dir, AddsSpawningArgs args)
         {
-            dir._monsterCards = monsterCards;
-            dir.maxSquadCount = maxSquadCount;
+            if (args.MonsterCards)
+            {
+                dir._monsterCards = args.MonsterCards;
+            }
+            else
+            {
+                Debug.LogWarning($"No monster cards provided for adds spawning, using default ones. This may cause issues if the default monster cards are not suitable for the intended use.");
+            }
+
+            dir.maxSquadCount = args.MaxSquadCount;
             dir.minRerollSpawnInterval = 0.5f;
             dir.maxRerollSpawnInterval = 0.5f;
-            dir.minSeriesSpawnInterval = spawnFrequency - spawnFrequencyVariation;
-            dir.maxSeriesSpawnInterval = spawnFrequency + spawnFrequencyVariation;
+            dir.minSeriesSpawnInterval = args.SpawnFrequency - args.SpawnFrequencyVariation;
+            dir.maxSeriesSpawnInterval = args.SpawnFrequency + args.SpawnFrequencyVariation;
             dir.moneyWaveIntervals = new RangeFloat[]
             {
                 new RangeFloat
@@ -723,8 +736,16 @@ namespace PactOfPunishment
                     max = 1
                 }
             };
-            dir.creditMultiplier = monsterCards.categories.SelectMany(x => x.cards).Max(x => x.cost) / (1 + .4f * expectedDifficultyCoefficient) / spawnFrequency;
+
+            dir.creditMultiplier = dir._monsterCards!.categories.SelectMany(x => x.cards).Max(x => x.cost) / (1 + .4f * args.ExpectedDifficultyCoefficient) / args.SpawnFrequency;
             dir.EnsureComponent<DisableWhileSquadFullBehavior>();
+
+            float startDelay = args.InitialSpawnDelay - args.SpawnFrequency;
+
+            if (startDelay > 0)
+            {
+                dir.gameObject.AddComponent<CombatDirectorInitialDelay>().StartDelay = startDelay;
+            }
         }
 
         public static void EnsureHasItem(this CharacterBody body, ItemDef itemDef)
@@ -745,6 +766,32 @@ namespace PactOfPunishment
         private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this BaseAI ai, Func<AISkillDriver, bool> predicate)
         {
             return ai.skillDrivers.Where(predicate);
+        }
+
+        public static void FastTrackCombatDirectorCredits(CombatDirector? combatDirector)
+        {
+            if (!combatDirector)
+            {
+                return;
+            }
+
+            if (combatDirector!.TryGetComponent<CombatDirectorInitialDelay>(out var behavior))
+            {
+                behavior.Skip();
+            }
+
+            var monsterCard = combatDirector.lastAttemptedMonsterCard;
+
+            if (combatDirector.monsterCredit < monsterCard?.cost)
+            {
+                combatDirector.monsterCredit = monsterCard.cost;
+            }
+        }
+
+        public static void MakeGhost(this CharacterBody body)
+        {
+            (body.inventory ??= body.master.inventory).GiveItemPermanent(RoR2Content.Items.Ghost);
+            body.AddBuff(DLC2Content.Buffs.HiddenRejectAllDamage);
         }
     }
 }

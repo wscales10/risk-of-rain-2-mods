@@ -25,7 +25,16 @@ namespace PactOfPunishment.Waves.Stage4
             };
 
             wavePrefab.EnsureComponent<KeepCombatDirectorEnabledBehavior>();
-            dir.SetupCombatDirectorPrefabForAddsSpawning(this.GetAddsMonsterCards(Stage4AddsSpawnCards.Instance), this.BaseMaxSquadCount, this.AddSpawnInterval, this.AddSpawnInterval / 5, 15.6152565f);
+
+            dir.SetupCombatDirectorPrefabForAddsSpawning(new AddsSpawningArgs
+            {
+                MonsterCards = this.GetAddsMonsterCards(Stage4AddsSpawnCards.Instance),
+                MaxSquadCount = this.BaseMaxSquadCount,
+                SpawnFrequency = this.AddSpawnInterval,
+                SpawnFrequencyVariation = this.AddSpawnInterval / 5,
+                ExpectedDifficultyCoefficient = 15.6152565f
+            }); 
+            
             dir.EnsureComponent<Stage4MiniBossFightBehavior>();
         }
 

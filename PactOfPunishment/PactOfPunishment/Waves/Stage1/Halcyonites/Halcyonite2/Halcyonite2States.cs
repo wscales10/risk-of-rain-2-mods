@@ -1,5 +1,5 @@
-﻿using PactOfPunishment.Waves.Halcyonites;
-using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1;
+﻿using EntityStates;
+using PactOfPunishment.Waves.Halcyonites;
 using RoR2;
 using UnityEngine;
 
@@ -7,6 +7,22 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
 {
     public static class Halcyonite2States
     {
+        public class Support : EntityState
+        {
+            public override void OnEnter()
+            {
+                base.OnEnter();
+                var bodyBehavior = this.GetComponent<Halcyonite2BodyBehavior>();
+                bodyBehavior.CanUseNewSkill = false;
+                bodyBehavior.SpawnPillars = true;
+                bodyBehavior.powerMeter.Persistent = true;
+
+                // TODO: what to do about power meter?
+
+                this.DisableSkill(this.characterBody, SkillSlot.Special);
+            }
+        }
+
         public class Phase1 : PhaseState
         {
             public override float PhaseEndHealthThreshold => 0.75f;
@@ -97,26 +113,11 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
             public override void OnEnter()
             {
                 base.OnEnter();
-                FastTrackCombatDirectorCredits(this.GetComponent<Halcyonite2BodyBehavior>().CombatDirector);
+                Utils.FastTrackCombatDirectorCredits(this.GetComponent<Halcyonite2BodyBehavior>().CombatDirector);
 
                 if (this.isLast)
                 {
                     this.GetComponent<Halcyonite2BodyBehavior>().powerMeter.Persistent = true;
-                }
-            }
-
-            private static void FastTrackCombatDirectorCredits(CombatDirector? combatDirector)
-            {
-                if (!combatDirector)
-                {
-                    return;
-                }
-
-                var monsterCard = combatDirector!.lastAttemptedMonsterCard;
-
-                if (combatDirector.monsterCredit < monsterCard?.cost)
-                {
-                    combatDirector.monsterCredit = monsterCard.cost;
                 }
             }
         }

@@ -160,8 +160,9 @@ namespace PactOfPunishment.Waves.Infrastructure
                 x => x.MatchBrtrue(out label)
             );
 
+            c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Ldloc_S, (byte)localVariableNumber);
-            c.EmitDelegate<Func<HurtBox, bool>>(hurtBox => hurtBox.healthComponent.body.GetComponent<Summoner2.Summoner2BossBodyBehavior>());
+            c.EmitDelegate<Func<HealNearbyController, HurtBox, bool>>((self, hurtBox) => hurtBox.healthComponent.body.GetComponent<Summoner2.Summoner2BossBodyBehavior>() || self.networkedBodyAttachment?.attachedBody?.GetComponent<Halcyonite3BodyBehavior>());
             c.Emit(OpCodes.Brtrue_S, label);
         }
 

@@ -80,13 +80,10 @@ namespace PactOfPunishment.Waves.Stage3
         protected override void Awake()
         {
             base.Awake();
+            this.Body.ScaleDifficultyAsBoss(2, 15, true, false);
+            this.Body.inventory.GiveItemPermanent(RoR2Content.Items.AdaptiveArmor);
             this.Body.DisableStunsEtc();
             this.triLaserModifier = this.EnsureComponent<TriLaserModule.StateModifier>().Stats;
-
-            this.stateMachine = this.gameObject.AddComponent<EntityStateMachine>();
-            this.stateMachine.customName = "BossBody";
-            this.Body?.healthComponent.ForwardBossDamageTo(this.stateMachine);
-            this.stateMachine.SetState(new FinalHalcyoniteStates.Phase1());
         }
 
         private void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)

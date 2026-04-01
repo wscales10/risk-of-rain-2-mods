@@ -3,6 +3,7 @@ using HG;
 using PactOfPunishment.Waves.Halcyonites;
 using R2API;
 using RoR2;
+using RoR2.CharacterAI;
 using RoR2.Projectile;
 using System;
 using UnityEngine;
@@ -62,7 +63,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         }
     }
 
-    public class Halcyonite2BodyBehavior : HalcyoniteBodyBehavior
+    public class Halcyonite2BodyBehavior : Stage1HalcyoniteBodyBehavior
     {
         public static GameObject PillarPrefab;
 
@@ -112,6 +113,8 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         protected override void Awake()
         {
             base.Awake();
+            this.Body.ScaleDifficultyAsBoss(0.62f, 65f, true, false);
+            this.Body.DisableStunsEtc();
             this.powerMeter.IsPoweredChanged += this.PowerMeter_IsPoweredChanged;
             this.Body.skillLocator.primary.cooldownOverride = 6;
             this.Body.skillLocator.secondary.cooldownOverride = 12;
@@ -128,11 +131,6 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
 
             this.newSkill = this.gameObject.AddComponent<GenericSkill>();
             this.defaultUtilitySkill = this.Body.skillLocator.utility;
-
-            var stateMachine = this.gameObject.AddComponent<EntityStateMachine>();
-            stateMachine.customName = "BossBody";
-            this.Body.healthComponent.ForwardBossDamageTo(stateMachine);
-            stateMachine.SetState(new Halcyonite2States.Phase1());
         }
 
         protected override void ManagedFixedUpdate(float deltaTime)
@@ -140,6 +138,26 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
             base.ManagedFixedUpdate(deltaTime);
             var state = this.WeaponStateMachine?.state;
             this.powerMeter.FixedUpdate(deltaTime, state is TriLaser);
+        }
+
+        protected override void SetupBossAi(BaseAI ai)
+        {
+            base.SetupBossAi(ai);
+
+            CustomWeaponStates.RepeatingFistSkillState.customSkill.InsertSkillDriver(ai, Array.FindIndex(ai.skillDrivers, sd => sd.skillSlot == SkillSlot.Primary) + 1);
+
+            foreach (var skillDriver in ai.GetSkillDrivers("Follow Target"))
+            {
+                skillDriver.shouldSprint = true;
+            }
+        }
+
+        protected override void SetupLaserSkillDriver(AISkillDriver skillDriver)
+        {
+            base.SetupLaserSkillDriver(skillDriver);
+            skillDriver.movementType = AISkillDriver.MovementType.Stop;
+            skillDriver.moveInputScale = 0;
+            skillDriver.requiredSkill = HalcyoniteModule.LaserSkillDef.Value;
         }
 
         private void ThrustBehavior_OnThrust()

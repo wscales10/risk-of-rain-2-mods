@@ -124,7 +124,7 @@ namespace PactOfPunishment.Waves.FinalStage
                 this.predictiveDashController.GetDashTargetPositionFromPredictedPosition = this.GetDashTargetPositionFromPredictedPosition;
 
                 this.bodyStateMachine = EntityStateMachine.FindByCustomName(this.gameObject, "Body");
-                (this.Body.inventory ??= this.Body.master.inventory).GiveItemPermanent(RoR2Content.Items.Ghost);
+                this.Body.MakeGhost();
 
                 var ai = this.Body.master.GetComponent<BaseAI>();
                 ai.ReplaceSkillDrivers(Array.Empty<AISkillDriver>());

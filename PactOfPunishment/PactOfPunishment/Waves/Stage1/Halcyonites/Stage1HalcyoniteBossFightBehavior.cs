@@ -1,51 +1,30 @@
-﻿using HG;
-using PactOfPunishment.Waves.Halcyonites;
-using RoR2.CharacterAI;
+﻿using PactOfPunishment.Waves.Common;
+using RoR2;
 using System;
 
 namespace PactOfPunishment.Waves.Stage1.Halcyonites
 {
-    public abstract class Stage1HalcyoniteBossFightBehavior : HalcyoniteBossFightBehavior
+    public abstract class Stage1HalcyoniteBossFightBehavior : BossFightBehavior
     {
-        protected override void SetupThrustSkillDriver(AISkillDriver skillDriver)
+        public event Action<CharacterBody>? MainBossSpawnedServer;
+
+        protected sealed override void OnBossSpawnedServer(CharacterBody body)
         {
-            base.SetupThrustSkillDriver(skillDriver);
-
-            // Increase max activation distance of thrust, as it will move the Halcyonite forward
-            skillDriver.maxDistance += 16;
-        }
-
-        protected override void SetupLaserSkillDriver(AISkillDriver skillDriver)
-        {
-            base.SetupLaserSkillDriver(skillDriver);
-            skillDriver.selectionRequiresOnGround = true;
-            skillDriver.moveInputScale = 0;
-        }
-
-        protected override void SetupBossAi(BaseAI ai)
-        {
-            base.SetupBossAi(ai);
-
-            int index = Array.FindIndex(ai.skillDrivers, x => x.customName == "WhirlwindRush");
-
-            if (index != -1)
+            if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
             {
-                int laserIndex = Array.FindIndex(ai.skillDrivers, x => x.customName == "TriLaser");
-
-                if (laserIndex != -1)
-                {
-                    ArrayUtils.Swap(ai.skillDrivers, index, laserIndex);
-                }
+                this.OnMainBossSpawnedServer(body);
+                this.MainBossSpawnedServer?.Invoke(body);
+            }
+            else
+            {
+                this.OnAddSpawnedServer(body);
             }
         }
 
-        protected override void SetupWhirlWindSkillDriver(AISkillDriver whirlwindSkillDriver)
-        {
-            base.SetupWhirlWindSkillDriver(whirlwindSkillDriver);
+        protected abstract void OnMainBossSpawnedServer(CharacterBody body);
 
-            // Increase min activation distance of whirlwind, so the Halcyonite uses thrust instead
-            // more often
-            whirlwindSkillDriver.minDistance += 10;
+        protected virtual void OnAddSpawnedServer(CharacterBody body)
+        {
         }
     }
 }

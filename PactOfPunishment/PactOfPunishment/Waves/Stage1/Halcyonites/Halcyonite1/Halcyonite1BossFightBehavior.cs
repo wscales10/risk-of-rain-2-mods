@@ -1,7 +1,5 @@
 ﻿using HG;
 using RoR2;
-using RoR2.CharacterAI;
-using System;
 
 namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
 {
@@ -25,44 +23,31 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
             this.gameObject.EliminateCombatSquadWhenLastMainMemberDies(this.CombatDirector.combatSquad, x => x.GetBody()?.bodyIndex == DLC2Content.BodyPrefabs.HalcyoniteBody.bodyIndex, callback: () => this.CombatDirector.enabled = false);
         }
 
-        protected override void OnBossSpawnedServer(CharacterBody body)
+        protected override void OnMainBossSpawnedServer(CharacterBody body)
         {
-            if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
-            {
-                body.ScaleDifficultyAsBoss(0.65f, 65f, true, false); // TODO: rethink the way I'm scaling enemies, I need one or more helper methods which easily allow me to correctly scale enemy health, damage and most importantly, rewards. Also note that the combat squads scale enemy health for multiplayer by default, so at the moment I'm overscaling.
-                this.laserFirst ??= this.GetComponent<CombatDirector>().rng.nextBool;
+            this.laserFirst ??= this.GetComponent<CombatDirector>().rng.nextBool;
 
-                this.SetupBossAi(body);
+            var halcyoniteBodyBehavior = body.EnsureComponent<Halcyonite1BodyBehavior>();
+            halcyoniteBodyBehavior.laserFirst = this.laserFirst.Value;
+            halcyoniteBodyBehavior.CombatDirector = this.CombatDirector;
+            halcyoniteBodyBehavior.BossStateMachine.SetState(new Halcyonite1States.Phase1());
+        }
 
-                var halcyoniteBodyBehavior = body.EnsureComponent<Halcyonite1BodyBehavior>();
-                halcyoniteBodyBehavior.laserFirst = this.laserFirst.Value;
-                halcyoniteBodyBehavior.CombatDirector = this.CombatDirector;
-                body.inventory.GiveItemPermanent(RoR2Content.Items.SecondarySkillMagazine, 2);
-                body.DisableStunsEtc();
-            }
-            else if (body.Is(RoR2Content.BodyPrefabs.GolemBody))
+        protected override void OnAddSpawnedServer(CharacterBody body)
+        {
+            if (body.Is(RoR2Content.BodyPrefabs.GolemBody))
             {
-                body.ScaleDifficultyAsBoss(4.5f, 30f, true, false);
+                body.ScaleDifficultyAsBoss(65f, 30f, true, false);
+                body.ScaleMaxHealth(this, 0.4f);
+                body.ScaleDamage(this, 0.85f);
                 this.DisableSkill(body, SkillSlot.Secondary);
             }
             else if (body.Is(DLC2Content.BodyPrefabs.ChildBody))
             {
-                body.ScaleDifficultyAsBoss(4.5f, 65f, true, false);
+                body.ScaleDifficultyAsBoss(65f, 65f, true, false);
+                body.ScaleMaxHealth(this, 0.6f);
+                body.ScaleDamage(this, 0.25f);
                 body.EnsureComponent<DisableChildMonsterTeleport>();
-            }
-        }
-
-        protected override void SetupBossAi(BaseAI ai)
-        {
-            base.SetupBossAi(ai);
-
-            ai.aimVectorMaxSpeed = 720f; // Turn twice as fast
-
-            int index = Array.FindIndex(ai.skillDrivers, x => x.customName == "WhirlwindRush");
-
-            if (index != -1)
-            {
-                CustomWeaponStates.CrossedFistsSkillState.customSkill.InsertSkillDriver(ai, index);
             }
         }
 

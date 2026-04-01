@@ -50,7 +50,7 @@ namespace PactOfPunishment.Waves.Stage3
             wavePrefab.EnsureComponent<MithrixWithHalcyoniteBehavior>();
         }
 
-        public class MithrixWithHalcyoniteBehavior : HalcyoniteBossFightBehavior
+        public class MithrixWithHalcyoniteBehavior : BossFightBehavior
         {
             public override void Awake()
             {
@@ -75,10 +75,9 @@ namespace PactOfPunishment.Waves.Stage3
                 }
                 else if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
                 {
-                    body.ScaleDifficultyAsBoss(2, 15, true, false);
-                    body.inventory.GiveItemPermanent(RoR2Content.Items.AdaptiveArmor);
-                    this.SetupBossAi(body);
-                    body.EnsureComponent<FinalHalcyoniteBodyBehavior>().DesiredState = FinalHalcyoniteBodyBehavior.State.Collective;
+                    var halcyoniteBodyBehavior = body.EnsureComponent<FinalHalcyoniteBodyBehavior>();
+                    halcyoniteBodyBehavior.DesiredState = FinalHalcyoniteBodyBehavior.State.Collective;
+                    halcyoniteBodyBehavior.BossStateMachine.SetState(new FinalHalcyoniteStates.Phase1());
                 }
             }
 

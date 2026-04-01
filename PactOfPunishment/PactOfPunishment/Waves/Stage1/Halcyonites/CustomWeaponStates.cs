@@ -325,7 +325,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
                 return indices.Select(i => GetZoneCentre(normalizedCentrePoints[i], args.TargetHorizontalFacingDirection, args.TargetGroundPosition));
             }
 
-            protected override int GetTotalTimesToFire() => 4;
+            protected override int GetTotalTimesToFire() => 5;
 
             private static Vector3? GetZoneCentre(Vector2 d, Vector3 c, Vector3 o)
             {

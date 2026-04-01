@@ -16,10 +16,19 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
 
             wavePrefab.EnsureComponent<Halcyonite1BossFightBehavior>();
             wavePrefab.EnsureComponent<KeepCombatDirectorEnabledBehavior>();
-            dir.SetupCombatDirectorPrefabForAddsSpawning(Utils.MakeDirectorCardCategorySelection(
-                ("Ranged", new[] { this.rangedSpawnCard }),
-                ("Melee", this.meleeSpawnCards)
-            ), 4, 5, 1, 3.06942795f);
+
+            dir.SetupCombatDirectorPrefabForAddsSpawning(new AddsSpawningArgs
+            {
+                MonsterCards = Utils.MakeDirectorCardCategorySelection(
+                    ("Ranged", new[] { this.rangedSpawnCard }),
+                    ("Melee", this.meleeSpawnCards)
+                ),
+                MaxSquadCount = 4,
+                SpawnFrequency = 5,
+                SpawnFrequencyVariation = 1,
+                ExpectedDifficultyCoefficient = 3.06942795f,
+                InitialSpawnDelay = 15,
+            });
         }
     }
 }

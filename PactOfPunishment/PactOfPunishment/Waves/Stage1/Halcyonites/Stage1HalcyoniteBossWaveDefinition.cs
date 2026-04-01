@@ -1,6 +1,7 @@
 ﻿using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using RoR2;
+using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage1.Halcyonites
 {
@@ -12,7 +13,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
 
         protected override UpgradeEncounterStrategy? GetUpgradeStrategy()
         {
-            return null; // TODO: Extreme measures 1
+            return ScriptableObject.CreateInstance<Stage1HalcyoniteUpgrade>();
         }
 
         protected override PickupDropTable GetRewardDropTable(Run run)

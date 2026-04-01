@@ -15,7 +15,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
         {
             base.SetupSkillDriver(skillDef, skillDriver);
 
-            skillDriver.skillSlot = SkillSlot.Special;
+            skillDriver.skillSlot = SkillSlot.Utility;
             skillDriver.maxDistance = 120;
             skillDriver.selectionRequiresTargetLoS = false;
             skillDriver.selectionRequiresOnGround = true;

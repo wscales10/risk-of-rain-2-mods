@@ -1,6 +1,6 @@
-﻿using HG;
+﻿using EntityStates;
+using HG;
 using PactOfPunishment.Waves.Halcyonites;
-using R2API;
 using RoR2;
 using UnityEngine;
 
@@ -8,6 +8,16 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3
 {
     public static class Halcyonite3States
     {
+        public class Support : EntityState
+        {
+            public override void OnEnter()
+            {
+                base.OnEnter();
+                this.GetComponent<Halcyonite3BodyBehavior>().isBurstLaserEnabled = true;
+                this.DisableSkill(this.characterBody, SkillSlot.Special);
+            }
+        }
+
         public class Phase1 : PhaseState
         {
             public override float PhaseEndHealthThreshold => 2 / 3f;

@@ -1,10 +1,21 @@
-﻿using PactOfPunishment.Waves.Halcyonites;
+﻿using EntityStates;
+using PactOfPunishment.Waves.Halcyonites;
 using RoR2;
 
 namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
 {
     public static class Halcyonite1States
     {
+        public class Support : EntityState
+        {
+            public override void OnEnter()
+            {
+                base.OnEnter();
+                var bodyBehavior = this.GetComponent<Halcyonite1BodyBehavior>();
+                bodyBehavior.EnableSkill(this.characterBody, SkillSlot.Secondary);
+            }
+        }
+
         public class Phase1 : PhaseState
         {
             public override float PhaseEndHealthThreshold => 0.75f;
@@ -77,7 +88,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
                 this.bodyBehavior = this.GetComponent<Halcyonite1BodyBehavior>();
             }
 
-            protected void OverrideSkill() => this.OverrideSkill(SkillSlot.Special, CustomWeaponStates.CrossedFistsSkillState.customSkill.SkillDef);
+            protected void OverrideSkill() => this.OverrideSkill(SkillSlot.Utility, CustomWeaponStates.CrossedFistsSkillState.customSkill.SkillDef);
 
             protected override HalcyoniteStates.InterludeState<PhaseState> GetInterludeState(float phaseEndHealthThreshold, PhaseState nextPhaseState)
             {
@@ -96,22 +107,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
             public override void OnEnter()
             {
                 base.OnEnter();
-                FastTrackCombatDirectorCredits(this.GetComponent<Halcyonite1BodyBehavior>().CombatDirector);
-            }
-
-            private static void FastTrackCombatDirectorCredits(CombatDirector? combatDirector)
-            {
-                if (!combatDirector)
-                {
-                    return;
-                }
-
-                var monsterCard = combatDirector!.lastAttemptedMonsterCard;
-
-                if (combatDirector!.monsterCredit < monsterCard?.cost)
-                {
-                    combatDirector.monsterCredit = monsterCard.cost;
-                }
+                Utils.FastTrackCombatDirectorCredits(this.GetComponent<Halcyonite1BodyBehavior>().CombatDirector);
             }
         }
     }

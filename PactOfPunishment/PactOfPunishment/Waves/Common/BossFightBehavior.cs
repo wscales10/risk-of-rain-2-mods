@@ -10,7 +10,7 @@ namespace PactOfPunishment.Waves.Common
     {
         private EncounterContext? encounterContext;
 
-        protected CombatDirector CombatDirector { get; private set; }
+        public CombatDirector CombatDirector { get; private set; }
 
         protected EncounterContext EncounterContext
         {

@@ -92,7 +92,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
                 if (Utils.TryGetCharacterBody(spawnedInstance, out var spawnedBody))
                 {
-                    (spawnedBody.inventory ??= spawnedBody.master.inventory).GiveItemPermanent(RoR2Content.Items.Ghost);
+                    spawnedBody.MakeGhost();
                     var ghostBossBodyBehavior = spawnedBody.EnsureComponent<SummonerBossBodyBehavior>();
                     ghostBossBodyBehavior.PowerLevel = powerLevel;
                     ghostBossBodyBehavior.BossType = bossType;
