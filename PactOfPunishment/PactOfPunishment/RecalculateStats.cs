@@ -5,7 +5,6 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using R2API;
 using RoR2;
-using RoR2.Skills;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -14,8 +13,6 @@ namespace PactOfPunishment
 {
     public class RecalculateStats : Module
     {
-        public delegate int GetRechargeStockDelegate(int orig, GenericSkill self);
-
         private static readonly Dictionary<CharacterBody, List<Action<RecalculateStatsAPI.StatHookEventArgs>>> dictionary = new Dictionary<CharacterBody, List<Action<RecalculateStatsAPI.StatHookEventArgs>>>();
 
         private static readonly Dictionary<GenericSkill, List<GetRechargeStockDelegate>> rechargeStockOverrides = new Dictionary<GenericSkill, List<GetRechargeStockDelegate>>();
@@ -25,6 +22,8 @@ namespace PactOfPunishment
         private RecalculateStats()
         {
         }
+
+        public delegate int GetRechargeStockDelegate(int orig, GenericSkill self);
 
         public static RecalculateStats Instance { get; } = new RecalculateStats();
 
@@ -60,25 +59,6 @@ namespace PactOfPunishment
             IL.RoR2.EntityStateMachine.CanInterruptState += Utils.HookIL(EntityStateMachine_CanInterruptState);
         }
 
-        private static void EntityStateMachine_CanInterruptState(ILCursor c)
-        {
-            c.GotoNext(MoveType.AfterLabel, x => x.MatchCallvirt<EntityState>(nameof(EntityState.GetMinimumInterruptPriority)));
-            c.Remove();
-            c.MoveAfterLabels();
-            c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate<Func<EntityState, EntityStateMachine, InterruptPriority>>(GetMinimumInterruptPriority);
-        }
-
-        private static InterruptPriority GetMinimumInterruptPriority(EntityState state, EntityStateMachine stateMachine)
-        {
-            if(minimumInterruptPriorityOverrides.TryGetValue((stateMachine, state.GetType()), out var func))
-            {
-                return func(state);
-            }
-
-            return state.GetMinimumInterruptPriority();
-        }
-
         internal static void OverrideRechargeStock(GenericSkill skill, GetRechargeStockDelegate getRechargeStock)
         {
             if (!rechargeStockOverrides.TryGetValue(skill, out var list))
@@ -96,6 +76,25 @@ namespace PactOfPunishment
         internal static void SetMinimumInterruptPriorityOverride(EntityStateMachine stateMachine, Type entityStateType, Func<EntityState, InterruptPriority> getMinimumInterruptPriority)
         {
             minimumInterruptPriorityOverrides[(stateMachine, entityStateType)] = getMinimumInterruptPriority;
+        }
+
+        private static void EntityStateMachine_CanInterruptState(ILCursor c)
+        {
+            c.GotoNext(MoveType.AfterLabel, x => x.MatchCallvirt<EntityState>(nameof(EntityState.GetMinimumInterruptPriority)));
+            c.Remove();
+            c.MoveAfterLabels();
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<EntityState, EntityStateMachine, InterruptPriority>>(GetMinimumInterruptPriority);
+        }
+
+        private static InterruptPriority GetMinimumInterruptPriority(EntityState state, EntityStateMachine stateMachine)
+        {
+            if (minimumInterruptPriorityOverrides.TryGetValue((stateMachine, state.GetType()), out var func))
+            {
+                return func(state);
+            }
+
+            return state.GetMinimumInterruptPriority();
         }
 
         private static void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)

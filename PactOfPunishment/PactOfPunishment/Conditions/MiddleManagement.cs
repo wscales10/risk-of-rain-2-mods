@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class MiddleManagement : DefaultConditionDef // TODO: apply to mini-bosses summoned by Extreme Measures 4
+    public sealed class MiddleManagement : DefaultConditionDef
     {
         public override int MaxRank => 1;
 
@@ -108,11 +108,19 @@ namespace PactOfPunishment.Conditions
                     if (this.counter == 0)
                     {
                         this.isSpawningMushrum = true;
-                        combatDirector.Spawn(miniMushrumSpawnCard.Value, DLC1Content.Elites.EarthHonor, spawnedEntity.transform, DirectorCore.MonsterSpawnDistance.Close, false, 0);
-                        this.isSpawningMushrum = false;
+
+                        try
+                        {
+                            Debug.Log("Spawning mending mini mushrum");
+                            combatDirector.Spawn(miniMushrumSpawnCard.Value, DLC1Content.Elites.EarthHonor, spawnedEntity.transform, DirectorCore.MonsterSpawnDistance.Close, false, 0);
+                        }
+                        finally
+                        {
+                            this.isSpawningMushrum = false;
+                        }
                     }
 
-                    this.counter = (this.counter + 1) % 3;
+                    this.counter = (this.counter + 1) % 4;
                 }
                 else
                 {

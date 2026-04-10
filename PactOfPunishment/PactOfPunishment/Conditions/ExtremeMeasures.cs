@@ -23,15 +23,20 @@ namespace PactOfPunishment.Conditions
 
         private UpgradeEncounterStrategy? TryUpgradeEncounter(EncounterContext ctx, IWaveSelectionDefinition? waveSelectionDefinition)
         {
+            if (ctx is FalseSonBossFightContext falseSonBossFightContext)
+            {
+                if (this.GetRank(ctx.Controller) < 4)
+                {
+                    return null;
+                }
+
+                return ctx.Controller.EnsureComponent<FinalBossUpgradeStrategies>().GetUpgradeStrategy(falseSonBossFightContext);
+            }
+
             // On stage 1, if the rank is greater than zero, apply the upgrade etc.
             if (this.GetRank(ctx.Controller) <= Run.instance.stageClearCount)
             {
                 return null;
-            }
-
-            if (ctx is FalseSonBossFightContext falseSonBossFightContext)
-            {
-                return ctx.Controller.EnsureComponent<FinalBossUpgradeStrategies>().GetUpgradeStrategy(falseSonBossFightContext);
             }
 
             if (waveSelectionDefinition != null && ctx.Controller is InfiniteTowerWaveController wave)

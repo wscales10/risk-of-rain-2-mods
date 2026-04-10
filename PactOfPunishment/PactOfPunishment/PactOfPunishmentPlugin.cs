@@ -4,7 +4,6 @@ using HG;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using PactOfPunishment.Conditions;
-using PactOfPunishment.Waves.Infrastructure;
 using RiskOfOptions;
 using RiskOfOptions.OptionConfigs;
 using RiskOfOptions.Options;
@@ -14,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
 using UnityHotReloadNS;
 
@@ -25,7 +23,7 @@ namespace PactOfPunishment
     [BepInPlugin("com.woodyscales.pactofpunishment", "Pact of Punishment", "0.0.1")]
     public partial class PactOfPunishmentPlugin : BaseUnityPlugin
     {
-        private const string Section = "Conditions";
+        internal const string Section = "Conditions";
 
         private readonly List<Module> modules = new List<Module>();
 
@@ -47,6 +45,7 @@ namespace PactOfPunishment
                 try
                 {
                     module.Logger = this.Logger;
+                    module.Config = this.Config;
                     module.Init();
                     this.Logger.LogInfo($"Initialized module: {module.GetType().Name}");
                 }
@@ -76,6 +75,7 @@ namespace PactOfPunishment
             Utils.OnLoad<GameObject>("RoR2/DLC3/Tanker/TankerBody.prefab", gameObject => gameObject.GetComponent<CharacterBody>().baseMoveSpeed = 13);
         }
 
+        /*
         public void Update()
         {
             if (Input.GetKeyUp(KeyCode.F2))
@@ -87,7 +87,7 @@ namespace PactOfPunishment
                     UnityHotReload.LoadNewAssemblyVersion(this.GetType().Assembly, dllFilePath);
                 }
             }
-        }
+        }*/
 
         private static void CombatDirector_AttemptSpawnOnTarget(ILCursor c)
         {
@@ -139,23 +139,6 @@ namespace PactOfPunishment
                     return self.currentActiveEliteTier!;
                 });
             }
-        }
-
-        private static string SplitPascalCaseString(string input)
-        {
-            var output = new StringBuilder();
-
-            foreach (char c in input)
-            {
-                if (char.IsUpper(c))
-                {
-                    output.Append(' ');
-                }
-
-                output.Append(c);
-            }
-
-            return output.ToString().Trim();
         }
 
         private IEnumerable<Module> GetModules(IEnumerable<Type> moduleTypes)
@@ -260,7 +243,7 @@ namespace PactOfPunishment
         {
             foreach (var conditionDef in this.modules.OfType<IConditionDef>())
             {
-                var configEntry = this.Config.Bind(Section, SplitPascalCaseString(conditionDef.GetType().Name), 0);
+                var configEntry = this.Config.Bind(Section, Utils.SplitPascalCaseString(conditionDef.GetType().Name), 0);
                 ModSettingsManager.AddOption(new IntSliderOption(configEntry, new IntSliderConfig { restartRequired = false, min = 0, max = conditionDef.MaxRank, checkIfDisabled = () => Run.instance }));
                 this.conditionDefs[conditionDef] = configEntry;
             }

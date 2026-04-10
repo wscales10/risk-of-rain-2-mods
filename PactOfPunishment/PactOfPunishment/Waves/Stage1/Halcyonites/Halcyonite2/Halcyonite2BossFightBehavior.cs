@@ -1,5 +1,4 @@
 ﻿using HG;
-using PactOfPunishment.Waves.Halcyonites;
 using RoR2;
 
 namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
@@ -9,16 +8,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         public override void Awake()
         {
             base.Awake();
-            this.gameObject.EliminateCombatSquadWhenLastMainMemberDies(this.CombatDirector.combatSquad, x => x.GetBody()?.bodyIndex == DLC2Content.BodyPrefabs.HalcyoniteBody.bodyIndex, callback: () =>
-            {
-                this.CombatDirector.enabled = false;
-
-                foreach (var pillar in FindObjectsOfType<PillarMovementBehavior>())
-                {
-                    // TODO: not working
-                    Destroy(pillar.gameObject); // I guess I could filter by team or something, but I don't think it's necessary
-                }
-            });
+            this.gameObject.EliminateCombatSquadWhenLastMainMemberDies(this.CombatDirector.combatSquad, x => x.GetBody()?.bodyIndex == DLC2Content.BodyPrefabs.HalcyoniteBody.bodyIndex, callback: () => this.CombatDirector.enabled = false);
         }
 
         protected override void OnMainBossSpawnedServer(CharacterBody body)

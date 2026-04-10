@@ -186,7 +186,10 @@ namespace PactOfPunishment.Conditions
 
             if (self.TryGetComponent<TightDeadlineBehavior>(out var behavior)) // TODO: wait until players spawned in?
             {
-                behavior.AddTime(this.GetTimeLimitPerRegion(self));
+                if (self.stageClearCount < 4)
+                {
+                    behavior.AddTime(this.GetTimeLimitPerRegion(self));
+                }
 
                 if (!self.safeWardController)
                 {
@@ -200,7 +203,7 @@ namespace PactOfPunishment.Conditions
             behavior.getDamagePerSecond = (body) => damagePerSecond + 1 + 0.2f * (body.level - 1);
         }
 
-        private TimeSpan GetTimeLimitPerRegion(UnityEngine.Object context) => TimeSpan.FromMinutes(15 - 2 * this.GetRank(context));
+        private TimeSpan GetTimeLimitPerRegion(UnityEngine.Object context) => TimeSpan.FromMinutes(13 - 2 * this.GetRank(context));
 
         public class TightDeadlineBehavior : MonoBehaviour
         {

@@ -11,6 +11,7 @@ using RoR2.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
@@ -83,15 +84,6 @@ namespace PactOfPunishment
             return buffDef;
         }
 
-        public static ILContext.Manipulator HookIL(this Action<ILCursor> hook)
-        {
-            return il =>
-            {
-                var c = new ILCursor(il);
-                hook(c);
-            };
-        }
-
         public static WeightedSelection<EliteDef> GetEliteDefSelector(this CombatDirector combatDirector, SpawnCard spawnCard)
         {
             var selector = new WeightedSelection<EliteDef>();
@@ -132,6 +124,14 @@ namespace PactOfPunishment
                 {
                     weightedSelection.RemoveChoice(i);
                 }
+            }
+        }
+
+        public static void Transform<T>(this WeightedSelection<T> weightedSelection, Func<WeightedSelection<T>.ChoiceInfo, WeightedSelection<T>.ChoiceInfo> transform)
+        {
+            for (int i = 0; i < weightedSelection.Count; i++)
+            {
+                weightedSelection.choices[i] = transform(weightedSelection.GetChoice(i));
             }
         }
 
@@ -197,19 +197,9 @@ namespace PactOfPunishment
             MakeUnscaledEliteUsingEquipment(body.inventory ??= body.master.inventory, eliteDef.eliteEquipmentDef);
         }
 
-        public static void MakeUnscaledEliteUsingBuff(this CharacterBody body, EliteDef eliteDef)
-        {
-            MakeUnscaledEliteUsingBuff(body, eliteDef.eliteEquipmentDef.passiveBuffDef);
-        }
-
         public static void MakeUnscaledEliteUsingEquipment(Inventory inventory, EquipmentDef eliteEquipmentDef)
         {
             inventory.SetEquipmentIndex(eliteEquipmentDef.equipmentIndex, false);
-        }
-
-        public static void MakeUnscaledEliteUsingBuff(this CharacterBody body, BuffDef eliteBuffDef)
-        {
-            body.AddBuff(eliteBuffDef);
         }
 
         public static void MakeScaledElite(this CharacterBody body, EliteDef? eliteDef)
@@ -312,6 +302,7 @@ namespace PactOfPunishment
 
         public static void ForwardBossDamageTo(this HealthComponent bossHealthComponent, EntityStateMachine bossBodyStateMachine)
         {
+            bossHealthComponent.body.bodyFlags |= CharacterBody.BodyFlags.ImmuneToExecutes;
             var receiver = bossHealthComponent.gameObject.AddComponent<OnBossTakeDamageServerReceiver>();
             receiver.stateMachine = bossBodyStateMachine;
             bossHealthComponent.AddOnTakeDamageServerReceiver(receiver);
@@ -493,18 +484,6 @@ namespace PactOfPunishment
         public static void AddSpawnListener(this CombatDirector combatDirector, UnityAction<GameObject> listener)
         {
             (combatDirector.onSpawnedServer ??= new CombatDirector.OnSpawnedServer()).AddListener(listener);
-        }
-
-        public static void GotoLast(this ILCursor c, params Func<Mono.Cecil.Cil.Instruction, bool>[] predicates)
-        {
-            c.Index = c.Instrs.Count - 1;
-            c.GotoPrev(predicates);
-        }
-
-        public static void GotoLast(this ILCursor c, MoveType moveType, params Func<Mono.Cecil.Cil.Instruction, bool>[] predicates)
-        {
-            c.Index = c.Instrs.Count - 1;
-            c.GotoPrev(moveType, predicates);
         }
 
         public static float GetAltitude(this CharacterBody body)
@@ -702,14 +681,13 @@ namespace PactOfPunishment
             return NodeIndex.invalid;
         }
 
-        public static void InterceptLoadField<TSelf, TField>(this ILCursor c, string fieldName, Func<TSelf, TField> func)
+        public static ILContext.Manipulator HookIL(this Action<ILCursor> hook)
         {
-            while (c.TryGotoNext(MoveType.AfterLabel, x => x.MatchLdfld<TSelf>(fieldName)))
+            return il =>
             {
-                c.Remove();
-                c.MoveAfterLabels(); // AfterLabel stuff is probably not needed here, but just to be safe...
-                c.EmitDelegate(func);
-            }
+                var c = new ILCursor(il);
+                hook(c);
+            };
         }
 
         public static void SetupCombatDirectorPrefabForAddsSpawning(this CombatDirector dir, AddsSpawningArgs args)
@@ -748,6 +726,22 @@ namespace PactOfPunishment
             }
         }
 
+        public static List<T> GenerateDistinctFromWeightedSelection<T>(List<T> dest, int desiredCount, Xoroshiro128Plus rng, WeightedSelection<T> weightedSelection)
+        {
+            int count = Math.Min(desiredCount, weightedSelection.Count);
+            var ignoreIndices = new List<int>();
+
+            for (int i = 0; i < count; i++)
+            {
+                int choiceIndex = weightedSelection.EvaluateToChoiceIndex(rng.nextNormalizedFloat, ignoreIndices.ToArray());
+                var choice = weightedSelection.GetChoice(choiceIndex);
+                ignoreIndices.Add(choiceIndex);
+                dest.Add(choice.value);
+            }
+
+            return dest;
+        }
+
         public static void EnsureHasItem(this CharacterBody body, ItemDef itemDef)
         {
             int count = (body.inventory ??= body.master.inventory).GetItemCountPermanent(itemDef);
@@ -758,14 +752,16 @@ namespace PactOfPunishment
             }
         }
 
-        private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this CharacterMaster master, Func<AISkillDriver, bool> predicate)
+        public static NodeIndex FindNearbyNode(this NodeGraph self, Vector3 position, HullClassification hullClassification, float maxDistance = float.PositiveInfinity)
         {
-            return master?.AiComponents?.SelectMany(x => x.GetSkillDriversInternal(predicate)) ?? Enumerable.Empty<AISkillDriver>();
-        }
+            var nodeSearchFilter = Create(self, And(new NodeHullFilter(hullClassification), default(NodeAvailableFilter)));
 
-        private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this BaseAI ai, Func<AISkillDriver, bool> predicate)
-        {
-            return ai.skillDrivers.Where(predicate);
+            if (self.blockMap.GetNearestItemWhichPassesFilter(position, maxDistance, ref nodeSearchFilter, out var result))
+            {
+                return result;
+            }
+
+            return NodeIndex.invalid;
         }
 
         public static void FastTrackCombatDirectorCredits(CombatDirector? combatDirector)
@@ -792,6 +788,33 @@ namespace PactOfPunishment
         {
             (body.inventory ??= body.master.inventory).GiveItemPermanent(RoR2Content.Items.Ghost);
             body.AddBuff(DLC2Content.Buffs.HiddenRejectAllDamage);
+        }
+
+        public static string SplitPascalCaseString(string input)
+        {
+            var output = new StringBuilder();
+
+            foreach (char c in input)
+            {
+                if (char.IsUpper(c))
+                {
+                    output.Append(' ');
+                }
+
+                output.Append(c);
+            }
+
+            return output.ToString().Trim();
+        }
+
+        private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this CharacterMaster master, Func<AISkillDriver, bool> predicate)
+        {
+            return master?.AiComponents?.SelectMany(x => x.GetSkillDriversInternal(predicate)) ?? Enumerable.Empty<AISkillDriver>();
+        }
+
+        private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this BaseAI ai, Func<AISkillDriver, bool> predicate)
+        {
+            return ai.skillDrivers.Where(predicate);
         }
     }
 }

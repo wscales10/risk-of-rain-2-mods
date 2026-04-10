@@ -32,6 +32,8 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
         public void OnEnable()
         {
+            this.Body.characterMotor.mass = Mathf.Max(this.Body.characterMotor.mass, 900);
+            this.Body.rigidbody.mass = Mathf.Max(this.Body.rigidbody.mass, 900);
             RecalculateStats.Add(this.Body, this.OnRecalculateStats);
         }
 
@@ -40,7 +42,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             RecalculateStats.Remove(this.Body, this.OnRecalculateStats);
         }
 
-        private static void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args, SkillLocator skillLocator, float bodyCost, SummonerBossPowerLevel powerLevel, SummonerBossType bossType, bool isUpgraded)
+        private static void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args, SkillLocator skillLocator, CharacterDirection characterDirection, float bodyCost, SummonerBossPowerLevel powerLevel, SummonerBossType bossType, bool isUpgraded)
         {
             var primary = skillLocator.primary;
             var secondary = skillLocator.secondary;
@@ -58,6 +60,8 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             switch (bossType)
             {
                 case SummonerBossType.Normal:
+                    args.moveSpeedTotalMult /= 2f;
+
                     var myArgs = new Args();
 
                     args.damageTotalMult *= powerLevel switch
@@ -159,16 +163,24 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                     break;
 
                 case SummonerBossType.SlammerGhost:
-                    args.damageTotalMult *= 0.6f;
+                    args.damageTotalMult *= 0.5f;
                     args.attackSpeedTotalMult *= 5; // TODO: reduce for earlier phases???
 
                     switch (powerLevel)
                     {
                         case SummonerBossPowerLevel.Phase3:
                             FrontloadPrimary(2);
+                            break;
+                    }
 
+                    switch (powerLevel)
+                    {
+                        case SummonerBossPowerLevel.Phase3:
+                        case SummonerBossPowerLevel.SecondInterlude:
                             if (isUpgraded)
                             {
+                                // TODO: undo turn speed?
+                                characterDirection.turnSpeed = 720;
                                 args.moveSpeedMultAdd += 0.4f;
                             }
                             break;
@@ -184,6 +196,17 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                     };
 
                     args.attackSpeedTotalMult *= 1.36f;
+
+                    switch (powerLevel)
+                    {
+                        case SummonerBossPowerLevel.Phase3:
+                        case SummonerBossPowerLevel.SecondInterlude:
+                            if (isUpgraded)
+                            {
+                                args.primarySkill.bonusStockAdd++;
+                            }
+                            break;
+                    }
                     break;
             }
 
@@ -221,7 +244,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
         private void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)
         {
-            OnRecalculateStats(args, this.Body.skillLocator, this.BodyCost, this.PowerLevel, this.BossType, this.IsUpgraded);
+            OnRecalculateStats(args, this.Body.skillLocator, this.Body.characterDirection, this.BodyCost, this.PowerLevel, this.BossType, this.IsUpgraded);
         }
 
         private class Args

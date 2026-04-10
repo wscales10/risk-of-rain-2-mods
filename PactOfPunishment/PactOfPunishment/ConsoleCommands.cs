@@ -30,6 +30,15 @@ namespace PactOfPunishment
             }
         }
 
+        [ConCommand(commandName = "simulacrum_override_wave_index", flags = ConVarFlags.ExecuteOnServer, helpText = "Overrides the wave index used to choose the next simulacrum wave (-1 = no override).")]
+        private static void CmdOverrideSimulacrumWaveIndex(ConCommandArgs args)
+        {
+            if (Run.instance is InfiniteTowerRun run && run.GetComponent<SimulacrumWavesBehavior>() is SimulacrumWavesBehavior behavior && args.Count > 0)
+            {
+                behavior.WaveOverrideIndex = args.GetArgInt(0);
+            }
+        }
+
         [ConCommand(commandName = "log_state_changes", helpText = "Toggles whether state changes are logged.")]
         private static void CmdToggleStateLogging(ConCommandArgs args)
         {

@@ -47,16 +47,19 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
             switch (mainBossBody.GetComponent<Stage1HalcyoniteBodyBehavior>())
             {
                 case Halcyonite1BodyBehavior _:
+                    mainBossBody.ScaleMaxHealth(this, 1.09f);
                     SpawnGhost(SetupHalcyonite2);
                     SpawnGhost(SetupHalcyonite3);
                     break;
 
                 case Halcyonite2BodyBehavior _:
+                    mainBossBody.ScaleMaxHealth(this, 1.07f);
                     SpawnGhost(SetupHalcyonite1);
                     SpawnGhost(SetupHalcyonite3);
                     break;
 
                 case Halcyonite3BodyBehavior _:
+                    mainBossBody.ScaleMaxHealth(this, 1.08f);
                     SpawnGhost(SetupHalcyonite1);
                     SpawnGhost(SetupHalcyonite2);
                     break;

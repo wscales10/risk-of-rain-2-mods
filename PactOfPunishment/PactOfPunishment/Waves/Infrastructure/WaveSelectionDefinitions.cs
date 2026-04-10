@@ -1,4 +1,5 @@
-﻿using PactOfPunishment.Conditions;
+﻿using HG;
+using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Stage1;
 using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1;
 using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2;
@@ -6,9 +7,12 @@ using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3;
 using PactOfPunishment.Waves.Stage2;
 using PactOfPunishment.Waves.Stage3;
 using PactOfPunishment.Waves.Stage4;
+using R2API;
 using RoR2;
+using System.Collections.Generic;
 using UnityEngine;
 using static PactOfPunishment.Conditions.MiddleManagement;
+using static PactOfPunishment.IncreaseSpawnRateWhileThereAreNoMonsters;
 
 namespace PactOfPunishment.Waves.Infrastructure
 {
@@ -28,6 +32,8 @@ namespace PactOfPunishment.Waves.Infrastructure
 
     public class Wave15SelectionDefinition : WaveSelectionDefinition
     {
+        private static readonly Dictionary<GameObject, GameObject> cloneCache = new Dictionary<GameObject, GameObject>();
+
         public Wave15SelectionDefinition(SimulacrumWaveDefinitions cache) : base((cache.Get<WormAndDistributor>(), 1), (cache.Get<Projectilers>(), 1))
         {
         }
@@ -35,6 +41,32 @@ namespace PactOfPunishment.Waves.Infrastructure
         public override void ModifyWeightedSelection(WeightedSelection<GameObject?> weightedSelection, SimulacrumWaveDefinitions.Instance cache)
         {
             weightedSelection.RemoveWhere(x => x?.GetComponent<InfiniteTowerWaveController>() is InfiniteTowerExplicitSpawnWaveController);
+            weightedSelection.Transform(choice =>
+            {
+                if (choice.value is null)
+                {
+                    return choice;
+                }
+
+                if (!cloneCache.TryGetValue(choice.value, out var clone))
+                {
+                    clone = PrefabAPI.InstantiateClone(choice.value, "Wave15" + choice.value.name);
+                    var wave = clone.GetComponent<InfiniteTowerWaveController>();
+                    wave.immediateCreditsFraction = 0.1f;
+                    var waveModifiers = wave.EnsureComponent<SimulacrumCombatDirectorSpawnRateMultiplier>();
+                    waveModifiers.TotalWaveCreditsMultiplier = 0.5f;
+                    waveModifiers.WavePeriodSecondsMultiplier = 0.75f;
+
+                    wave.EnsureComponent<SafeZoneRadiusCapper>().RadiusMultiplier = 0.75f;
+                    cloneCache[choice.value] = clone;
+                }
+
+                return new WeightedSelection<GameObject?>.ChoiceInfo
+                {
+                    value = clone,
+                    weight = choice.weight
+                };
+            });
             base.ModifyWeightedSelection(weightedSelection, cache);
         }
 

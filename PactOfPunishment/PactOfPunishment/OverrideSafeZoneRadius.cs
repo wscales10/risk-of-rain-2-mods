@@ -10,6 +10,8 @@ namespace PactOfPunishment
     public class SafeZoneRadiusCapper : MonoBehaviour
     {
         public float MaximumRadiusPercentage = 1;
+
+        public float RadiusMultiplier = 1;
     }
 
     public class CapSafeZoneRadius : Module
@@ -24,11 +26,11 @@ namespace PactOfPunishment
             c.GotoNext(x => x.MatchCallvirt<InfiniteTowerWaveController>($"get_{nameof(InfiniteTowerWaveController.zoneRadiusPercentage)}"));
             c.Emit(OpCodes.Dup);
             c.Index++;
-            c.EmitDelegate<Func<InfiniteTowerWaveController, float, float>>((self, orig) =>
+            c.EmitDelegate<Func<InfiniteTowerWaveController, float, float>>((waveController, orig) =>
             {
-                if (self.TryGetComponent<SafeZoneRadiusCapper>(out var behavior))
+                if (waveController.TryGetComponent<SafeZoneRadiusCapper>(out var behavior))
                 {
-                    orig = Mathf.Min(orig, behavior.MaximumRadiusPercentage);
+                    orig = Mathf.Min(orig, behavior.MaximumRadiusPercentage) * behavior.RadiusMultiplier;
                 }
 
                 return orig;

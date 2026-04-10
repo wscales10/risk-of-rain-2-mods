@@ -158,6 +158,8 @@ namespace PactOfPunishment
                 {
                     fogDamageController.enabled = false;
                 }
+
+                self.GetComponent<EnemyInfoPanelInventoryProvider>().enabled = false; // TODO: do we need to re-enable this at some point? Is this the correct condition for disabling this?
             }
         }
 

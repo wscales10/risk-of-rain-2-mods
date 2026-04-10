@@ -14,7 +14,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
         public SummonerReferences References;
 
-        private readonly AssetPromise<CharacterSpawnCard> beetleGuardSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/BeetleGuard/cscBeetleGuard.asset");
+        private readonly AssetPromise<CharacterSpawnCard> slammerSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/Parent/cscParent.asset");
 
         private readonly AssetPromise<CharacterSpawnCard> solusProspectorSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/DLC3/WorkerUnit/cscWorkerUnit.asset");
 
@@ -69,7 +69,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
             if (powerLevel != SummonerBossPowerLevel.Support)
             {
-                SpawnGhost(this.beetleGuardSpawnCard.Value, SummonerBossType.SlammerGhost);
+                SpawnGhost(this.slammerSpawnCard.Value, SummonerBossType.SlammerGhost);
             }
 
             SpawnGhost(this.solusProspectorSpawnCard.Value, SummonerBossType.LungerGhost);
@@ -98,6 +98,16 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                     ghostBossBodyBehavior.BossType = bossType;
                     ghostBossBodyBehavior.BodyCost = spawnCard.directorCreditCost;
                     bossBody.GetComponent<SummonerBossBodyBehavior>().ghostBodies.Add(spawnedBody);
+
+                    if (bossType == SummonerBossType.SlammerGhost)
+                    {
+                        // Make the parent ghost's teleport skill usable regardless of health
+                        // fraction - it needs it for mobility and it will never use it otherwise
+                        foreach (var aiSkillDriver in spawnedBody.master.GetSkillDrivers("Teleport"))
+                        {
+                            aiSkillDriver.maxUserHealthFraction = float.PositiveInfinity;
+                        }
+                    }
                 }
             }
         }

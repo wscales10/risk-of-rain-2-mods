@@ -35,7 +35,7 @@ namespace PactOfPunishment.Waves.Stage4
                 spawnCard = Stage4MiniBossSpawnCards.Instance.gupSpawnCard.Value,
                 spawnDistance = DirectorCore.MonsterSpawnDistance.Close,
             };
-            output.spawnDelay = 8; // TODO: with such long spawn delays, what if you kill the main one before the other one spawns?
+            output.spawnDelay = 8;
             return output;
         }
 

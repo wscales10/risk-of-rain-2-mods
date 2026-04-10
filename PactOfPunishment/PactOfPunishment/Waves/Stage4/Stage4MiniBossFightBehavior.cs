@@ -82,7 +82,7 @@ namespace PactOfPunishment.Waves.Stage4
             }
             else if (body.Is(RoR2Content.BodyPrefabs.LemurianBody))
             {
-                body.MakeUnscaledEliteUsingBuff(RoR2Content.Elites.Fire);
+                body.MakeUnscaledEliteUsingEquipment(RoR2Content.Elites.Fire);
             }
         }
     }

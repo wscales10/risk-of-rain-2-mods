@@ -33,16 +33,6 @@ namespace PactOfPunishment.Waves.Stage1
 
             body.EnsureComponent<UndeployMinionsOnDeathBehavior>();
             body.EnsureComponent<SolusControlUnitBodyBehavior>();
-           
-            SimulacrumWavesModule.OnTakeNonZeroDamageGlobal += (victim, _) => OnTakeNonZeroDamageGlobal(victim, body);
-        }
-
-        private static void OnTakeNonZeroDamageGlobal(HealthComponent victim, CharacterBody solusControlUnitBody)
-        {
-            if (victim == solusControlUnitBody.healthComponent)
-            {
-                solusControlUnitBody.GetComponent<RateLimiter>().TryDoThing();
-            }
         }
     }
 

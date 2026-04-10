@@ -24,14 +24,9 @@ namespace PactOfPunishment
             {
                 var spawnRateMultiplier = self.combatDirector.EnsureComponent<SimulacrumCombatDirectorSpawnRateMultiplier>();
 
-                // TODO: check this
-                if (self.isBossWave)
+                if (!self.isBossWave)
                 {
-                    spawnRateMultiplier.TotalWaveCreditsMultiplier = 1;
-                }
-                else
-                {
-                    spawnRateMultiplier.TotalWaveCreditsMultiplier = 0.5f;
+                    spawnRateMultiplier.TotalWaveCreditsMultiplier *= 0.5f;
                 }
 
                 return orig * spawnRateMultiplier.TotalWaveCreditsMultiplier;
@@ -44,16 +39,13 @@ namespace PactOfPunishment
 
             if (!self.isBossWave)
             {
-                float wavePeriodSecondsMultiplier = 0.5f;
-                spawnRateMultiplier.WavePeriodSecondsMultiplier = wavePeriodSecondsMultiplier;
-                float secondsRemovedFromWave = self.wavePeriodSeconds * (1 - wavePeriodSecondsMultiplier);
-                self.wavePeriodSeconds *= wavePeriodSecondsMultiplier;
-                self.secondsBeforeSuddenDeath += secondsRemovedFromWave;
+                spawnRateMultiplier.WavePeriodSecondsMultiplier *= 0.5f;// TODO: Apply also to boss waves? If so, be careful of interaction with directors which use money waves
             }
-            else
-            {
-                spawnRateMultiplier.WavePeriodSecondsMultiplier = 1; // TODO: Apply also to boss waves? If so, be careful of interaction with directors which use money waves
-            }
+
+            float wavePeriodSecondsMultiplier = spawnRateMultiplier.WavePeriodSecondsMultiplier;
+            float secondsRemovedFromWave = self.wavePeriodSeconds * (1 - wavePeriodSecondsMultiplier);
+            self.wavePeriodSeconds *= wavePeriodSecondsMultiplier;
+            self.secondsBeforeSuddenDeath += secondsRemovedFromWave;
 
             orig(self, waveIndex, enemyInventory, spawnTarget);
         }

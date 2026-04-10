@@ -30,8 +30,6 @@ namespace PactOfPunishment.Waves.Infrastructure
         {
         }
 
-        internal static event Action<HealthComponent, DamageInfo>? OnTakeNonZeroDamageGlobal;
-
         public static SimulacrumWavesModule Instance { get; } = new SimulacrumWavesModule();
 
         public SimulacrumWaveDefinitions Cache { get; } = new SimulacrumWaveDefinitions();
@@ -39,7 +37,6 @@ namespace PactOfPunishment.Waves.Infrastructure
         public override void Init()
         {
             IL.RoR2.InfiniteTowerWaveCategory.SelectWavePrefab += Utils.HookIL(InfiniteTowerWaveCategory_SelectWavePrefab);
-            IL.RoR2.HealthComponent.TakeDamageProcess += Utils.HookIL(HealthComponent_TakeDamageProcess);
             On.RoR2.Run.Start += Run_Start;
             On.RoR2.InfiniteTowerRun.MoveSafeWard += InfiniteTowerRun_MoveSafeWard;
             On.RoR2.InfiniteTowerBossWaveController.OnTimerExpire += InfiniteTowerBossWaveController_OnTimerExpire;
@@ -48,8 +45,6 @@ namespace PactOfPunishment.Waves.Infrastructure
             On.RoR2.MusicController.UpdateTeleporterParameters += this.MusicController_UpdateTeleporterParameters;
 
             IL.EntityStates.RoboBallBoss.Weapon.DeployMinions.SummonMinion += Utils.HookIL(DeployMinions_SummonMinion);
-
-            On.EntityStates.Scorchling.ScorchlingBreach.OnEnter += this.ScorchlingBreach_OnEnter;
 
             Content.Elites.NerfedPoison = Projectilers.AllMalachiteWaveStrategy.MakeEliteDef();
             Content.EliteTiers.NerfedPoisonTier = Projectilers.AllMalachiteWaveStrategy.MakeEliteTierDef();
@@ -68,6 +63,7 @@ namespace PactOfPunishment.Waves.Infrastructure
             Utils.OnLoad<GameObject>("RoR2/Base/Titan/TitanGoldPreFistProjectile.prefab", x => FistsController.zoneProjectilePrefab = x);
 
             IL.EntityStates.DefectiveUnit.DenialProjectile.FireProjectile += Utils.HookIL(DenialProjectile_FireProjectile);
+            IL.RoR2.InfiniteTowerWaveController.FixedUpdate += Utils.HookIL(InfiniteTowerWaveController_FixedUpdate);
 
             // Stage 1
             this.Cache.Add<RunaldAndKjaro>();
@@ -95,6 +91,31 @@ namespace PactOfPunishment.Waves.Infrastructure
             this.Cache.Add<BlazingElderLemurian>();
             this.Cache.Add<Gup>();
             this.Cache.Add<Invalidator>();
+        }
+
+        private static void InfiniteTowerWaveController_FixedUpdate(ILCursor c)
+        {
+            ILLabel? label = null;
+
+            c.GotoNext(MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<InfiniteTowerWaveController>(nameof(InfiniteTowerWaveController.combatSquad)),
+                x => x.MatchCall<UnityEngine.Object>("op_Implicit"),
+                x => x.MatchBrfalse(out _),
+
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<InfiniteTowerWaveController>(nameof(InfiniteTowerWaveController.combatSquad)),
+                x => x.MatchCallvirt<CombatSquad>($"get_{nameof(CombatSquad.memberCount)}"),
+                x => x.MatchBrtrue(out _),
+
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<InfiniteTowerWaveController>(nameof(InfiniteTowerWaveController.haveAllEnemiesBeenDefeated)),
+                x => x.MatchBrtrue(out label)
+            );
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<InfiniteTowerWaveController, bool>>(self => self.TryGetComponent<ExtraMiniBossBehavior>(out var behavior) && !behavior.HasSpawnedExtraBoss);
+            c.Emit(OpCodes.Brtrue_S, label);
         }
 
         private static void DeployMinions_SummonMinion(ILCursor c)
@@ -234,24 +255,8 @@ namespace PactOfPunishment.Waves.Infrastructure
             if (self is InfiniteTowerRun)
             {
                 self.gameObject.AddComponent<SimulacrumWavesBehavior>();
+                self.gameObject.AddComponent<RunSpawnCounter>();
             }
-        }
-
-        private static void HealthComponent_TakeDamageProcess(ILCursor c)
-        {
-            c.GotoNext(MoveType.AfterLabel,
-                x => x.MatchLdarg(0),
-                x => x.MatchLdflda<HealthComponent>(nameof(HealthComponent.itemCounts)),
-                x => x.MatchLdfld<HealthComponent.ItemCounts>(nameof(HealthComponent.ItemCounts.thorns)),
-                x => x.MatchLdcI4(0),
-                x => x.MatchBle(out _)
-            );
-            c.Emit(OpCodes.Ldarg_0);
-            c.Emit(OpCodes.Ldarg_1);
-            c.EmitDelegate<Action<HealthComponent, DamageInfo>>((self, damageInfo) =>
-            {
-                OnTakeNonZeroDamageGlobal?.Invoke(self, damageInfo); // TODO: replace with IOnTakeDamageServerReceiver
-            });
         }
 
         private static void InfiniteTowerWaveCategory_SelectWavePrefab(ILCursor c)
@@ -305,17 +310,6 @@ namespace PactOfPunishment.Waves.Infrastructure
                 return IsSimulacrumBossAlive() != null; // TODO: use override behavior instead and choose boss tracks more carefully?
             });
             c.Emit(OpCodes.Stloc_1);
-        }
-
-        private void ScorchlingBreach_OnEnter(On.EntityStates.Scorchling.ScorchlingBreach.orig_OnEnter orig, EntityStates.Scorchling.ScorchlingBreach self)
-        {
-            if (self.GetComponent<WormAndDistributor.WormMiniBossInfo.WormBossBodyBehavior>())
-            {
-                self.crackToBreachTime *= 0.75f;
-                self.breachToBurrow *= 0.5f;
-            }
-
-            orig(self);
         }
 
         private void MusicController_UpdateTeleporterParameters(On.RoR2.MusicController.orig_UpdateTeleporterParameters orig, MusicController self, TeleporterInteraction teleporter, Transform cameraTransform, CharacterBody targetBody)

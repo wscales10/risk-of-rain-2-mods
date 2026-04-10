@@ -1,16 +1,8 @@
-﻿using EntityStates;
-using EntityStates.FalseSonBoss;
-using HG;
-using Mono.Cecil.Cil;
+﻿using EntityStates.FalseSonBoss;
 using MonoMod.Cil;
 using RoR2;
-using RoR2.Audio;
-using RoR2.Skills;
 using System;
-using System.Reflection;
 using UnityEngine;
-using UnityEngine.Networking;
-using static PactOfPunishment.Waves.FinalStage.FinalBossUpgradeStrategies;
 
 namespace PactOfPunishment.Waves.FinalStage
 {
@@ -131,7 +123,7 @@ namespace PactOfPunishment.Waves.FinalStage
 
         private void Phase3_OnExit(On.EntityStates.MeridianEvent.Phase3.orig_OnExit orig, EntityStates.MeridianEvent.Phase3 self)
         {
-            var repositionGeodesBehavior = MeridianEventTriggerInteraction.instance?.GetComponent<RepositionGeodesBehavior>();
+            var repositionGeodesBehavior = MeridianEventTriggerInteraction.instance?.GetComponent<FinalBossUpgradeStrategies.RepositionGeodesBehavior>();
 
             if (repositionGeodesBehavior)
             {
@@ -219,7 +211,7 @@ namespace PactOfPunishment.Waves.FinalStage
 
         private void Phase2_OnExit(On.EntityStates.MeridianEvent.Phase2.orig_OnExit orig, EntityStates.MeridianEvent.Phase2 self)
         {
-            if (self.meridianEventTriggerInteraction.phase2CombatDirector && self.meridianEventTriggerInteraction.phase2CombatDirector.TryGetComponent<FinalBossUpgradeStrategies.MiniBossSpawner>(out var behavior))
+            if (self.meridianEventTriggerInteraction?.phase2CombatDirector && self.meridianEventTriggerInteraction.phase2CombatDirector.TryGetComponent<FinalBossUpgradeStrategies.MiniBossSpawner>(out var behavior))
             {
                 UnityEngine.Object.Destroy(behavior);
             }

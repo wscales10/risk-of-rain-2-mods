@@ -1,4 +1,5 @@
-﻿using PactOfPunishment.Conditions;
+﻿using HG;
+using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Stage2.Summoner;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace PactOfPunishment.Waves.Summoner
             public override void PostInitialise(EncounterContext ctx)
             {
                 ctx.CombatDirector.AddSpawnListener(OnBossSpawnedServer);
+                ctx.Controller.EnsureComponent<SafeZoneRadiusCapper>().RadiusMultiplier = 0.75f; // Any smaller risks spawning monsters outside zone. This might even be too small, depending on what's used for the spawn target.
             }
 
             private static void OnBossSpawnedServer(GameObject spawnedInstance)

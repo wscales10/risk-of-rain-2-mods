@@ -5,7 +5,6 @@ using RoR2;
 using RoR2.CharacterAI;
 using System;
 using System.Linq;
-using UnityEngine;
 
 namespace PactOfPunishment.Waves.Halcyonites
 {
@@ -44,7 +43,7 @@ namespace PactOfPunishment.Waves.Halcyonites
             this.fallRiskMitigator.DoUpdate(this.Body!.transform);
 
             var utilitySkill = this.Body!.skillLocator.utility;
-            if (this.fallRiskMitigator.IsAboveGround == false && utilitySkill.skillDef == HalcyoniteModule.WhirlwindSkillDef)
+            if (this.fallRiskMitigator.IsAboveGround == false)
             {
                 switch (this.WeaponStateMachine?.state)
                 {
@@ -53,13 +52,10 @@ namespace PactOfPunishment.Waves.Halcyonites
                         break;
 
                     default:
-                        this.WeaponStateMachine?.SetInterruptState(Utils.InstantiateState<WhirlwindWarmUp>(), EntityStates.InterruptPriority.PrioritySkill);
-                        /*utilitySkill.stock = utilitySkill.skillDef.requiredStock;
-
-                        foreach (var ai in this.Body?.master?.AiComponents ?? Enumerable.Empty<BaseAI>())
+                        if (this.WeaponStateMachine && this.WeaponStateMachine!.SetInterruptState(Utils.InstantiateState<WhirlwindWarmUp>(), EntityStates.InterruptPriority.PrioritySkill) && utilitySkill?.skillDef == HalcyoniteModule.WhirlwindSkillDef)
                         {
-                            ai.skillDriverUpdateTimer = Mathf.Min(ai.skillDriverUpdateTimer, 0.15f);
-                        }*/
+                            utilitySkill?.DeductStock(utilitySkill.skillDef.stockToConsume);
+                        }
 
                         break;
                 }

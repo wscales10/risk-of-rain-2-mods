@@ -6,11 +6,4 @@
 
         public override int GetHeatForRank(int rank) => this.HeatPerRank;
     }
-
-    public sealed class RoutineInspection : DefaultConditionDef
-    {
-        public override int MaxRank => 4;
-
-        public override int HeatPerRank => 2;
-    }
 }

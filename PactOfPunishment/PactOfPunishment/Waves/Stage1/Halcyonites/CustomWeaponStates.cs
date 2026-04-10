@@ -357,7 +357,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
 
             protected override int GetTotalTimesToFire() => (this.characterBody.TryGetComponent<Halcyonite3BodyBehavior>(out var behavior) && behavior.isThreeWayFistsEnabled) ? 3 : 1;
 
-            protected override IEnumerable<Vector3?> GetZoneCentres(ZoneCreationArgs args) // TODO: at less than 33% health, also fire lines to left and right
+            protected override IEnumerable<Vector3?> GetZoneCentres(ZoneCreationArgs args)
             {
                 this.isTargetToTheRight ??= Vector3.Cross(args.MyHorizontalFacingDirection, args.TargetPosition - args.MyCurrentPosition).y > 0;
 

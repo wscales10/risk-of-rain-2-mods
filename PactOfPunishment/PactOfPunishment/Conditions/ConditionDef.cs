@@ -18,6 +18,7 @@ namespace PactOfPunishment.Conditions
         {
             var run = Run.instance;
 
+            // TODO: if we decide to display conditions in the UI outside of the context of a run, we'll need to change this
             if (run && run.TryGetComponent<PactOfPunishmentBehavior>(out var behavior))
             {
                 return behavior.GetRank(this);

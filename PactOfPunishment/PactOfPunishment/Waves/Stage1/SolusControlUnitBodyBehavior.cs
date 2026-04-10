@@ -8,7 +8,7 @@ namespace PactOfPunishment.Waves.Stage1
 {
     public partial class SolusControlUnitMiniBossInfo
     {
-        public class SolusControlUnitBodyBehavior : BossBodyBehavior
+        public class SolusControlUnitBodyBehavior : BossBodyBehavior, IOnTakeDamageServerReceiver
         {
             private readonly AssetPromise<CharacterSpawnCard> solusProbeSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/Base/RoboBallBoss/cscRoboBallMini.asset");
 
@@ -37,6 +37,8 @@ namespace PactOfPunishment.Waves.Stage1
                 this.spawnMinionsBehavior = this.gameObject.AddComponent<RateLimiter>();
                 this.spawnMinionsBehavior.minimumInterval = 1;
                 this.spawnMinionsBehavior.doThing = this.TrySpawnProbe;
+
+                this.Body.healthComponent.AddOnTakeDamageServerReceiver(this);
             }
 
             private bool TrySpawnProbe()
@@ -80,6 +82,14 @@ namespace PactOfPunishment.Waves.Stage1
                 Utils.ScaleDeathRewards(probeBody, 0);
                 this.Body.AddMinion(probe, deployableSlot.Value);
                 return true;
+            }
+
+            public void OnTakeDamageServer(DamageReport damageReport)
+            {
+                if (damageReport.damageDealt > 0)
+                {
+                    this.spawnMinionsBehavior.TryDoThing();
+                }
             }
         }
     }

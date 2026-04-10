@@ -12,8 +12,27 @@ namespace PactOfPunishment.Conditions
 
         public override void Init()
         {
-            IL.RoR2.HealthComponent.Heal += this.HealthComponent_Heal;
+            IL.RoR2.HealthComponent.Heal += Utils.HookIL(HealthComponent_Heal);
             IL.RoR2.HealthComponent.ServerFixedUpdate += this.HealthComponent_ServerFixedUpdate;
+            IL.RoR2.HealthComponent.AddBarrier += Utils.HookIL(HealthComponent_AddBarrier);
+        }
+
+        private void HealthComponent_AddBarrier(ILCursor c)
+        {
+            c.GotoNext(
+                x => x.MatchLdarg(0),
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<HealthComponent>(nameof(HealthComponent.barrier)),
+                x => x.MatchLdarg(1),
+                x => x.MatchAdd(),
+                x => x.MatchLdarg(0),
+                x => x.MatchCall<HealthComponent>($"get_{nameof(HealthComponent.fullBarrier)}"),
+                x => x.MatchCall<Mathf>(nameof(Mathf.Min)),
+                x => x.MatchCall<HealthComponent>($"set_{nameof(HealthComponent.Networkbarrier)}")
+            );
+            c.Index += 4;
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<float, HealthComponent, float>>(this.ModifyHealing);
         }
 
         private void HealthComponent_ServerFixedUpdate(ILContext il)
@@ -33,34 +52,35 @@ namespace PactOfPunishment.Conditions
             c.EmitDelegate<Func<float, HealthComponent, float>>(this.ModifyHealing);
         }
 
-        private void HealthComponent_Heal(ILContext il)
+        private void HealthComponent_Heal(ILCursor c)
         {
-            var c = new ILCursor(il);
-
-            c.GotoNext(MoveType.AfterLabel,
-                x => x.MatchLdarg(1),
-                x => x.MatchStloc(2),
+            c.GotoNext(MoveType.After,
+                x => x.MatchLdarg(0),
                 x => x.MatchLdarg(0),
                 x => x.MatchLdfld<HealthComponent>(nameof(HealthComponent.health)),
-                x => x.MatchLdarg(0),
-                x => x.MatchCall<HealthComponent>($"get_{nameof(HealthComponent.fullHealth)}"),
-                x => x.MatchBgeUn(out _));
-            c.Emit(OpCodes.Ldarg_1);
+                x => x.MatchLdloc(out _),
+                x => x.MatchAdd(),
+                x => x.MatchCall<HealthComponent>($"set_{nameof(HealthComponent.Networkhealth)}")
+            );
+            c.Index -= 2;
             c.Emit(OpCodes.Ldarg_0);
             c.EmitDelegate<Func<float, HealthComponent, float>>(this.ModifyHealing);
-            c.Emit(OpCodes.Starg_S, (byte)1);
         }
 
         private float ModifyHealing(float amount, HealthComponent self)
         {
             if (self.body.teamComponent.teamIndex == TeamIndex.Player)
             {
+                float multiplier = 0.5f;
+
                 int lastingConsequencesRank = this.GetRank(self);
 
                 if (lastingConsequencesRank > 0)
                 {
-                    return amount * Mathf.Max(0, 1 - 0.25f * lastingConsequencesRank);
+                    multiplier *= Mathf.Max(0, 1 - 0.25f * lastingConsequencesRank);
                 }
+
+                return amount * multiplier;
             }
 
             return amount;

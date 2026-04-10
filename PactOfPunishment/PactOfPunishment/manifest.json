@@ -1,0 +1,20 @@
+﻿{
+    "name": "Pact_of_Punishment",
+    "version_number": "0.0.1",
+    "website_url": "https://github.com/wscales10/risk-of-rain-2-mods/tree/feature/pact-of-punishment/PactOfPunishment",
+    "description": "WIP",
+    "dependencies": [
+        "bbepis-BepInExPack-5.4.2121",
+		"RiskofThunder-HookGenPatcher-1.2.9",
+		"RiskofThunder-R2API_ContentManagement-1.0.10",
+		"RiskofThunder-R2API_RecalculateStats-1.6.6",
+		"Rune580-Risk_Of_Options-2.8.5",
+		"RiskofThunder-R2API_Prefab-1.1.1",
+		"RiskofThunder-R2API_Deployable-1.0.1",
+		"RiskofThunder-R2API_Elites-1.1.1",
+		"RiskofThunder-R2API_DamageType-1.1.7",
+		"RiskofThunder-R2API_Language-1.1.0",
+		"6thmoon-UnlockMomentum-0.1.6",
+		"RiskofThunder-R2API_Items-1.0.8",
+    ]
+}

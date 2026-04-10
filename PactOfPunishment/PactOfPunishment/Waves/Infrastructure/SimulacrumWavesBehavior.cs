@@ -17,6 +17,8 @@ namespace PactOfPunishment.Waves.Infrastructure
 
         public string? WaveOverrideName { get; set; }
 
+        public int WaveOverrideIndex { get; internal set; } = -1;
+
         internal IWaveSelectionDefinition? LastSelectedWaveSelectionDefinition { get; private set; }
 
         internal bool WasMithrixDefeatedEarlierInRun { get; set; }
@@ -57,6 +59,11 @@ namespace PactOfPunishment.Waves.Infrastructure
                 {
                     return waveSelectionDefinition;
                 }
+            }
+
+            if (this.WaveOverrideIndex > -1)
+            {
+                return this.waveSelectionDefinitionSelector.GetForWaveIndex(this.WaveOverrideIndex);
             }
 
             if (self.name != "BossWaveCategory")

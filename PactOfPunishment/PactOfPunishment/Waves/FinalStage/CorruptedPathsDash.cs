@@ -77,7 +77,7 @@ namespace PactOfPunishment.Waves.FinalStage
             orig(self);
         }
 
-        private EntityStates.EntityState CorruptedPathsDash_GetNextStateAuthority(On.EntityStates.FalseSonBoss.CorruptedPathsDash.orig_GetNextStateAuthority orig, CorruptedPathsDash self)
+        private EntityState CorruptedPathsDash_GetNextStateAuthority(On.EntityStates.FalseSonBoss.CorruptedPathsDash.orig_GetNextStateAuthority orig, CorruptedPathsDash self)
         {
             if (self.GetComponent<UpgradedLeap.UpgradedLeapGhostBehavior>())
             {
@@ -98,6 +98,13 @@ namespace PactOfPunishment.Waves.FinalStage
 
         public class PredictiveDashController : MonoBehaviour
         {
+#if DEBUG
+            static PredictiveDashController()
+            {
+                IsDebugDisplayEnabled = true;
+            }
+#endif
+
             public Func<float> GetLookAheadDuration;
 
             public Func<bool>? ShouldUsePredictedPosition;
@@ -106,26 +113,45 @@ namespace PactOfPunishment.Waves.FinalStage
 
             public CharacterBody? TargetBodyOverride;
 
+            private static bool isDebugDisplayEnabled = false;
+
             private TargetingAndPredictionController targetingAndPredictionController;
+
+            private GameObject dashTargetSphere;
+
+            private GameObject predictedPositionSphere;
+
+            private static event Action? DebugDisplayToggled;
+
+            public static bool IsDebugDisplayEnabled
+            {
+                get => isDebugDisplayEnabled;
+
+                set
+                {
+                    isDebugDisplayEnabled = value;
+                    DebugDisplayToggled?.Invoke();
+                }
+            }
 
             public bool IsPredictorActive { get; private set; }
 
             public bool DidMostRecentDashUsePredictedPosition { get; private set; }
 
-            private GameObject dashTargetSphere;
-            private GameObject predictedPositionSphere;
-
             public void Awake()
             {
+                DebugDisplayToggled += this.PredictiveDashController_DebugDisplayToggled;
                 this.dashTargetSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 this.dashTargetSphere.GetComponent<Renderer>().material.color = Color.green;
                 this.predictedPositionSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 this.predictedPositionSphere.GetComponent<Renderer>().material.color = Color.red;
+                this.PredictiveDashController_DebugDisplayToggled();
                 this.targetingAndPredictionController = this.gameObject.AddComponent<TargetingAndPredictionController>();
             }
 
             public void OnDestroy()
             {
+                DebugDisplayToggled -= this.PredictiveDashController_DebugDisplayToggled;
                 Destroy(this.dashTargetSphere);
                 Destroy(this.predictedPositionSphere);
             }
@@ -175,6 +201,12 @@ namespace PactOfPunishment.Waves.FinalStage
                     dashTargetPosition = default;
                     return false;
                 }
+            }
+
+            private void PredictiveDashController_DebugDisplayToggled()
+            {
+                this.dashTargetSphere?.SetActive(IsDebugDisplayEnabled);
+                this.predictedPositionSphere?.SetActive(IsDebugDisplayEnabled);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using EntityStates.Halcyonite;
+using HG;
 using RoR2;
 using RoR2.CharacterAI;
 using System;
@@ -11,6 +12,19 @@ namespace PactOfPunishment.Waves.Halcyonites
     {
         public class UseAirNodesController : MonoBehaviour, IOverrideTargetPos
         {
+#if DEBUG
+
+            static UseAirNodesController()
+            {
+                EnableDebugVisuals = true;
+            }
+
+#endif
+
+            private bool enableDebugVisuals;
+
+            public static bool EnableDebugVisuals { get; set; }
+
             private UseAirNodes? instance;
 
             private LineRenderer lineRenderer;
@@ -32,10 +46,7 @@ namespace PactOfPunishment.Waves.Halcyonites
                 set
                 {
                     this.instance = value;
-
-                    var positions = value?.path?.Where(x => x.HasValue).Select(x => x!.Value).ToArray() ?? Array.Empty<Vector3>();
-                    this.lineRenderer.positionCount = positions.Length;
-                    this.lineRenderer.SetPositions(positions);
+                    this.UpdateDebugVisuals();
                 }
             }
 
@@ -49,12 +60,14 @@ namespace PactOfPunishment.Waves.Halcyonites
 
             public void OnEnable()
             {
-                this.debugSphere.SetActive(true);
+                this.enableDebugVisuals = EnableDebugVisuals;
+                this.UpdateDebugVisuals();
             }
 
             public void OnDisable()
             {
-                this.debugSphere.SetActive(false);
+                this.enableDebugVisuals = false;
+                this.UpdateDebugVisuals();
             }
 
             public void OnDestroy()
@@ -67,12 +80,22 @@ namespace PactOfPunishment.Waves.Halcyonites
 
             public void Awake()
             {
-                this.lineRenderer = this.gameObject.AddComponent<LineRenderer>();
+                this.lineRenderer = this.GetLineRenderer();
                 this.lineRenderer.material = DebugOverlay.defaultWireMaterial;
-                this.lineRenderer.useWorldSpace = true;
                 this.weaponStateMachine = EntityStateMachine.FindByCustomName(this.gameObject, "Weapon");
                 this.debugSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 this.debugSphere.transform.localScale = Vector3.one * 0.5f;
+            }
+
+            private LineRenderer GetLineRenderer()
+            {
+                LineRenderer output;
+
+                // output = this.gameObject.AddComponent<LineRenderer>(); output.useWorldSpace = true;
+
+                output = Stage.instance.EnsureComponent<LineRenderer>();
+
+                return output;
             }
 
             public void OnDashStart(WhirlWindPersuitCycle state) => this.Instance = new UseAirNodes(this.GetPath(state), state, this.GetCurrentPosition);
@@ -80,6 +103,29 @@ namespace PactOfPunishment.Waves.Halcyonites
             void IOverrideTargetPos.Reset() => this.Instance = default;
 
             void IOverrideTargetPos.Update() => this.Instance?.Update();
+
+            private void UpdateLineRenderer(Vector3[] positions)
+            {
+                if (this.lineRenderer != null)
+                {
+                    this.lineRenderer.positionCount = positions.Length;
+                    this.lineRenderer.SetPositions(positions);
+                }
+            }
+
+            private void UpdateDebugVisuals()
+            {
+                this.debugSphere?.SetActive(this.enableDebugVisuals);
+
+                if (this.enableDebugVisuals)
+                {
+                    this.UpdateLineRenderer(this.Instance?.path?.Where(x => x.HasValue).Select(x => x!.Value).ToArray() ?? Array.Empty<Vector3>());
+                }
+                else
+                {
+                    this.UpdateLineRenderer(Array.Empty<Vector3>());
+                }
+            }
 
             private Path? GetPath(WhirlWindPersuitCycle state)
             {
@@ -97,6 +143,16 @@ namespace PactOfPunishment.Waves.Halcyonites
                 return pathTask?.wasReachable == true ? path : null;
             }
 
+            public bool CheckIfArrived(bool orig)
+            {
+                if (this.Instance?.IsInFinalStretch == false)
+                {
+                    return false;
+                }
+
+                return orig;
+            }
+
             private class UseAirNodes
             {
                 public Vector3?[]? path;
@@ -110,6 +166,8 @@ namespace PactOfPunishment.Waves.Halcyonites
                 private readonly WhirlWindPersuitCycle state;
 
                 private readonly Func<Vector3> getCurrentPosition;
+
+                public bool IsInFinalStretch => this.path is null || this.indexInPath >= this.path.Length - 1;
 
                 public UseAirNodes(Path? path, WhirlWindPersuitCycle state, Func<WhirlWindPersuitCycle, Vector3> getCurrentPosition)
                 {

@@ -14,7 +14,6 @@ using RoR2.CharacterAI;
 using RoR2.Skills;
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves.Halcyonites

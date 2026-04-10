@@ -49,6 +49,7 @@ namespace PactOfPunishment.Conditions
             c.Emit(OpCodes.Ldarg_0);
             c.EmitDelegate<Action<GameObject, InfiniteTowerRun>>((portalObject, self) =>
             {
+                // TODO: don't spawn scrapper if there is already one near the safe ward
                 DirectorCore.instance.TrySpawnObject(new DirectorSpawnRequest(this.scrapperCard.Value, new DirectorPlacementRule
                 {
                     minDistance = 0f,

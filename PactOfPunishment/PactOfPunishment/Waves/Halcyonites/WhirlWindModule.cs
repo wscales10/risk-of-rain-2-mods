@@ -35,6 +35,8 @@ namespace PactOfPunishment.Waves.Halcyonites
 
             void OnDashStart(WhirlWindPersuitCycle state);
 
+            bool CheckIfArrived(bool orig);
+
             void Update();
 
             void Reset();
@@ -54,6 +56,7 @@ namespace PactOfPunishment.Waves.Halcyonites
             On.EntityStates.Halcyonite.WhirlWindPersuitCycle.StartDash += this.WhirlWindPersuitCycle_StartDash;
             On.EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateDash += this.WhirlWindPersuitCycle_UpdateDash;
             On.EntityStates.Halcyonite.WhirlWindPersuitCycle.OnExit += this.WhirlWindPersuitCycle_OnExit;
+            On.EntityStates.Halcyonite.WhirlWindPersuitCycle.CheckIfArrived += this.WhirlWindPersuitCycle_CheckIfArrived;
 
             IL.EntityStates.Halcyonite.WhirlWindPersuitCycle.CheckIfArrived += InterceptGetTargetPos(true).HookIL();
             IL.EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateDash += InterceptGetTargetPos(true).HookIL();
@@ -63,37 +66,78 @@ namespace PactOfPunishment.Waves.Halcyonites
             IL.EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateFindTarget += Utils.HookIL(WhirlWindPersuitCycle_UpdateFindTarget);
         }
 
+        private void WhirlWindPersuitCycle_CheckIfArrived(On.EntityStates.Halcyonite.WhirlWindPersuitCycle.orig_CheckIfArrived orig, WhirlWindPersuitCycle self)
+        {
+            // TODO: this is temporary, I want to use an IL hook but this will help with debugging
+            if (CheckIfArrived(self))
+            {
+                self.state = WhirlWindPersuitCycle.PersuitState.Decelerate;
+                self.startDecelerateTimeStamp = self.fixedAge;
+                self.startedDash = false;
+            }
+        }
+
+        private static bool CheckIfArrived(WhirlWindPersuitCycle self)
+        {
+            bool orig = Vector3.Dot(self.targetPos - self.transform.position, GetTargetMoveDirection(self)) < 0f;
+
+            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            {
+                return component.CheckIfArrived(orig);
+            }
+            else
+            {
+                return orig;
+            }
+        }
+
         private static Action<ILCursor> InterceptGetTargetPos(bool moveDirectionOnly) => c => InterceptGetTargetPosInternal(c, moveDirectionOnly);
+
+        private static Vector3 GetTargetPos(WhirlWindPersuitCycle self)
+        {
+            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            {
+                return component.TargetPos;
+            }
+            else
+            {
+                return self.targetPos;
+            }
+        }
+
+        private static Vector3 GetTargetMoveDirection(WhirlWindPersuitCycle self)
+        {
+            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            {
+                return component.TargetMoveDirection;
+            }
+            else
+            {
+                return self.targetMoveDirt;
+            }
+        }
+
+        private static Vector3 GetNormalizedTargetMoveDirection(WhirlWindPersuitCycle self)
+        {
+            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            {
+                return component.TargetMoveDirection.normalized;
+            }
+            else
+            {
+                return self.targetMoveDirt.normalized;
+            }
+        }
 
         private static void InterceptGetTargetPosInternal(ILCursor c, bool moveDirectionOnly)
         {
             if (!moveDirectionOnly)
             {
-                c.InterceptLoadField<WhirlWindPersuitCycle, Vector3>(nameof(WhirlWindPersuitCycle.targetPos), self =>
-                {
-                    if (self.TryGetComponent<IOverrideTargetPos>(out var component))
-                    {
-                        return component.TargetPos;
-                    }
-                    else
-                    {
-                        return self.targetPos;
-                    }
-                });
+                c.InterceptLoadField<WhirlWindPersuitCycle, Vector3>(nameof(WhirlWindPersuitCycle.targetPos), GetTargetPos);
             }
 
             c.Index = 0;
-            c.InterceptLoadField<WhirlWindPersuitCycle, Vector3>(nameof(WhirlWindPersuitCycle.targetMoveDirt), self =>
-            {
-                if (self.TryGetComponent<IOverrideTargetPos>(out var component))
-                {
-                    return component.TargetMoveDirection;
-                }
-                else
-                {
-                    return self.targetMoveDirt;
-                }
-            });
+            c.InterceptLoadField<WhirlWindPersuitCycle, Vector3>(nameof(WhirlWindPersuitCycle.targetMoveDirt), GetTargetMoveDirection);
 
             c.Index = 0;
             while (c.TryGotoNext(MoveType.AfterLabel,
@@ -102,17 +146,7 @@ namespace PactOfPunishment.Waves.Halcyonites
             {
                 c.RemoveRange(2);
                 c.MoveAfterLabels(); // AfterLabel stuff is probably not needed here, but just to be safe...
-                c.EmitDelegate<Func<WhirlWindPersuitCycle, Vector3>>(self =>
-                {
-                    if (self.TryGetComponent<IOverrideTargetPos>(out var component))
-                    {
-                        return component.TargetMoveDirection.normalized;
-                    }
-                    else
-                    {
-                        return self.targetMoveDirt.normalized;
-                    }
-                });
+                c.EmitDelegate<Func<WhirlWindPersuitCycle, Vector3>>(GetNormalizedTargetMoveDirection);
             }
         }
 
