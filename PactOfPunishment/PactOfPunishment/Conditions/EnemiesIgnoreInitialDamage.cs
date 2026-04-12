@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class DamageControl : DefaultConditionDef
+    public sealed class EnemiesIgnoreInitialDamage : DefaultConditionDef
     {
         public override int MaxRank => 2;
 

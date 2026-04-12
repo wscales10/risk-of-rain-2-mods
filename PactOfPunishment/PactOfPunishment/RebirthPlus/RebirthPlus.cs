@@ -36,7 +36,7 @@ namespace PactOfPunishment.RebirthPlus
         {
             On.RoR2.Run.Awake += this.Run_Awake;
             RebirthPlusBehavior.itemChoiceStrategy = this;
-            RoR2Application.onLoadFinished = (Action)Delegate.Combine(RoR2Application.onLoadFinished, new Action(this.AddConfigSettings));
+            Utils.DoDuringGameLoad(this.AddConfigSettings);
         }
 
         private static string GetKey(ILevelInfo level)
@@ -64,12 +64,12 @@ namespace PactOfPunishment.RebirthPlus
                             return true;
                         }
 
-                        if (this.conditionConfigEntry is null && !config.TryGetEntry(PactOfPunishmentPlugin.Section, Utils.SplitPascalCaseString(typeof(RoutineInspection).Name), out this.conditionConfigEntry))
+                        if (this.conditionConfigEntry is null && !config.TryGetEntry(PactOfPunishmentPlugin.Section, Utils.SplitPascalCaseString(typeof(DisableStartingItems).Name), out this.conditionConfigEntry))
                         {
                             return false;
                         }
 
-                        var levelCount = RoutineInspection.Instance.GetLevelCount(levels.Length, this.conditionConfigEntry.Value);
+                        var levelCount = DisableStartingItems.Instance.GetLevelCount(levels.Length, this.conditionConfigEntry.Value);
                         return level.Index >= levelCount;
                     }
                 }));

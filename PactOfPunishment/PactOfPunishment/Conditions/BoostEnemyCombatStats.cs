@@ -3,11 +3,15 @@ using RoR2;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class ForcedOvertime : DefaultConditionDef
+    public sealed class BoostEnemyCombatStats : DefaultConditionDef
     {
         public override int MaxRank => 2;
 
         public override int HeatPerRank => 3;
+        
+        private const float combatStatIncreasePerRank = 0.2f;
+
+        public override string Description => string.Format(base.Description, Utils.Percent(combatStatIncreasePerRank));
 
         public bool ReduceEnemyCooldowns { get; set; } = true;
 
@@ -20,7 +24,7 @@ namespace PactOfPunishment.Conditions
         {
             if (Utils.IsFoe(sender))
             {
-                float multiplier = 1 + 0.2f * this.GetRank(sender);
+                float multiplier = 1 + combatStatIncreasePerRank * this.GetRank(sender);
                 args.moveSpeedTotalMult *= multiplier;
                 args.attackSpeedTotalMult *= multiplier;
 

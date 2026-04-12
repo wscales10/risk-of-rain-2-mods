@@ -3,9 +3,13 @@ using RoR2;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class CalisthenicsProgram : DefaultConditionDef
+    public sealed class IncreaseEnemyDamage : DefaultConditionDef
     {
-        public override int MaxRank => 2;
+        public override int MaxRank => 5;
+
+        private const float damageIncreasePerRank = 0.2f;
+
+        public override string Description => string.Format(base.Description, Utils.Percent(damageIncreasePerRank));
 
         public override void Init()
         {
@@ -16,7 +20,7 @@ namespace PactOfPunishment.Conditions
         {
             if (Utils.IsFoe(sender))
             {
-                args.healthTotalMult *= 1 + 0.15f * this.GetRank(sender);
+                args.damageTotalMult *= 1 + 0.2f * this.GetRank(sender);
             }
         }
     }

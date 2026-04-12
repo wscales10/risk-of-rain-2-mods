@@ -1,5 +1,4 @@
-﻿using EntityStates;
-using HG;
+﻿using HG;
 using RoR2;
 using RoR2.UI;
 using System;
@@ -11,17 +10,25 @@ using static RoR2.TimerStringFormatter;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class TightDeadline : ConditionDef // TODO: visual timer indication, testing, allow player to spawn next wave immediately by interacting with focus
+    public sealed class LimitRunTime : ConditionDef
     {
+        private const int numberOfEarlyStages = 3;
+
+        private const int minutesPerStageAtRank1 = 11;
+
+        private const int minutesPerStageReductionPerRank = 2;
+
         private static float damagePerSecond = 10;
 
         public override int MaxRank => 3;
+
+        public override string Description => string.Format(base.Description, numberOfEarlyStages, minutesPerStageAtRank1, minutesPerStageReductionPerRank);
 
         public static void PauseTimer()
         {
             var run = Run.instance;
 
-            if (run && run.TryGetComponent<TightDeadlineBehavior>(out var behavior))
+            if (run && run.TryGetComponent<LimitRunTimeBehavior>(out var behavior))
             {
                 behavior.Pause();
             }
@@ -31,7 +38,7 @@ namespace PactOfPunishment.Conditions
         {
             var run = Run.instance;
 
-            if (run && run.TryGetComponent<TightDeadlineBehavior>(out var behavior))
+            if (run && run.TryGetComponent<LimitRunTimeBehavior>(out var behavior))
             {
                 behavior.Resume();
             }
@@ -41,7 +48,7 @@ namespace PactOfPunishment.Conditions
 
         public override void Init()
         {
-            // Create TightDeadlineBehavior
+            // Create LimitRunTimeBehavior
             On.RoR2.InfiniteTowerRun.Start += this.InfiniteTowerRun_Start;
 
             // Add time
@@ -98,11 +105,11 @@ namespace PactOfPunishment.Conditions
             {
                 Transform rightInfoBar = self.gameModeUiRoot.GetChild(0).Find("RightInfoBar");
 
-                var timerGameObject = new GameObject(nameof(TightDeadlineUI), typeof(RectTransform));
+                var timerGameObject = new GameObject(nameof(LimitRunTimeUI), typeof(RectTransform));
                 timerGameObject.transform.SetParent(rightInfoBar, false);
 
                 // timerGameObject.transform.SetAsLastSibling();
-                timerGameObject.AddComponent<TightDeadlineUI>().TightDeadlineBehavior = Run.instance?.GetComponent<TightDeadlineBehavior>();
+                timerGameObject.AddComponent<LimitRunTimeUI>().LimitRunTimeBehavior = Run.instance?.GetComponent<LimitRunTimeBehavior>();
             }
         }
 
@@ -174,7 +181,7 @@ namespace PactOfPunishment.Conditions
         {
             if (this.IsEnabled(self))
             {
-                this.SetupBehavior(self.EnsureComponent<TightDeadlineBehavior>());
+                this.SetupBehavior(self.EnsureComponent<LimitRunTimeBehavior>());
             }
 
             orig(self);
@@ -184,9 +191,9 @@ namespace PactOfPunishment.Conditions
         {
             orig(self, stage);
 
-            if (self.TryGetComponent<TightDeadlineBehavior>(out var behavior)) // TODO: wait until players spawned in?
+            if (self.TryGetComponent<LimitRunTimeBehavior>(out var behavior)) // TODO: wait until players spawned in?
             {
-                if (self.stageClearCount < 4)
+                if (self.stageClearCount <= numberOfEarlyStages)
                 {
                     behavior.AddTime(this.GetTimeLimitPerRegion(self));
                 }
@@ -198,14 +205,14 @@ namespace PactOfPunishment.Conditions
             }
         }
 
-        private void SetupBehavior(TightDeadlineBehavior behavior)
+        private void SetupBehavior(LimitRunTimeBehavior behavior)
         {
-            behavior.getDamagePerSecond = (body) => damagePerSecond + 1 + 0.2f * (body.level - 1);
+            behavior.getDamagePerSecond = (body) => damagePerSecond * ((body.maxHealth + body.maxShield) / 600f + (5 / 6f)) + 1 + 0.2f * (body.level - 1);
         }
 
-        private TimeSpan GetTimeLimitPerRegion(UnityEngine.Object context) => TimeSpan.FromMinutes(13 - 2 * this.GetRank(context));
+        private TimeSpan GetTimeLimitPerRegion(UnityEngine.Object context) => TimeSpan.FromMinutes(minutesPerStageAtRank1 - minutesPerStageReductionPerRank * (this.GetRank(context) - 1));
 
-        public class TightDeadlineBehavior : MonoBehaviour
+        public class LimitRunTimeBehavior : MonoBehaviour
         {
             public TimeSpan timerTotal;
 
@@ -309,7 +316,7 @@ namespace PactOfPunishment.Conditions
             }
         }
 
-        public class TightDeadlineUI : MonoBehaviour
+        public class LimitRunTimeUI : MonoBehaviour
         {
             private static Color defaultColor = new Color(1, 0.4f, 0.4f);
 
@@ -321,7 +328,7 @@ namespace PactOfPunishment.Conditions
 
             private TimerText? timerText;
 
-            public TightDeadlineBehavior? TightDeadlineBehavior { get; set; }
+            public LimitRunTimeBehavior? LimitRunTimeBehavior { get; set; }
 
             public void Awake()
             {
@@ -384,7 +391,7 @@ namespace PactOfPunishment.Conditions
             {
                 if (this.timerText)
                 {
-                    float secondsRemaining = this.TightDeadlineBehavior?.TimeRemaining ?? 0f;
+                    float secondsRemaining = this.LimitRunTimeBehavior?.TimeRemaining ?? 0f;
                     this.timerText!.seconds = Mathf.Max(0, secondsRemaining);
 
                     float intensity;
@@ -394,7 +401,7 @@ namespace PactOfPunishment.Conditions
                     }
                     else
                     {
-                        intensity = 1 - 2 * this.TightDeadlineBehavior?.SecondsSinceLastTick ?? 0; // No need to clamp as lerp does the clamping
+                        intensity = 1 - 2 * this.LimitRunTimeBehavior?.SecondsSinceLastTick ?? 0; // No need to clamp as lerp does the clamping
                     }
 
                     this.timerText.targetLabel.color = Color.Lerp(defaultColor, secondsRemaining > 0 ? Color.white : Color.red, intensity);

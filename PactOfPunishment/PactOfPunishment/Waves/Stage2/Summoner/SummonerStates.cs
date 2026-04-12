@@ -266,7 +266,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
                 body.AddBuff(RoR2Content.Buffs.Immune);
                 CleanseSystem.CleanseBodyServer(body, true, false, false, true, false, false);
-                Utils.DirectHeal(this.healthComponent, this.PhaseStartingHealthFraction);
+                Utils.DirectHealIncludingShields(this.healthComponent, this.PhaseStartingHealthFraction);
             }
 
             private void CombatSquad_onDefeatedServer()

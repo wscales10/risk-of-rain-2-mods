@@ -78,7 +78,7 @@ namespace PactOfPunishment.Waves.Stage1
 
             protected override void OnBossSpawnedServer(CharacterBody body)
             {
-                body.ScaleDifficultyAsBoss(2.5f, 40, true, false);
+                body.ScaleDifficultyAsBoss(4, 40, true, false);
 
                 if (this.eliteEquipments.Length > 0)
                 {

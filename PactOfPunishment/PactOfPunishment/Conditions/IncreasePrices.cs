@@ -3,9 +3,13 @@ using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class ConvenienceFee : DefaultConditionDef
+    public sealed class IncreasePrices : DefaultConditionDef
     {
         public override int MaxRank => 2;
+        
+        private const float priceIncreasePerRank = 0.4f;
+
+        public override string Description => string.Format(base.Description, Utils.Percent(priceIncreasePerRank));
 
         public override void Init()
         {
@@ -15,7 +19,7 @@ namespace PactOfPunishment.Conditions
 
         public int ScaleCost(Object context, float originalCost)
         {
-            return Mathf.RoundToInt(originalCost * (1 + 0.4f * this.GetRank(context)));
+            return Mathf.RoundToInt(originalCost * (1 + priceIncreasePerRank * this.GetRank(context)));
         }
 
         private void HalcyoniteShrineInteractable_Awake(On.RoR2.HalcyoniteShrineInteractable.orig_Awake orig, HalcyoniteShrineInteractable self)

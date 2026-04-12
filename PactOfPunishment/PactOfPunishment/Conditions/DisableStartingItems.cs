@@ -3,13 +3,18 @@ using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class RoutineInspection : DefaultConditionDef
+    public sealed class DisableStartingItems : DefaultConditionDef
     {
-        private RoutineInspection()
+        private DisableStartingItems()
         {
         }
 
-        public static RoutineInspection Instance { get; } = new RoutineInspection();
+        // TODO: DRY
+        private const int itemsDisabledPerRank = 3;
+
+        public override string Description => string.Format(base.Description, itemsDisabledPerRank);
+
+        public static DisableStartingItems Instance { get; } = new DisableStartingItems();
 
         public override int MaxRank => 4;
 
@@ -27,7 +32,7 @@ namespace PactOfPunishment.Conditions
 
         private int GetLevelCount(int maxCount)
         {
-            return GetLevelCount(maxCount, this.GetRank(Run.instance));
+            return this.GetLevelCount(maxCount, this.GetRank(Run.instance));
         }
     }
 }

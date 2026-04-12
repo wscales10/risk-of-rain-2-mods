@@ -52,6 +52,10 @@ namespace PactOfPunishment.Waves.Stage3
 
         public class MithrixWithHalcyoniteBehavior : BossFightBehavior
         {
+            private BossGroupWrapper? mithrixBossGroup;
+
+            private BossGroupWrapper? halcyoniteBossGroup;
+
             public override void Awake()
             {
                 base.Awake();
@@ -62,6 +66,7 @@ namespace PactOfPunishment.Waves.Stage3
             {
                 if (body.name.Contains("Brother"))
                 {
+                    this.AddBossToGroup(ref this.mithrixBossGroup, body);
                     body.ScaleDifficultyAsBoss(2.5f, 30, true, false);
                     body.EnsureComponent<Mithrix.MithrixBodyBehavior>();
 
@@ -75,6 +80,7 @@ namespace PactOfPunishment.Waves.Stage3
                 }
                 else if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
                 {
+                    this.AddBossToGroup(ref this.halcyoniteBossGroup, body);
                     var halcyoniteBodyBehavior = body.EnsureComponent<FinalHalcyoniteBodyBehavior>();
                     halcyoniteBodyBehavior.DesiredState = FinalHalcyoniteBodyBehavior.State.Collective;
                     halcyoniteBodyBehavior.BossStateMachine.SetState(new FinalHalcyoniteStates.Phase1());

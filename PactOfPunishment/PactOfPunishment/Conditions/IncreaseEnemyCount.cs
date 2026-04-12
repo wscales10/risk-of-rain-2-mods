@@ -6,20 +6,24 @@ using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed partial class JurySummons : DefaultConditionDef
+    public sealed partial class IncreaseEnemyCount : DefaultConditionDef
     {
         public override int MaxRank => 3;
+
+        private const float spawnRateBonusPerRank = 0.2f;
+
+        public override string Description => string.Format(base.Description, Utils.Percent(spawnRateBonusPerRank));
 
         public override void Init()
         {
             On.RoR2.InfiniteTowerRun.Start += this.InfiniteTowerRun_Start;
             On.RoR2.InfiniteTowerWaveController.OnEnable += InfiniteTowerWaveController_OnEnable;
-            ScaleMaxSquadCount.OnScaleMaxSquadCount += ScaleMaxSquadCountForJurySummons;
+            PactOfPunishment.ScaleMaxSquadCount.OnScaleMaxSquadCount += ScaleMaxSquadCount;
         }
 
         private static void InfiniteTowerWaveController_OnEnable(On.RoR2.InfiniteTowerWaveController.orig_OnEnable orig, InfiniteTowerWaveController self)
         {
-            if (!self.isBossWave && Run.instance.TryGetComponent<JurySummonsBehavior>(out var behavior))
+            if (!self.isBossWave && Run.instance.TryGetComponent<SpawnMoreEnemiesBehavior>(out var behavior))
             {
                 behavior.AddCombatDirector(self.combatDirector);
             }
@@ -27,9 +31,9 @@ namespace PactOfPunishment.Conditions
             orig(self);
         }
 
-        private static void ScaleMaxSquadCountForJurySummons(CombatDirector combatDirector, ref uint maxSquadCount)
+        private static void ScaleMaxSquadCount(CombatDirector combatDirector, ref uint maxSquadCount)
         {
-            if (combatDirector.TryGetComponent<JurySummonsBehavior>(out var behavior))
+            if (combatDirector.TryGetComponent<SpawnMoreEnemiesBehavior>(out var behavior))
             {
                 maxSquadCount = (uint)Mathf.CeilToInt(maxSquadCount * (1 + behavior.spawnRateBonus));
             }
@@ -37,13 +41,13 @@ namespace PactOfPunishment.Conditions
 
         private void InfiniteTowerRun_Start(On.RoR2.InfiniteTowerRun.orig_Start orig, InfiniteTowerRun self)
         {
-            var behavior = self.EnsureComponent<JurySummonsBehavior>();
+            var behavior = self.EnsureComponent<SpawnMoreEnemiesBehavior>();
             behavior.enabled = this.IsEnabled(self);
-            behavior.spawnRateBonus = this.GetRank(self) * 0.2f;
+            behavior.spawnRateBonus = this.GetRank(self) * spawnRateBonusPerRank;
             orig(self);
         }
 
-        public class JurySummonsBehavior : MonoBehaviour
+        public class SpawnMoreEnemiesBehavior : MonoBehaviour
         {
             public float savedCredits;
 

@@ -14,13 +14,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using UnityHotReloadNS;
 
 [assembly: HG.Reflection.SearchableAttribute.OptIn]
 
 namespace PactOfPunishment
 {
-    [BepInPlugin("com.woodyscales.pactofpunishment", "Pact of Punishment", "0.0.1")]
+    [BepInPlugin("com.woodyscales.pactofpunishment", "Pact of Punishment", "0.0.2")]
     public partial class PactOfPunishmentPlugin : BaseUnityPlugin
     {
         internal const string Section = "Conditions";
@@ -58,7 +57,7 @@ namespace PactOfPunishment
                 this.modules.Add(module);
             }
 
-            this.SetupConditions();
+            RoR2Application.onLoadFinished = (Action)Delegate.Combine(RoR2Application.onLoadFinished, new Action(this.SetupConditions));
 
             On.RoR2.Run.Awake += this.Run_Awake;
             IL.RoR2.CombatDirector.AttemptSpawnOnTarget += Utils.HookIL(CombatDirector_AttemptSpawnOnTarget);
@@ -241,12 +240,41 @@ namespace PactOfPunishment
 
         private void SetupConditions()
         {
-            foreach (var conditionDef in this.modules.OfType<IConditionDef>())
+            foreach (var conditionDef in SortConditionDefs(this.modules.OfType<IConditionDef>()))
             {
-                var configEntry = this.Config.Bind(Section, Utils.SplitPascalCaseString(conditionDef.GetType().Name), 0);
+                var configEntry = this.Config.Bind(Section, conditionDef.Name, 0, conditionDef.Description);
                 ModSettingsManager.AddOption(new IntSliderOption(configEntry, new IntSliderConfig { restartRequired = false, min = 0, max = conditionDef.MaxRank, checkIfDisabled = () => Run.instance }));
                 this.conditionDefs[conditionDef] = configEntry;
             }
+        }
+
+        private static IEnumerable<IConditionDef> SortConditionDefs(IEnumerable<IConditionDef> conditionDefs)
+        {
+            Type[] conditionTypes = new[]
+            {
+                typeof(IncreaseEnemyDamage),
+                typeof(ReduceAllyHealing),
+                typeof(IncreasePrices),
+                typeof(IncreaseEnemyCount),
+                typeof(UpgradeMainBosses),
+                typeof(IncreaseEnemyMaxHealth),
+                typeof(ExtraEliteBuffs),
+                typeof(UpgradeMiniBosses),
+                typeof(StageProgressionCost),
+                typeof(BoostEnemyCombatStats),
+                typeof(IncreaseEnvironmentalDamage),
+                typeof(DisableStartingItems),
+                typeof(EnemiesIgnoreInitialDamage),
+                typeof(LimitChoiceOptions),
+                typeof(LimitRunTime),
+                typeof(RemoveOneShotProtection)
+            };
+
+            return conditionDefs.OrderBy(x =>
+            {
+                int index = Array.IndexOf(conditionTypes, x.GetType());
+                return index >= 0 ? index : int.MaxValue;
+            });
         }
     }
 

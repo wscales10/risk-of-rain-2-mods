@@ -2,6 +2,7 @@
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using RoR2;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -18,10 +19,17 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
         private readonly AssetPromise<CharacterSpawnCard> solusProspectorSpawnCard = Utils.BeginLoad<CharacterSpawnCard>("RoR2/DLC3/WorkerUnit/cscWorkerUnit.asset");
 
+        private DefeatSupportsObjectiveController defeatSupportsObjectiveController;
+
         private CombatDirector? combatDirector;
+
+        private BossGroupWrapper? bossGroup;
+
+        public event Action<CharacterBody>? OnBossSpawnedServer;
 
         public void Awake()
         {
+            this.defeatSupportsObjectiveController = this.EnsureComponent<DefeatSupportsObjectiveController>();
             this.combatDirector = this.GetComponent<CombatDirector>();
             this.combatDirector.EnsureComponent<UseMinimumEliteTierBehavior>();
             MonsterTracker.TrackCombatDirector(this.combatDirector);
@@ -34,6 +42,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             Debug.Log($"Selected summoner boss: '{mainBossMonsterDirectorCard?.spawnCard.prefab.name}'");
             this.combatDirector.OverrideNextBossCard(mainBossMonsterDirectorCard, false); // TODO: can fail! Try on commencement? also note that this implicitly calls ScaleDifficultyAsBoss.
             this.gameObject.EliminateCombatSquadWhenLastMainMemberDies(this.combatDirector.combatSquad, x => EntityStateMachine.FindByCustomName(x.GetBodyObject(), StateMachineCustomName));
+            this.combatDirector.combatSquad.onMemberDefeatedServer += this.CombatSquad_onMemberDefeatedServer;
         }
 
         public void OnEnable()
@@ -108,6 +117,8 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                             aiSkillDriver.maxUserHealthFraction = float.PositiveInfinity;
                         }
                     }
+
+                    this.OnBossSpawnedServer?.Invoke(spawnedBody);
                 }
             }
         }
@@ -115,7 +126,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
         private static bool CanBeSupportMonster(WeightedSelection<DirectorCard>.ChoiceInfo choice)
         {
             // TODO: check all bosses' interactions with artifact of kin
-            return choice.value?.cost > 14 && choice.value?.spawnCard is CharacterSpawnCard characterSpawnCard && characterSpawnCard.prefab.GetComponent<CharacterMaster>()?.bodyPrefab?.GetComponent<CharacterBody>()?.isChampion == false;
+            return choice.value?.cost > 10 && choice.value?.spawnCard is CharacterSpawnCard characterSpawnCard && characterSpawnCard.prefab.GetComponent<CharacterMaster>()?.bodyPrefab?.GetComponent<CharacterBody>()?.isChampion == false;
         }
 
         private static bool CanBeMainBossMonster(WeightedSelection<DirectorCard>.ChoiceInfo choice)
@@ -123,8 +134,19 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             return choice.value.cost > 10;
         }
 
+        private void CombatSquad_onMemberDefeatedServer(CharacterMaster arg1, DamageReport arg2)
+        {
+            var body = arg1.GetBody();
+
+            if (body && body.TryGetComponent<SummonerBossBodyBehavior>(out var bossBodyBehavior) && bossBodyBehavior.PowerLevel == SummonerBossPowerLevel.Support)
+            {
+                this.defeatSupportsObjectiveController.OnSupportDefeated(body);
+            }
+        }
+
         private void SummonerBossFightBehavior_OnSpawnedServer(SpawnCard.SpawnResult result)
         {
+            // Note: ghosts are not spawned by the combat director and thus will not trigger this event, so we don't need to worry about them being processed here.
             if (!Utils.TryGetCharacterBody(result.spawnedInstance, out var body))
             {
                 return;
@@ -141,8 +163,11 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                 if (EntityStateMachine.TryFindByCustomName(summonerBody.gameObject, StateMachineCustomName, out var stateMachine))
                 {
                     (stateMachine.state as SummonerStates.SummonerBaseState)?.OnBossSpawnedServer(result, body!);
+                    this.defeatSupportsObjectiveController.AddSupport(body);
                 }
             }
+
+            this.OnBossSpawnedServer?.Invoke(body);
         }
 
         private void OnMainBossSpawnedServer(SpawnCard.SpawnResult result, CharacterBody body)
@@ -165,8 +190,8 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             }
 
             Debug.Log($"Scaling health for {body.name} by {healthMultiplier}");
-            var summonerBehavior = this.GetComponent<SummonerBossFightBehavior>();
-            body.ScaleMaxHealth(summonerBehavior, healthMultiplier);
+            var bossFightBehavior = this.GetComponent<SummonerBossFightBehavior>();
+            body.ScaleMaxHealth(bossFightBehavior, healthMultiplier);
             Utils.MakeBodySemiImmortal(body);
             body.DisableStunsEtc();
             body.EnsureComponent<SummonerBossBodyBehavior>();
@@ -175,6 +200,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             body.healthComponent.ForwardBossDamageTo(bossBodyStateMachine);
             this.SpawnGhosts(body, SummonerBossPowerLevel.Phase1);
             bossBodyStateMachine.SetState(new SummonerStates.Phase1 { References = this.References });
+            this.AddBossToGroup(ref this.bossGroup, body);
         }
 
         private DirectorCard[] GetSupportMonsterDirectorCards(int count) // TODO: if the main boss is a lunar chimera wisp, for some reason this can return wisp and golem rather than exploder and golem.

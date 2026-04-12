@@ -7,9 +7,13 @@ using System;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class HeightenedSecurity : DefaultConditionDef
+    public sealed class IncreaseEnvironmentalDamage : DefaultConditionDef
     {
         public override int MaxRank => 1;
+
+        private const float damageMultiplier = 5f;
+
+        public override string Description => string.Format(base.Description, Utils.Percent(damageMultiplier - 1));
 
         public static DamageAPI.ModdedDamageType DamageType => Content.DamageTypes.EnvironmentalHazard;
 
@@ -98,7 +102,7 @@ namespace PactOfPunishment.Conditions
         {
             if (self.body.teamComponent.teamIndex == TeamIndex.Player && damageInfo.HasModdedDamageType(Content.DamageTypes.EnvironmentalHazard) && this.IsEnabled(self))
             {
-                damageInfo.damage *= 5;
+                damageInfo.damage *= damageMultiplier;
             }
 
             orig(self, damageInfo);

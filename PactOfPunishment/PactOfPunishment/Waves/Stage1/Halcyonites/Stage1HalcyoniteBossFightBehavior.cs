@@ -8,10 +8,13 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
     {
         public event Action<CharacterBody>? MainBossSpawnedServer;
 
+        private BossGroupWrapper? bossGroup;
+
         protected sealed override void OnBossSpawnedServer(CharacterBody body)
         {
             if (body.Is(DLC2Content.BodyPrefabs.HalcyoniteBody))
             {
+                this.AddBossToGroup(ref this.bossGroup, body);
                 this.OnMainBossSpawnedServer(body);
                 this.MainBossSpawnedServer?.Invoke(body);
             }

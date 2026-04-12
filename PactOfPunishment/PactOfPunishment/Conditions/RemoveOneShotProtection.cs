@@ -5,7 +5,7 @@ using Mono.Cecil.Cil;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class PersonalLiability : DefaultConditionDef
+    public sealed class RemoveOneShotProtection : DefaultConditionDef
     {
         public override int MaxRank => 1;
 

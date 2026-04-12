@@ -24,6 +24,11 @@ namespace PactOfPunishment
 {
     public static partial class Utils
     {
+        public static int Percent(float damageIncreasePerRank)
+        {
+            return Mathf.RoundToInt(100 * damageIncreasePerRank);
+        }
+
         public static T InstantiateState<T>()
             where T : EntityState
         {
@@ -397,7 +402,20 @@ namespace PactOfPunishment
             }
         }
 
-        public static void DirectHeal(HealthComponent healthComponent, float healthFraction)
+        public static float DirectHeal(this HealthComponent self, float amount)
+        {
+            float num = self.health;
+
+            if (self.health < self.fullHealth)
+            {
+                float num4 = Mathf.Max(Mathf.Min(amount, self.fullHealth - self.health), 0f);
+                self.Networkhealth = self.health + num4;
+            }
+
+            return self.health - num;
+        }
+
+        public static void DirectHealIncludingShields(HealthComponent healthComponent, float healthFraction)
         {
             if (!healthComponent)
             {

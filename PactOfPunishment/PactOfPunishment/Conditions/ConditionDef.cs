@@ -7,6 +7,14 @@ namespace PactOfPunishment.Conditions
     {
         public abstract int MaxRank { get; }
 
+        public string NameToken => $"CONDITION_{this.GetType().Name.ToUpper()}_NAME";
+
+        public string DescriptionToken => $"CONDITION_{this.GetType().Name.ToUpper()}_DESCRIPTION";
+
+        public string Name => Language.GetString(this.NameToken);
+
+        public virtual string Description => Language.GetString(this.DescriptionToken);
+
         public abstract int GetHeatForRank(int rank);
 
         public override void Init()

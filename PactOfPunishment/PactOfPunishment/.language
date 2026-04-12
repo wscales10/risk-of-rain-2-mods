@@ -5,5 +5,53 @@
 	"STATNAME_HEATEASY": "Heat",
 	"STATNAME_HEATNORMAL": "Heat",
 	"STATNAME_HEATHARD": "Heat",
+
+	"CONDITION_INCREASEENEMYDAMAGE_NAME": "Hard Labor",
+    "CONDITION_INCREASEENEMYDAMAGE_DESCRIPTION": "All foes deal bonus damage, +{0}% per rank.",
+
+    "CONDITION_REDUCEALLYHEALING_NAME": "Lasting Consequences",
+    "CONDITION_REDUCEALLYHEALING_DESCRIPTION": "Any healing effects restore less of your Life Total than usual, -{0}% per rank.",
+
+    "CONDITION_INCREASEPRICES_NAME": "Convenience Fee",
+    "CONDITION_INCREASEPRICES_DESCRIPTION": "All gold prices are higher, +{0}% per rank.",
+
+    "CONDITION_INCREASEENEMYCOUNT_NAME": "Jury Summons",
+    "CONDITION_INCREASEENEMYCOUNT_DESCRIPTION": "Foes in common waves appear in greater numbers, +{0}% per rank.",
+
+    "CONDITION_UPGRADEMAINBOSSES_NAME": "Extreme Measures",
+    "CONDITION_UPGRADEMAINBOSSES_DESCRIPTION": "Each main boss gains new techniques, 1 main boss encounter per rank.",
+
+    "CONDITION_INCREASEENEMYMAXHEALTH_NAME": "Calisthenics Program",
+    "CONDITION_INCREASEENEMYMAXHEALTH_DESCRIPTION": "All foes have higher Life Totals, +{0}% per rank.",
+
+    "CONDITION_EXTRAELITEBUFFS_NAME": "Benefits Package",
+    "CONDITION_EXTRAELITEBUFFS_DESCRIPTION": "In common waves, every elite enemy has extra elite types, +{0} per rank.",
+
+    "CONDITION_UPGRADEMINIBOSSES_NAME": "Middle Management",
+    "CONDITION_UPGRADEMINIBOSSES_DESCRIPTION": "All mini-boss encounters are upgraded.",
+
+    "CONDITION_STAGEPROGRESSIONCOST_NAME": "Underworld Customs",
+    "CONDITION_STAGEPROGRESSIONCOST_DESCRIPTION": "The scrapper at the end of each stage must be used {0} times in order to progress.",
+
+    "CONDITION_BOOSTENEMYCOMBATSTATS_NAME": "Forced Overtime",
+    "CONDITION_BOOSTENEMYCOMBATSTATS_DESCRIPTION": "All foes have bonus move speed, attack speed, and reduced skill cooldowns, +{0}% per rank.",
+
+    "CONDITION_INCREASEENVIRONMENTALDAMAGE_NAME": "Heightened Security",
+    "CONDITION_INCREASEENVIRONMENTALDAMAGE_DESCRIPTION": "All Environmental Hazards deal +{0}% bonus damage.",
+
+    "CONDITION_DISABLESTARTINGITEMS_NAME": "Routine Inspection",
+    "CONDITION_DISABLESTARTINGITEMS_DESCRIPTION": "Your Starting Items are deactivated, -{0} per rank, (from the bottom up).",
+
+    "CONDITION_ENEMIESIGNOREINITIALDAMAGE_NAME": "Damage Control",
+    "CONDITION_ENEMIESIGNOREINITIALDAMAGE_DESCRIPTION": "All foes ignore initial instances of damage, 1 hit per rank.",
+
+    "CONDITION_LIMITCHOICEOPTIONS_NAME": "Approval Process",
+    "CONDITION_LIMITCHOICEOPTIONS_DESCRIPTION": "You have fewer choices when offered a selection of items, -1 per rank.",
+
+    "CONDITION_LIMITRUNTIME_NAME": "Tight Deadline",
+    "CONDITION_LIMITRUNTIME_DESCRIPTION": "You have a limited amount of time to complete the run. At the start of each of the first {0} stages, {1} minutes (-{2} minutes per rank) is added to the timer.",
+
+    "CONDITION_REMOVEONESHOTPROTECTION_NAME": "Personal Liability",
+    "CONDITION_REMOVEONESHOTPROTECTION_DESCRIPTION": "Your One-Shot Protection is removed."
   },
 }

@@ -5,7 +5,7 @@ using RoR2;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class ExtremeMeasures : ConditionDef
+    public sealed class UpgradeMainBosses : ConditionDef
     {
         public override int MaxRank => 4;
 

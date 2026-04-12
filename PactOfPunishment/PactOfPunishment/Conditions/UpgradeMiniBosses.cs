@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class MiddleManagement : DefaultConditionDef
+    public sealed class UpgradeMiniBosses : DefaultConditionDef
     {
         public override int MaxRank => 1;
 

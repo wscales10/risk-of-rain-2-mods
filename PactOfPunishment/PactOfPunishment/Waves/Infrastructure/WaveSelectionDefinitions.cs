@@ -11,8 +11,7 @@ using R2API;
 using RoR2;
 using System.Collections.Generic;
 using UnityEngine;
-using static PactOfPunishment.Conditions.MiddleManagement;
-using static PactOfPunishment.IncreaseSpawnRateWhileThereAreNoMonsters;
+using static PactOfPunishment.Conditions.UpgradeMiniBosses;
 
 namespace PactOfPunishment.Waves.Infrastructure
 {

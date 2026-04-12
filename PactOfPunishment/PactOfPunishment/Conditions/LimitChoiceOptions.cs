@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class ApprovalProcess : ConditionDef
+    public sealed class LimitChoiceOptions : ConditionDef
     {
         public override int MaxRank => 2;
 

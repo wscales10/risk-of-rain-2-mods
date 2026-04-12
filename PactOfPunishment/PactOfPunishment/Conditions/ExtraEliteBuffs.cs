@@ -7,9 +7,13 @@ using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class BenefitsPackage : ConditionDef
+    public sealed class ExtraEliteBuffs : ConditionDef
     {
         public override int MaxRank => 2;
+
+        private const int extraEliteBuffsPerRank = 1;
+
+        public override string Description => string.Format(base.Description, extraEliteBuffsPerRank);
 
         public override int GetHeatForRank(int rank) => rank + 1;
 
@@ -28,7 +32,7 @@ namespace PactOfPunishment.Conditions
             {
                 this.Logger.LogDebug($"Adding {nameof(ExtraEliteBuffsBehavior)} to combat director...");
                 var behavior = self.EnsureComponent<ExtraEliteBuffsBehavior>();
-                behavior.extraBuffCount = rank;
+                behavior.extraBuffCount = rank * extraEliteBuffsPerRank;
                 behavior.ReRollExtraEliteDefs();
             }
         }

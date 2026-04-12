@@ -32,8 +32,23 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
         public void OnEnable()
         {
-            this.Body.characterMotor.mass = Mathf.Max(this.Body.characterMotor.mass, 900);
-            this.Body.rigidbody.mass = Mathf.Max(this.Body.rigidbody.mass, 900);
+            if (this.Body.characterMotor is CharacterMotor motor)
+            {
+                motor.mass = Mathf.Max(motor.mass, 900);
+            }
+
+            if (this.Body.rigidbody is Rigidbody rigidbody)
+            {
+                rigidbody.mass = Mathf.Max(rigidbody.mass, 900);
+            }
+
+            foreach (var ai in this.Body.master.AiComponents.Where(x => x))
+            {
+                ai.prioritizePlayers = true;
+                ai.fullVision = true;
+                ai.xrayVision = true;
+            }
+
             RecalculateStats.Add(this.Body, this.OnRecalculateStats);
         }
 

@@ -82,7 +82,7 @@ namespace PactOfPunishment.Waves.Halcyonites
             public override void Update()
             {
                 base.Update();
-                Utils.DirectHeal(this.healthComponent, this.PhaseStartingHealthFraction);
+                Utils.DirectHealIncludingShields(this.healthComponent, this.PhaseStartingHealthFraction);
             }
 
             public override void OnExit()

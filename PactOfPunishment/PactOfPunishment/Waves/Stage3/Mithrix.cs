@@ -26,6 +26,8 @@ namespace PactOfPunishment.Waves.Stage3
 
         public class MithrixMiniBossBehavior : BossFightBehavior
         {
+            private BossGroupWrapper? bossGroup;
+
             public override void Awake()
             {
                 base.Awake();
@@ -36,6 +38,7 @@ namespace PactOfPunishment.Waves.Stage3
             {
                 body.ScaleMaxHealth(this, 0.8f);
                 body.EnsureComponent<MithrixBodyBehavior>();
+                this.AddBossToGroup(ref this.bossGroup, body);
             }
 
             private static void CombatSquad_onDefeatedServer()

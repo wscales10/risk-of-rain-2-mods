@@ -250,15 +250,26 @@ namespace PactOfPunishment.Waves.FinalStage
             {
                 base.OnRecalculateStats(args);
                 args.utilitySkill.bonusStockAdd++;
+                args.healthTotalMult *= 1.4f;
             }
         }
 
         public class Phase2BodyBehavior : BodyBehavior
         {
+            protected override void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)
+            {
+                base.OnRecalculateStats(args);
+                args.healthTotalMult *= 2;
+            }
         }
 
         public class Phase3BodyBehavior : BodyBehavior
         {
+            protected override void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)
+            {
+                base.OnRecalculateStats(args);
+                args.healthTotalMult *= 1.1f;
+            }
         }
 
         public class MiniBossSpawner : MonoBehaviour

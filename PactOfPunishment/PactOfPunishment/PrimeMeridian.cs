@@ -75,6 +75,7 @@ namespace PactOfPunishment
 
             var body = master.GetBody();
 
+            // Only affects phase 1
             if (body.Is(DLC2Content.BodyPrefabs.FalseSonBossBody))
             {
                 body.ScaleMaxHealth(this, 0.85f);

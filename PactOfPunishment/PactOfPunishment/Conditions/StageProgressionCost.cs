@@ -2,18 +2,24 @@
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
+using RoR2.UI;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
-    public sealed class UnderworldCustoms : DefaultConditionDef
+    public sealed class StageProgressionCost : DefaultConditionDef
     {
+        private const int itemsToScrapPerRank = 2;
+
         private AssetPromise<InteractableSpawnCard> scrapperCard;
 
         public override int MaxRank => 1;
 
         public override int HeatPerRank => 2;
+
+        public override string Description => string.Format(base.Description, itemsToScrapPerRank);
 
         public override void Init()
         {
@@ -71,10 +77,11 @@ namespace PactOfPunishment.Conditions
                     throw new InvalidOperationException("Not a portal");
                 }
 
+                // TODO: disable "activate portal" objective while portal not enabled
                 portalObject.GetComponent<GenericInteraction>().SetInteractabilityConditionsNotMet();
 
                 var behavior = Run.instance.EnsureComponent<UnderworldCustomsBehavior>();
-                behavior.itemsToScrap = this.GetRank(self);
+                behavior.OpenShop(this.GetRank(self) * itemsToScrapPerRank);
                 behavior.onEnoughItemsScrapped = portalObject.GetComponent<GenericInteraction>().SetInteractabilityAvailable;
             });
         }
@@ -94,23 +101,74 @@ namespace PactOfPunishment.Conditions
 
         public class UnderworldCustomsBehavior : MonoBehaviour
         {
-            public int itemsToScrap;
-
             public Action? onEnoughItemsScrapped;
+
+            private int itemsToScrap;
+
+            public int ItemsToScrap
+            {
+                get => this.itemsToScrap;
+
+                private set
+                {
+                    this.itemsToScrap = value;
+
+                    if (value > 0)
+                    {
+                        ObjectivePanelController.collectObjectiveSources += this.ObjectivePanelController_collectObjectiveSources;
+                    }
+                    else
+                    {
+                        ObjectivePanelController.collectObjectiveSources -= this.ObjectivePanelController_collectObjectiveSources;
+                    }
+                }
+            }
+
+            public void OpenShop(int numberOfItemsToScrap)
+            {
+                this.ItemsToScrap = this.TotalItemsToScrap = numberOfItemsToScrap;
+            }
+
+            public int TotalItemsToScrap { get; private set; }
 
             public void OnItemScrapped()
             {
-                if (this.itemsToScrap > 0)
+                if (this.ItemsToScrap > 0)
                 {
-                    this.itemsToScrap--;
+                    this.ItemsToScrap--;
 
-                    if (this.itemsToScrap < 1)
+                    if (this.ItemsToScrap < 1)
                     {
-                        this.itemsToScrap = 0;
+                        this.ItemsToScrap = 0;
                         var callback = this.onEnoughItemsScrapped;
                         this.onEnoughItemsScrapped = null;
                         callback?.Invoke();
                     }
+                }
+            }
+
+            private void ObjectivePanelController_collectObjectiveSources(CharacterMaster master, List<ObjectivePanelController.ObjectiveSourceDescriptor> output)
+            {
+                output.Add(new ObjectivePanelController.ObjectiveSourceDescriptor
+                {
+                    source = this,
+                    master = master,
+                    objectiveType = typeof(ObjectiveTracker)
+                });
+            }
+
+            private sealed class ObjectiveTracker : ObjectivePanelController.ObjectiveTracker
+            {
+                private UnderworldCustomsBehavior Source => (UnderworldCustomsBehavior)this.sourceDescriptor.source;
+
+                public ObjectiveTracker()
+                {
+                    this.baseToken = "SCRAPPER_CONTEXT";
+                }
+
+                public override string GenerateString()
+                {
+                    return Language.GetStringFormatted("OBJECTIVE_FRACTION_PROGRESS_FORMAT", base.GenerateString(), this.Source.TotalItemsToScrap - this.Source.ItemsToScrap, this.Source.TotalItemsToScrap);
                 }
             }
         }
