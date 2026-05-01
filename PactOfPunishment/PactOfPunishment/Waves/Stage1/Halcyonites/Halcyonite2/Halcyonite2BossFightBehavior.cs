@@ -20,9 +20,11 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
 
         protected override void OnAddSpawnedServer(CharacterBody body)
         {
+            base.OnAddSpawnedServer(body);
+
             if (body.Is(DLC3Content.BodyPrefabs.WorkerUnitBody))
             {
-                body.ScaleDifficultyAsBoss(1f, 30f, true, false); // TODO: coef was kinda factored into spawning
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(1f, 30f, false, 10), false); // TODO: coef was kinda factored into spawning
             }
         }
     }

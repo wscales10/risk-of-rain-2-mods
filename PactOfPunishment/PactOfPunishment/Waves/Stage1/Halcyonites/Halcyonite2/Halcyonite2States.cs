@@ -91,6 +91,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
             {
                 base.OnEnter();
                 this.BodyBehavior = this.GetComponent<Halcyonite2BodyBehavior>();
+                this.BodyBehavior.DefaultUtilitySkill?.RestockSteplike();
             }
 
             protected override HalcyoniteStates.InterludeState<PhaseState> GetInterludeState(float phaseEndHealthThreshold, PhaseState nextPhaseState)

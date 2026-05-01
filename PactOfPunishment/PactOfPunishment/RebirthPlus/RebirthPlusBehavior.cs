@@ -63,7 +63,7 @@ namespace PactOfPunishment.RebirthPlus
             {
                 var level = levels[i];
                 var pickup = itemChoiceStrategy.ChoosePickup(level);
-                if (pickup is null)
+                if (pickup == null)
                 {
                     Debug.LogWarning($"Failed to get pickup for level {i}.");
                 }

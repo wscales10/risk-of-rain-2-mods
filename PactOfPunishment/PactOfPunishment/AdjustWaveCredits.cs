@@ -3,7 +3,6 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using System;
-using static PactOfPunishment.IncreaseSpawnRateWhileThereAreNoMonsters;
 
 namespace PactOfPunishment
 {
@@ -39,7 +38,7 @@ namespace PactOfPunishment
 
             if (!self.isBossWave)
             {
-                spawnRateMultiplier.WavePeriodSecondsMultiplier *= 0.5f;// TODO: Apply also to boss waves? If so, be careful of interaction with directors which use money waves
+                spawnRateMultiplier.WavePeriodSecondsMultiplier *= 0.5f; // TODO: Apply also to boss waves? If so, be careful of interaction with directors which use money waves
             }
 
             float wavePeriodSecondsMultiplier = spawnRateMultiplier.WavePeriodSecondsMultiplier;

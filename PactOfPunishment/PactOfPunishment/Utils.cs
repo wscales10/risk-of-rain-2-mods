@@ -1,5 +1,6 @@
 ﻿using BepInEx.Logging;
 using EntityStates;
+using EntityStates.InfiniteTowerSafeWard;
 using HG;
 using MonoMod.Cil;
 using PactOfPunishment.ProtectMonstersFromHazards;
@@ -24,6 +25,56 @@ namespace PactOfPunishment
 {
     public static partial class Utils
     {
+        public static bool TryGetComponentWhere<T>(this EntityState self, Func<T, bool> predicate, out T component)
+            where T : class
+        {
+            if (self.outer)
+            {
+                return self.outer.TryGetComponentWhere(predicate, out component);
+            }
+
+            component = default;
+            return false;
+        }
+
+        public static bool TryGetComponentWhere<T>(this Component self, Func<T, bool> predicate, out T component)
+            where T : class
+        {
+            return self.gameObject.TryGetComponentWhere(predicate, out component);
+        }
+
+        public static bool TryGetComponentWhere<T>(this GameObject self, Func<T, bool> predicate, out T component)
+            where T : class
+        {
+            if (self.TryGetComponent(out component) && predicate(component))
+            {
+                return true;
+            }
+
+            component = default;
+            return false;
+        }
+
+        public static T CreateInstance<T>(Action<T>? setup = null)
+            where T : ScriptableObject
+        {
+            var output = ScriptableObject.CreateInstance<T>();
+            setup?.Invoke(output);
+            return output;
+        }
+
+        public static void RegisterChatMessageType<T>()
+            where T : ChatMessageBase
+        {
+            var type = typeof(T);
+
+            if (type.IsSubclassOf(typeof(ChatMessageBase)) && !ChatMessageBase.chatMessageTypeToIndex.ContainsKey(type))
+            {
+                ChatMessageBase.chatMessageTypeToIndex.Add(type, (byte)ChatMessageBase.chatMessageIndexToType.Count);
+                ChatMessageBase.chatMessageIndexToType.Add(type);
+            }
+        }
+
         public static int Percent(float damageIncreasePerRank)
         {
             return Mathf.RoundToInt(100 * damageIncreasePerRank);
@@ -38,7 +89,7 @@ namespace PactOfPunishment
         public static IEnumerable<T> GetInvocationList<T>(T? e)
             where T : Delegate
         {
-            if (e is null)
+            if (e == null)
             {
                 yield break;
             }
@@ -223,26 +274,6 @@ namespace PactOfPunishment
             inventory.GiveItemPermanent(RoR2Content.Items.BoostDamage, Mathf.RoundToInt((num2 - 1f) * 10f));
         }
 
-        public static IEnumerable<AISkillDriver> GetSkillDrivers(this CharacterMaster master, SkillSlot skillSlot)
-        {
-            return master.GetSkillDriversInternal(x => x.skillSlot == skillSlot).LogIfEmpty();
-        }
-
-        public static IEnumerable<AISkillDriver> GetSkillDrivers(this BaseAI ai, SkillSlot skillSlot)
-        {
-            return ai.GetSkillDriversInternal(x => x.skillSlot == skillSlot).LogIfEmpty();
-        }
-
-        public static IEnumerable<AISkillDriver> GetSkillDrivers(this CharacterMaster master, string customName)
-        {
-            return master.GetSkillDriversInternal(x => x.customName == customName).LogIfEmpty();
-        }
-
-        public static IEnumerable<AISkillDriver> GetSkillDrivers(this BaseAI ai, string customName)
-        {
-            return ai.GetSkillDriversInternal(x => x.customName == customName).LogIfEmpty();
-        }
-
         public static void OnLoad<TObject>(string key, Action<TObject> onLoad)
         {
             Addressables.LoadAssetAsync<TObject>(key).Completed += x => onLoad(x.Result);
@@ -320,7 +351,7 @@ namespace PactOfPunishment
             {
                 if (result.OperationException is Exception ex)
                 {
-                    if (logger is null)
+                    if (logger == null)
                     {
                         Debug.LogException(ex);
                     }
@@ -341,7 +372,7 @@ namespace PactOfPunishment
             {
                 if (result.OperationException is Exception ex)
                 {
-                    if (logger is null)
+                    if (logger == null)
                     {
                         Debug.LogException(ex);
                     }
@@ -380,7 +411,7 @@ namespace PactOfPunishment
 
         public static void LogError(ManualLogSource? logger, object errorData)
         {
-            if (logger is null)
+            if (logger == null)
             {
                 Debug.LogError(errorData);
             }
@@ -459,6 +490,20 @@ namespace PactOfPunishment
             return false;
         }
 
+        public static float CreditsForBossWave(int waveIndex)
+        {
+            return 500 * EstimateDifficultyCoefficient(waveIndex);
+        }
+
+        public static float EstimateDifficultyCoefficient(int waveIndex, DifficultyIndex difficultyIndex = DifficultyIndex.Normal)
+        {
+            DifficultyDef difficultyDef = DifficultyCatalog.GetDifficultyDef(difficultyIndex);
+            float num = 1.5f * waveIndex;
+            float num2 = 0.0506f * difficultyDef.scalingValue;
+            float num3 = Mathf.Pow(1.02f, waveIndex);
+            return (1f + num2 * num) * num3;
+        }
+
         public static void ScaleDeathRewards(DeathRewards deathRewards, float multiplier)
         {
             deathRewards.spawnValue = (int)Mathf.Max(1f, deathRewards.spawnValue * multiplier);
@@ -532,7 +577,7 @@ namespace PactOfPunishment
         /// <param name="wasSpawnedByCombatDirector"></param>
         /// <param name="wasCoefFactoredIntoSpawning">"true" case not implemented yet</param>
         /// <exception cref="NotImplementedException"></exception>
-        public static void ScaleDifficultyAsBoss(this CharacterBody body, float hpDivisor, float damageDivisor, bool wasSpawnedByCombatDirector, bool wasCoefFactoredIntoSpawning)
+        public static void ScaleDifficultyAsBoss(this CharacterBody body, IBossScalingArgs args, bool wasCoefFactoredIntoSpawning)
         {
             if (wasCoefFactoredIntoSpawning)
             {
@@ -540,11 +585,11 @@ namespace PactOfPunishment
             }
             else
             {
-                body.master.ScaleDifficultyAsBoss(hpDivisor, damageDivisor, !wasSpawnedByCombatDirector);
+                body.master.ScaleDifficultyAsBoss(args.HpDivisor, args.DamageDivisor, args.BoostHpByPlayerCount);
             }
         }
 
-        public static EntityState? GetSafeWardState()
+        public static BaseSafeWardState? GetSafeWardState()
         {
             var run = Run.instance as InfiniteTowerRun;
 
@@ -557,7 +602,7 @@ namespace PactOfPunishment
 
             if (safeWardController && safeWardController.wardStateMachine)
             {
-                return safeWardController.wardStateMachine.state;
+                return safeWardController.wardStateMachine.state as BaseSafeWardState;
             }
 
             return null;
@@ -635,7 +680,23 @@ namespace PactOfPunishment
         public static void InsertSkillDriver(this BaseAI ai, AISkillDriver newSkillDriver, int index)
         {
             var skillDrivers = ai.skillDrivers;
-            ArrayUtils.ArrayInsert(ref skillDrivers, index, newSkillDriver);
+
+            if (index == skillDrivers.Length)
+            {
+                ArrayUtils.ArrayAppend(ref skillDrivers, newSkillDriver);
+            }
+            else
+            {
+                ArrayUtils.ArrayInsert(ref skillDrivers, index, newSkillDriver);
+            }
+
+            ai.ReplaceSkillDrivers(skillDrivers);
+        }
+
+        public static void AddSkillDriver(this BaseAI ai, AISkillDriver newSkillDriver)
+        {
+            var skillDrivers = ai.skillDrivers;
+            ArrayUtils.ArrayAppend(ref skillDrivers, newSkillDriver);
             ai.ReplaceSkillDrivers(skillDrivers);
         }
 
@@ -823,16 +884,6 @@ namespace PactOfPunishment
             }
 
             return output.ToString().Trim();
-        }
-
-        private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this CharacterMaster master, Func<AISkillDriver, bool> predicate)
-        {
-            return master?.AiComponents?.SelectMany(x => x.GetSkillDriversInternal(predicate)) ?? Enumerable.Empty<AISkillDriver>();
-        }
-
-        private static IEnumerable<AISkillDriver> GetSkillDriversInternal(this BaseAI ai, Func<AISkillDriver, bool> predicate)
-        {
-            return ai.skillDrivers.Where(predicate);
         }
     }
 }

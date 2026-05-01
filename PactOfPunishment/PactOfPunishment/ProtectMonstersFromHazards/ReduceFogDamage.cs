@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using MonoMod.Cil;
+using RoR2;
 using System;
 
 namespace PactOfPunishment.ProtectMonstersFromHazards
@@ -7,32 +8,43 @@ namespace PactOfPunishment.ProtectMonstersFromHazards
     {
         public override void Init()
         {
-            /* Hades lava is just worse than Simulacrum Void Fog in general.
-             * I decided to add this module because of a time when I went slightly the wrong way (the focus went up and I didn't).
-             * I think I might have even been able to wait for myself to regenerate (assuming no lasting consequences), but I didn't.
-             * Maybe I can use NVidia to record my next death from void fog to see if it actually needs tweaking (using RoR2 data rather than Hades lava info)?
-             */
-
-            // On.RoR2.InfiniteTowerRun.Start += this.InfiniteTowerRun_Start;
+            IL.RoR2.FogDamageController.MyFixedUpdate += Utils.HookIL(FogDamageController_MyFixedUpdate);
         }
 
-        private void InfiniteTowerRun_Start(On.RoR2.InfiniteTowerRun.orig_Start orig, InfiniteTowerRun self)
+        private static void FogDamageController_MyFixedUpdate(ILCursor c)
         {
-            try
+            int bodyVariableNumber = -1;
+            c.GotoNext(
+                x => x.MatchLdloc(out bodyVariableNumber),
+                x => x.MatchCallvirt<CharacterBody>($"get_{nameof(CharacterBody.IsDrone)}"),
+                x => x.MatchBrtrue(out _));
+            int index = c.Index;
+            int damageVariableNumber = -1;
+            c.GotoNext(
+                x => x.MatchLdloc(out damageVariableNumber),
+                x => x.MatchStfld<DamageInfo>(nameof(DamageInfo.damage)));
+            c.Goto(index, MoveType.AfterLabel);
+
+            c.EmitLdloc(damageVariableNumber);
+            c.EmitLdloc(bodyVariableNumber);
+            c.EmitLdarg(0);
+            c.EmitDelegate<Func<float, CharacterBody, FogDamageController, float>>((damage, body, controller) =>
             {
-                FogDamageController fogDamageController = self.fogDamagePrefab.GetComponent<FogDamageController>();
-                fogDamageController.healthFractionPerSecond = 0.1f;
-                fogDamageController.healthFractionRampIncreaseCooldown = 0.4f;
-                fogDamageController.healthFractionRampCoefficientPerSecond = 5f;
-            }
-            catch (Exception ex)
-            {
-                this.Logger.LogError(ex);
-            }
-            finally
-            {
-                orig(self);
-            }
+                if (!body.isBoss)
+                {
+                    return damage;
+                }
+
+                var run = Run.instance as InfiniteTowerRun;
+
+                if (run?.fogDamageController == controller && run?.waveController != null)
+                {
+                    return damage * 0.5f * (1 - 0.75f * run.waveController.zoneRadiusPercentage);
+                }
+
+                return damage;
+            });
+            c.EmitStloc(damageVariableNumber);
         }
     }
 }

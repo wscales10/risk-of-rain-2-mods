@@ -73,7 +73,7 @@ namespace PactOfPunishment.Waves.Infrastructure
             {
                 var keyValuePair = this.waveDefinitions.dictionary.FirstOrDefault(x => string.Equals(waveDefinitionName, x.Value.Name, StringComparison.OrdinalIgnoreCase));
 
-                if (keyValuePair.Key is null)
+                if (keyValuePair.Key == null)
                 {
                     return null;
                 }

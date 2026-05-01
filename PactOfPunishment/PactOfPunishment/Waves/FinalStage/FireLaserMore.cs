@@ -74,7 +74,7 @@ namespace PactOfPunishment.Waves.FinalStage
                     return;
                 }
 
-                if (behavior.isDoingMiniBurst || behavior.chargeStateType is null)
+                if (behavior.isDoingMiniBurst || behavior.chargeStateType == null)
                 {
                     behavior.isDoingMiniBurst = false;
                     self.SetNextStateToMain();
@@ -110,22 +110,9 @@ namespace PactOfPunishment.Waves.FinalStage
         {
             if (self.TryGetComponent<FireLaserMoreBehavior>(out var behavior))
             {
-                float newLockOnDuration;
-                float newFireDuration;
-                float newWindDownDuration;
-
-                if (behavior.isDoingMiniBurst)
-                {
-                    newLockOnDuration = 0.5f;
-                    newFireDuration = 1.5f;
-                    newWindDownDuration = self.windDownDuration / 2f;
-                }
-                else
-                {
-                    newLockOnDuration = self.lockOnDelayDuration;
-                    newFireDuration = self.duration - (self.lockOnDelayDuration + self.windDownDuration);
-                    newWindDownDuration = 1.25f;
-                }
+                float newLockOnDuration = behavior.GetLockOnDuration(self);
+                float newFireDuration = behavior.GetFireDuration(self);
+                float newWindDownDuration = behavior.GetWindDownDuration(self);
 
                 self.duration = newLockOnDuration + newFireDuration + newWindDownDuration;
                 self.lockOnDelayDuration = newLockOnDuration;
@@ -148,9 +135,27 @@ namespace PactOfPunishment.Waves.FinalStage
 
             private readonly Dictionary<CharacterBody, Vector3?> lockOnPositions = new Dictionary<CharacterBody, Vector3?>();
 
-            public float ChargeDuration => this.isDoingMiniBurst ? 1.5f : LunarGazeLaserCharge.duration;
+            /// <remarks>
+            /// If not doing a mini burst, the default is 4 seconds.
+            /// </remarks>
+            public float ChargeDuration => this.isDoingMiniBurst ? 1.75f : LunarGazeLaserCharge.duration;
 
-            public float FireEndDelayDuration => this.isDoingMiniBurst ? LunarGazeLaserEnd.fireEndDelayDuration : 0.4f;
+            /// <remarks>
+            /// If doing a mini burst, the default is 1.53 seconds.
+            /// </remarks>
+            public float FireEndDelayDuration => this.isDoingMiniBurst ? LunarGazeLaserEnd.fireEndDelayDuration : 0.65f;
+
+            /// <remarks>
+            /// If not doing a mini burst, the default is 2 seconds.
+            /// </remarks>
+            public float GetLockOnDuration(LunarGazeLaserFire fireState) => this.isDoingMiniBurst ? 0.5f : fireState.lockOnDelayDuration;
+
+            public float GetFireDuration(LunarGazeLaserFire fireState) => this.isDoingMiniBurst ? 1.5f : fireState.duration - (fireState.lockOnDelayDuration + fireState.windDownDuration);
+
+            /// <remarks>
+            /// The default 2 seconds.
+            /// </remarks>
+            public float GetWindDownDuration(LunarGazeLaserFire fireState) => this.isDoingMiniBurst ? fireState.windDownDuration / 2f : 1.25f;
 
             public void CacheLaserTargets(List<LunarGazeLaserFire.LaserTargetInfo> laserTargets)
             {

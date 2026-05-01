@@ -1,5 +1,6 @@
 ﻿using EntityStates.Halcyonite;
 using HG;
+using PactOfPunishment.ProtectMonstersFromHazards;
 using RoR2;
 using RoR2.CharacterAI;
 using System;
@@ -10,7 +11,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 {
     public partial class WhirlWindModule
     {
-        public class UseAirNodesController : MonoBehaviour, IOverrideTargetPos
+        public class UseAirNodesController : MonoBehaviour, IOverrideTargetPos, IOnOff
         {
 #if DEBUG
 
@@ -48,6 +49,34 @@ namespace PactOfPunishment.Waves.Halcyonites
                     this.instance = value;
                     this.UpdateDebugVisuals();
                 }
+            }
+
+            public bool CustomEnabled { get; private set; }
+
+            public void Activate()
+            {
+                if (this.CustomEnabled)
+                {
+                    return;
+                }
+
+                this.CustomEnabled = true;
+
+                if (this.weaponStateMachine?.state is WhirlWindPersuitCycle whirlWindState)
+                {
+                    this.CreateInstance(whirlWindState);
+                }
+            }
+
+            public void Deactivate()
+            {
+                if (!this.CustomEnabled)
+                {
+                    return;
+                }
+
+                this.CustomEnabled = false;
+                this.Instance = null;
             }
 
             public void Update()
@@ -98,7 +127,9 @@ namespace PactOfPunishment.Waves.Halcyonites
                 return output;
             }
 
-            public void OnDashStart(WhirlWindPersuitCycle state) => this.Instance = new UseAirNodes(this.GetPath(state), state, this.GetCurrentPosition);
+            public void OnDashStart(WhirlWindPersuitCycle state) => this.CreateInstance(state);
+
+            private void CreateInstance(WhirlWindPersuitCycle state) => this.Instance = new UseAirNodes(this.GetPath(state), state, this.GetCurrentPosition);
 
             void IOverrideTargetPos.Reset() => this.Instance = default;
 
@@ -130,7 +161,7 @@ namespace PactOfPunishment.Waves.Halcyonites
             private Path? GetPath(WhirlWindPersuitCycle state)
             {
                 var path = new Path(SceneInfo.instance.airNodes);
-                var pathTask = SceneInfo.instance.airNodes.ComputePath(new RoR2.Navigation.NodeGraph.PathRequest
+                var pathTask = SceneInfo.instance.airNodes.ComputePath(new TryNotToNavigateThroughTheVoidFog.DangerAwarePathRequest
                 {
                     path = path,
                     startPos = this.GetCurrentPosition(state),
@@ -167,11 +198,11 @@ namespace PactOfPunishment.Waves.Halcyonites
 
                 private readonly Func<Vector3> getCurrentPosition;
 
-                public bool IsInFinalStretch => this.path is null || this.indexInPath >= this.path.Length - 1;
+                public bool IsInFinalStretch => this.path == null || this.indexInPath >= this.path.Length - 1;
 
                 public UseAirNodes(Path? path, WhirlWindPersuitCycle state, Func<WhirlWindPersuitCycle, Vector3> getCurrentPosition)
                 {
-                    this.path = path is null ? null : Enumerable.Range(0, path.waypointsCount).Select<int, Vector3?>(i =>
+                    this.path = path == null ? null : Enumerable.Range(0, path.waypointsCount).Select<int, Vector3?>(i =>
                     {
                         if (SceneInfo.instance.airNodes.GetNodePosition(path[i].nodeIndex, out var position))
                         {
@@ -189,7 +220,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
                 public void Update()
                 {
-                    if (this.path is null)
+                    if (this.path == null)
                     {
                         return;
                     }
@@ -213,7 +244,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
                 public void UpdateCurrentTargetPosition()
                 {
-                    if (this.path is null || this.path.Length == 0)
+                    if (this.path == null || this.path.Length == 0)
                     {
                         this.currentTargetPosition = this.getCurrentPosition();
                         this.currentTargetMoveDirection = this.state.characterDirection.moveVector;

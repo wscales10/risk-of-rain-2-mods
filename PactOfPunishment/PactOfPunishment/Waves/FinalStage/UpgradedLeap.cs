@@ -187,7 +187,7 @@ namespace PactOfPunishment.Waves.FinalStage
                     this.Body!.characterDirection.turnSpeed = 2000;
                 }
 
-                if (this.StandPosition is null && this.bodyStateMachine.IsInMainState())
+                if (this.StandPosition == null && this.bodyStateMachine.IsInMainState())
                 {
                     this.SetupDash();
                 }

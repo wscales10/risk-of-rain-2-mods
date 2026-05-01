@@ -196,6 +196,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                     var directorCreditCost = body.cost;
 
                     float healthMultiplier = totalWaveCredits * 0.15f / directorCreditCost;
+                    Utils.ScaleDeathRewards(body, healthMultiplier);
                     Debug.Log($"Health multiplier for {body.name} based on {totalWaveCredits} wave credits / {directorCreditCost} spawn cost: {healthMultiplier}");
 
                     float? bossMaxHealth = this.healthComponent.fullCombinedHealth;
@@ -259,7 +260,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
             private void SetupMainBossBody(CharacterBody? body)
             {
-                if (body is null)
+                if (body == null)
                 {
                     return;
                 }

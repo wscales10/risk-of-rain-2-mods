@@ -6,7 +6,10 @@ using PactOfPunishment.Waves.Common;
 using PactOfPunishment.Waves.Halcyonites;
 using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
+using System;
+using System.Collections;
 using UnityEngine;
+using static PactOfPunishment.Waves.Stage3.Mithrix;
 using static RoR2.InfiniteTowerExplicitSpawnWaveController;
 
 namespace PactOfPunishment.Waves.Stage3
@@ -34,7 +37,8 @@ namespace PactOfPunishment.Waves.Stage3
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
         {
             base.Setup(dir, squad, wavePrefab);
-            wavePrefab.spawnList = new SpawnInfo[]
+            wavePrefab.spawnList = Array.Empty<SpawnInfo>();
+            wavePrefab.EnsureComponent<MithrixWithHalcyoniteBehavior>().spawnList = new SpawnInfo[]
             {
                 new SpawnInfo
                 {
@@ -47,19 +51,27 @@ namespace PactOfPunishment.Waves.Stage3
                     spawnCard = this.halcyoniteSpawnCard.Value,
                 }
             };
-            wavePrefab.EnsureComponent<MithrixWithHalcyoniteBehavior>();
         }
 
-        public class MithrixWithHalcyoniteBehavior : BossFightBehavior
+        public class MithrixWithHalcyoniteBehavior : BossFightBehavior, IPreventWaveFromEnding
         {
+            public SpawnInfo[] spawnList;
+
             private BossGroupWrapper? mithrixBossGroup;
 
             private BossGroupWrapper? halcyoniteBossGroup;
 
+            private InfiniteTowerWaveController? waveController;
+
+            public bool CanWaveEnd { get; private set; }
+
             public override void Awake()
             {
                 base.Awake();
+                this.waveController = this.GetComponent<InfiniteTowerWaveController>();
                 this.EnsureComponent<FistsController>();
+                MoonMusic.Instance.PlayBossTrack(this.waveController);
+                this.StartCoroutine(this.SpawnBossAfterDelay());
             }
 
             protected override void OnBossSpawnedServer(CharacterBody body)
@@ -67,8 +79,10 @@ namespace PactOfPunishment.Waves.Stage3
                 if (body.name.Contains("Brother"))
                 {
                     this.AddBossToGroup(ref this.mithrixBossGroup, body);
-                    body.ScaleDifficultyAsBoss(2.5f, 30, true, false);
-                    body.EnsureComponent<Mithrix.MithrixBodyBehavior>();
+                    body.ScaleDifficultyAsBoss(new BossScalingArgs1(2.5f, 30, false, 30), false);
+                    Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(30) * 0.5f / 4000);
+
+                    body.EnsureComponent<MithrixBodyBehavior>();
 
                     // TODO: Mithrix is almost invisible in this fight - fix that
                     if (body.TryGetComponent<CharacterDeathBehavior>(out var component))
@@ -98,6 +112,20 @@ namespace PactOfPunishment.Waves.Stage3
                         healthComponent.Networkhealth = healthComponent.fullHealth * 0.8f;
                     }
                 }
+            }
+
+            private IEnumerator SpawnBossAfterDelay()
+            {
+                yield return new WaitForSeconds(MoonMusic.BossSpawnDelay);
+
+                var spawnTarget = this.waveController?.spawnTarget.transform;
+
+                foreach (var spawnInfo in this.spawnList)
+                {
+                    this.CombatDirector.Spawn(spawnInfo.spawnCard, spawnInfo.eliteDef, spawnTarget, spawnInfo.spawnDistance, spawnInfo.preventOverhead);
+                }
+
+                this.CanWaveEnd = true;
             }
         }
 

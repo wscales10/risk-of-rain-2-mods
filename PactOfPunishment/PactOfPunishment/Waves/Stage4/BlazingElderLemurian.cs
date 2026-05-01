@@ -1,4 +1,5 @@
-﻿using PactOfPunishment.Conditions;
+﻿using PactOfPunishment.AiSkillDrivers;
+using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using R2API;
 using RoR2;
@@ -52,7 +53,7 @@ namespace PactOfPunishment.Waves.Stage4
                 Utils.MakeUnscaledEliteUsingEquipment(this.Body, RoR2Content.Elites.Fire);
                 this.Body.inventory.GiveItemPermanent(RoR2Content.Items.JumpBoost, 8);
 
-                foreach (var skillDriver in this.Body.master.GetSkillDrivers("ChaseTarget"))
+                foreach (var skillDriver in this.Body.GetSkillDrivers("ChaseTarget"))
                 {
                     skillDriver.shouldSprint = true;
                 }

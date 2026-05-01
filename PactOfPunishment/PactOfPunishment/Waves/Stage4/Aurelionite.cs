@@ -1,4 +1,5 @@
 ﻿using PactOfPunishment.Conditions;
+using PactOfPunishment.Waves.Common;
 using R2API;
 using RoR2;
 using UnityEngine;
@@ -39,16 +40,22 @@ namespace PactOfPunishment.Waves.Stage4
             return output;
         }
 
-        public class BodyBehavior : MonoBehaviour
+        public class BodyBehavior : BossBodyBehavior
         {
+            protected override void Awake()
+            {
+                base.Awake();
+                this.Body.inventory.GiveItemPermanent(RoR2Content.Items.AdaptiveArmor);
+            }
+
             public void OnEnable()
             {
-                RecalculateStats.Add(this.GetComponent<CharacterBody>(), this.OnRecalculateStats);
+                RecalculateStats.Add(this.Body, this.OnRecalculateStats);
             }
 
             public void OnDisable()
             {
-                RecalculateStats.Remove(this.GetComponent<CharacterBody>(), this.OnRecalculateStats);
+                RecalculateStats.Remove(this.Body, this.OnRecalculateStats);
             }
 
             private void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)

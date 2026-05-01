@@ -5,6 +5,7 @@ using RoR2;
 
 namespace PactOfPunishment.Conditions
 {
+    [ModuleDependency(typeof(EncounterUpgradeModule))]
     public sealed class UpgradeMainBosses : ConditionDef
     {
         public override int MaxRank => 4;

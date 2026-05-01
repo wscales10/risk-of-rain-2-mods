@@ -60,7 +60,7 @@ namespace PactOfPunishment.Waves.Common
 
         public void DoUpdate(Transform? transform)
         {
-            if (transform is null)
+            if (transform == null)
             {
                 this.IsAboveGround = null;
             }

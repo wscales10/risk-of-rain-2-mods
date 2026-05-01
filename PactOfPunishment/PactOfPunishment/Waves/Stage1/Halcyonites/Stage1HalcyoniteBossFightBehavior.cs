@@ -28,6 +28,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
 
         protected virtual void OnAddSpawnedServer(CharacterBody body)
         {
+            Utils.ScaleDeathRewards(body, 0);
         }
     }
 }

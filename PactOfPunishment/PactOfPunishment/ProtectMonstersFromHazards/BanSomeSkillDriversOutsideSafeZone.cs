@@ -13,7 +13,7 @@ namespace PactOfPunishment.ProtectMonstersFromHazards
         {
             var originalResult = orig(self, ref currentSkillDriverEvaluation, aiSkillDriver, myHealthFraction);
 
-            if (originalResult is null || Utils.IsSafeLocation(self.body.teamComponent.transform.position) || aiSkillDriver.moveInputScale > 0 && aiSkillDriver.movementType != AISkillDriver.MovementType.Stop)
+            if (originalResult == null || Utils.IsSafeLocation(self.body.teamComponent.transform.position) || aiSkillDriver.moveInputScale > 0 && aiSkillDriver.movementType != AISkillDriver.MovementType.Stop)
             {
                 return originalResult;
             }

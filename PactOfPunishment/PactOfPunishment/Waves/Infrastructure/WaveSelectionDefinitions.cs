@@ -42,7 +42,7 @@ namespace PactOfPunishment.Waves.Infrastructure
             weightedSelection.RemoveWhere(x => x?.GetComponent<InfiniteTowerWaveController>() is InfiniteTowerExplicitSpawnWaveController);
             weightedSelection.Transform(choice =>
             {
-                if (choice.value is null)
+                if (choice.value == null)
                 {
                     return choice;
                 }
@@ -55,7 +55,7 @@ namespace PactOfPunishment.Waves.Infrastructure
                     var waveModifiers = wave.EnsureComponent<SimulacrumCombatDirectorSpawnRateMultiplier>();
                     waveModifiers.TotalWaveCreditsMultiplier = 0.5f;
                     waveModifiers.WavePeriodSecondsMultiplier = 0.75f;
-
+                    waveModifiers.CreditsPerAttemptMultiplier = 3; // TODO: test this
                     wave.EnsureComponent<SafeZoneRadiusCapper>().RadiusMultiplier = 0.75f;
                     cloneCache[choice.value] = clone;
                 }

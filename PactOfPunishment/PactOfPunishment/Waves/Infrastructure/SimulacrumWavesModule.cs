@@ -4,6 +4,7 @@ using EntityStates.RoboBallBoss.Weapon;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using PactOfPunishment.MonsterSpawnDistance;
+using PactOfPunishment.Waves.Common;
 using PactOfPunishment.Waves.Stage1;
 using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1;
 using PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2;
@@ -20,6 +21,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
+using static PactOfPunishment.Waves.Stage2.WormAndDistributor.DistributorMiniBossInfo;
 using static RoR2.InfiniteTowerWaveCategory;
 
 namespace PactOfPunishment.Waves.Infrastructure
@@ -45,6 +47,8 @@ namespace PactOfPunishment.Waves.Infrastructure
             On.RoR2.MusicController.UpdateTeleporterParameters += this.MusicController_UpdateTeleporterParameters;
 
             IL.EntityStates.RoboBallBoss.Weapon.DeployMinions.SummonMinion += Utils.HookIL(DeployMinions_SummonMinion);
+
+            On.EntityStates.SolusMine.SolusMineMain.OnEnter += this.SolusMineMain_OnEnter;
 
             Content.Elites.NerfedPoison = Projectilers.AllMalachiteWaveStrategy.MakeEliteDef();
             Content.EliteTiers.NerfedPoisonTier = Projectilers.AllMalachiteWaveStrategy.MakeEliteTierDef();
@@ -93,6 +97,18 @@ namespace PactOfPunishment.Waves.Infrastructure
             this.Cache.Add<Invalidator>();
         }
 
+        private void SolusMineMain_OnEnter(On.EntityStates.SolusMine.SolusMineMain.orig_OnEnter orig, EntityStates.SolusMine.SolusMineMain self)
+        {
+            orig(self);
+
+            var ownerBody = self.characterBody?.master?.minionOwnership?.ownerMaster?.GetBody();
+
+            if (ownerBody && ownerBody!.GetComponent<DistributorBossBodyBehavior>())
+            {
+                self._sqrTriggerRaidus = DistributorBossBodyBehavior.mineTriggerRadius * DistributorBossBodyBehavior.mineTriggerRadius;
+            }
+        }
+
         private static void InfiniteTowerWaveController_FixedUpdate(ILCursor c)
         {
             ILLabel? label = null;
@@ -114,8 +130,23 @@ namespace PactOfPunishment.Waves.Infrastructure
             );
 
             c.Emit(OpCodes.Ldarg_0);
-            c.EmitDelegate<Func<InfiniteTowerWaveController, bool>>(self => self.TryGetComponent<ExtraMiniBossBehavior>(out var behavior) && !behavior.HasSpawnedExtraBoss);
+            c.EmitDelegate<Func<InfiniteTowerWaveController, bool>>(self => self.GetComponents<IPreventWaveFromEnding>().All(x => x.CanWaveEnd));
             c.Emit(OpCodes.Brtrue_S, label);
+
+            c.GotoNext(MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<InfiniteTowerWaveController>(nameof(InfiniteTowerWaveController.combatDirector)),
+                x => x.MatchLdcR4(0f),
+                x => x.MatchStfld<CombatDirector>(nameof(CombatDirector.monsterCredit)),
+
+                x => x.MatchLdarg(0),
+                x => x.MatchLdfld<InfiniteTowerWaveController>(nameof(InfiniteTowerWaveController.combatSquad)),
+                x => x.MatchCallvirt<CombatSquad>($"get_{nameof(CombatSquad.memberCount)}"),
+                x => x.MatchBrtrue(out _)
+            );
+            c.Index--;
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Func<int, InfiniteTowerWaveController, bool>>((squadCount, wave) => !(squadCount == 0 && wave.GetComponents<IPreventWaveFromEnding>().All(x => x.CanWaveEnd)));
         }
 
         private static void DeployMinions_SummonMinion(ILCursor c)
@@ -305,6 +336,12 @@ namespace PactOfPunishment.Waves.Infrastructure
                 if (orig)
                 {
                     return true;
+                }
+
+                if (MoonMusic.IsMoonStage && Run.instance is InfiniteTowerRun run && run.stageClearCount != 2 && !run.IsStageTransitionWave())
+                {
+                    // Let stage track play a bit longer
+                    return false;
                 }
 
                 return IsSimulacrumBossAlive() != null; // TODO: use override behavior instead and choose boss tracks more carefully?
