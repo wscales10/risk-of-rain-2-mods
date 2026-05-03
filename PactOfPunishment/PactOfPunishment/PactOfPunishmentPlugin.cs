@@ -19,7 +19,7 @@ using UnityEngine;
 
 namespace PactOfPunishment
 {
-    [BepInPlugin("com.woodyscales.pactofpunishment", "Pact of Punishment", "0.0.2")]
+    [BepInPlugin("com.woodyscales.pactofpunishment", "Pact of Punishment", "0.0.3")]
     public partial class PactOfPunishmentPlugin : BaseUnityPlugin
     {
         internal const string Section = "Conditions";
