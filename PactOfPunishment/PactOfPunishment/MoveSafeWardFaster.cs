@@ -64,7 +64,7 @@ namespace PactOfPunishment
                 {
                     float bonus = this.GetTravelSpeedBonus(state, Mathf.Max(0, Util.Vector3XZToVector2XY(x.body!.characterMotor.velocity).magnitude * 1.5f - state.travelSpeed), x.position!.Value);
 
-                    if (min is null || bonus < min)
+                    if (min == null || bonus < min)
                     {
                         min = bonus;
                     }

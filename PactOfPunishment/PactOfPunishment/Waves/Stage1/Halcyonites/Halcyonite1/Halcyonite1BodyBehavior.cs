@@ -50,7 +50,8 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
         protected override void Awake()
         {
             base.Awake();
-            this.Body.ScaleDifficultyAsBoss(0.65f, 65f, true, false); // TODO: rethink the way I'm scaling enemies, I need one or more helper methods which easily allow me to correctly scale enemy health, damage and most importantly, rewards. Also note that the combat squads scale enemy health for multiplayer by default, so at the moment I'm overscaling.
+            this.Body.ScaleDifficultyAsBoss(new BossScalingArgs1(0.65f, 65f, false, 10), false); // TODO: rethink the way I'm scaling enemies, I need one or more helper methods which easily allow me to correctly scale enemy health, damage and most importantly, rewards. Also note that the combat squads scale enemy health for multiplayer by default, so at the moment I'm overscaling.
+            Utils.ScaleDeathRewards(this.Body, Utils.CreditsForBossWave(10) / 200);
             this.EnsureComponent<HalcyoniteThrustBehavior>().getDesiredDistance = () => 16;
             this.Body.DisableStunsEtc();
         }

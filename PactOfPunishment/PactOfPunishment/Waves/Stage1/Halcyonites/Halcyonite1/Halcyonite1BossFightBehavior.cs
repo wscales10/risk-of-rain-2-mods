@@ -35,16 +35,18 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite1
 
         protected override void OnAddSpawnedServer(CharacterBody body)
         {
+            base.OnAddSpawnedServer(body);
+
             if (body.Is(RoR2Content.BodyPrefabs.GolemBody))
             {
-                body.ScaleDifficultyAsBoss(65f, 30f, true, false);
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(65f, 30f, false, 10), false);
                 body.ScaleMaxHealth(this, 0.4f);
                 body.ScaleDamage(this, 0.85f);
                 this.DisableSkill(body, SkillSlot.Secondary);
             }
             else if (body.Is(DLC2Content.BodyPrefabs.ChildBody))
             {
-                body.ScaleDifficultyAsBoss(65f, 65f, true, false);
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(65f, 65f, false, 10), false);
                 body.ScaleMaxHealth(this, 0.6f);
                 body.ScaleDamage(this, 0.25f);
                 body.EnsureComponent<DisableChildMonsterTeleport>();

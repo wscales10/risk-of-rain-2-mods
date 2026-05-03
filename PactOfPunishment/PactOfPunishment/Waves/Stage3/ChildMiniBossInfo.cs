@@ -20,7 +20,9 @@ namespace PactOfPunishment.Waves.Stage3
         public override void SetupBossBody(CharacterBody body, Summoner2BossFightBehavior bossFightBehavior)
         {
             body.EnsureComponent<Summoner2BossBodyBehavior>();
-            body.ScaleDifficultyAsBoss(2.5f, 30, true, false);
+            body.ScaleDifficultyAsBoss(new BossScalingArgs1(2.5f, 30, false, 25), false);
+            Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(25) / 35);
+
             body.inventory.GiveItemPermanent(RoR2Content.Items.AdaptiveArmor);
             body.ResistNonTargetedDamage();
 

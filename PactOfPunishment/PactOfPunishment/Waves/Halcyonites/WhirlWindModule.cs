@@ -8,40 +8,41 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static PactOfPunishment.Waves.Halcyonites.WhirlWindModule;
 
 namespace PactOfPunishment.Waves.Halcyonites
 {
+    public interface IOverrideGetTarget<TResult, TArgs>
+    {
+        IEnumerator<OrigResult<TResult>>? CurrentEnumerator { get; }
+
+        TResult Result { get; }
+
+        void StartLoop(TArgs args);
+    }
+
+    public interface IOverrideHasTarget<TResult, TArgs>
+    {
+        TResult GetResult(TResult orig, TArgs args);
+    }
+
+    public interface IOverrideTargetPos : IOnOff
+    {
+        Vector3 TargetPos { get; }
+
+        Vector3 TargetMoveDirection { get; }
+
+        void OnDashStart(WhirlWindPersuitCycle state);
+
+        bool CheckIfArrived(bool orig);
+
+        void Update();
+
+        void Reset();
+    }
+
     public partial class WhirlWindModule : Module
     {
-        public interface IOverrideGetTarget<TResult, TArgs>
-        {
-            IEnumerator<OrigResult<TResult>>? CurrentEnumerator { get; }
-
-            TResult Result { get; }
-
-            void StartLoop(TArgs args);
-        }
-
-        public interface IOverrideHasTarget<TResult, TArgs>
-        {
-            TResult GetResult(TResult orig, TArgs args);
-        }
-
-        public interface IOverrideTargetPos
-        {
-            Vector3 TargetPos { get; }
-
-            Vector3 TargetMoveDirection { get; }
-
-            void OnDashStart(WhirlWindPersuitCycle state);
-
-            bool CheckIfArrived(bool orig);
-
-            void Update();
-
-            void Reset();
-        }
-
         public override void Init()
         {
             // TODO: similar to TriLaserModule.
@@ -66,22 +67,11 @@ namespace PactOfPunishment.Waves.Halcyonites
             IL.EntityStates.Halcyonite.WhirlWindPersuitCycle.UpdateFindTarget += Utils.HookIL(WhirlWindPersuitCycle_UpdateFindTarget);
         }
 
-        private void WhirlWindPersuitCycle_CheckIfArrived(On.EntityStates.Halcyonite.WhirlWindPersuitCycle.orig_CheckIfArrived orig, WhirlWindPersuitCycle self)
-        {
-            // TODO: this is temporary, I want to use an IL hook but this will help with debugging
-            if (CheckIfArrived(self))
-            {
-                self.state = WhirlWindPersuitCycle.PersuitState.Decelerate;
-                self.startDecelerateTimeStamp = self.fixedAge;
-                self.startedDash = false;
-            }
-        }
-
         private static bool CheckIfArrived(WhirlWindPersuitCycle self)
         {
             bool orig = Vector3.Dot(self.targetPos - self.transform.position, GetTargetMoveDirection(self)) < 0f;
 
-            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            if (self.TryGetComponentWhere<IOverrideTargetPos>(x => x.CustomEnabled, out var component))
             {
                 return component.CheckIfArrived(orig);
             }
@@ -95,7 +85,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
         private static Vector3 GetTargetPos(WhirlWindPersuitCycle self)
         {
-            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            if (self.TryGetComponentWhere<IOverrideTargetPos>(x => x.CustomEnabled, out var component))
             {
                 return component.TargetPos;
             }
@@ -107,7 +97,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
         private static Vector3 GetTargetMoveDirection(WhirlWindPersuitCycle self)
         {
-            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            if (self.TryGetComponentWhere<IOverrideTargetPos>(x => x.CustomEnabled, out var component))
             {
                 return component.TargetMoveDirection;
             }
@@ -119,7 +109,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
         private static Vector3 GetNormalizedTargetMoveDirection(WhirlWindPersuitCycle self)
         {
-            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            if (self.TryGetComponentWhere<IOverrideTargetPos>(x => x.CustomEnabled, out var component))
             {
                 return component.TargetMoveDirection.normalized;
             }
@@ -241,9 +231,20 @@ namespace PactOfPunishment.Waves.Halcyonites
             });
         }
 
+        private void WhirlWindPersuitCycle_CheckIfArrived(On.EntityStates.Halcyonite.WhirlWindPersuitCycle.orig_CheckIfArrived orig, WhirlWindPersuitCycle self)
+        {
+            // TODO: this is temporary, I want to use an IL hook but this will help with debugging
+            if (CheckIfArrived(self))
+            {
+                self.state = WhirlWindPersuitCycle.PersuitState.Decelerate;
+                self.startDecelerateTimeStamp = self.fixedAge;
+                self.startedDash = false;
+            }
+        }
+
         private void WhirlWindPersuitCycle_OnExit(On.EntityStates.Halcyonite.WhirlWindPersuitCycle.orig_OnExit orig, WhirlWindPersuitCycle self)
         {
-            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            if (self.TryGetComponentWhere<IOverrideTargetPos>(x => x.CustomEnabled, out var component))
             {
                 component.Reset();
             }
@@ -253,7 +254,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
         private void WhirlWindPersuitCycle_UpdateDash(On.EntityStates.Halcyonite.WhirlWindPersuitCycle.orig_UpdateDash orig, WhirlWindPersuitCycle self)
         {
-            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            if (self.TryGetComponentWhere<IOverrideTargetPos>(x => x.CustomEnabled, out var component))
             {
                 component.Update();
             }
@@ -263,7 +264,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
         private void WhirlWindPersuitCycle_StartDash(On.EntityStates.Halcyonite.WhirlWindPersuitCycle.orig_StartDash orig, WhirlWindPersuitCycle self)
         {
-            if (self.TryGetComponent<IOverrideTargetPos>(out var component))
+            if (self.TryGetComponentWhere<IOverrideTargetPos>(x => x.CustomEnabled, out var component))
             {
                 component.OnDashStart(self);
             }

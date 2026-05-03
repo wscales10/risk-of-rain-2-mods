@@ -24,7 +24,7 @@ namespace PactOfPunishment.Waves.Infrastructure
 
         public IWaveSelectionDefinition? GetForCustomWaveName(string key)
         {
-            return this.dictionary.Values.Select(x => x.TryBuildForCustomWaveName(key)).SingleOrDefault(x => !(x is null));
+            return this.dictionary.Values.Select(x => x.TryBuildForCustomWaveName(key)).SingleOrDefault(x => !(x == null));
         }
 
         public IWaveSelectionDefinition? GetForWaveIndex(int waveIndex)

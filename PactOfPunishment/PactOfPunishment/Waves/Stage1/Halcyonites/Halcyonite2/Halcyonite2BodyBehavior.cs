@@ -1,5 +1,6 @@
 ﻿using EntityStates.Halcyonite;
 using HG;
+using PactOfPunishment.AiSkillDrivers;
 using PactOfPunishment.Waves.Halcyonites;
 using R2API;
 using RoR2;
@@ -75,8 +76,6 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
 
         private GenericSkill newSkill;
 
-        private GenericSkill? defaultUtilitySkill;
-
         private bool canUseNewSkill;
 
         private bool haveUsedWhirlWindSinceLastUsingNewSkill;
@@ -113,7 +112,8 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         protected override void Awake()
         {
             base.Awake();
-            this.Body.ScaleDifficultyAsBoss(0.62f, 65f, true, false);
+            this.Body.ScaleDifficultyAsBoss(new BossScalingArgs1(0.62f, 65f, false, 10), false);
+            Utils.ScaleDeathRewards(this.Body, Utils.CreditsForBossWave(10) / 200);
             this.Body.DisableStunsEtc();
             this.powerMeter.IsPoweredChanged += this.PowerMeter_IsPoweredChanged;
             this.Body.skillLocator.primary.cooldownOverride = 6;
@@ -124,13 +124,13 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
             thrustBehavior.OnThrust += this.ThrustBehavior_OnThrust;
 
             var laserModifier = this.Body.EnsureComponent<TriLaserModule.StateModifier>().Stats;
-            laserModifier.BaseTotalTimesToFire = 6;
+            laserModifier.BaseTotalTimesToFire = 4;
             laserModifier.FireCooldownOverride = 0.75f;
             laserModifier.EndLagOverride = 2;
             laserModifier.ChargeTimeMultiplier = 1 / 3f;
+            laserModifier.KeepFiringWhileKeyDown = true;
 
             this.newSkill = this.gameObject.AddComponent<GenericSkill>();
-            this.defaultUtilitySkill = this.Body.skillLocator.utility;
         }
 
         protected override void ManagedFixedUpdate(float deltaTime)
@@ -144,7 +144,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
         {
             base.SetupBossAi(ai);
 
-            CustomWeaponStates.RepeatingFistSkillState.customSkill.InsertSkillDriver(ai, Array.FindIndex(ai.skillDrivers, sd => sd.skillSlot == SkillSlot.Primary) + 1);
+            CustomWeaponStates.RepeatingFistSkillState.customSkill.InsertSkillDriver(ai, Array.FindLastIndex(ai.skillDrivers, sd => sd.skillSlot == SkillSlot.Utility) + 1);
 
             foreach (var skillDriver in ai.GetSkillDrivers("Follow Target"))
             {
@@ -158,6 +158,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
             skillDriver.movementType = AISkillDriver.MovementType.Stop;
             skillDriver.moveInputScale = 0;
             skillDriver.requiredSkill = HalcyoniteModule.LaserSkillDef.Value;
+            skillDriver.noRepeat = false;
         }
 
         private void ThrustBehavior_OnThrust()
@@ -177,7 +178,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
 
         private void Body_onSkillActivatedServer(GenericSkill skill)
         {
-            if (skill == this.defaultUtilitySkill)
+            if (skill == this.DefaultUtilitySkill)
             {
                 this.haveUsedWhirlWindSinceLastUsingNewSkill = true;
                 this.SelectUtilitySkill();
@@ -204,7 +205,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
             }
             else
             {
-                this.Body.skillLocator.utility = this.defaultUtilitySkill;
+                this.Body.skillLocator.utility = this.DefaultUtilitySkill;
             }
         }
 
@@ -239,9 +240,9 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite2
 
             if (this.powerMeter.IsPoweredUp)
             {
-                args.attackSpeedTotalMult *= 1.5f;
-                args.moveSpeedTotalMult *= 1.5f;
-                args.allSkills.cooldownMultiplier /= 1.5f;
+                args.attackSpeedTotalMult /= 0.7f;
+                args.moveSpeedTotalMult /= 0.7f;
+                args.allSkills.cooldownMultiplier *= 0.7f;
             }
 
             var state = this.WeaponStateMachine?.state;

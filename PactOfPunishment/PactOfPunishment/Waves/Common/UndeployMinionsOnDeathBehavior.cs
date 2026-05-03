@@ -22,7 +22,7 @@ namespace PactOfPunishment.Waves.Common
 
             var list = master.deployablesList;
 
-            if (list is null)
+            if (list == null)
             {
                 return;
             }

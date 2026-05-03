@@ -261,7 +261,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
                     halcyoniteThrustBehavior.getDesiredDistance = () =>
                     {
-                        float desiredDistance = targetPosition is null ? 0 : Vector3.Project(targetPosition.Value - self.characterBody.footPosition, self.characterBody.GetHorizontalFacingDirection()).magnitude;
+                        float desiredDistance = targetPosition == null ? 0 : Vector3.Project(targetPosition.Value - self.characterBody.footPosition, self.characterBody.GetHorizontalFacingDirection()).magnitude;
                         return Mathf.Max(30, desiredDistance);
                     };
                 }
@@ -281,7 +281,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
         private void GenericSkill_Awake(On.RoR2.GenericSkill.orig_Awake orig, GenericSkill self)
         {
-            if (self.TryGetComponent<Halcyonite2BodyBehavior>(out var behavior) && self._skillFamily is null)
+            if (self.TryGetComponent<Halcyonite2BodyBehavior>(out var behavior) && self._skillFamily == null)
             {
                 behavior.SetupSkill(self);
             }

@@ -26,7 +26,7 @@ namespace PactOfPunishment
 
         internal static void DoUpgrade(Action orig, EncounterContext? ctx, IWaveSelectionDefinition? waveSelectionDefinition)
         {
-            if (ctx is null)
+            if (ctx == null)
             {
                 orig();
                 return;

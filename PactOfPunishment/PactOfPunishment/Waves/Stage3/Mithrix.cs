@@ -1,14 +1,18 @@
 ﻿using EntityStates;
 using HG;
+using PactOfPunishment.AiSkillDrivers;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using PactOfPunishment.Waves.Infrastructure;
 using RoR2;
+using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage3
 {
+
     public class Mithrix : MiniBossWaveDefinition<InfiniteTowerExplicitSpawnWaveController>
     {
         protected override string BaseWavePrefabKey => "RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/InfiniteTowerWaveBossBrother.prefab";
@@ -21,22 +25,40 @@ namespace PactOfPunishment.Waves.Stage3
         protected override void Setup(CombatDirector dir, CombatSquad squad, InfiniteTowerExplicitSpawnWaveController wavePrefab)
         {
             base.Setup(dir, squad, wavePrefab);
-            wavePrefab.EnsureComponent<MithrixMiniBossBehavior>();
+            wavePrefab.EnsureComponent<MithrixMiniBossBehavior>().spawnInfo = wavePrefab.spawnList[0];
+            wavePrefab.spawnList = Array.Empty<InfiniteTowerExplicitSpawnWaveController.SpawnInfo>();
         }
 
-        public class MithrixMiniBossBehavior : BossFightBehavior
+        public class MithrixMiniBossBehavior : BossFightBehavior, IPreventWaveFromEnding
         {
+            public InfiniteTowerExplicitSpawnWaveController.SpawnInfo spawnInfo;
+
             private BossGroupWrapper? bossGroup;
+            
+            private InfiniteTowerWaveController? waveController;
+
+            public bool CanWaveEnd { get; private set; }
 
             public override void Awake()
             {
                 base.Awake();
+                this.waveController = this.GetComponent<InfiniteTowerWaveController>();
                 this.CombatDirector.combatSquad.onDefeatedServer += CombatSquad_onDefeatedServer;
+                MoonMusic.Instance.PlayBossTrack(this.waveController);
+                this.StartCoroutine(this.SpawnBossAfterDelay());
+            }
+
+            private IEnumerator SpawnBossAfterDelay()
+            {
+                yield return new WaitForSeconds(MoonMusic.BossSpawnDelay);
+                this.CombatDirector.Spawn(this.spawnInfo.spawnCard, this.spawnInfo.eliteDef, this.waveController?.spawnTarget.transform, this.spawnInfo.spawnDistance, this.spawnInfo.preventOverhead);
+                this.CanWaveEnd = true;
             }
 
             protected override void OnBossSpawnedServer(CharacterBody body)
             {
                 body.ScaleMaxHealth(this, 0.8f);
+                Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(25) / 4000);
                 body.EnsureComponent<MithrixBodyBehavior>();
                 this.AddBossToGroup(ref this.bossGroup, body);
             }
@@ -108,6 +130,7 @@ namespace PactOfPunishment.Waves.Stage3
             {
                 ctx.CombatDirector.AddSpawnListener(OnBossSpawnedServer);
                 ctx.GameObject.EnsureComponent<PhaseCounter>().phase = 3;
+                MoonMusic.Instance.SetPhase3();
             }
 
             private static void OnBossSpawnedServer(GameObject spawnedEntity)
@@ -124,7 +147,7 @@ namespace PactOfPunishment.Waves.Stage3
             protected override void Awake()
             {
                 base.Awake();
-                
+
                 this.Body.ScaleMaxHealth(this, 8f / 7);
                 this.Body.inventory.GiveItemPermanent(RoR2Content.Items.SprintBonus, 2);
                 this.Body.inventory.GiveItemPermanent(RoR2Content.Items.SecondarySkillMagazine, 2);

@@ -6,13 +6,15 @@ using UnityEngine;
 
 namespace PactOfPunishment.Waves.Common
 {
-    public abstract class PortableMiniBossFightBehavior<T> : BossFightBehavior
+    public abstract class PortableMiniBossFightBehavior<T> : BossFightBehavior, IOnOff
         where T : PortableMiniBossFightBehavior<T>
     {
         [SerializeField]
         private PortableMiniBossInfo[]? miniBosses;
 
         public event Action<bool>? OnSetEnabled;
+
+        bool IOnOff.CustomEnabled => this.CustomEnabled;
 
         protected bool CustomEnabled { get; private set; }
 
@@ -43,7 +45,7 @@ namespace PactOfPunishment.Waves.Common
 
         protected override void OnBossSpawnedServer(CharacterBody body)
         {
-            if (this.miniBosses is null)
+            if (this.miniBosses == null)
             {
                 Debug.LogError($"{this.GetType().Name}.{nameof(this.miniBosses)} was null.");
                 return;
@@ -51,7 +53,7 @@ namespace PactOfPunishment.Waves.Common
 
             var miniBossInfo = this.miniBosses.SingleOrDefault(info => body.Is(info.BodyPrefab));
 
-            if (!(miniBossInfo is null))
+            if (!(miniBossInfo == null))
             {
                 body.EnsureHasItem(Content.Items.ChiefBossMarker);
                 miniBossInfo?.SetupBossBody(body, this);

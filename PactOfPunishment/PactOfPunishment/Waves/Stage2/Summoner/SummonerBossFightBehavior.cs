@@ -1,4 +1,5 @@
 ﻿using HG;
+using PactOfPunishment.AiSkillDrivers;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using RoR2;
@@ -112,7 +113,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
                     {
                         // Make the parent ghost's teleport skill usable regardless of health
                         // fraction - it needs it for mobility and it will never use it otherwise
-                        foreach (var aiSkillDriver in spawnedBody.master.GetSkillDrivers("Teleport"))
+                        foreach (var aiSkillDriver in spawnedBody.GetSkillDrivers("Teleport"))
                         {
                             aiSkillDriver.maxUserHealthFraction = float.PositiveInfinity;
                         }
@@ -154,7 +155,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
 
             var summonerBody = this.References.MainBossBodyCurrentlySummoningSupport;
 
-            if (summonerBody is null)
+            if (summonerBody == null)
             {
                 this.OnMainBossSpawnedServer(result, body!);
             }
@@ -183,6 +184,7 @@ namespace PactOfPunishment.Waves.Stage2.Summoner
             }
 
             float healthMultiplier = wave.totalWaveCredits / cost;
+            Utils.ScaleDeathRewards(body, healthMultiplier);
 
             if (healthMultiplier > 1)
             {

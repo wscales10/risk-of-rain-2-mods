@@ -19,7 +19,7 @@ using UnityEngine;
 
 namespace PactOfPunishment
 {
-    [BepInPlugin("com.woodyscales.pactofpunishment", "Pact of Punishment", "0.0.2")]
+    [BepInPlugin("com.woodyscales.pactofpunishment", "Pact of Punishment", "0.0.3")]
     public partial class PactOfPunishmentPlugin : BaseUnityPlugin
     {
         internal const string Section = "Conditions";
@@ -37,24 +37,50 @@ namespace PactOfPunishment
                     typeof(Module).IsAssignableFrom(t) &&
                     t.IsClass &&
                     !t.IsAbstract);
-            var tempModules = GetModules(moduleTypes).ToList();
+            var uninitializedModules = GetUninitializedModules(moduleTypes).ToList();
+            var sortedModules = ModuleLoader.SortModulesByDependencies(uninitializedModules);
+            var moduleTypeInitializationStatus = new Dictionary<Type, bool>();
 
-            foreach (var module in tempModules)
+            foreach (var module in sortedModules)
             {
+                var moduleType = module.GetType();
+                var dependencies = ModuleLoader.GetModuleTypeDependencies(moduleType);
+                bool shouldSkip = false;
+
+                foreach (var dependency in dependencies)
+                {
+                    if (!moduleTypeInitializationStatus.TryGetValue(dependency, out bool isInitialized))
+                    {
+                        this.Logger.LogWarning($"Module {moduleType.Name} has an unrecognized dependency: {dependency.Name}. Ensure the dependency is included in the mod and initialized before this module.");
+                        shouldSkip = true;
+                    }
+                    else if (!isInitialized)
+                    {
+                        this.Logger.LogWarning($"Module {moduleType.Name} has a dependency that failed to initialize: {dependency.Name}");
+                        shouldSkip = true;
+                    }
+                }
+
+                if (shouldSkip)
+                {
+                    this.Logger.LogWarning($"Skipping initialization of {moduleType.Name}.");
+                    continue;
+                }
+
                 try
                 {
                     module.Logger = this.Logger;
                     module.Config = this.Config;
                     module.Init();
-                    this.Logger.LogInfo($"Initialized module: {module.GetType().Name}");
+                    this.Logger.LogInfo($"Initialized module: {moduleType.Name}");
+                    this.modules.Add(module);
+                    moduleTypeInitializationStatus[moduleType] = true;
                 }
                 catch (Exception ex)
                 {
                     this.Logger.LogWarning(ex);
-                    continue;
+                    moduleTypeInitializationStatus[moduleType] = false;
                 }
-
-                this.modules.Add(module);
             }
 
             RoR2Application.onLoadFinished = (Action)Delegate.Combine(RoR2Application.onLoadFinished, new Action(this.SetupConditions));
@@ -130,7 +156,7 @@ namespace PactOfPunishment
                 c.Remove();
                 c.EmitDelegate<Func<CombatDirector, CombatDirector.EliteTierDef>>(self =>
                 {
-                    if (self.currentActiveEliteTier is null)
+                    if (self.currentActiveEliteTier == null)
                     {
                         self.ResetEliteType();
                     }
@@ -140,7 +166,36 @@ namespace PactOfPunishment
             }
         }
 
-        private IEnumerable<Module> GetModules(IEnumerable<Type> moduleTypes)
+        private static IEnumerable<IConditionDef> SortConditionDefs(IEnumerable<IConditionDef> conditionDefs)
+        {
+            Type[] conditionTypes = new[]
+            {
+                typeof(IncreaseEnemyDamage),
+                typeof(ReduceAllyHealing),
+                typeof(IncreasePrices),
+                typeof(IncreaseEnemyCount),
+                typeof(UpgradeMainBosses),
+                typeof(IncreaseEnemyMaxHealth),
+                typeof(ExtraEliteBuffs),
+                typeof(UpgradeMiniBosses),
+                typeof(StageProgressionCost),
+                typeof(BoostEnemyCombatStats),
+                typeof(IncreaseEnvironmentalDamage),
+                typeof(DisableStartingItems),
+                typeof(EnemiesIgnoreInitialDamage),
+                typeof(LimitChoiceOptions),
+                typeof(LimitRunTime),
+                typeof(RemoveOneShotProtection)
+            };
+
+            return conditionDefs.OrderBy(x =>
+            {
+                int index = Array.IndexOf(conditionTypes, x.GetType());
+                return index >= 0 ? index : int.MaxValue;
+            });
+        }
+
+        private IEnumerable<Module> GetUninitializedModules(IEnumerable<Type> moduleTypes)
         {
             foreach (var moduleType in moduleTypes)
             {
@@ -246,35 +301,6 @@ namespace PactOfPunishment
                 ModSettingsManager.AddOption(new IntSliderOption(configEntry, new IntSliderConfig { restartRequired = false, min = 0, max = conditionDef.MaxRank, checkIfDisabled = () => Run.instance }));
                 this.conditionDefs[conditionDef] = configEntry;
             }
-        }
-
-        private static IEnumerable<IConditionDef> SortConditionDefs(IEnumerable<IConditionDef> conditionDefs)
-        {
-            Type[] conditionTypes = new[]
-            {
-                typeof(IncreaseEnemyDamage),
-                typeof(ReduceAllyHealing),
-                typeof(IncreasePrices),
-                typeof(IncreaseEnemyCount),
-                typeof(UpgradeMainBosses),
-                typeof(IncreaseEnemyMaxHealth),
-                typeof(ExtraEliteBuffs),
-                typeof(UpgradeMiniBosses),
-                typeof(StageProgressionCost),
-                typeof(BoostEnemyCombatStats),
-                typeof(IncreaseEnvironmentalDamage),
-                typeof(DisableStartingItems),
-                typeof(EnemiesIgnoreInitialDamage),
-                typeof(LimitChoiceOptions),
-                typeof(LimitRunTime),
-                typeof(RemoveOneShotProtection)
-            };
-
-            return conditionDefs.OrderBy(x =>
-            {
-                int index = Array.IndexOf(conditionTypes, x.GetType());
-                return index >= 0 ? index : int.MaxValue;
-            });
         }
     }
 

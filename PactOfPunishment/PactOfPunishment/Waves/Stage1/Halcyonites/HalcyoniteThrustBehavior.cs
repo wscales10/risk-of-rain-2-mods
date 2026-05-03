@@ -63,9 +63,9 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
             this.swipeTimers.RemoveAt(index);
             this.OnThrust?.Invoke();
 
-            if (this.getDesiredDistance is null)
+            if (this.getDesiredDistance == null)
             {
-                Debug.LogError($"{this.name}.{nameof(this.getDesiredDistance)} is null.");
+                Debug.LogError($"{this.name}.{nameof(this.getDesiredDistance)} == null.");
             }
             else
             {

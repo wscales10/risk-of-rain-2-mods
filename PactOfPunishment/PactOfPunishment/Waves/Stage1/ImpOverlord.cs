@@ -42,7 +42,8 @@ namespace PactOfPunishment.Waves.Stage1
             public override void SetupBossBody(CharacterBody body, ImpOverlordBossFightBehavior bossFightBehavior)
             {
                 body.ScaleMaxHealth(this, 0.4f);
-                body.ScaleDifficultyAsBoss(39, 31, true, false);
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(39, 31, false, 5), false);
+                Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(5) / 800);
                 body.skillLocator.utility.cooldownOverride = 2;
             }
         }

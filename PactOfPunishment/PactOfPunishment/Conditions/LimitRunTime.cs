@@ -73,6 +73,14 @@ namespace PactOfPunishment.Conditions
             On.RoR2.InfiniteTowerSafeWardController.Activate += this.InfiniteTowerSafeWardController_Activate;
 
             On.RoR2.InfiniteTowerRun.InitializeWaveController += this.InfiniteTowerRun_InitializeWaveController;
+
+            On.RoR2.MeridianEventLightningTrigger.PopulateSceneWithMonsters += this.MeridianEventLightningTrigger_PopulateSceneWithMonsters;
+        }
+
+        private void MeridianEventLightningTrigger_PopulateSceneWithMonsters(On.RoR2.MeridianEventLightningTrigger.orig_PopulateSceneWithMonsters orig, MeridianEventLightningTrigger self)
+        {
+            ResumeTimer();
+            orig(self);
         }
 
         private void InfiniteTowerRun_InitializeWaveController(On.RoR2.InfiniteTowerRun.orig_InitializeWaveController orig, InfiniteTowerRun self)
@@ -196,11 +204,6 @@ namespace PactOfPunishment.Conditions
                 if (self.stageClearCount <= numberOfEarlyStages)
                 {
                     behavior.AddTime(this.GetTimeLimitPerRegion(self));
-                }
-
-                if (!self.safeWardController)
-                {
-                    behavior.Resume();
                 }
             }
         }

@@ -31,8 +31,8 @@ namespace PactOfPunishment.Waves.Common
         protected override void Setup(CombatDirector dir, CombatSquad squad, TWaveController wavePrefab)
         {
             base.Setup(dir, squad, wavePrefab);
-            wavePrefab.secondsBeforeSuddenDeath *= 1.5f;
-            wavePrefab.suddenDeathRadiusConstrictingPerSecond /= 1.5f;
+            wavePrefab.secondsBeforeSuddenDeath *= 2f;
+            wavePrefab.suddenDeathRadiusConstrictingPerSecond /= 2f;
         }
     }
 

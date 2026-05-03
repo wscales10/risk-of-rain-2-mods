@@ -3,18 +3,19 @@ using UnityEngine;
 
 namespace PactOfPunishment.Conditions
 {
+    [ModuleDependency(typeof(RebirthPlus.RebirthPlus))]
     public sealed class DisableStartingItems : DefaultConditionDef
     {
+        // TODO: DRY
+        private const int itemsDisabledPerRank = 3;
+
         private DisableStartingItems()
         {
         }
 
-        // TODO: DRY
-        private const int itemsDisabledPerRank = 3;
+        public static DisableStartingItems Instance { get; } = new DisableStartingItems();
 
         public override string Description => string.Format(base.Description, itemsDisabledPerRank);
-
-        public static DisableStartingItems Instance { get; } = new DisableStartingItems();
 
         public override int MaxRank => 4;
 

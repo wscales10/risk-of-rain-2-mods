@@ -29,7 +29,7 @@ namespace PactOfPunishment.Waves.Common
 
         protected override bool ShouldEnableTimer()
         {
-            return this.minInterval > 0 && this.maxInterval >= this.minInterval && !(this.rng is null);
+            return this.minInterval > 0 && this.maxInterval >= this.minInterval && !(this.rng == null);
         }
 
         protected override float GetNextInterval()
@@ -63,7 +63,7 @@ namespace PactOfPunishment.Waves.Common
 
         private void ServerUpdate(float deltaTime)
         {
-            if (this.doSomething is null || !this.ShouldEnableTimer())
+            if (this.doSomething == null || !this.ShouldEnableTimer())
             {
                 return;
             }

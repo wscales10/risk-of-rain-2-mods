@@ -1,9 +1,10 @@
 ﻿using HG;
+using PactOfPunishment.AiSkillDrivers;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
-using PactOfPunishment.Waves.Infrastructure;
 using R2API;
 using RoR2;
+using RoR2.CharacterAI;
 using System;
 using UnityEngine;
 using static RoR2.InfiniteTowerExplicitSpawnWaveController;
@@ -31,8 +32,48 @@ namespace PactOfPunishment.Waves.Stage1
                 this.DisableSkill(body, SkillSlot.Primary);
             }
 
+            foreach (var skillDriver in body.GetSkillDrivers(SkillSlot.Utility))
+            {
+                // Enable utility skill immediately
+                skillDriver.maxUserHealthFraction = float.PositiveInfinity;
+            }
+
+            /*
+            foreach (var skillDriver in body.master.GetSkillDrivers("FireAndChase"))
+            {
+                skillDriver.minDistance = 15;
+            }
+
+            var newSkillDriver = body.master.gameObject.AddComponent<AISkillDriver>();
+            SetupStrafeSkillDriver(newSkillDriver);
+            body.master.GetComponent<BaseAI>().AddSkillDriver(newSkillDriver);
+            */
             body.EnsureComponent<UndeployMinionsOnDeathBehavior>();
             body.EnsureComponent<SolusControlUnitBodyBehavior>();
+        }
+
+        private static void SetupStrafeSkillDriver(AISkillDriver skillDriver)
+        {
+            skillDriver.customName = "Strafe";
+            skillDriver.skillSlot = SkillSlot.None;
+            skillDriver.minDistance = 10;
+            skillDriver.maxDistance = 35;
+            skillDriver.moveTargetType = AISkillDriver.TargetType.CurrentEnemy;
+            skillDriver.movementType = AISkillDriver.MovementType.StrafeMovetarget;
+            skillDriver.aimType = AISkillDriver.AimType.AtMoveTarget;
+            skillDriver.ignoreNodeGraph = true;
+        }
+
+        private static void SetupFleeSkillDriver(AISkillDriver skillDriver)
+        {
+            skillDriver.customName = "Strafe";
+            skillDriver.skillSlot = SkillSlot.None;
+            skillDriver.minDistance = 10;
+            skillDriver.maxDistance = 35;
+            skillDriver.moveTargetType = AISkillDriver.TargetType.CurrentEnemy;
+            skillDriver.movementType = AISkillDriver.MovementType.StrafeMovetarget;
+            skillDriver.aimType = AISkillDriver.AimType.AtMoveTarget;
+            skillDriver.ignoreNodeGraph = true;
         }
     }
 

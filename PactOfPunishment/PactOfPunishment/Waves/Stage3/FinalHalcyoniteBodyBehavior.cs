@@ -1,5 +1,6 @@
 ﻿using EntityStates;
 using HG;
+using PactOfPunishment.AiSkillDrivers;
 using PactOfPunishment.Waves.Halcyonites;
 using R2API;
 using RoR2;
@@ -80,7 +81,9 @@ namespace PactOfPunishment.Waves.Stage3
         protected override void Awake()
         {
             base.Awake();
-            this.Body.ScaleDifficultyAsBoss(2, 15, true, false);
+            this.Body.ScaleDifficultyAsBoss(new BossScalingArgs1(2, 15, false, 30), false);
+            Utils.ScaleDeathRewards(this.Body, Utils.CreditsForBossWave(30) * 0.5f / 200);
+
             this.Body.inventory.GiveItemPermanent(RoR2Content.Items.AdaptiveArmor);
             this.Body.DisableStunsEtc();
             this.triLaserModifier = this.EnsureComponent<TriLaserModule.StateModifier>().Stats;

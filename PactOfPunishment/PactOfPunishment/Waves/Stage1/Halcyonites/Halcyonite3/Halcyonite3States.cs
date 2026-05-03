@@ -59,6 +59,7 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites.Halcyonite3
             {
                 base.OnEnter();
                 this.bodyBehavior = this.GetComponent<Halcyonite3BodyBehavior>();
+                this.bodyBehavior.DefaultUtilitySkill?.RestockSteplike();
                 this.OverrideSkill(SkillSlot.Special, CustomWeaponStates.LineOfFistsSkillState.customSkill.SkillDef);
             }
 

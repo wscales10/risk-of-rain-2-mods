@@ -16,7 +16,7 @@ namespace PactOfPunishment.Waves.Common
         {
             get
             {
-                if (this.encounterContext is null)
+                if (this.encounterContext == null)
                 {
                     var encounterContextHolder = this.GetComponent<EncounterContextHolder>();
 

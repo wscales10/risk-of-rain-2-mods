@@ -1,4 +1,5 @@
 ﻿using HG;
+using PactOfPunishment.AiSkillDrivers;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using R2API;
@@ -31,7 +32,8 @@ namespace PactOfPunishment.Waves.Stage2
 
             public override void SetupBossBody(CharacterBody body, WormAndDistributorBossFightBehavior bossFightBehavior)
             {
-                body.ScaleDifficultyAsBoss(0.68f, 2.2f, true, false);
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(0.68f, 2.2f, false, 15), false);
+                Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(15) * 0.5f / 80);
 
                 foreach (var ai in body.master.AiComponents)
                 {
@@ -76,10 +78,11 @@ namespace PactOfPunishment.Waves.Stage2
 
             public override void SetupBossBody(CharacterBody body, WormAndDistributorBossFightBehavior bossFightBehavior)
             {
-                body.ScaleDifficultyAsBoss(0.2f, 100, true, false);
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(0.2f, 100, false, 15), false);
+                Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(15) * 0.5f / 20);
                 Utils.MakeUnscaledEliteUsingEquipment(body, RoR2Content.Elites.Ice);
 
-                foreach (var skillDriver in body.master.GetSkillDrivers("PlantMine"))
+                foreach (var skillDriver in body.GetSkillDrivers("PlantMine"))
                 {
                     skillDriver.maxDistance = 140;
                 }
@@ -94,6 +97,8 @@ namespace PactOfPunishment.Waves.Stage2
 
             public class DistributorBossBodyBehavior : BossBodyBehavior
             {
+                public static float mineTriggerRadius = 12f;
+
                 public void OnEnable()
                 {
                     RecalculateStats.Add(this.Body, this.OnRecalculateStats);

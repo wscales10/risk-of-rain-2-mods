@@ -60,17 +60,6 @@ namespace PactOfPunishment.Conditions
 
         private static void FogDamageController_MyFixedUpdate(ILCursor c)
         {
-            // TODO: move this first bit to another class
-            ILLabel? label = null;
-            int bodyVariableNumber = -1;
-            c.GotoNext(MoveType.AfterLabel,
-                x => x.MatchLdloc(out bodyVariableNumber),
-                x => x.MatchCallvirt<CharacterBody>($"get_{nameof(CharacterBody.IsDrone)}"),
-                x => x.MatchBrtrue(out label));
-            c.Emit(OpCodes.Ldloc_S, (byte)bodyVariableNumber);
-            c.EmitDelegate<Func<CharacterBody, bool>>(key => key.isBoss);
-            c.Emit(OpCodes.Brtrue_S, label);
-
             int variableNumber = -1;
             c.GotoLast(x => x.MatchLdloc(out variableNumber), x => x.MatchStfld<DamageInfo>(nameof(DamageInfo.damageType)));
             c.Index++;

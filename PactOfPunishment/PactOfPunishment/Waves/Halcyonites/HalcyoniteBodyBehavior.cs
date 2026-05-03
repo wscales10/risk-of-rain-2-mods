@@ -1,5 +1,7 @@
 ﻿using EntityStates.Halcyonite;
 using HG;
+using PactOfPunishment.AiSkillDrivers;
+using PactOfPunishment.ProtectMonstersFromHazards;
 using PactOfPunishment.Waves.Common;
 using RoR2;
 using RoR2.CharacterAI;
@@ -22,12 +24,21 @@ namespace PactOfPunishment.Waves.Halcyonites
             this.fallRiskMitigator = this.EnsureComponent<FallRiskMitigator>();
             this.fallRiskMitigator.CurrentMode = FallRiskMitigator.Mode.Halcyonite;
             this.WeaponStateMachine = EntityStateMachine.FindByCustomName(this.gameObject, "Weapon");
-            this.EnsureComponent<WhirlWindModule.UseAirNodesController>();
+
+            this.EnsureComponent<WhirlWindNavigationController>();
             this.EnsureComponent<WhirlWindModule.OverrideGetTarget>();
             this.SetupBossAi();
             this.BossStateMachine = this.gameObject.AddComponent<EntityStateMachine>();
             this.BossStateMachine.customName = "BossBody";
             this.Body.healthComponent.ForwardBossDamageTo(this.BossStateMachine);
+
+            // TODO: DRY, also add this stuff to other bosses
+            foreach (var skillDriver in this.Body.GetSkillDrivers("SeekSafeWard"))
+            {
+                skillDriver.ignoreNodeGraph = true;
+            }
+
+            this.EnsureComponent<ObstacleNavigator>();
         }
 
         protected override void ManagedFixedUpdate(float deltaTime)
@@ -103,6 +114,15 @@ namespace PactOfPunishment.Waves.Halcyonites
 
             if (index != -1)
             {
+                TryToEscapeFog.Instance.InsertSkillDriver(ai, newSkillDriver =>
+                {
+                    newSkillDriver.customName = "WhirlWindToSafeWard";
+                    newSkillDriver.skillSlot = SkillSlot.Utility;
+                    newSkillDriver.requiredSkill = HalcyoniteModule.WhirlwindSkillDef;
+                    newSkillDriver.requireSkillReady = true;
+                    newSkillDriver.ignoreNodeGraph = true;
+                    newSkillDriver.driverUpdateTimerOverride = 4;
+                }, index);
                 this.SetupWhirlWindSkillDriver(ai.skillDrivers[index]);
             }
         }

@@ -1,6 +1,7 @@
 ﻿using HG;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using PactOfPunishment.Conditions;
 using R2API;
 using RoR2;
 using RoR2.ExpansionManagement;
@@ -110,7 +111,7 @@ namespace PactOfPunishment
         private void MeridianEventLightningTrigger_PopulateSceneWithMonsters(On.RoR2.MeridianEventLightningTrigger.orig_PopulateSceneWithMonsters orig, MeridianEventLightningTrigger self)
         {
             orig(self);
-
+            
             if (Run.instance is InfiniteTowerRun run)
             {
                 this.AdvanceWave(run);

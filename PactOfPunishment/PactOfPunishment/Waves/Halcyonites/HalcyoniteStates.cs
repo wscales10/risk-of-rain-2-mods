@@ -39,7 +39,7 @@ namespace PactOfPunishment.Waves.Halcyonites
                 {
                     var nextPhaseState = this.GetNextPhaseState();
 
-                    if (!(nextPhaseState is null))
+                    if (!(nextPhaseState == null))
                     {
                         this.outer.SetState(this.GetInterludeState(this.PhaseEndHealthThreshold, nextPhaseState));
                     }
@@ -99,7 +99,7 @@ namespace PactOfPunishment.Waves.Halcyonites
 
             private void SetupMainBossBody(CharacterBody? body)
             {
-                if (body is null)
+                if (body == null)
                 {
                     return;
                 }

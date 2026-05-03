@@ -30,7 +30,7 @@ namespace PactOfPunishment.Waves.Infrastructure
                 IWaveSelectionDefinition? waveSelectionDefinition = this.TryGetWaveSelectionDefinition(self);
                 this.LastSelectedWaveSelectionDefinition = waveSelectionDefinition;
 
-                if (!(waveSelectionDefinition is null))
+                if (!(waveSelectionDefinition == null))
                 {
                     waveSelectionDefinition.ModifyWeightedSelection(self.weightedSelection, this.cache);
                     return true;

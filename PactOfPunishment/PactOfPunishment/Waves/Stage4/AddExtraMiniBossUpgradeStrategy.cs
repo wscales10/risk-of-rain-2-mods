@@ -1,10 +1,11 @@
 ﻿using PactOfPunishment.Conditions;
+using PactOfPunishment.Waves.Common;
 using RoR2;
 using UnityEngine;
 
 namespace PactOfPunishment.Waves.Stage4
 {
-    public class ExtraMiniBossBehavior : MonoBehaviour
+    public class ExtraMiniBossBehavior : MonoBehaviour, IPreventWaveFromEnding
     {
         public InfiniteTowerExplicitSpawnWaveController.SpawnInfo extraBossSpawnInfo;
 
@@ -16,6 +17,8 @@ namespace PactOfPunishment.Waves.Stage4
 
         public bool HasSpawnedExtraBoss { get; private set; }
 
+        bool IPreventWaveFromEnding.CanWaveEnd => this.HasSpawnedExtraBoss;
+
         public void Update()
         {
             this.ManagedUpdate(Time.deltaTime);
@@ -23,7 +26,7 @@ namespace PactOfPunishment.Waves.Stage4
 
         private void ManagedUpdate(float deltaTime)
         {
-            if (this.spawnDelay < 0 || this.ctx is null || this.HasSpawnedExtraBoss)
+            if (this.spawnDelay < 0 || this.ctx == null || this.HasSpawnedExtraBoss)
             {
                 return;
             }

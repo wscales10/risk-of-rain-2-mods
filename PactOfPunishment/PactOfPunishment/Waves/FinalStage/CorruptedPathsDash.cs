@@ -180,7 +180,7 @@ namespace PactOfPunishment.Waves.FinalStage
                     this.predictedPositionSphere.SetActive(true);
                     this.predictedPositionSphere.transform.position = predictedPosition;
 
-                    if (this.GetDashTargetPositionFromPredictedPosition is null)
+                    if (this.GetDashTargetPositionFromPredictedPosition == null)
                     {
                         dashTargetPosition = predictedPosition;
                     }

@@ -1,5 +1,7 @@
-﻿using PactOfPunishment.Conditions;
+﻿using HG;
+using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
+using R2API;
 using RoR2;
 using System;
 using System.Linq;
@@ -78,7 +80,9 @@ namespace PactOfPunishment.Waves.Stage1
 
             protected override void OnBossSpawnedServer(CharacterBody body)
             {
-                body.ScaleDifficultyAsBoss(4, 40, true, false);
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(4, 40, false, 5), false);
+                Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(5) * 0.5f / 115);
+                body.EnsureComponent<Stage1ElderLemurianBossBody>();
 
                 if (this.eliteEquipments.Length > 0)
                 {
@@ -89,6 +93,24 @@ namespace PactOfPunishment.Waves.Stage1
                 {
                     Debug.LogWarning("eliteEquipments.Length is 0");
                 }
+            }
+        }
+
+        public class Stage1ElderLemurianBossBody : BossBodyBehavior
+        {
+            public void OnEnable()
+            {
+                RecalculateStats.Add(this.Body, OnRecalculateStats);
+            }
+
+            public void OnDisable()
+            {
+                RecalculateStats.Remove(this.Body, OnRecalculateStats);
+            }
+
+            private static void OnRecalculateStats(RecalculateStatsAPI.StatHookEventArgs args)
+            {
+                args.primarySkill.cooldownMultiplier *= 5 / 4f;
             }
         }
 

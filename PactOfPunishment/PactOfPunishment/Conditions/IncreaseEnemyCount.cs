@@ -66,13 +66,13 @@ namespace PactOfPunishment.Conditions
             {
                 if (!combatDirector)
                 {
-                    Debug.LogError($"{nameof(combatDirector)} is null");
+                    Debug.LogError($"{nameof(combatDirector)} == null");
                     return;
                 }
 
-                if (combatDirector!.onSpawnedServer is null)
+                if (combatDirector!.onSpawnedServer == null)
                 {
-                    Debug.LogError($"{nameof(combatDirector.onSpawnedServer)} is null");
+                    Debug.LogError($"{nameof(combatDirector.onSpawnedServer)} == null");
                     return;
                 }
 

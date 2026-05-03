@@ -1,5 +1,6 @@
 ﻿using HG;
 using PactOfPunishment.Waves.Halcyonites;
+using RoR2;
 using RoR2.CharacterAI;
 using System;
 
@@ -7,6 +8,14 @@ namespace PactOfPunishment.Waves.Stage1.Halcyonites
 {
     public class Stage1HalcyoniteBodyBehavior : HalcyoniteBodyBehavior
     {
+        internal GenericSkill? DefaultUtilitySkill { get; private set; }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            this.DefaultUtilitySkill = this.Body.skillLocator.utility;
+        }
+
         protected override void SetupThrustSkillDriver(AISkillDriver skillDriver)
         {
             base.SetupThrustSkillDriver(skillDriver);

@@ -50,12 +50,14 @@ namespace PactOfPunishment.Waves.Stage3
             if (body.Is(RoR2Content.BodyPrefabs.ParentBody))
             {
                 body.EnsureHasItem(RoR2Content.Items.UseAmbientLevel);
-                body.ScaleDifficultyAsBoss(158, 158, false, false);
+                body.ScaleDifficultyAsBoss(new BossScalingArgs1(158, 158, true, 25), false);
+                Utils.ScaleDeathRewards(body, 0);
                 body.EnsureComponent<ParentBehavior>().onDeathStart = this.OnParentDeath;
             }
             else if (body.Is(this.eggBodyPrefab))
             {
                 body.ScaleMaxHealth(this, 1 / 3f);
+                Utils.ScaleDeathRewards(body, 0);
             }
         }
 

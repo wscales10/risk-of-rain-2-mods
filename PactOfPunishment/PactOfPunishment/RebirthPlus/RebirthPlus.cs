@@ -64,7 +64,7 @@ namespace PactOfPunishment.RebirthPlus
                             return true;
                         }
 
-                        if (this.conditionConfigEntry is null && !config.TryGetEntry(PactOfPunishmentPlugin.Section, Utils.SplitPascalCaseString(typeof(DisableStartingItems).Name), out this.conditionConfigEntry))
+                        if (this.conditionConfigEntry == null && !config.TryGetEntry(PactOfPunishmentPlugin.Section, Utils.SplitPascalCaseString(typeof(DisableStartingItems).Name), out this.conditionConfigEntry))
                         {
                             return false;
                         }
