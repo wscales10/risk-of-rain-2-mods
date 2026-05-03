@@ -1,4 +1,5 @@
 ﻿using HG;
+using PactOfPunishment.AiSkillDrivers;
 using PactOfPunishment.Conditions;
 using PactOfPunishment.Waves.Common;
 using R2API;
@@ -83,6 +84,13 @@ namespace PactOfPunishment.Waves.Stage1
                 body.ScaleDifficultyAsBoss(new BossScalingArgs1(4, 40, false, 5), false);
                 Utils.ScaleDeathRewards(body, Utils.CreditsForBossWave(5) * 0.5f / 115);
                 body.EnsureComponent<Stage1ElderLemurianBossBody>();
+
+                foreach (var skillDriver in body.GetSkillDrivers("SeekSafeWard"))
+                {
+                    skillDriver.ignoreNodeGraph = true;
+                }
+
+                body.EnsureComponent<ObstacleNavigator>();
 
                 if (this.eliteEquipments.Length > 0)
                 {
