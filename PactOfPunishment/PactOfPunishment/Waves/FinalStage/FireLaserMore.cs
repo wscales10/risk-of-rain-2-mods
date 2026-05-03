@@ -125,6 +125,11 @@ namespace PactOfPunishment.Waves.FinalStage
             {
                 behavior.InitLaserTargets(self.laserTargets);
             }
+
+            if (!(self.laserTargets?.Count > 0))
+            {
+                self.duration = self.windDownDuration;
+            }
         }
 
         public class FireLaserMoreBehavior : MonoBehaviour
